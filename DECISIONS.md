@@ -11,6 +11,23 @@ This is the running log required by the brief (§17). Newest entries go at the t
 
 ## 2026-09-19
 
+### D-009 · The Kova payment path is proven on Moderato testnet (Decided)
+**What ran** (`packages/tempo/test/e2e/payment.e2e.test.ts`, live on chain 42431):
+- A sponsored `transferWithMemo` settled and passed `verifyPayment`: **304,795 gas**, about 4.2 s end to end. The gas includes the one-off cost of a merchant's first balance in a token; the latency includes testnet relay round trips.
+- A **simulated card** (P-256, SHA-256-then-ECDSA, DER out, exactly what a JavaCard produces) was authorized as an access key with a $50/day limit scoped to `transferWithMemo`, and paid: **83,782 gas**, matching the 81,618 the research measured.
+- A **freeze** (spending limit set to 0) blocked the next tap.
+
+**Why it matters:** the card design, fee sponsorship, memo reconciliation and receipt verification are no longer theory. Remaining unknown: real JavaCard hardware.
+
+### D-008 · Terminal: SUNMI V3 (NFC SKU), with a GrapheneOS Pixel as fallback (Proposed, needs a purchase decision)
+**Decision:** buy one SUNMI V3 in an **NFC part number** (e.g. P06100058 UK, P06100077 EU; US: V3 Plus with the +$50 NFC option). SUNMI's docs say the V3's NFC is the *native Android NFC module*, so `react-native-nfc-manager` with `IsoDep` can talk to the Kova Card without a vendor SDK. It has a 58 mm printer with a maintained React Native wrapper.
+
+**Rejected:** every PCI/EMV terminal (PAX A920, SUNMI P-series, Nexgo, Newland, Castles). They refuse unsigned apps, and their contactless reader is locked behind a secure-processor SDK that only speaks to bank cards.
+
+**Fully-open alternative:** a carrier-unlocked Pixel on GrapheneOS plus a Bluetooth ESC/POS printer. It's the fallback and the second terminal, since the team has no Android device at all. A Raspberry Pi build is documented but is a post-hackathon project.
+
+**Risks:** NFC is a **paid option**, so order by part number, never model name. SUNMI can restrict installing your own apps on channel-bound units, so buy new, get written confirmation, and run the on-arrival test in `docs/hardware/pos-terminal.md` within the first hour.
+
 ### D-007 · Card signing requires Kova approval inside the applet (Proposed)
 **Decision:** The Kova Card applet signs a payment digest only when it comes with a valid Kova approval signature over `digest ‖ counter`.
 

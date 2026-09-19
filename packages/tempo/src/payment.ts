@@ -1,12 +1,5 @@
-import {
-  type Address,
-  decodeEventLog,
-  encodeFunctionData,
-  type Hex,
-  isAddressEqual,
-  type TransactionReceipt,
-} from 'viem'
-import { Abis, Addresses } from 'viem/tempo'
+import { type Address, decodeEventLog, encodeFunctionData, type Hex, isAddressEqual } from 'viem'
+import { Abis, Addresses, type Transaction } from 'viem/tempo'
 import { decodeMemo, type KovaMemo } from './memo.js'
 
 /** TIP-20 `transferWithMemo(address,uint256,bytes32)`. The docs' Go/Python selector is wrong. */
@@ -59,7 +52,10 @@ export interface DecodedTransfers {
 }
 
 /** Decodes the TIP-20 transfer logs of one token from a receipt, ignoring everything else. */
-export function decodeTransfers(receipt: TransactionReceipt, token: Address): DecodedTransfers {
+export function decodeTransfers(
+  receipt: Transaction.TransactionReceipt,
+  token: Address,
+): DecodedTransfers {
   const transfers: TransferEvent[] = []
   const memos: MemoEvent[] = []
   for (const log of receipt.logs) {
@@ -93,6 +89,8 @@ export function decodeTransfers(receipt: TransactionReceipt, token: Address): De
 
 export type PaymentStatus =
   | 'paid'
+  /** Submitted but not yet included: `eth_sendRawTransactionSync` timed out. Keep watching. */
+  | 'pending'
   /** Included but reverted: an access-key scope/limit violation, a paused token, a policy block. */
   | 'failed'
   /** Succeeded on-chain, but the recipient's receive policy sent the funds to the guard. */
@@ -127,9 +125,10 @@ export interface PaymentVerdict {
  * match a payment intent they opened.
  */
 export function verifyPayment(
-  receipt: TransactionReceipt,
+  receipt: Transaction.TransactionReceipt,
   expected: ExpectedPayment,
 ): PaymentVerdict {
+  if (receipt.status === 'pending') return { status: 'pending' }
   if (receipt.status !== 'success') return { status: 'failed' }
 
   const payTo = expected.payTo ?? expected.merchant

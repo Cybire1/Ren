@@ -1,5 +1,5 @@
-import { type Address, encodeEventTopics, type Hex, pad, type TransactionReceipt } from 'viem'
-import { Abis } from 'viem/tempo'
+import { type Address, encodeEventTopics, type Hex, pad } from 'viem'
+import { Abis, type Transaction } from 'viem/tempo'
 import { describe, expect, it } from 'vitest'
 import { decodeMemo, encodeMemo, isKovaMemo } from '../src/memo.js'
 import {
@@ -40,11 +40,14 @@ function memoLog(from: Address, to: Address, amount: bigint, memo: Hex, index: n
 }
 
 /** A receipt shaped like Tempo's: the payment logs plus the fee transfer every receipt carries. */
-function receipt(logs: unknown[], status: 'success' | 'reverted' = 'success'): TransactionReceipt {
+function receipt(
+  logs: unknown[],
+  status: 'success' | 'reverted' = 'success',
+): Transaction.TransactionReceipt {
   return {
     status,
     logs: [...logs, transferLog(PAYER, FEE_MANAGER as Address, 31n, 99)],
-  } as unknown as TransactionReceipt
+  } as unknown as Transaction.TransactionReceipt
 }
 
 describe('memo', () => {
