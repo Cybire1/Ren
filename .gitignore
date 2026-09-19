@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.next/
+.turbo/
+.expo/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+# card build output
+card/**/build/
+*.cap
