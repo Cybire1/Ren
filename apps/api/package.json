@@ -11,7 +11,8 @@
     "test": "vitest run --passWithNoTests",
     "setup:dev": "tsx --env-file-if-exists=.env src/scripts/setup-dev.ts",
     "test:e2e": "tsx --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run",
-    "demo:payments": "tsx --env-file-if-exists=.env src/scripts/demo-payments.ts"
+    "demo:payments": "tsx --env-file-if-exists=.env src/scripts/demo-payments.ts",
+    "pay:open": "tsx --env-file-if-exists=.env src/scripts/pay-open.ts"
   },
   "dependencies": {
     "@hono/node-server": "2.1.1",
