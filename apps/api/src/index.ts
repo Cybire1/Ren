@@ -21,7 +21,17 @@ app.route('/v1', reportRoutes)
 
 // Tempo RPC with Kova sponsorship. Apps and terminals point their wallet transport here.
 const relay = relayHandler
-if (relay) app.all(relayPath, (c) => relay.fetch(c.req.raw))
+if (relay)
+  app.all(relayPath, async (c) => {
+    const started = performance.now()
+    const raw = c.req.raw.clone()
+    const response = await relay.fetch(c.req.raw)
+    if (process.env.KOVA_TRACE_RELAY) {
+      const body = (await raw.json().catch(() => ({}))) as { method?: string }
+      console.log(`[relay] ${body.method} ${(performance.now() - started).toFixed(0)}ms`)
+    }
+    return response
+  })
 
 if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')) {
   // The watcher catches payments Kova did not submit, such as QR payments from any wallet.

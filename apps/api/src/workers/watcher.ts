@@ -31,6 +31,9 @@ const watchedTokens: Address[] = [
 /** How far back to look on a cold start, so a fresh deployment is not blind to open intents. */
 const COLD_START_LOOKBACK = 2_000n
 
+/** Blocks are ~0.56s, so this is about two blocks behind at worst. */
+const POLL_INTERVAL = 1_000
+
 export interface WatcherHandle {
   stop: () => Promise<void>
 }
@@ -102,32 +105,13 @@ export async function startWatcher(): Promise<WatcherHandle> {
   await saveCursor(cursor)
   console.log(`[watcher] ${network.id}: caught up to block ${head} (${caught} transfers)`)
 
-  // Live subscription. viem falls back to polling when the transport has no WebSocket.
-  const unwatch = publicClient.watchEvent({
-    address: watchedTokens,
-    event: TRANSFER_WITH_MEMO,
-    onLogs: (logs: readonly Log[]) => {
-      void (async () => {
-        for (const log of logs) {
-          try {
-            await handleTransferLog(log)
-            if (log.blockNumber && log.blockNumber > cursor) {
-              cursor = log.blockNumber
-              await saveCursor(cursor)
-            }
-          } catch (error) {
-            console.error('[watcher] failed to handle log', log.transactionHash, error)
-          }
-        }
-      })()
-    },
-    onError: (error) => console.error('[watcher] subscription error', error),
-  })
-
-  // Safety net: the subscription can silently stall, so sweep any gap periodically.
-  const sweep = setInterval(() => {
+  // Poll for new logs. viem's watchEvent uses server-side filters, which this RPC drops
+  // after a while ("filter not found"); a cursor plus getLogs has no such state.
+  let inFlight = false
+  const poll = setInterval(() => {
     void (async () => {
-      if (stopped) return
+      if (stopped || inFlight) return
+      inFlight = true
       try {
         const latest = await publicClient.getBlockNumber()
         if (latest > cursor) {
@@ -136,16 +120,17 @@ export async function startWatcher(): Promise<WatcherHandle> {
           await saveCursor(cursor)
         }
       } catch (error) {
-        console.error('[watcher] sweep failed', error)
+        console.error('[watcher] poll failed', error)
+      } finally {
+        inFlight = false
       }
     })()
-  }, 15_000)
+  }, POLL_INTERVAL)
 
   return {
     stop: async () => {
       stopped = true
-      clearInterval(sweep)
-      unwatch()
+      clearInterval(poll)
       await saveCursor(cursor)
     },
   }

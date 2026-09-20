@@ -24,9 +24,28 @@ export const feePayerAccount = config.KOVA_FEE_PAYER_PRIVATE_KEY
 
 export const feePayerAddress: Address | undefined = feePayerAccount?.address
 
+/**
+ * Traces every upstream RPC call when KOVA_TRACE_RPC is set. The relay's cost is mostly the
+ * calls it makes on our behalf, and they are invisible without this.
+ */
+const trace = process.env.KOVA_TRACE_RPC
+  ? {
+      onFetchRequest: async (request: Request) => {
+        const body = (await request
+          .clone()
+          .json()
+          .catch(() => ({}))) as { method?: string } | { method?: string }[]
+        const methods = Array.isArray(body)
+          ? body.map((entry) => entry.method).join(',')
+          : body.method
+        console.log(`[rpc] ${methods}`)
+      },
+    }
+  : {}
+
 /** Read-only client. Writes go through the relay, which is the only thing holding a key. */
 export const publicClient = createClient({
   testnet: config.KOVA_NETWORK === 'testnet',
   feeToken: settlementToken.address,
-  transport: http(rpcUrl),
+  transport: http(rpcUrl, trace),
 })
