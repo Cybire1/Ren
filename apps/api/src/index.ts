@@ -7,6 +7,7 @@ import { errorHandler } from './errors.js'
 import { relayHandler, relayPath } from './relay.js'
 import { healthRoutes } from './routes/health.js'
 import { intentRoutes } from './routes/intents.js'
+import { reportRoutes } from './routes/reports.js'
 import { startWatcher } from './workers/watcher.js'
 
 export const app = new Hono()
@@ -16,6 +17,7 @@ app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpo
 
 app.route('/health', healthRoutes)
 app.route('/v1/payment_intents', intentRoutes)
+app.route('/v1', reportRoutes)
 
 // Tempo RPC with Kova sponsorship. Apps and terminals point their wallet transport here.
 const relay = relayHandler

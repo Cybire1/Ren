@@ -1,0 +1,357 @@
+/*
+ * Kova merchant surface.
+ *
+ * The page is a receipt tape: one column, hairline rules, amounts aligned on the decimal.
+ * Everything else stays quiet so the amount and its status carry the screen.
+ */
+
+:root {
+  --paper: #f3f5f4;
+  --paper-raised: #fbfcfb;
+  --ink: #0f1512;
+  --ink-muted: #5b6560;
+  --rule: #d6dbd8;
+  --settled: #0b6b4f;
+  --pending: #8a6a1f;
+  --failed: #8c2f22;
+
+  --step--1: 0.8125rem;
+  --step-0: 0.9375rem;
+  --step-1: 1.125rem;
+  --step-2: 1.5rem;
+  --step-3: 2.25rem;
+  --step-4: clamp(3rem, 12vw, 4.5rem);
+
+  --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  color-scheme: light;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  padding-bottom: 6rem; /* clears the fixed total bar */
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: var(--step-0);
+  line-height: 1.5;
+  font-feature-settings: "tnum" 0;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Amounts, ids and timestamps: tabular so columns line up down the tape. */
+.mono {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--settled);
+  outline-offset: 2px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+.shell {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0 1.25rem 4rem;
+}
+
+/* --- Header ------------------------------------------------------------- */
+
+.masthead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.5rem 0 0;
+}
+
+.wordmark {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.wordmark span {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+
+.live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+}
+
+.live::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--settled);
+}
+
+.live[data-state="stale"]::before {
+  background: var(--rule);
+}
+
+/* --- The tape ----------------------------------------------------------- */
+
+.tape {
+  background: var(--paper-raised);
+  border: 1px solid var(--rule);
+  border-radius: 2px;
+  /* The torn top edge of a receipt roll. */
+  border-top: none;
+  position: relative;
+}
+
+.tape::before {
+  content: "";
+  display: block;
+  height: 0.75rem;
+  background:
+    repeating-linear-gradient(90deg, var(--rule) 0 4px, transparent 4px 9px) top / 100% 1px
+    no-repeat,
+    var(--paper-raised);
+  border-inline: 1px solid var(--rule);
+  margin: 0 -1px;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-top: 1px solid var(--rule);
+}
+
+.row:first-of-type {
+  border-top: none;
+}
+
+.row-time {
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+}
+
+.row-ref {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.row-ref-none {
+  color: var(--ink-muted);
+}
+
+.row-amount {
+  font-size: var(--step-1);
+  text-align: right;
+}
+
+.row[data-status="paid"] .row-amount {
+  color: var(--settled);
+}
+
+.row[data-status="requires_payment"] .row-amount,
+.row[data-status="processing"] .row-amount {
+  color: var(--pending);
+}
+
+.row[data-status="failed"] .row-amount,
+.row[data-status="held"] .row-amount {
+  color: var(--failed);
+}
+
+.row-status {
+  grid-column: 2 / -1;
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+  margin-top: 0.15rem;
+}
+
+/* A payment landing is the one moment worth animating. */
+@keyframes land {
+  from {
+    opacity: 0;
+    transform: translateY(-0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.row[data-new="true"] {
+  animation: land 320ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .row[data-new="true"] {
+    animation: none;
+  }
+}
+
+/* --- Empty and error states --------------------------------------------- */
+
+.empty {
+  padding: 3rem 1.25rem;
+  text-align: center;
+  color: var(--ink-muted);
+}
+
+.empty p {
+  margin: 0 0 1.25rem;
+}
+
+.button {
+  display: inline-block;
+  background: var(--ink);
+  color: var(--paper-raised);
+  border: none;
+  border-radius: 2px;
+  padding: 0.7rem 1.1rem;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.button:hover {
+  background: var(--settled);
+}
+
+.notice {
+  border: 1px solid var(--rule);
+  border-left: 3px solid var(--failed);
+  background: var(--paper-raised);
+  padding: 0.875rem 1rem;
+  margin: 1.5rem 0 0;
+}
+
+.notice h2 {
+  font-size: var(--step-0);
+  margin: 0 0 0.25rem;
+}
+
+.notice p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+}
+
+.footer {
+  margin-top: 1.25rem;
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+/* --- Receipt header and footer ------------------------------------------ */
+
+.tape-head {
+  padding: 1.25rem 1rem 1rem;
+  border-bottom: 1px solid var(--rule);
+}
+
+.tape-head h1 {
+  font-size: var(--step-2);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.tape-sub {
+  margin: 0.15rem 0 0;
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+}
+
+.tape-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.875rem 1rem;
+  border-top: 1px dashed var(--rule);
+  color: var(--ink-muted);
+  font-size: var(--step--1);
+}
+
+/* --- Total bar ----------------------------------------------------------
+   Pinned to the bottom: on a phone behind a counter, the number a merchant
+   checks all day should sit where the thumb already is. */
+
+.totalbar {
+  position: fixed;
+  inset: auto 0 0 0;
+  background: var(--ink);
+  color: var(--paper-raised);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.totalbar-inner {
+  max-width: 34rem;
+  margin: 0 auto;
+  padding: 0.875rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.totalbar-label {
+  margin: 0;
+  font-size: var(--step--1);
+  color: #9fb0a8;
+}
+
+.totalbar-amount {
+  margin: 0.1rem 0 0;
+  font-size: var(--step-3);
+  line-height: 1;
+  letter-spacing: -0.03em;
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.totalbar-unit {
+  font-size: var(--step--1);
+  letter-spacing: 0;
+  color: #9fb0a8;
+  font-family: var(--sans);
+}
+
+.totalbar .button {
+  background: var(--paper-raised);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.totalbar .button:hover {
+  background: #fff;
+}
