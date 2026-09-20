@@ -7,6 +7,7 @@ import { errorHandler } from './errors.js'
 import { relayHandler, relayPath } from './relay.js'
 import { healthRoutes } from './routes/health.js'
 import { intentRoutes } from './routes/intents.js'
+import { startWatcher } from './workers/watcher.js'
 
 export const app = new Hono()
 app.use(logger())
@@ -21,6 +22,9 @@ const relay = relayHandler
 if (relay) app.all(relayPath, (c) => relay.fetch(c.req.raw))
 
 if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')) {
+  // The watcher catches payments Kova did not submit, such as QR payments from any wallet.
+  void startWatcher().catch((error) => console.error('[watcher] failed to start', error))
+
   serve({ fetch: app.fetch, port: config.PORT }, (info) => {
     console.log(
       `kova api on :${info.port} (${network.id}, chain ${network.chainId})` +
