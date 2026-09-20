@@ -19,6 +19,15 @@ This is the running log required by the brief (§17). Newest entries go at the t
 
 **Why it matters:** the card design, fee sponsorship, memo reconciliation and receipt verification are no longer theory. Remaining unknown: real JavaCard hardware.
 
+## 2026-09-20
+
+### D-010 · No GrapheneOS. Stock Android is the target (Decided)
+**Decision:** Kova Terminal and Kova Pay target stock Android. GrapheneOS is dropped.
+
+**Why:** it was only ever there to make the stack open-source down to the OS. It changes nothing technically (stock Android already gives our app the NFC access we need), the open-source judging criterion is met by our own public code, and installing it wipes the device, which rules out borrowed phones. Revisit only if "runs on a de-Googled phone" becomes a real merchant-facing selling point.
+
+**Consequence:** any Android phone with NFC will do, so a used ₦120–200k device is enough. No need for a Pixel specifically.
+
 ### D-008 · Terminal: SUNMI V3 (NFC SKU), with a GrapheneOS Pixel as fallback (Proposed, needs a purchase decision)
 **Decision:** buy one SUNMI V3 in an **NFC part number** (e.g. P06100058 UK, P06100077 EU; US: V3 Plus with the +$50 NFC option). SUNMI's docs say the V3's NFC is the *native Android NFC module*, so `react-native-nfc-manager` with `IsoDep` can talk to the Kova Card without a vendor SDK. It has a 58 mm printer with a maintained React Native wrapper.
 
