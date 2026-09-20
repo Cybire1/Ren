@@ -21,6 +21,27 @@ This is the running log required by the brief (§17). Newest entries go at the t
 
 ## 2026-09-20
 
+### D-012 · Kova never converts to naira (Decided)
+**Decision:** Kova does not offer "settle to naira", does not touch fiat, and does not hold float. Merchants are shown dual ₦/USDC pricing from a public reference rate and given a documented self-serve cash-out path (Tempo → Base via Stargate/Relay, then Paycrest/Noblocks or Bitnob).
+
+**Why (docs/market/nigeria.md):**
+- No off-ramp accepts a Tempo deposit today, so we could not do it well even if we wanted to.
+- Converting, custody, or holding float is what triggers Nigerian licensing (SEC's draft proposes ₦30m registration and ₦200m capital for the VASP tier). Non-custodial software plus a merchant accepting USDC needs no licence.
+- NRS Circular 2026/21 puts 1.5% stamp duty on token↔fiat conversion only, never wallet-to-wallet. Owning the off-ramp would mean owning that cost.
+
+**A lawyer must confirm** the stamp-duty reading and whether the CBN Regulatory Sandbox is the right door before real volume.
+
+### D-011 · Positioning: dollars, inbound cross-border, agents — not "cheaper payments" (Decided)
+**Decision:** Kova is not pitched as faster or cheaper than a Nigerian bank transfer.
+
+**Why:** NIP is instant and free under ₦5,000, ₦10 up to ₦50k. That comparison is unwinnable. The defensible wedges are: holding dollars (25.9m Nigerians already hold stablecoins; NIP cannot hold USD), inbound cross-border (Nigeria is ~60% of sub-Saharan stablecoin inflows), 0% merchant fee vs Paystack 1.5%+₦100, deterministic sub-second settlement against the familiar "debited but not credited" failure, and agent/API payments that NIP cannot express.
+
+**Consequences:**
+- Target merchants who already want dollars or already receive money from abroad, not general retail.
+- **Measure repeat volume per merchant, not merchant count.** Lazerpay died in 2023 with 3,000 merchants and working software.
+- Flutterwave is already live on Tempo, so "first on Tempo in Nigeria" is not a claim we can make. Compete on the card, the terminal and the agent layer.
+- Most low-end Nigerian Androids have no NFC, so the physical card and Kova's terminal carry the tap, not customer phones.
+
 ### D-010 · No GrapheneOS. Stock Android is the target (Decided)
 **Decision:** Kova Terminal and Kova Pay target stock Android. GrapheneOS is dropped.
 
