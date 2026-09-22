@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "Kova",
+    "slug": "kova",
+    "scheme": "kova",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#F3F5F4",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "xyz.kova.pay",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "Use Face ID to approve payments and unlock your Kova wallet.",
+        "NFCReaderUsageDescription": "Hold a Kova Card near the top of your iPhone to take a payment."
+      }
+    },
+    "android": {
+      "package": "xyz.kova.pay",
+      "edgeToEdgeEnabled": true,
+      "permissions": ["android.permission.NFC"]
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-local-authentication",
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Hold a Kova Card near the top of your iPhone to take a payment.",
+          "selectIdentifiers": ["F04B4F564131"]
+        }
+      ]
+    ],
+    "experiments": { "typedRoutes": true }
+  }
+}

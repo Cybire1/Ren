@@ -1,3 +1,7 @@
 packages:
-  - "apps/*"
+  - "apps/api"
+  - "apps/web"
   - "packages/*"
+# apps/mobile is deliberately outside this workspace: React Native needs a hoisted
+# node_modules, and forcing that layout on the whole repo made every install re-link
+# hundreds of backend packages. It installs with npm, and reaches @kova/tempo through Metro.
