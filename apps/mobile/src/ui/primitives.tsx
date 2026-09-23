@@ -174,8 +174,8 @@ export function RoundButton({
   icon,
   label,
   onPress,
-  fill = 'transparent',
-  size = 48,
+  fill,
+  size = 40,
 }: {
   icon: IconName
   label: string
@@ -191,11 +191,11 @@ export function RoundButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.round,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: fill },
-        pressed && { opacity: 0.6 },
+        { width: size, height: size, borderRadius: size / 2, backgroundColor: fill ?? 'rgba(11,26,29,0.07)' },
+        pressed && { transform: [{ scale: 0.92 }], opacity: 0.8 },
       ]}
     >
-      <Icon name={icon} />
+      <Icon name={icon} size={Math.round(size * 0.5)} strokeWidth={2.4} />
     </Pressable>
   )
 }
@@ -268,7 +268,7 @@ export function Header({
       {onBack ? (
         <RoundButton icon={backIcon} label={backIcon === 'close' ? 'Close' : 'Back'} onPress={onBack} />
       ) : (
-        <View style={{ width: 48 }} />
+        <View style={{ width: 40 }} />
       )}
       <View style={{ alignItems: 'center', flexShrink: 1 }}>
         {title ? (
@@ -282,7 +282,7 @@ export function Header({
           </Txt>
         ) : null}
       </View>
-      <View style={{ minWidth: 48, alignItems: 'flex-end' }}>{right}</View>
+      <View style={{ minWidth: 40, alignItems: 'flex-end' }}>{right}</View>
     </View>
   )
 }
@@ -331,12 +331,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  round: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(13,13,18,0.14)',
-  },
+  round: { alignItems: 'center', justifyContent: 'center' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',

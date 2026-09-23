@@ -4,7 +4,7 @@ import { colors } from '@/lib/theme'
 /** Line icons on a 24px grid, drawn to match the illustrations' rounded ink stroke. */
 const glyphs = {
   arrow: ['M5 12h14', 'M13 6l6 6-6 6'],
-  back: ['M19 12H5', 'M11 6l-6 6 6 6'],
+  back: ['M14.5 5.5L8 12l6.5 6.5'],
   close: ['M6 6l12 12', 'M18 6L6 18'],
   bell: ['M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z', 'M10 20a2 2 0 0 0 4 0'],
   send: ['M4 12l16-8-6 16-3-6z', 'M11 14l9-10'],
