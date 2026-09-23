@@ -35,11 +35,29 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return body as T
 }
 
-export function createCharge(amount: string, reference?: string) {
+export function createCharge(
+  amount: string,
+  options: { reference?: string; metadata?: Record<string, unknown> } = {},
+) {
   return request<PaymentIntent>('/v1/payment_intents', {
     method: 'POST',
-    body: JSON.stringify({ amount, ...(reference ? { reference } : {}) }),
+    body: JSON.stringify({
+      amount,
+      ...(options.reference ? { reference: options.reference } : {}),
+      ...(options.metadata ? { metadata: options.metadata } : {}),
+    }),
   })
+}
+
+export interface Merchant {
+  id: string
+  name: string
+  livemode: boolean
+}
+
+export async function getMerchant(): Promise<Merchant> {
+  const summary = await request<{ merchant: Merchant }>('/v1/summary')
+  return summary.merchant
 }
 
 export function getIntent(id: string) {

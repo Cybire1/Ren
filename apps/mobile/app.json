@@ -20,20 +20,32 @@
     "android": {
       "package": "xyz.kova.pay",
       "edgeToEdgeEnabled": true,
-      "permissions": ["android.permission.NFC"]
+      "permissions": [
+        "android.permission.NFC"
+      ]
     },
     "plugins": [
-      "expo-router",
+      [
+        "expo-router",
+        {
+          "root": "./src/app"
+        }
+      ],
       "expo-secure-store",
       "expo-local-authentication",
       [
         "react-native-nfc-manager",
         {
           "nfcPermission": "Hold a Kova Card near the top of your iPhone to take a payment.",
-          "selectIdentifiers": ["F04B4F564131"]
+          "selectIdentifiers": [
+            "F04B4F564131"
+          ]
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
-    "experiments": { "typedRoutes": true }
+    "experiments": {
+      "typedRoutes": true
+    }
   }
 }

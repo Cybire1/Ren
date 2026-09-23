@@ -1,5 +1,6 @@
-// Expo in a pnpm monorepo: Metro has to watch the workspace root so `@kova/tempo` resolves,
-// and resolve modules from both the app and the root store.
+// The app installs with npm on its own, outside the pnpm workspace, and reaches
+// @kova/tempo through a `file:` symlink. Metro needs to watch the repo root so it can follow
+// that link, and must keep normal node_modules lookup so npm's nested packages resolve.
 const { getDefaultConfig } = require('expo/metro-config')
 const path = require('node:path')
 
@@ -8,10 +9,16 @@ const workspaceRoot = path.resolve(projectRoot, '../..')
 
 const config = getDefaultConfig(projectRoot)
 config.watchFolders = [workspaceRoot]
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, 'node_modules'),
-  path.resolve(workspaceRoot, 'node_modules'),
-]
-config.resolver.disableHierarchicalLookup = true
+
+// @kova/tempo imports viem and ox. Resolve them from the app, not from the package's own
+// pnpm copy, so the bundle carries one viem and values cross the boundary cleanly.
+const shared = ['viem', 'ox']
+const appPackage = path.join(projectRoot, 'package.json')
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const root = moduleName.split('/')[0]
+  if (shared.includes(root))
+    return context.resolveRequest({ ...context, originModulePath: appPackage }, moduleName, platform)
+  return context.resolveRequest(context, moduleName, platform)
+}
 
 module.exports = config

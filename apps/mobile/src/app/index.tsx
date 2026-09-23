@@ -1,62 +1,79 @@
 import { useCallback, useEffect, useState } from 'react'
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-  useWindowDimensions,
-} from 'react-native'
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import QRCode from 'react-native-qrcode-svg'
-import { createCharge, getIntent, payLinkFor, type PaymentIntent } from '@/lib/api'
-import { theme } from '@/lib/theme'
+import { applyKey, type Key, Keypad } from '@/features/terminal/Keypad'
+import { PaidView } from '@/features/terminal/PaidView'
+import { WaitingView } from '@/features/terminal/WaitingView'
+import { createCharge, getIntent, getMerchant, type PaymentIntent } from '@/lib/api'
+import { type EntryCurrency, groupDigits, nairaToUsdc, ngnPerUsd } from '@/lib/money'
+import { colors, fonts } from '@/lib/theme'
 
 /**
  * Kova Terminal: what a merchant holds at the counter.
  *
- * Type an amount, take the payment, see it settle. The NFC tap is added on top of this same
- * screen; until a card is in hand, the QR path exercises the whole flow.
+ * Type the price in naira (or dollars), charge, turn the phone to the customer, and watch
+ * it settle. Card taps are added on top of this same flow; the QR path already works end
+ * to end against Tempo.
  */
 
 type Stage = 'amount' | 'waiting' | 'paid' | 'problem'
 
-const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'del'] as const
-
-function applyKey(current: string, key: (typeof keys)[number]): string {
-  if (key === 'del') return current.slice(0, -1)
-  if (key === '.') return current.includes('.') ? current : current === '' ? '0.' : `${current}.`
-  const next = current + key
-  const [, decimals] = next.split('.')
-  if (decimals && decimals.length > 2) return current
-  if (next.replace('.', '').length > 9) return current
-  return next.startsWith('0') && !next.startsWith('0.') ? next.slice(1) : next
-}
-
 export default function Terminal() {
   const [stage, setStage] = useState<Stage>('amount')
-  const [amount, setAmount] = useState('')
+  const [currency, setCurrency] = useState<EntryCurrency>('NGN')
+  const [typed, setTyped] = useState('')
   const [reference, setReference] = useState('')
   const [intent, setIntent] = useState<PaymentIntent | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const { width } = useWindowDimensions()
+  const [naira, setNaira] = useState<number | null>(null)
+  const [merchantName, setMerchantName] = useState('this shop')
+  const [problem, setProblem] = useState<string | null>(null)
+  const [starting, setStarting] = useState(false)
 
-  const value = amount === '' ? '0' : amount
-  const canCharge = Number(value) > 0
+  useEffect(() => {
+    getMerchant()
+      .then((merchant) => setMerchantName(merchant.name))
+      .catch(() => {})
+  }, [])
 
-  const start = useCallback(async () => {
-    setError(null)
+  const usdc =
+    currency === 'NGN'
+      ? typed === ''
+        ? '0.00'
+        : nairaToUsdc(Number(typed))
+      : typed === ''
+        ? '0.00'
+        : Number(typed).toFixed(2)
+  const canCharge = Number(usdc) > 0 && !starting
+
+  const onKey = useCallback((key: Key) => setTyped((v) => applyKey(v, key, currency)), [currency])
+
+  const switchCurrency = () => {
+    setTyped('')
+    setCurrency((c) => (c === 'NGN' ? 'USD' : 'NGN'))
+  }
+
+  const start = async () => {
+    setStarting(true)
+    setProblem(null)
+    const entered = currency === 'NGN' ? Number(typed) : null
     try {
-      const created = await createCharge(Number(value).toFixed(2), reference.trim() || undefined)
+      const created = await createCharge(usdc, {
+        reference: reference.trim() || undefined,
+        metadata:
+          entered !== null ? { price_ngn: entered, ngn_per_usd: ngnPerUsd } : { price_usd: usdc },
+      })
+      setNaira(entered)
       setIntent(created)
       setStage('waiting')
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'Could not start the charge')
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'The charge could not be started.')
       setStage('problem')
+    } finally {
+      setStarting(false)
     }
-  }, [value, reference])
+  }
 
+  // While the customer pays, ask the API what happened to the charge.
   useEffect(() => {
     if (stage !== 'waiting' || !intent) return
     let cancelled = false
@@ -66,10 +83,12 @@ export default function Terminal() {
         if (cancelled) return
         setIntent(latest)
         if (latest.status === 'paid') setStage('paid')
-        else if (['failed', 'expired', 'canceled', 'held'].includes(latest.status))
+        else if (['failed', 'expired', 'canceled', 'held'].includes(latest.status)) {
+          setProblem(problemFor(latest.status))
           setStage('problem')
+        }
       } catch {
-        /* a dropped poll is not a failed payment */
+        // A dropped poll is not a failed payment; keep waiting.
       }
     }, 1000)
     return () => {
@@ -79,183 +98,186 @@ export default function Terminal() {
   }, [stage, intent])
 
   const reset = () => {
-    setAmount('')
+    setTyped('')
     setReference('')
     setIntent(null)
-    setError(null)
+    setNaira(null)
+    setProblem(null)
     setStage('amount')
   }
 
-  if (stage === 'paid' && intent)
+  if (stage === 'paid' && intent) return <PaidView intent={intent} naira={naira} onNext={reset} />
+
+  if (stage === 'waiting' && intent)
     return (
-      <SafeAreaView style={[styles.screen, styles.center]}>
-        <Text style={styles.paidMark}>✓</Text>
-        <Text style={styles.paidAmount}>{intent.amount}</Text>
-        <Text style={styles.muted}>
-          Paid{intent.reference ? ` · ${intent.reference}` : ''}
-        </Text>
-        <Pressable style={styles.button} onPress={reset}>
-          <Text style={styles.buttonText}>Next charge</Text>
-        </Pressable>
-      </SafeAreaView>
+      <WaitingView intent={intent} naira={naira} merchantName={merchantName} onCancel={reset} />
     )
 
   if (stage === 'problem')
     return (
-      <SafeAreaView style={[styles.screen, styles.center]}>
-        <Text style={styles.problemTitle}>
-          {error ? 'Could not start the charge' : `Charge ${intent?.status}`}
-        </Text>
-        <Text style={[styles.muted, styles.problemBody]}>{error ?? 'Try the charge again.'}</Text>
-        <Pressable style={styles.button} onPress={reset}>
-          <Text style={styles.buttonText}>Start again</Text>
+      <SafeAreaView style={styles.screen}>
+        <View style={styles.problem}>
+          <Text style={styles.problemTitle}>This charge did not go through</Text>
+          <Text style={styles.problemBody}>{problem}</Text>
+        </View>
+        <Pressable accessibilityRole="button" onPress={reset} style={styles.charge}>
+          <Text style={styles.chargeLabel}>Start a new charge</Text>
         </Pressable>
       </SafeAreaView>
     )
 
-  if (stage === 'waiting' && intent)
-    return (
-      <SafeAreaView style={[styles.screen, styles.center]}>
-        <Text style={styles.waitAmount}>{intent.amount}</Text>
-        <Text style={[styles.muted, styles.waitLabel]}>
-          {intent.reference ? `${intent.reference} · ` : ''}Scan to pay
-        </Text>
-        <View style={styles.qr}>
-          <QRCode
-            value={payLinkFor(intent)}
-            size={Math.min(width - 120, 260)}
-            color={theme.ink}
-            backgroundColor={theme.paperRaised}
-          />
-        </View>
-        <Text style={[styles.muted, styles.waitHint]}>Waiting for payment.</Text>
-        <Pressable onPress={reset}>
-          <Text style={styles.link}>Cancel</Text>
-        </Pressable>
-      </SafeAreaView>
-    )
+  const display = currency === 'NGN' ? groupDigits(typed) : typed === '' ? '0' : typed
 
   return (
-    <SafeAreaView style={styles.screen}>
-      <ScrollView contentContainerStyle={styles.amountArea} keyboardShouldPersistTaps="handled">
-        <Text style={styles.wordmark}>
-          Kova <Text style={styles.muted}>Terminal</Text>
+    <SafeAreaView style={styles.screen} edges={['top', 'bottom']}>
+      <View style={styles.header}>
+        <Text style={styles.merchant} numberOfLines={1}>
+          {merchantName}
         </Text>
-        <View style={styles.amountRow}>
-          <Text style={[styles.amount, amount === '' && styles.amountEmpty]}>{value}</Text>
-          <Text style={styles.amountUnit}>USDC</Text>
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Enter prices in ${currency === 'NGN' ? 'dollars' : 'naira'}`}
+          onPress={switchCurrency}
+          style={styles.toggle}
+        >
+          <Text style={[styles.toggleSide, currency === 'NGN' && styles.toggleActive]}>₦</Text>
+          <Text style={[styles.toggleSide, currency === 'USD' && styles.toggleActive]}>$</Text>
+        </Pressable>
+      </View>
+
+      <View style={styles.entry}>
+        <Text
+          style={[styles.amount, typed === '' && styles.amountEmpty]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+        >
+          {currency === 'NGN' ? '₦' : '$'}
+          {display}
+        </Text>
+        <Text style={styles.conversion}>
+          {currency === 'NGN'
+            ? `${usdc} USDC at ₦${ngnPerUsd.toLocaleString('en-NG')} per dollar`
+            : `${usdc} USDC`}
+        </Text>
         <TextInput
           style={styles.reference}
           value={reference}
           onChangeText={setReference}
-          placeholder="What is it for? (optional)"
-          placeholderTextColor={theme.inkMuted}
+          placeholder="What's it for? (optional)"
+          placeholderTextColor={colors.inkMuted}
           maxLength={60}
+          returnKeyType="done"
         />
-      </ScrollView>
-
-      <View style={styles.keypad}>
-        {keys.map((key) => (
-          <Pressable
-            key={key}
-            style={styles.key}
-            onPress={() => setAmount((current) => applyKey(current, key))}
-          >
-            <Text style={styles.keyText}>{key === 'del' ? '⌫' : key}</Text>
-          </Pressable>
-        ))}
       </View>
 
+      <Keypad currency={currency} onKey={onKey} />
+
       <Pressable
-        style={[styles.chargeBar, !canCharge && styles.chargeBarDisabled]}
+        accessibilityRole="button"
         disabled={!canCharge}
         onPress={start}
+        style={({ pressed }) => [
+          styles.charge,
+          !canCharge && styles.chargeDisabled,
+          pressed && styles.chargePressed,
+        ]}
       >
-        <Text style={styles.chargeText}>
-          Charge{canCharge ? ` ${Number(value).toFixed(2)}` : ''}
+        <Text style={[styles.chargeLabel, !canCharge && styles.chargeLabelDisabled]}>
+          {starting
+            ? 'Starting charge…'
+            : canCharge
+              ? `Charge ${currency === 'NGN' ? `₦${groupDigits(typed)}` : `$${usdc}`}`
+              : 'Enter an amount'}
         </Text>
       </Pressable>
     </SafeAreaView>
   )
 }
 
+function problemFor(status: PaymentIntent['status']): string {
+  switch (status) {
+    case 'expired':
+      return 'Nobody paid it in time. Start the charge again when the customer is ready.'
+    case 'held':
+      return "The customer's payment was stopped by the receiving wallet's rules. Check this shop's settlement wallet."
+    case 'canceled':
+      return 'The charge was canceled.'
+    default:
+      return 'The payment failed on-chain. No money moved. Start the charge again.'
+  }
+}
+
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.paper },
-  center: { alignItems: 'center', justifyContent: 'center', padding: 24 },
-  muted: { color: theme.inkMuted },
-  wordmark: { fontSize: 15, fontWeight: '600', color: theme.ink },
-  amountArea: { padding: 20, paddingTop: 16 },
-  amountRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 8, marginTop: 28 },
-  amount: {
-    fontFamily: theme.mono,
-    fontSize: 56,
-    color: theme.ink,
-    letterSpacing: -2,
-  },
-  amountEmpty: { color: theme.rule },
-  amountUnit: { color: theme.inkMuted, fontSize: 16, marginBottom: 10 },
-  reference: {
-    marginTop: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.rule,
-    paddingVertical: 8,
-    fontSize: 15,
-    color: theme.ink,
-  },
-  keypad: {
+  screen: { flex: 1, backgroundColor: colors.paper },
+  header: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    borderTopWidth: 1,
-    borderLeftWidth: 1,
-    borderColor: theme.rule,
-    marginHorizontal: 20,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    gap: 16,
   },
-  key: {
-    width: '33.333%',
+  merchant: { fontFamily: fonts.sansSemi, fontSize: 17, color: colors.ink, flexShrink: 1 },
+  toggle: {
+    flexDirection: 'row',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.rule,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  toggleSide: {
+    fontFamily: fonts.mono,
+    fontSize: 15,
+    color: colors.inkMuted,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  toggleActive: { backgroundColor: colors.ink, color: colors.paperRaised },
+  entry: { flex: 1, justifyContent: 'flex-end', paddingHorizontal: 20, paddingBottom: 16 },
+  amount: {
+    fontFamily: fonts.monoMedium,
+    fontSize: 64,
+    letterSpacing: -2,
+    color: colors.ink,
+    textAlign: 'right',
+  },
+  amountEmpty: { color: colors.rule },
+  conversion: {
+    fontFamily: fonts.sans,
+    fontSize: 14,
+    color: colors.inkMuted,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  reference: {
+    marginTop: 18,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: colors.rule,
+    paddingVertical: 10,
+    fontFamily: fonts.sans,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  charge: {
+    backgroundColor: colors.ink,
+    marginHorizontal: 20,
+    marginTop: 14,
+    marginBottom: 8,
     paddingVertical: 18,
     alignItems: 'center',
-    backgroundColor: theme.paperRaised,
-    borderRightWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: theme.rule,
+    borderRadius: 3,
   },
-  keyText: { fontFamily: theme.mono, fontSize: 24, color: theme.ink },
-  chargeBar: {
-    backgroundColor: theme.ink,
-    margin: 20,
-    paddingVertical: 16,
-    alignItems: 'center',
-    borderRadius: 2,
+  chargeDisabled: { backgroundColor: colors.rule },
+  chargePressed: { backgroundColor: colors.settled },
+  chargeLabel: { fontFamily: fonts.sansMedium, fontSize: 17, color: colors.paperRaised },
+  chargeLabelDisabled: { color: colors.inkMuted },
+  problem: { flex: 1, justifyContent: 'center', paddingHorizontal: 24 },
+  problemTitle: { fontFamily: fonts.sansSemi, fontSize: 22, color: colors.ink },
+  problemBody: {
+    fontFamily: fonts.sans,
+    fontSize: 16,
+    lineHeight: 24,
+    color: colors.inkMuted,
+    marginTop: 10,
   },
-  chargeBarDisabled: { backgroundColor: '#3A423E' },
-  chargeText: { color: theme.paperRaised, fontSize: 17 },
-  button: {
-    backgroundColor: theme.ink,
-    paddingVertical: 14,
-    paddingHorizontal: 22,
-    borderRadius: 2,
-    marginTop: 32,
-  },
-  buttonText: { color: theme.paperRaised, fontSize: 16 },
-  link: { color: theme.inkMuted, marginTop: 24, textDecorationLine: 'underline' },
-  paidMark: { fontSize: 56, color: theme.settled },
-  paidAmount: {
-    fontFamily: theme.mono,
-    fontSize: 56,
-    color: theme.settled,
-    letterSpacing: -2,
-    marginTop: 8,
-  },
-  waitAmount: { fontFamily: theme.mono, fontSize: 40, color: theme.ink, letterSpacing: -1 },
-  waitLabel: { marginTop: 4, marginBottom: 28 },
-  waitHint: { marginTop: 24 },
-  qr: {
-    padding: 20,
-    backgroundColor: theme.paperRaised,
-    borderWidth: 1,
-    borderColor: theme.rule,
-  },
-  problemTitle: { fontSize: 18, color: theme.ink, textAlign: 'center' },
-  problemBody: { marginTop: 8, textAlign: 'center' },
 })
