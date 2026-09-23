@@ -1,68 +1,92 @@
+import { apiUrl, merchantApiKey, webUrl } from './config'
+
 /**
- * Talks to the Kova API.
+ * The Kova API, from both sides of a payment.
  *
- * The API key here is a development shortcut: a shipped terminal will register once and hold
- * a device token instead, so a merchant key never lives on a device.
+ * The payer side (checkout) needs no key: holding a charge's id is enough to see what to pay.
+ * The merchant side (terminal) uses the merchant key from development config.
  */
-const baseUrl = process.env.EXPO_PUBLIC_KOVA_API_URL ?? 'http://localhost:4000'
-const apiKey = process.env.EXPO_PUBLIC_KOVA_API_KEY
+
+async function request<T>(path: string, init: RequestInit & { merchant?: boolean } = {}): Promise<T> {
+  const { merchant, ...rest } = init
+  const response = await fetch(`${apiUrl}${path}`, {
+    ...rest,
+    headers: {
+      'content-type': 'application/json',
+      ...(merchant && merchantApiKey ? { authorization: `Bearer ${merchantApiKey}` } : {}),
+      ...rest.headers,
+    },
+  })
+  const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
+  if (!response.ok) throw new Error(body.error?.message ?? `Kova is unreachable (${response.status})`)
+  return body as T
+}
+
+// --- payer ---------------------------------------------------------------------------------
+
+export interface Checkout {
+  id: string
+  merchant_name: string
+  amount: string
+  amount_base: string
+  currency: string
+  status: 'requires_payment' | 'processing' | 'paid' | 'held' | 'failed' | 'canceled' | 'expired'
+  token: `0x${string}`
+  pay_to: `0x${string}`
+  memo: `0x${string}`
+  reference: string | null
+  expires_at: string
+}
+
+export const getCheckout = (id: string) => request<Checkout>(`/v1/checkout/${id}`)
+
+export const confirmCheckout = (id: string, txHash: string) =>
+  request<Checkout>(`/v1/checkout/${id}/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({ tx_hash: txHash }),
+  })
+
+// --- merchant ------------------------------------------------------------------------------
 
 export interface PaymentIntent {
   id: string
   amount: string
   currency: string
-  status: 'requires_payment' | 'processing' | 'paid' | 'held' | 'failed' | 'canceled' | 'expired'
+  status: Checkout['status']
   pay_to: string
   memo: string
   reference: string | null
+  metadata?: Record<string, unknown> | null
   created_at: string
+  expires_at?: string
   paid_at: string | null
+  payer?: string | null
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const response = await fetch(`${baseUrl}${path}`, {
-    ...init,
-    headers: {
-      'content-type': 'application/json',
-      ...(apiKey ? { authorization: `Bearer ${apiKey}` } : {}),
-      ...init.headers,
-    },
-  })
-  const body = (await response.json().catch(() => ({}))) as Record<string, unknown> & {
-    error?: { message?: string }
-  }
-  if (!response.ok) throw new Error(body.error?.message ?? `Request failed (${response.status})`)
-  return body as T
+export interface Summary {
+  merchant: { id: string; name: string; livemode: boolean }
+  today?: { total: string; count: number }
+  [key: string]: unknown
 }
 
-export function createCharge(
-  amount: string,
-  options: { reference?: string; metadata?: Record<string, unknown> } = {},
-) {
-  return request<PaymentIntent>('/v1/payment_intents', {
+export const hasMerchantKey = Boolean(merchantApiKey)
+
+export const createCharge = (amount: string, options: { reference?: string; metadata?: Record<string, unknown> } = {}) =>
+  request<PaymentIntent>('/v1/payment_intents', {
     method: 'POST',
-    body: JSON.stringify({
-      amount,
-      ...(options.reference ? { reference: options.reference } : {}),
-      ...(options.metadata ? { metadata: options.metadata } : {}),
-    }),
+    merchant: true,
+    body: JSON.stringify({ amount, ...options }),
   })
-}
 
-export interface Merchant {
-  id: string
-  name: string
-  livemode: boolean
-}
+export const getCharge = (id: string) => request<PaymentIntent>(`/v1/payment_intents/${id}`, { merchant: true })
 
-export async function getMerchant(): Promise<Merchant> {
-  const summary = await request<{ merchant: Merchant }>('/v1/summary')
-  return summary.merchant
-}
+export const cancelCharge = (id: string) =>
+  request<PaymentIntent>(`/v1/payment_intents/${id}/cancel`, { method: 'POST', merchant: true })
 
-export function getIntent(id: string) {
-  return request<PaymentIntent>(`/v1/payment_intents/${id}`)
-}
+export const getSummary = () => request<Summary>('/v1/summary', { merchant: true })
 
-export const payLinkFor = (intent: PaymentIntent) =>
-  `${process.env.EXPO_PUBLIC_KOVA_WEB_URL ?? 'http://localhost:3000'}/pay/${intent.id}`
+export const listCharges = (limit = 25) =>
+  request<{ data: PaymentIntent[] }>(`/v1/payment_intents?limit=${limit}`, { merchant: true }).then((r) => r.data)
+
+/** What the terminal's QR encodes: the public pay page, which Kova Pay also opens directly. */
+export const payLinkFor = (id: string) => `${webUrl}/pay/${id}`

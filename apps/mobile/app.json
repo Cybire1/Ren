@@ -6,7 +6,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "backgroundColor": "#F3F5F4",
+    "backgroundColor": "#E7E5E0",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
@@ -22,7 +22,11 @@
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.NFC"
-      ]
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/brand/icon-foreground.png",
+        "backgroundColor": "#E7E5E0"
+      }
     },
     "plugins": [
       [
@@ -42,10 +46,28 @@
           ]
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Kova uses the camera to scan payment codes.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/splash-mark.png",
+          "imageWidth": 150,
+          "resizeMode": "contain",
+          "backgroundColor": "#E7E5E0"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "icon": "./assets/brand/icon.png"
   }
 }

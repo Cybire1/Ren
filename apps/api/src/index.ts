@@ -5,6 +5,7 @@ import { feePayerAddress, network } from './chain.js'
 import { config } from './config.js'
 import { errorHandler } from './errors.js'
 import { relayHandler, relayPath } from './relay.js'
+import { checkoutRoutes } from './routes/checkout.js'
 import { healthRoutes } from './routes/health.js'
 import { intentRoutes } from './routes/intents.js'
 import { reportRoutes } from './routes/reports.js'
@@ -16,6 +17,7 @@ app.onError(errorHandler)
 app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404))
 
 app.route('/health', healthRoutes)
+app.route('/v1/checkout', checkoutRoutes)
 app.route('/v1/payment_intents', intentRoutes)
 app.route('/v1', reportRoutes)
 

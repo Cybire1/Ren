@@ -1,0 +1,173 @@
+import * as Haptics from 'expo-haptics'
+import { router } from 'expo-router'
+import { Pressable, StyleSheet, View } from 'react-native'
+import Svg, { Circle } from 'react-native-svg'
+import { baseToNumber, type DisplayCurrency, formatLocal, formatUsd } from '@/lib/money'
+import { usePrefs } from '@/lib/prefs'
+import { colors } from '@/lib/theme'
+import type { Entry } from '@/lib/wallet'
+import { Coin } from './art'
+import { Icon } from './Icon'
+import { Txt } from './primitives'
+
+/** Secondary text on teal. */
+const onTeal = '#DCEBEA'
+
+/** What came in over the last seven days: the one number that says the wallet is alive. */
+function inThisWeek(activity: Entry[]): bigint {
+  const since = Date.now() - 7 * 86_400_000
+  return activity
+    .filter((e) => e.at >= since && (e.kind === 'received' || e.kind === 'added'))
+    .reduce((sum, e) => sum + BigInt(e.amount), 0n)
+}
+
+/**
+ * The balance, as the first thing on Home: dollars as the headline with the sign and cents set
+ * small and raised like a price tag, the local equivalent and the week's inflow as chips, and a
+ * one-tap way to hide it all when someone is looking over your shoulder.
+ */
+export function BalanceCard({
+  balance,
+  currency,
+  activity,
+}: {
+  balance: bigint | null
+  currency: DisplayCurrency
+  activity: Entry[]
+}) {
+  const { hideBalance, setHideBalance } = usePrefs()
+  const usd = balance === null ? null : formatUsd(balance)
+  const [whole, cents] = usd === null ? ['—', ''] : [usd.slice(1, usd.lastIndexOf('.')), usd.slice(usd.lastIndexOf('.'))]
+  const week = inThisWeek(activity)
+
+  return (
+    <View style={styles.card} accessibilityLabel={hideBalance ? 'Balance hidden' : `Available ${usd ?? 'loading'}`}>
+      <Svg width={220} height={220} viewBox="-110 -110 220 220" style={styles.rings} pointerEvents="none">
+        {[104, 78, 52, 26].map((r) => (
+          <Circle key={r} r={r} fill="none" stroke={colors.tealDeep} strokeWidth={2} />
+        ))}
+      </Svg>
+      <View style={styles.coins} pointerEvents="none">
+        <View style={{ transform: [{ rotate: '-14deg' }] }}>
+          <Coin size={50} symbol="$" />
+        </View>
+        <View style={styles.coinBack}>
+          <Coin size={40} symbol="€" />
+        </View>
+      </View>
+
+      <View style={styles.top}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={hideBalance ? 'Show balance' : 'Hide balance'}
+          hitSlop={10}
+          onPress={() => {
+            void Haptics.selectionAsync()
+            setHideBalance(!hideBalance)
+          }}
+          style={styles.label}
+        >
+          <Txt weight="medium" size={15} color={onTeal}>
+            Available
+          </Txt>
+          <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={18} color={onTeal} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Add money"
+          hitSlop={8}
+          onPress={() => router.push('/add-money')}
+          style={({ pressed }) => [styles.add, pressed && { transform: [{ scale: 0.96 }] }]}
+        >
+          <Icon name="plus" size={16} />
+          <Txt weight="semi" size={14}>
+            Add
+          </Txt>
+        </Pressable>
+      </View>
+
+      <View style={styles.amount}>
+        {hideBalance ? (
+          <Txt weight="bold" size={44} color={colors.white} style={{ letterSpacing: 4 }}>
+            ••••••
+          </Txt>
+        ) : (
+          <>
+            <Txt weight="semi" size={26} color={onTeal} style={styles.sign}>
+              $
+            </Txt>
+            <Txt weight="bold" size={54} color={colors.white} style={styles.whole} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
+              {whole}
+            </Txt>
+            <Txt weight="semi" size={24} color={onTeal} style={styles.cents}>
+              {cents}
+            </Txt>
+          </>
+        )}
+      </View>
+
+      <View style={styles.chips}>
+        {balance !== null && currency !== 'USD' ? (
+          <View style={styles.chip}>
+            <Txt weight="medium" size={13} color={colors.white}>
+              {hideBalance ? '≈ ••••' : `≈ ${formatLocal(baseToNumber(balance), currency)}`}
+            </Txt>
+          </View>
+        ) : null}
+        {week > 0n ? (
+          <View style={styles.chip}>
+            <Icon name="down" size={14} color={colors.white} strokeWidth={2.4} />
+            <Txt weight="medium" size={13} color={colors.white}>
+              {hideBalance ? '••••' : formatUsd(week)} in this week
+            </Txt>
+          </View>
+        ) : null}
+      </View>
+    </View>
+  )
+}
+
+const styles = StyleSheet.create({
+  card: {
+    marginTop: 16,
+    borderRadius: 30,
+    backgroundColor: colors.teal,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 18,
+    overflow: 'hidden',
+  },
+  rings: { position: 'absolute', right: -70, top: -70, opacity: 0.55 },
+  coins: { position: 'absolute', right: 14, bottom: 12, width: 84, height: 60 },
+  coinBack: { position: 'absolute', right: 0, top: 0, transform: [{ rotate: '12deg' }] },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  label: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
+  add: {
+    height: 36,
+    paddingLeft: 10,
+    paddingRight: 14,
+    borderRadius: 18,
+    backgroundColor: colors.surface,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+  amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 10, paddingRight: 70 },
+  sign: { marginTop: 8, marginRight: 2 },
+  whole: { letterSpacing: -2.2, lineHeight: 60, flexShrink: 1 },
+  cents: { marginTop: 8, marginLeft: 2 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, paddingRight: 84 },
+  chip: {
+    height: 30,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    backgroundColor: colors.tealDeep,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+  },
+})

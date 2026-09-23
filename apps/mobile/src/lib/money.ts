@@ -1,32 +1,77 @@
+import { formatAmount, parseAmount } from '@kova/tempo'
+
 /**
- * Naira in, dollars settled.
+ * Money in the app is dollars on-chain (USDC), shown in whatever currency a person thinks in.
  *
- * Nigerian merchants price in naira, so the terminal takes ₦ and charges the USDC equivalent
- * at a reference rate that is always shown, never hidden (DECISIONS D-012). Kova never
- * converts money itself; the rate only decides how many dollars to ask for.
+ * Kova never converts money (DECISIONS D-012). Local amounts are shown at a published
+ * reference rate, always labelled as approximate, so a price in euros or naira becomes a
+ * clear number of dollars to pay.
  */
-export type EntryCurrency = 'NGN' | 'USD'
+export const displayCurrencies = ['USD', 'EUR', 'GBP', 'NGN', 'KES', 'MXN'] as const
+export type DisplayCurrency = (typeof displayCurrencies)[number]
 
-/** Naira per US dollar. Configurable until a live reference rate is wired in. */
-export const ngnPerUsd = Number(process.env.EXPO_PUBLIC_NGN_PER_USD ?? 1375)
-
-/** "650000" (kobo-free naira digits) → "₦6,500". */
-export function formatNaira(naira: number): string {
-  return `₦${Math.round(naira).toLocaleString('en-NG')}`
+export const currencyInfo: Record<DisplayCurrency, { symbol: string; name: string; perUsd: number; decimals: number }> = {
+  USD: { symbol: '$', name: 'US dollars', perUsd: 1, decimals: 2 },
+  EUR: { symbol: '€', name: 'Euros', perUsd: 0.92, decimals: 2 },
+  GBP: { symbol: '£', name: 'British pounds', perUsd: 0.79, decimals: 2 },
+  NGN: { symbol: '₦', name: 'Naira', perUsd: 1375, decimals: 0 },
+  KES: { symbol: 'KSh', name: 'Kenyan shillings', perUsd: 129, decimals: 0 },
+  MXN: { symbol: 'MX$', name: 'Mexican pesos', perUsd: 18.4, decimals: 2 },
 }
 
-/** Naira → USDC string with two decimals, rounded up so the merchant is never short. */
-export function nairaToUsdc(naira: number, rate = ngnPerUsd): string {
-  const cents = Math.ceil((naira / rate) * 100)
+function grouped(value: number, decimals: number) {
+  return value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
+}
+
+/** Base units (6 decimals) → "$1,240.50". */
+export function formatUsd(base: bigint, options: { sign?: boolean } = {}): string {
+  const negative = base < 0n
+  const abs = negative ? -base : base
+  const text = `$${grouped(Number(formatAmount(abs)), 2)}`
+  if (!options.sign) return negative ? `−${text}` : text
+  return `${negative ? '−' : '+'}${text}`
+}
+
+/** Dollars → an amount in a display currency, e.g. 200 USD → "€184.00". */
+export function formatLocal(usd: number, currency: DisplayCurrency): string {
+  const info = currencyInfo[currency]
+  return `${info.symbol}${grouped(usd * info.perUsd, info.decimals)}`
+}
+
+/** An amount typed in a display currency → dollars owed, rounded up so a merchant is never short. */
+export function localToUsd(amount: number, currency: DisplayCurrency): string {
+  const cents = Math.ceil((amount / currencyInfo[currency].perUsd) * 100 - 1e-9)
   return (cents / 100).toFixed(2)
 }
 
-export function usdcToNaira(usdc: string | number, rate = ngnPerUsd): number {
-  return Math.round(Number(usdc) * rate)
+export function toBase(dollars: string): bigint {
+  return parseAmount(dollars)
 }
 
-/** Groups naira digits as they are typed: "650000" → "650,000". */
-export function groupDigits(digits: string): string {
-  if (digits === '') return '0'
-  return Number(digits).toLocaleString('en-NG')
+export function baseToNumber(base: bigint): number {
+  return Number(formatAmount(base))
+}
+
+export type Key = '0' | '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8' | '9' | '.' | 'del'
+
+/** Applies a keypad press to a typed amount, keeping it a valid number with `decimals` places. */
+export function applyKey(value: string, key: Key, decimals = 2): string {
+  if (key === 'del') return value.slice(0, -1)
+  if (key === '.') {
+    if (decimals === 0 || value.includes('.')) return value
+    return value === '' ? '0.' : `${value}.`
+  }
+  const [whole = '', frac] = value.split('.')
+  if (frac !== undefined && frac.length >= decimals) return value
+  if (frac === undefined && whole.length >= 9) return value
+  if (value === '0') return key
+  return value + key
+}
+
+/** Typed digits → "1,240.5" with grouping, for display while typing. */
+export function groupTyped(value: string): string {
+  if (value === '') return '0'
+  const [whole = '0', frac] = value.split('.')
+  const w = Number(whole).toLocaleString('en-US')
+  return frac === undefined ? w : `${w}.${frac}`
 }

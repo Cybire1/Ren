@@ -1,45 +1,63 @@
-import 'react-native-get-random-values'
 import {
-  IBMPlexMono_400Regular,
-  IBMPlexMono_500Medium,
-  useFonts as useMono,
-} from '@expo-google-fonts/ibm-plex-mono'
-import {
-  IBMPlexSans_400Regular,
-  IBMPlexSans_500Medium,
-  IBMPlexSans_600SemiBold,
-  useFonts as useSans,
-} from '@expo-google-fonts/ibm-plex-sans'
-import { Stack } from 'expo-router'
+  Manrope_400Regular,
+  Manrope_500Medium,
+  Manrope_600SemiBold,
+  Manrope_700Bold,
+  useFonts,
+} from '@expo-google-fonts/manrope'
+import { router, Stack } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
+import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
+import { PrefsProvider, usePrefs } from '@/lib/prefs'
 import { colors } from '@/lib/theme'
+import { useWallet, WalletProvider } from '@/lib/wallet'
 
 void SplashScreen.preventAutoHideAsync()
 
+/** When money arrives while the app is open, celebrate it. Terminal mode has its own screens. */
+function ArrivalWatcher() {
+  const { arrival, clearArrival } = useWallet()
+  const { mode } = usePrefs()
+  useEffect(() => {
+    if (!arrival || mode !== 'pay') return
+    router.push({
+      pathname: '/received',
+      params: { amount: arrival.amount.toString(), name: arrival.name, hash: arrival.hash },
+    })
+    clearArrival()
+  }, [arrival, clearArrival, mode])
+  return null
+}
+
 export default function RootLayout() {
-  const [sansLoaded] = useSans({
-    IBMPlexSans_400Regular,
-    IBMPlexSans_500Medium,
-    IBMPlexSans_600SemiBold,
-  })
-  const [monoLoaded] = useMono({ IBMPlexMono_400Regular, IBMPlexMono_500Medium })
-  const ready = sansLoaded && monoLoaded
+  const [loaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold })
 
   useEffect(() => {
-    if (ready) void SplashScreen.hideAsync()
-  }, [ready])
+    if (loaded) void SplashScreen.hideAsync()
+  }, [loaded])
 
-  if (!ready) return null
+  if (!loaded) return null
 
   return (
-    <SafeAreaProvider>
-      <StatusBar style="dark" />
-      <Stack
-        screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}
-      />
-    </SafeAreaProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <PrefsProvider>
+          <WalletProvider>
+            <StatusBar style="dark" />
+            <ArrivalWatcher />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
+              <Stack.Screen name="index" options={{ animation: 'none' }} />
+              <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+              <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+              <Stack.Screen name="received" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+              <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
+            </Stack>
+          </WalletProvider>
+        </PrefsProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   )
 }

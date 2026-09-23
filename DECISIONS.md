@@ -19,6 +19,22 @@ This is the running log required by the brief (§17). Newest entries go at the t
 
 **Why it matters:** the card design, fee sponsorship, memo reconciliation and receipt verification are no longer theory. Remaining unknown: real JavaCard hardware.
 
+## 2026-09-23
+
+### D-014 · Kova Pay's wallet key is generated on the phone and gated by Face ID (Decided for the hackathon, revisit for mainnet)
+**Decision:** Kova Pay creates a secp256k1 key on the device and stores it in the iOS Keychain / Android Keystore with `requireAuthentication`, so reading it (every payment, every send) needs Face ID. The key never leaves the phone. Payments to merchants go through Kova's relay (fee sponsored, D-003); person-to-person sends pay Tempo's fee (under $0.01) from the sender's own dollars.
+
+**Why:** it gives "your face is your key" with no seed phrase today, on the Expo build we already have. True passkeys (WebAuthn P-256, which Tempo verifies natively) need an associated domain and a hosted `apple-app-site-association`, which we don't have yet.
+
+**Costs:** a key bound to one phone has no recovery if the phone is lost. Before mainnet: move to a synced passkey as the account's root key, with this device key as an access key under it.
+
+**Proven:** `npm run e2e:wallet` in apps/mobile funds a new wallet, pays a real charge through the relay (~0.9 s), sends to a person (~0.9 s) and detects the arrival, on Moderato.
+
+### D-013 · Kova is international, not a Nigerian product (Decided, supersedes the scope of D-011)
+**Decision:** Kova is cross-border payments infrastructure and an app for anyone, anywhere. The product, brand and UI are never themed or limited to one country: no national motifs, no naira-first defaults, no local-only copy. Amounts show in the sender's and receiver's own currencies. Nigeria remains a possible pilot market and the research in docs/market/nigeria.md still applies there.
+
+**Why:** the user's direction. A single-country identity caps the market and reads as a local wallet rather than payment infrastructure.
+
 ## 2026-09-20
 
 ### D-012 · Kova never converts to naira (Decided)
