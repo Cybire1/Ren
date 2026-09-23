@@ -79,7 +79,7 @@ def finish():
 
     # Avatars: clip to the painted circle and redraw its ring, so shoulders sit inside it.
     S, cx, cy, r = 4, 256, 255, 236
-    ink = tuple(int(MAP['#0D0D12'][i:i + 2], 16) for i in (1, 3, 5)) + (255,)
+    ink = (13, 13, 18, 255)
     for i in range(1, 7):
         n = at(f'avatar-{i}.png')
         im = Image.open(n).convert('RGBA').resize((512 * S, 512 * S), Image.LANCZOS)
@@ -120,7 +120,12 @@ def finish():
 
 if __name__ == '__main__':
     for name in sorted(os.listdir(SRC)):
-        if name.endswith('.png'):
+        if not name.endswith('.png'):
+            continue
+        if name.startswith('avatar-'):
+            # People keep their original colours, as generated.
+            Image.open(os.path.join(SRC, name)).save(os.path.join(DST, name))
+        else:
             recolor(os.path.join(SRC, name), os.path.join(DST, name))
     finish()
     print('art rebuilt in', DST)
