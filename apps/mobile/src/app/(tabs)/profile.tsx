@@ -58,7 +58,7 @@ export default function Profile() {
       <View style={styles.pass}>
         <View style={styles.passTop}>
           <View style={styles.ring}>
-            <Avatar name={profile.name} size={64} />
+            <Avatar name={profile.name} id={profile.address} size={64} />
           </View>
           <View style={{ flex: 1 }}>
             <Txt weight="bold" size={22} color={colors.white} numberOfLines={1} style={{ letterSpacing: -0.4 }}>

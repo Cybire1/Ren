@@ -41,7 +41,7 @@ export default function Home() {
     >
       <View style={styles.header}>
         <Pressable accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/(tabs)/profile')}>
-          <Avatar name={profile.name} size={44} />
+          <Avatar name={profile.name} id={profile.address} size={44} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <Txt size={13} color={colors.muted}>
@@ -132,7 +132,7 @@ export default function Home() {
             onPress={() => router.push({ pathname: '/send/[to]', params: { to: c.address, name: c.name, cur: c.currency ?? '' } })}
             style={styles.person}
           >
-            <Avatar name={c.name} size={56} />
+            <Avatar name={c.name} id={c.address} size={56} />
             <Txt weight="medium" size={13} numberOfLines={1}>
               {c.name.split(' ')[0]}
             </Txt>

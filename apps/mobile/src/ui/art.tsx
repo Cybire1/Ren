@@ -259,17 +259,24 @@ export function CardArt({ width = 300, last4, frozen }: { width?: number; last4:
   )
 }
 
+/** FNV-1a: spreads similar strings (like two 0x addresses) evenly across the faces. */
 function hash(text: string) {
-  let h = 0
-  for (const c of text) h = (h * 31 + c.charCodeAt(0)) >>> 0
+  let h = 0x811c9dc5
+  for (const c of text.toLowerCase()) {
+    h ^= c.charCodeAt(0)
+    h = Math.imul(h, 0x01000193) >>> 0
+  }
   return h
 }
 
-/** A friendly face picked from the name, so everyone you pay looks the same every time. */
-export function Avatar({ name, size = 56 }: { name: string; size?: number }) {
+/**
+ * A friendly face for a person. Picked from their wallet address when there is one (so the
+ * same person always looks the same, whatever they are called), else from their name.
+ */
+export function Avatar({ name, id, size = 56 }: { name: string; id?: string; size?: number }) {
   return (
     <Image
-      source={art.faces[hash(name || '?') % art.faces.length]}
+      source={art.faces[hash(id || name || '?') % art.faces.length]}
       style={{ width: size, height: size, borderRadius: size / 2 }}
       contentFit="contain"
       accessible={false}

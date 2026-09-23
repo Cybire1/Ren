@@ -52,7 +52,7 @@ export function Dock({ state, navigation }: BottomTabBarProps) {
         <View style={[styles.tab, focused && styles.tabOn]}>
           {tab.icon === 'profile' && profile ? (
             <View style={[styles.face, { borderColor: focused ? colors.yellow : 'rgba(255,255,255,0.45)' }]}>
-              <Avatar name={profile.name} size={focused ? 32 : 30} />
+              <Avatar name={profile.name} id={profile.address} size={focused ? 32 : 30} />
             </View>
           ) : (
             <NavIcon name={tab.icon} active={focused} size={26} color={focused ? colors.ink : 'rgba(255,255,255,0.66)'} />

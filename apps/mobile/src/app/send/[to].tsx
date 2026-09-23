@@ -242,7 +242,7 @@ export default function SendTo() {
         <Header
           right={
             <View style={styles.who}>
-              <Avatar name={name} size={36} />
+              <Avatar name={name} id={address} size={36} />
             </View>
           }
           title={`To ${first}`}

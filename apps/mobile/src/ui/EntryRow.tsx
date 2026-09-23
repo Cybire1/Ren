@@ -33,7 +33,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
       ) : entry.kind === 'added' ? (
         <AddBadge size={44} />
       ) : (
-        <Avatar name={entry.name} size={44} />
+        <Avatar name={entry.name} id={entry.address} size={44} />
       )}
       <View style={{ flex: 1 }}>
         <Txt weight="semi" size={16} numberOfLines={1}>

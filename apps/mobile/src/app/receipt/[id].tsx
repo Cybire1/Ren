@@ -35,7 +35,7 @@ export default function Receipt() {
       <View style={styles.wrap}>
         <View style={styles.paper}>
           <View style={styles.top}>
-            {entry.kind === 'paid' ? <ShopBadge size={64} /> : <Avatar name={entry.name} size={64} />}
+            {entry.kind === 'paid' ? <ShopBadge size={64} /> : <Avatar name={entry.name} id={entry.address} size={64} />}
             <Txt size={15} color={colors.muted} style={{ marginTop: 12 }}>
               {titles[entry.kind]} {incoming ? 'from' : 'to'}
             </Txt>

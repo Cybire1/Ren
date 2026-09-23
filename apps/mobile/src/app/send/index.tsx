@@ -93,7 +93,7 @@ export default function PickPerson() {
               onPress={() => router.push({ pathname: '/send/[to]', params: { to: c.address, name: c.name, cur: c.currency ?? '' } })}
               style={({ pressed }) => [styles.person, pressed && { opacity: 0.6 }]}
             >
-              <Avatar name={c.name} size={48} />
+              <Avatar name={c.name} id={c.address} size={48} />
               <View style={{ flex: 1 }}>
                 <Txt weight="semi" size={16}>
                   {c.name}
