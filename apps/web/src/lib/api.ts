@@ -66,3 +66,18 @@ export interface IntentList {
   has_more: boolean
   next_before: string | null
 }
+
+export interface Terminal {
+  id: string
+  name: string
+  status: string
+  last_seen_at: string | null
+  created_at: string
+}
+
+export interface TerminalPairing {
+  code: string
+  link: string
+  merchant_name: string
+  expires_at: string
+}

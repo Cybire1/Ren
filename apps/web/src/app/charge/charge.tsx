@@ -1,7 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { Art, Brand, Icon, Pill } from '@/components/brand'
 import type { PaymentIntent } from '@/lib/api'
+import { usd } from '@/lib/format'
 
 type Stage = 'amount' | 'waiting' | 'paid' | 'problem'
 
@@ -18,6 +20,15 @@ function applyKey(current: string, key: (typeof keys)[number]): string {
   return next.startsWith('0') && !next.startsWith('0.') ? next.slice(1) : next
 }
 
+/** "1234.5" as typed → "$1,234.5": grouped, but keeps what the person has typed so far. */
+function typedDollars(typed: string) {
+  if (typed === '') return '$0'
+  const [whole, decimals] = typed.split('.')
+  const grouped = Number(whole || '0').toLocaleString('en-US')
+  return `$${grouped}${decimals !== undefined ? `.${decimals}` : ''}`
+}
+
+/** The web terminal: the same keypad, code and receipt as Kova Terminal on a phone. */
 export function Charge() {
   const [stage, setStage] = useState<Stage>('amount')
   const [amount, setAmount] = useState('')
@@ -25,39 +36,45 @@ export function Charge() {
   const [intent, setIntent] = useState<PaymentIntent | null>(null)
   const [qr, setQr] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
 
-  const value = amount === '' ? '0' : amount
-  const canCharge = Number(value) > 0
+  const canCharge = Number(amount || '0') > 0
 
   const start = useCallback(async () => {
     setError(null)
+    setBusy(true)
     try {
       const response = await fetch('/api/charge', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          amount: Number(value).toFixed(2),
-          reference: reference.trim() || undefined,
-        }),
+        body: JSON.stringify({ amount: Number(amount).toFixed(2), reference: reference.trim() || undefined }),
       })
       const body = (await response.json()) as PaymentIntent & { error?: string }
       if (!response.ok) throw new Error(body.error ?? 'Could not start the charge')
+      const { toString } = await import('qrcode')
+      setQr(await toString(`${window.location.origin}/pay/${body.id}`, { type: 'svg', margin: 0, color: { dark: '#0b1a1d', light: '#ffffff' } }))
       setIntent(body)
       setStage('waiting')
-
-      const { toString } = await import('qrcode')
-      setQr(
-        await toString(`${window.location.origin}/pay/${body.id}`, {
-          type: 'svg',
-          margin: 0,
-          color: { dark: '#0f1512', light: '#fbfcfb' },
-        }),
-      )
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Could not start the charge')
       setStage('problem')
+    } finally {
+      setBusy(false)
     }
-  }, [value, reference])
+  }, [amount, reference])
+
+  // Type on a real keyboard too: digits, dot, backspace, Enter to charge.
+  useEffect(() => {
+    if (stage !== 'amount') return
+    const onKey = (event: KeyboardEvent) => {
+      if (event.target instanceof HTMLInputElement) return
+      if (/^[0-9.]$/.test(event.key)) setAmount((v) => applyKey(v, event.key as (typeof keys)[number]))
+      else if (event.key === 'Backspace') setAmount((v) => applyKey(v, 'del'))
+      else if (event.key === 'Enter' && canCharge && !busy) void start()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [stage, canCharge, busy, start])
 
   // While a charge is open, ask the API what happened to it.
   useEffect(() => {
@@ -82,119 +99,140 @@ export function Charge() {
     }
   }, [stage, intent])
 
+  const reset = () => {
+    setAmount('')
+    setReference('')
+    setIntent(null)
+    setQr(null)
+    setError(null)
+    setStage('amount')
+  }
+
+  const top = (
+    <header className="topbar">
+      <Brand label="Terminal" />
+      <a className="round" href="/" aria-label="Back to the dashboard">
+        <Icon name="close" size={18} />
+      </a>
+    </header>
+  )
+
   if (stage === 'paid' && intent)
     return (
-      <main className="shell stage-paid">
-        <div className="paid">
-          <p className="paid-mark" aria-hidden="true">
-            ✓
-          </p>
-          <p className="paid-amount mono">{intent.amount}</p>
-          <p className="paid-label">Paid{intent.reference ? ` · ${intent.reference}` : ''}</p>
-          <div className="paid-actions">
-            <a className="button" href="/charge">
-              Next charge
-            </a>
-            <a href="/">Back to today</a>
-          </div>
-        </div>
-      </main>
+      <div className="terminal-screen" style={{ background: 'var(--paper)' }}>
+        <main className="page page-narrow">
+          {top}
+          <section className="paid" aria-live="polite">
+            <div className="receipt" style={{ marginTop: '3.5rem' }}>
+              <Art name="scene-paid-terminal" size={304} />
+              <div className="receipt-text">
+                <small>PAID</small>
+                <strong>{usd(intent.amount)}</strong>
+              </div>
+              <Art name="kovi-cheer" size={88} className="kovi-cheer" />
+            </div>
+            <h1>Paid</h1>
+            <p>
+              {usd(intent.amount)}
+              {intent.reference ? ` for ${intent.reference}` : ''}, settled on Tempo
+            </p>
+            <div className="paid-actions">
+              <Pill icon="tap" onClick={reset}>
+                Next charge
+              </Pill>
+              <a className="textlink" href="/">
+                Back to today
+              </a>
+            </div>
+          </section>
+        </main>
+      </div>
     )
 
   if (stage === 'waiting' && intent)
     return (
-      <main className="shell">
-        <header className="masthead">
-          <div className="wordmark">
-            Kova <span>Charge</span>
-          </div>
-          <a href="/">Cancel</a>
-        </header>
-        <section className="await">
-          <p className="await-amount mono">{intent.amount}</p>
-          <p className="await-label">
-            {intent.reference ? `${intent.reference} · ` : ''}Scan to pay
-          </p>
-          {qr ? (
-            // biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG
-            <div className="qr" dangerouslySetInnerHTML={{ __html: qr }} />
-          ) : (
-            <div className="qr qr-placeholder" />
-          )}
-          <p className="await-hint">Waiting for payment. This screen updates by itself.</p>
-        </section>
-      </main>
+      <div className="terminal-screen">
+        <main className="page page-narrow">
+          {top}
+          <section className="await">
+            <div className="await-card">
+              <p className="await-amount">{usd(intent.amount)}</p>
+              <p className="await-label">{intent.reference ?? 'Scan with Kova Pay or any Tempo wallet'}</p>
+              {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
+              {qr ? <div className="qr qr-big" aria-label="Payment QR code" dangerouslySetInnerHTML={{ __html: qr }} /> : null}
+              <p className="waiting">
+                <Icon name="tap" size={20} />
+                Waiting for payment
+              </p>
+            </div>
+            <button type="button" className="pill" data-tone="light" onClick={reset} style={{ marginTop: '0.5rem' }}>
+              <span className="pill-label">Cancel</span>
+              <span className="pill-cap">
+                <Icon name="close" size={18} />
+              </span>
+            </button>
+          </section>
+        </main>
+      </div>
     )
 
   if (stage === 'problem')
     return (
-      <main className="shell">
-        <header className="masthead">
-          <div className="wordmark">
-            Kova <span>Charge</span>
+      <div className="terminal-screen">
+        <main className="page page-narrow">
+          {top}
+          <div className="card notice" role="alert">
+            <Art name="kovi-oops" size={130} />
+            <h2>{error ? 'The charge didn’t start' : `This charge ${intent?.status}`}</h2>
+            <p>{error ?? 'Nothing was taken. Start a new charge to try again.'}</p>
+            <Pill onClick={reset} icon="refresh">
+              Start again
+            </Pill>
           </div>
-        </header>
-        <div className="notice">
-          <h2>{error ? 'Could not start the charge' : `Charge ${intent?.status}`}</h2>
-          <p>{error ?? 'Start a new charge to try again.'}</p>
-        </div>
-        <p style={{ marginTop: '1.25rem' }}>
-          <a className="button" href="/charge">
-            Start again
-          </a>
-        </p>
-      </main>
+        </main>
+      </div>
     )
 
   return (
-    <main className="shell">
-      <header className="masthead">
-        <div className="wordmark">
-          Kova <span>Charge</span>
+    <div className="terminal-screen">
+      <main className="page page-narrow">
+        {top}
+        <section className="amount">
+          <p className="amount-value" data-empty={amount === '' ? 'true' : undefined} aria-live="polite">
+            {typedDollars(amount)}
+          </p>
+          <p className="amount-sub">Customer pays {usd(amount || '0')} in USDC</p>
+          <input
+            className="amount-ref"
+            value={reference}
+            onChange={(event) => setReference(event.target.value)}
+            placeholder="What’s it for? (optional)"
+            maxLength={60}
+            aria-label="What it’s for"
+          />
+        </section>
+
+        <div className="keypad">
+          {keys.map((key) => (
+            <button
+              key={key}
+              type="button"
+              className="key"
+              data-plain={key === 'del' ? 'true' : undefined}
+              onClick={() => setAmount((current) => applyKey(current, key))}
+              aria-label={key === 'del' ? 'Delete' : key}
+            >
+              {key === 'del' ? <Icon name="del" size={26} /> : key}
+            </button>
+          ))}
         </div>
-        <a href="/">Cancel</a>
-      </header>
 
-      <section className="amount">
-        <p className="amount-value mono" data-empty={amount === '' ? 'true' : undefined}>
-          {value}
-          <span className="amount-unit">USDC</span>
-        </p>
-        <input
-          className="amount-ref"
-          value={reference}
-          onChange={(event) => setReference(event.target.value)}
-          placeholder="What is it for? (optional)"
-          maxLength={60}
-        />
-      </section>
-
-      <div className="keypad">
-        {keys.map((key) => (
-          <button
-            key={key}
-            type="button"
-            className="key"
-            onClick={() => setAmount((current) => applyKey(current, key))}
-            aria-label={key === 'del' ? 'Delete' : key}
-          >
-            {key === 'del' ? '⌫' : key}
-          </button>
-        ))}
-      </div>
-
-      <div className="totalbar">
-        <div className="totalbar-inner">
-          <button
-            type="button"
-            className="button button-wide"
-            disabled={!canCharge}
-            onClick={start}
-          >
-            Charge {canCharge ? Number(value).toFixed(2) : ''}
-          </button>
+        <div className="pill-wide">
+          <Pill icon="tap" disabled={!canCharge || busy} onClick={start}>
+            {canCharge ? `Charge ${usd(amount)}` : 'Enter a price'}
+          </Pill>
         </div>
-      </div>
-    </main>
+      </main>
+    </div>
   )
 }

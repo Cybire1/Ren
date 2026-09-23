@@ -1,30 +1,25 @@
-import { type IntentList, kova, type Summary } from '@/lib/api'
+import { Notice } from '@/components/notice'
+import { type IntentList, kova, type Summary, type Terminal } from '@/lib/api'
 import { Dashboard } from './dashboard'
 
 export const dynamic = 'force-dynamic'
 
 export default async function Page() {
   try {
-    const [summary, intents] = await Promise.all([
+    const [summary, intents, terminals] = await Promise.all([
       kova<Summary>('/v1/summary'),
       kova<IntentList>('/v1/payment_intents?limit=25'),
+      kova<{ data: Terminal[] }>('/v1/terminals'),
     ])
-    return <Dashboard initialSummary={summary} initialIntents={intents.data} />
+    return <Dashboard initialSummary={summary} initialIntents={intents.data} initialTerminals={terminals.data} />
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
     return (
-      <main className="shell">
-        <header className="masthead">
-          <div className="wordmark">
-            Kova <span>Merchant</span>
-          </div>
-        </header>
-        <div className="notice">
-          <h2>Can&rsquo;t reach the Kova API</h2>
-          <p>{message}</p>
-          <p>Start it with `pnpm --filter @kova/api dev`, then set KOVA_API_KEY in apps/web/.env</p>
-        </div>
-      </main>
+      <Notice title="Can’t reach Kova">
+        <p>{error instanceof Error ? error.message : 'Unknown error'}.</p>
+        <p>
+          Check <code>KOVA_API_URL</code> and <code>KOVA_API_KEY</code> in <code>apps/web/.env</code>, then reload.
+        </p>
+      </Notice>
     )
   }
 }
