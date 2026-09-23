@@ -5,7 +5,6 @@ import Svg, { Circle } from 'react-native-svg'
 import { baseToNumber, type DisplayCurrency, formatLocal, formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
 import { colors } from '@/lib/theme'
-import type { Entry } from '@/lib/wallet'
 import { Coin } from './art'
 import { Icon } from './Icon'
 import { Txt } from './primitives'
@@ -13,32 +12,21 @@ import { Txt } from './primitives'
 /** Secondary text on teal. */
 const onTeal = '#DCEBEA'
 
-/** What came in over the last seven days: the one number that says the wallet is alive. */
-function inThisWeek(activity: Entry[]): bigint {
-  const since = Date.now() - 7 * 86_400_000
-  return activity
-    .filter((e) => e.at >= since && (e.kind === 'received' || e.kind === 'added'))
-    .reduce((sum, e) => sum + BigInt(e.amount), 0n)
-}
-
 /**
  * The balance, as the first thing on Home: dollars as the headline with the sign and cents set
- * small and raised like a price tag, the local equivalent and the week's inflow as chips, and a
+ * small and raised like a price tag, the local equivalent as a chip, and a
  * one-tap way to hide it all when someone is looking over your shoulder.
  */
 export function BalanceCard({
   balance,
   currency,
-  activity,
 }: {
   balance: bigint | null
   currency: DisplayCurrency
-  activity: Entry[]
 }) {
   const { hideBalance, setHideBalance } = usePrefs()
   const usd = balance === null ? null : formatUsd(balance)
   const [whole, cents] = usd === null ? ['—', ''] : [usd.slice(1, usd.lastIndexOf('.')), usd.slice(usd.lastIndexOf('.'))]
-  const week = inThisWeek(activity)
 
   return (
     <View style={styles.card} accessibilityLabel={hideBalance ? 'Balance hidden' : `Available ${usd ?? 'loading'}`}>
@@ -111,14 +99,6 @@ export function BalanceCard({
           <View style={styles.chip}>
             <Txt weight="medium" size={13} color={colors.white}>
               {hideBalance ? '≈ ••••' : `≈ ${formatLocal(baseToNumber(balance), currency)}`}
-            </Txt>
-          </View>
-        ) : null}
-        {week > 0n ? (
-          <View style={styles.chip}>
-            <Icon name="down" size={14} color={colors.white} strokeWidth={2.4} />
-            <Txt weight="medium" size={13} color={colors.white}>
-              {hideBalance ? '••••' : formatUsd(week)} in this week
             </Txt>
           </View>
         ) : null}

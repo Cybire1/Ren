@@ -54,7 +54,7 @@ export default function Home() {
         <RoundButton icon="bell" label="Activity" size={40} onPress={() => router.push('/(tabs)/activity')} />
       </View>
 
-      <BalanceCard balance={balance} currency={profile.currency} activity={activity} />
+      <BalanceCard balance={balance} currency={profile.currency} />
 
       <View style={styles.hero}>
         <Pressable
