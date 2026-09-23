@@ -6,7 +6,7 @@ import { usePrefs } from '@/lib/prefs'
 import { useTerminal } from '@/lib/terminal'
 import { colors, fonts } from '@/lib/theme'
 import { Kovi, ShopBadge } from '@/ui/art'
-import { Icon } from '@/ui/Icon'
+import { Icon, type IconName } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
 
@@ -57,15 +57,25 @@ export default function TerminalSetup() {
       <Screen bg={colors.paper}>
         <Header />
         <View style={styles.center}>
-          <Bob>
-            <ShopBadge size={120} />
-          </Bob>
-          <Txt weight="bold" size={30} style={{ marginTop: 18, letterSpacing: -0.8, textAlign: 'center' }}>
+          <View style={styles.pairedArt}>
+            <Bob>
+              <ShopBadge size={132} />
+            </Bob>
+            <View style={styles.pairedKovi}>
+              <Kovi pose="cheer" size={92} />
+            </View>
+          </View>
+          <Txt weight="bold" size={32} style={{ marginTop: 18, letterSpacing: -1, textAlign: 'center' }}>
             {paired.name}
           </Txt>
           <Txt size={16} color={colors.muted} style={{ marginTop: 4 }}>
             Paired to {paired.merchantName}
           </Txt>
+          <View style={styles.facts}>
+            <Fact icon="tap" text={`Takes payments for ${paired.merchantName}`} />
+            <Fact icon="check" text="Settles in USDC on Tempo, in about a second" />
+            <Fact icon="lock" text="Only this phone's key. Remove it from the dashboard any time" last />
+          </View>
         </View>
         <View style={styles.footer}>
           <PillButton label="Open the terminal" icon="terminal" onPress={start} />
@@ -144,9 +154,36 @@ export default function TerminalSetup() {
   )
 }
 
+function Fact({ icon, text, last }: { icon: IconName; text: string; last?: boolean }) {
+  return (
+    <View style={[styles.fact, !last && styles.factRule]}>
+      <View style={styles.factIcon}>
+        <Icon name={icon} size={16} />
+      </View>
+      <Txt weight="medium" size={15} style={{ flex: 1 }}>
+        {text}
+      </Txt>
+    </View>
+  )
+}
+
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 24, paddingBottom: 24 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
+  pairedArt: { width: 200, height: 150, alignItems: 'center', justifyContent: 'flex-end' },
+  pairedKovi: { position: 'absolute', right: -6, top: -18 },
+  facts: {
+    alignSelf: 'stretch',
+    marginTop: 28,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+  },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
+  factRule: { borderBottomWidth: 1, borderColor: colors.sunken },
+  factIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
   art: { height: 120, justifyContent: 'center', marginBottom: 12 },
   kovi: { position: 'absolute', left: 64, top: 8 },
   boxes: { flexDirection: 'row', gap: 8, marginTop: 26 },

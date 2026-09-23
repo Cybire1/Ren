@@ -1,25 +1,29 @@
-import { router, useLocalSearchParams } from 'expo-router'
+import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Burst, CoinRain, PopIn } from '@/ui/motion'
+import { when } from '@/ui/EntryRow'
 import { Stage } from '@/ui/Stage'
 import { Chip, Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /** Money arrived: coins rain, Kovi catches them, and the amount is the headline. */
 export default function Received() {
   const params = useLocalSearchParams<{ amount: string; name: string; hash?: string }>()
-  const amount = params.amount
-  const name = params.name || 'Someone'
-  const { profile, contacts } = useWallet()
+  const { profile, contacts, activity } = useWallet()
   const { width } = useWindowDimensions()
+  // Opened without an arrival (a stale link, a relaunch): show the latest money in instead.
+  const latest = params.amount ? null : activity.find((e) => e.kind === 'received')
+  const amount = params.amount ?? latest?.amount
+  const name = params.name || latest?.name || 'Someone'
   const base = BigInt(amount ?? '0')
   const known = contacts.find((c) => c.name === name)
+  if (!amount || base === 0n) return <Redirect href="/" />
 
   return (
     <Screen bg={colors.tealSoft}>
-      <Header backIcon="close" onBack={() => router.back()} right={<Chip label="Just now" dot={colors.tealLight} />} />
+      <Header backIcon="close" onBack={() => router.back()} right={<Chip label={latest ? when(latest.at) : 'Just now'} dot={colors.tealLight} />} />
       <View style={{ height: 320 }}>
         <CoinRain width={width} height={320} />
         <View style={[styles.catch, { left: width / 2 - 100 }]}>
