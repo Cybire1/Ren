@@ -288,6 +288,8 @@ export const apiKeys = pgTable(
     prefix: text('prefix').notNull(),
     secretHash: text('secret_hash').notNull(),
     scopes: jsonb('scopes').$type<string[]>().notNull(),
+    /** Set on a paired phone's device key: it can take payments, never manage the shop. */
+    terminalId: uuid('terminal_id').references(() => terminals.id),
     isTest: boolean('is_test').notNull().default(true),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),

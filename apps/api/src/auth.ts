@@ -69,11 +69,19 @@ export const requireApiKey = createMiddleware(async (c, next) => {
   c.set('merchant', merchant)
 
   // Fire-and-forget: last-used is for support, and must never slow down a payment.
-  void db
-    .update(schema.apiKeys)
-    .set({ lastUsedAt: new Date() })
-    .where(eq(schema.apiKeys.id, key.id))
-    .catch(() => {})
+  const now = new Date()
+  void db.update(schema.apiKeys).set({ lastUsedAt: now }).where(eq(schema.apiKeys.id, key.id)).catch(() => {})
+  if (key.terminalId)
+    void db.update(schema.terminals).set({ lastSeenAt: now }).where(eq(schema.terminals.id, key.terminalId)).catch(() => {})
 
+  await next()
+})
+
+/**
+ * Only the shop's own key, never a paired phone's device key. A stolen terminal can take
+ * payments into the shop's account, but cannot pair more phones or remove the real ones.
+ */
+export const requireMerchantKey = createMiddleware(async (c, next) => {
+  if (c.get('apiKey').terminalId) throw new KovaError('forbidden', 'A terminal key cannot manage terminals')
   await next()
 })

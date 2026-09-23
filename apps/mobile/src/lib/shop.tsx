@@ -1,4 +1,5 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
+import { AppState } from 'react-native'
 import { getSummary } from './api'
 import { useTerminal } from './terminal'
 import type { DisplayCurrency } from './money'
@@ -24,10 +25,16 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   }, [])
   useEffect(() => {
     if (paired) setName(paired.merchantName)
-    if (canCharge)
-      getSummary()
+    if (!canCharge) return
+    // Check in on open and whenever the app comes back: picks up a renamed shop, and a
+    // terminal removed from the dashboard goes back to pairing (see onDeviceKeyRevoked).
+    const check = () =>
+      void getSummary()
         .then((s) => setName(s.merchant.name))
         .catch(() => {})
+    check()
+    const sub = AppState.addEventListener('change', (state) => state === 'active' && check())
+    return () => sub.remove()
   }, [paired, canCharge])
 
   const setCurrency = (c: DisplayCurrency) => {

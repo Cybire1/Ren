@@ -14,6 +14,12 @@ export function setDeviceKey(key: string | null) {
   deviceKey = key
 }
 
+/** Called when the shop removes this terminal: its key is refused from then on. */
+let onRevoked: (() => void) | null = null
+export function onDeviceKeyRevoked(handler: (() => void) | null) {
+  onRevoked = handler
+}
+
 async function request<T>(path: string, init: RequestInit & { merchant?: boolean } = {}): Promise<T> {
   const key = deviceKey
   const { merchant, ...rest } = init
@@ -26,6 +32,7 @@ async function request<T>(path: string, init: RequestInit & { merchant?: boolean
     },
   })
   const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
+  if (merchant && deviceKey && response.status === 401) onRevoked?.()
   if (!response.ok) throw new Error(body.error?.message ?? `Kova is unreachable (${response.status})`)
   return body as T
 }
@@ -105,6 +112,9 @@ export interface PairedTerminal {
 /** Redeems a pairing code from the dashboard for this phone's own terminal key. */
 export const pairTerminal = (code: string, name: string, device: Record<string, unknown>) =>
   request<PairedTerminal>('/v1/terminals/pair', { method: 'POST', body: JSON.stringify({ code, name, device }) })
+
+/** Tells Kova this phone is no longer a terminal, so its key stops working everywhere. */
+export const unpairTerminal = () => request<{ status: string }>('/v1/terminals/self/unpair', { method: 'POST', merchant: true })
 
 /** What the terminal's QR encodes: the public pay page, which Kova Pay also opens directly. */
 export const payLinkFor = (id: string) => `${webUrl}/pay/${id}`

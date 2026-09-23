@@ -1,13 +1,12 @@
 import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react'
 import { Platform } from 'react-native'
-import { pairTerminal, setDeviceKey } from './api'
+import { onDeviceKeyRevoked, pairTerminal, setDeviceKey, unpairTerminal } from './api'
 
 /**
  * This phone's identity as a shop's terminal. Pairing trades a one-time code from the
  * dashboard for a device key, kept in the Keychain; the merchant's own key never touches the
- * phone. In development, a merchant key in .env still works so the terminal can be tried
- * without pairing.
+ * phone. Unpairing here, or removing the terminal in the dashboard, revokes that key.
  */
 export interface Paired {
   id: string
@@ -18,7 +17,7 @@ export interface Paired {
 interface TerminalState {
   ready: boolean
   paired: Paired | null
-  /** True when the phone can take payments: paired, or a development key is configured. */
+  /** True when the phone can take payments. */
   canCharge: boolean
   pair: (code: string, name: string) => Promise<Paired>
   unpair: () => Promise<void>
@@ -60,11 +59,24 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
     return next
   }, [])
 
-  const unpair = useCallback(async () => {
+  const forget = useCallback(async () => {
     await SecureStore.deleteItemAsync(STORE)
     setDeviceKey(null)
     setPaired(null)
   }, [])
+
+  const unpair = useCallback(async () => {
+    // Revoke on the server first; if the phone is offline, forgetting locally still stops it
+    // charging, and the shop can remove it from the dashboard.
+    await unpairTerminal().catch(() => {})
+    await forget()
+  }, [forget])
+
+  // Removed from the dashboard: the next request is refused, and the phone goes back to pairing.
+  useEffect(() => {
+    onDeviceKeyRevoked(() => void forget())
+    return () => onDeviceKeyRevoked(null)
+  }, [forget])
 
   return (
     <Ctx.Provider value={{ ready, paired, canCharge: Boolean(paired), pair, unpair }}>
