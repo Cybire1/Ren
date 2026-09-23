@@ -147,7 +147,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const contacts = useMemo(() => {
     const seen = new Map<string, Contact>()
+    // Tokens are minted from the zero address (the testnet faucet): that is not a person.
+    const zero = '0x0000000000000000000000000000000000000000'
     for (const e of activity) {
+      if (e.address?.toLowerCase() === zero) continue
       if ((e.kind === 'sent' || e.kind === 'received') && e.address && !seen.has(e.address.toLowerCase()))
         seen.set(e.address.toLowerCase(), { address: e.address, name: e.name })
     }
