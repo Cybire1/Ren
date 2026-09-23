@@ -39,8 +39,8 @@ export default function Welcome() {
 
       <View style={[styles.panel, { top: panelTop, paddingBottom: insets.bottom + 24 }]}>
         <Rise delay={120}>
-          <Txt weight="semi" size={40} style={styles.title}>
-            Money that moves like a message.
+          <Txt weight="bold" size={46} style={styles.title}>
+            Tap. Paid.{'\n'}Anywhere.
           </Txt>
           <Txt size={17} color={colors.onTint} style={styles.body}>
             Pay, send and get paid in any currency. It lands in seconds, anywhere in the world.
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
     paddingTop: 36,
     justifyContent: 'space-between',
   },
-  title: { lineHeight: 42, letterSpacing: -1.2 },
+  title: { lineHeight: 48, letterSpacing: -1.6 },
   body: { lineHeight: 25, marginTop: 14 },
   actions: { gap: 18 },
 })
