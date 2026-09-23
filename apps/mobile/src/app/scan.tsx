@@ -22,6 +22,7 @@ export default function Scan() {
     handled.current = true
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     if (scanned.kind === 'charge') router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
+    else if (scanned.kind === 'pair') router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
     else
       router.replace({
         pathname: '/send/[to]',

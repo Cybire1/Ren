@@ -5,7 +5,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 import { isTestnet } from '@/lib/config'
 import { colors } from '@/lib/theme'
-import { useWallet } from '@/lib/wallet'
+import { isUnnamed, useWallet } from '@/lib/wallet'
 import { ActionTile } from '@/ui/ActionTile'
 import { Avatar } from '@/ui/art'
 import { BalanceCard } from '@/ui/BalanceCard'
@@ -134,7 +134,7 @@ export default function Home() {
           >
             <Avatar name={c.name} id={c.address} size={56} />
             <Txt weight="medium" size={13} numberOfLines={1}>
-              {c.name.split(' ')[0]}
+              {isUnnamed(c.name) ? c.address.slice(0, 6) : c.name.split(' ')[0]}
             </Txt>
           </Pressable>
         ))}

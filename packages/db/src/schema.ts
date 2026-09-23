@@ -85,6 +85,27 @@ export const terminals = pgTable(
   (t) => [index('terminals_merchant_idx').on(t.merchantId)],
 )
 
+/**
+ * A short-lived code that pairs a phone as a merchant's terminal. The merchant creates it in
+ * the dashboard; the phone redeems it once for its own device key. Only the code's hash is
+ * stored.
+ */
+export const terminalPairings = pgTable(
+  'terminal_pairings',
+  {
+    id: id(),
+    merchantId: uuid('merchant_id')
+      .notNull()
+      .references(() => merchants.id),
+    codeHash: text('code_hash').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    terminalId: uuid('terminal_id').references(() => terminals.id),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('terminal_pairings_code_idx').on(t.codeHash)],
+)
+
 // --- Payment credentials --------------------------------------------------
 
 export const credentialType = pgEnum('credential_type', ['card', 'phone', 'agent'])

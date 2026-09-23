@@ -1,13 +1,15 @@
 import * as WebBrowser from 'expo-web-browser'
 import { useLocalSearchParams } from 'expo-router'
-import { Share, StyleSheet, View } from 'react-native'
+import { useState } from 'react'
+import { Pressable, Share, StyleSheet, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { explorerTx } from '@/lib/chain'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
-import { useWallet } from '@/lib/wallet'
+import { isUnnamed, useWallet } from '@/lib/wallet'
 import { Avatar, ShopBadge } from '@/ui/art'
 import { signed, when } from '@/ui/EntryRow'
+import { NameSheet } from '@/ui/NameSheet'
 import { Header, PillButton, Screen, TextLink, Txt } from '@/ui/primitives'
 
 const titles = { paid: 'Paid', sent: 'Sent', received: 'Received', added: 'Added' } as const
@@ -17,6 +19,7 @@ export default function Receipt() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { activity } = useWallet()
   const entry = activity.find((e) => e.id === id)
+  const [naming, setNaming] = useState(false)
 
   if (!entry)
     return (
@@ -27,6 +30,7 @@ export default function Receipt() {
     )
 
   const incoming = entry.kind === 'received' || entry.kind === 'added'
+  const person = (entry.kind === 'sent' || entry.kind === 'received') && entry.address ? entry.address : null
   const zigzag = Array.from({ length: 18 }, (_, i) => `L${i * 20 + 10} 10 L${i * 20 + 20} 0`).join(' ')
 
   return (
@@ -39,9 +43,22 @@ export default function Receipt() {
             <Txt size={15} color={colors.muted} style={{ marginTop: 12 }}>
               {titles[entry.kind]} {incoming ? 'from' : 'to'}
             </Txt>
-            <Txt weight="semi" size={22}>
-              {entry.name}
-            </Txt>
+            {person ? (
+              <Pressable accessibilityRole="button" accessibilityLabel={`Rename ${entry.name}`} onPress={() => setNaming(true)}>
+                <Txt weight="semi" size={22}>
+                  {entry.name}
+                </Txt>
+              </Pressable>
+            ) : (
+              <Txt weight="semi" size={22}>
+                {entry.name}
+              </Txt>
+            )}
+            {person && isUnnamed(entry.name) ? (
+              <View style={{ marginTop: 6 }}>
+                <TextLink label="Add a name" onPress={() => setNaming(true)} />
+              </View>
+            ) : null}
             <Txt weight="bold" size={48} color={incoming ? colors.positive : colors.ink} style={{ letterSpacing: -1.5, marginTop: 6 }}>
               {signed(entry)}
             </Txt>
@@ -73,6 +90,7 @@ export default function Receipt() {
           }
         />
       </View>
+      <NameSheet person={naming && person ? { address: person, name: entry.name } : null} onClose={() => setNaming(false)} />
     </Screen>
   )
 }

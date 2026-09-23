@@ -1,19 +1,27 @@
-import { apiUrl, merchantApiKey, webUrl } from './config'
+import { apiUrl, webUrl } from './config'
 
 /**
  * The Kova API, from both sides of a payment.
  *
  * The payer side (checkout) needs no key: holding a charge's id is enough to see what to pay.
- * The merchant side (terminal) uses the merchant key from development config.
+ * The merchant side (terminal) uses the device key this phone received when it was paired.
+ * A merchant's master key never lives on a phone.
  */
 
+/** The paired terminal's device key, set once pairing is loaded. */
+let deviceKey: string | null = null
+export function setDeviceKey(key: string | null) {
+  deviceKey = key
+}
+
 async function request<T>(path: string, init: RequestInit & { merchant?: boolean } = {}): Promise<T> {
+  const key = deviceKey
   const { merchant, ...rest } = init
   const response = await fetch(`${apiUrl}${path}`, {
     ...rest,
     headers: {
       'content-type': 'application/json',
-      ...(merchant && merchantApiKey ? { authorization: `Bearer ${merchantApiKey}` } : {}),
+      ...(merchant && key ? { authorization: `Bearer ${key}` } : {}),
       ...rest.headers,
     },
   })
@@ -69,7 +77,6 @@ export interface Summary {
   [key: string]: unknown
 }
 
-export const hasMerchantKey = Boolean(merchantApiKey)
 
 export const createCharge = (amount: string, options: { reference?: string; metadata?: Record<string, unknown> } = {}) =>
   request<PaymentIntent>('/v1/payment_intents', {
@@ -87,6 +94,17 @@ export const getSummary = () => request<Summary>('/v1/summary', { merchant: true
 
 export const listCharges = (limit = 25) =>
   request<{ data: PaymentIntent[] }>(`/v1/payment_intents?limit=${limit}`, { merchant: true }).then((r) => r.data)
+
+export interface PairedTerminal {
+  id: string
+  name: string
+  merchant: { id: string; name: string }
+  key: string
+}
+
+/** Redeems a pairing code from the dashboard for this phone's own terminal key. */
+export const pairTerminal = (code: string, name: string, device: Record<string, unknown>) =>
+  request<PairedTerminal>('/v1/terminals/pair', { method: 'POST', body: JSON.stringify({ code, name, device }) })
 
 /** What the terminal's QR encodes: the public pay page, which Kova Pay also opens directly. */
 export const payLinkFor = (id: string) => `${webUrl}/pay/${id}`

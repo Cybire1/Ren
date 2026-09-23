@@ -2,7 +2,7 @@ import * as LocalAuthentication from 'expo-local-authentication'
 import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { type Address, getAddress, type Hex, isAddressEqual } from 'viem'
+import { type Address, getAddress, type Hex, isAddress, isAddressEqual } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { confirmCheckout, type Checkout } from './api'
 import { confirmWithFace } from './auth'
@@ -57,6 +57,9 @@ export interface Contact {
   currency?: DisplayCurrency
 }
 
+/** A contact we only know by address: shown as "0x12ab…cdef" until you give them a name. */
+export const isUnnamed = (name: string) => name.startsWith('0x')
+
 export interface Arrival {
   amount: bigint
   name: string
@@ -81,6 +84,8 @@ interface Wallet {
   payCheckout: (checkout: Checkout) => Promise<Entry>
   send: (to: Contact, amount: bigint, note?: string) => Promise<Entry>
   rememberContact: (contact: Contact) => Promise<void>
+  /** Your own name for someone. It replaces their address everywhere, past payments included. */
+  renameContact: (address: Address, name: string) => Promise<void>
   signOut: () => Promise<void>
 }
 
@@ -115,7 +120,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       // Show the last known balance at once; the chain confirms it moments later.
       if (b !== null) setBalance(BigInt(b))
       setActivity(a)
-      setSavedContacts(c)
+      setSavedContacts(c.filter((x) => isAddress(x.address)))
       setProfile(p)
       setStatus(p ? 'ready' : 'none')
     })()
@@ -160,6 +165,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }
     return [...seen.values()]
   }, [activity, savedContacts])
+
+  // The names you gave people, applied to every payment with them, past ones included.
+  const named = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const c of savedContacts) if (!isUnnamed(c.name)) map.set(c.address.toLowerCase(), c.name)
+    return map
+  }, [savedContacts])
+  const shownActivity = useMemo(
+    () =>
+      activity.map((e) => {
+        const name = (e.kind === 'sent' || e.kind === 'received') && e.address ? named.get(e.address.toLowerCase()) : undefined
+        return name && name !== e.name ? { ...e, name } : e
+      }),
+    [activity, named],
+  )
 
   const nameFor = useCallback(
     (address: Address) => contacts.find((c) => isAddressEqual(c.address, address))?.name,
@@ -321,7 +341,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const rememberContact = useCallback(async (contact: Contact) => {
     setSavedContacts((prev) => {
-      const next = [contact, ...prev.filter((c) => !isAddressEqual(c.address, contact.address))].slice(0, 50)
+      const before = prev.find((c) => isAddressEqual(c.address, contact.address))
+      // Paying someone by address must not wipe the name you gave them.
+      const name = isUnnamed(contact.name) && before && !isUnnamed(before.name) ? before.name : contact.name
+      const merged = { ...before, ...contact, name, currency: contact.currency ?? before?.currency }
+      const next = [merged, ...prev.filter((c) => !isAddressEqual(c.address, contact.address))].slice(0, 50)
+      void save(CONTACTS, next)
+      return next
+    })
+  }, [])
+
+  const renameContact = useCallback(async (address: Address, name: string) => {
+    const clean = name.trim()
+    if (!clean || !isAddress(address)) return
+    setSavedContacts((prev) => {
+      const before = prev.find((c) => isAddressEqual(c.address, address))
+      const next = before
+        ? prev.map((c) => (c === before ? { ...c, name: clean } : c))
+        : [{ address, name: clean }, ...prev].slice(0, 50)
       void save(CONTACTS, next)
       return next
     })
@@ -364,7 +401,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     status,
     profile,
     balance,
-    activity,
+    activity: shownActivity,
     contacts,
     arrival,
     clearArrival: () => setArrival(null),
@@ -375,6 +412,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     payCheckout,
     send,
     rememberContact,
+    renameContact,
     signOut,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>

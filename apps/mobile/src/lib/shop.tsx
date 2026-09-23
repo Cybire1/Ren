@@ -1,5 +1,6 @@
 import { createContext, type ReactNode, useContext, useEffect, useState } from 'react'
-import { getSummary, hasMerchantKey } from './api'
+import { getSummary } from './api'
+import { useTerminal } from './terminal'
 import type { DisplayCurrency } from './money'
 import { load, save } from './storage'
 
@@ -17,13 +18,17 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   const [name, setName] = useState('Your shop')
   const [currency, setCurrencyState] = useState<DisplayCurrency>('USD')
 
+  const { paired, canCharge } = useTerminal()
   useEffect(() => {
     void load<DisplayCurrency>('kova.shop.currency', 'USD').then(setCurrencyState)
-    if (hasMerchantKey)
+  }, [])
+  useEffect(() => {
+    if (paired) setName(paired.merchantName)
+    if (canCharge)
       getSummary()
         .then((s) => setName(s.merchant.name))
         .catch(() => {})
-  }, [])
+  }, [paired, canCharge])
 
   const setCurrency = (c: DisplayCurrency) => {
     setCurrencyState(c)

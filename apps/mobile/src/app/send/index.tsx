@@ -7,10 +7,11 @@ import { type Address, isAddressEqual } from 'viem'
 import { parseScanned } from '@/lib/links'
 import { formatUsd } from '@/lib/money'
 import { colors, fonts } from '@/lib/theme'
-import { type Contact, type Entry, useWallet } from '@/lib/wallet'
+import { type Contact, type Entry, isUnnamed, useWallet } from '@/lib/wallet'
 import { Avatar, Flyer } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
+import { NameSheet } from '@/ui/NameSheet'
 import { Header, Screen, Txt } from '@/ui/primitives'
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
@@ -40,6 +41,7 @@ export default function PickPerson() {
   const { contacts, activity } = useWallet()
   const [text, setText] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
+  const [naming, setNaming] = useState<Contact | null>(null)
 
   const people = useMemo(() => {
     const lastWith = (a: Address) => activity.find((e) => e.address && isAddressEqual(e.address, a))
@@ -57,10 +59,16 @@ export default function PickPerson() {
     router.push({ pathname: '/send/[to]', params: { to: c.address, name: c.name, cur: c.currency ?? '' } })
   }
 
+  const name = (c: Contact) => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+    setNaming(c)
+  }
+
   const go = (value: string) => {
     const scanned = parseScanned(value)
     if (!scanned) return setProblem('That isn’t a Kova link or a wallet address.')
     if (scanned.kind === 'charge') return router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
+    if (scanned.kind === 'pair') return router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
     router.push({
       pathname: '/send/[to]',
       params: { to: scanned.address, name: scanned.name ?? '', cur: scanned.currency ?? '', amount: scanned.amount ?? '', note: scanned.note ?? '' },
@@ -155,10 +163,18 @@ export default function PickPerson() {
               </Txt>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20 }} contentContainerStyle={{ paddingHorizontal: 20, gap: 14 }}>
                 {people.slice(0, 6).map((p) => (
-                  <Pressable key={p.address} accessibilityRole="button" accessibilityLabel={`Send to ${p.name}`} onPress={() => open(p)} style={styles.recent}>
+                  <Pressable
+                    key={p.address}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Send to ${p.name}`}
+                    accessibilityHint="Hold to rename"
+                    onPress={() => open(p)}
+                    onLongPress={() => name(p)}
+                    style={styles.recent}
+                  >
                     <Avatar name={p.name} id={p.address} size={68} />
                     <Txt weight="semi" size={13} numberOfLines={1}>
-                      {p.name.startsWith('0x') ? p.address.slice(0, 6) : p.name.split(' ')[0]}
+                      {isUnnamed(p.name) ? p.address.slice(0, 6) : p.name.split(' ')[0]}
                     </Txt>
                   </Pressable>
                 ))}
@@ -178,18 +194,25 @@ export default function PickPerson() {
                     key={p.address}
                     accessibilityRole="button"
                     accessibilityLabel={`Send to ${p.name}`}
+                    accessibilityHint="Hold to rename"
                     onPress={() => open(p)}
+                    onLongPress={() => name(p)}
                     style={({ pressed }) => [styles.row, i < shown.length - 1 && styles.rule, pressed && { backgroundColor: colors.sunken }]}
                   >
                     <Avatar name={p.name} id={p.address} size={46} />
                     <View style={{ flex: 1 }}>
                       <Txt weight="semi" size={16} numberOfLines={1}>
-                        {p.name.startsWith('0x') ? short(p.address) : p.name}
+                        {isUnnamed(p.name) ? short(p.address) : p.name}
                       </Txt>
                       <Txt size={13} color={colors.muted} numberOfLines={1}>
                         {story(p.last)}
                       </Txt>
                     </View>
+                    {isUnnamed(p.name) ? (
+                      <Pressable accessibilityRole="button" accessibilityLabel="Add a name" hitSlop={6} onPress={() => name(p)} style={styles.nameChip}>
+                        <Icon name="pen" size={15} />
+                      </Pressable>
+                    ) : null}
                     <View style={styles.chip}>
                       <Txt weight="semi" size={13} color={colors.white}>
                         Send
@@ -206,6 +229,7 @@ export default function PickPerson() {
           ) : null}
         </ScrollView>
       </KeyboardAvoidingView>
+      <NameSheet person={naming} onClose={() => setNaming(null)} />
     </Screen>
   )
 }
@@ -263,6 +287,7 @@ const styles = StyleSheet.create({
   list: { borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
   rule: { borderBottomWidth: 1, borderColor: colors.sunken },
+  nameChip: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.sunken, alignItems: 'center', justifyContent: 'center' },
   chip: { height: 32, paddingHorizontal: 14, borderRadius: 16, backgroundColor: colors.coral, justifyContent: 'center' },
   empty: { alignItems: 'center', paddingTop: 30, paddingHorizontal: 20 },
 })

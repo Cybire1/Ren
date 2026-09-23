@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
-import { KeyboardAvoidingView, Platform, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native'
+import { KeyboardAvoidingView, Platform, Pressable, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native'
 import { getAddress, isAddress } from 'viem'
 import {
   applyKey,
@@ -15,9 +15,11 @@ import {
   toBase,
 } from '@/lib/money'
 import { colors, fonts } from '@/lib/theme'
-import { type Entry, useWallet } from '@/lib/wallet'
+import { type Entry, isUnnamed, useWallet } from '@/lib/wallet'
 import { Avatar, CitiesScene, Flyer, sendScene } from '@/ui/art'
+import { Icon } from '@/ui/Icon'
 import { Keypad } from '@/ui/Keypad'
+import { NameSheet } from '@/ui/NameSheet'
 import { Burst, Flight } from '@/ui/motion'
 import { Stage as KoviStage } from '@/ui/Stage'
 import { Header, PillButton, Rise, Screen, Sticker, TextLink, Txt } from '@/ui/primitives'
@@ -29,14 +31,16 @@ type Stage = 'amount' | 'review' | 'sending' | 'sent' | 'problem'
  * their own currency is shown as a reference, never as a conversion Kova performs.
  */
 export default function SendTo() {
-  const params = useLocalSearchParams<{ to: string; name?: string; cur?: string; amount?: string; note?: string }>()
-  const { profile, balance, send } = useWallet()
+  const params = useLocalSearchParams<{ to: string; name?: string; cur?: string; amount?: string; note?: string; rename?: string }>()
+  const { profile, balance, send, contacts } = useWallet()
   const { width } = useWindowDimensions()
   const [typed, setTyped] = useState(params.amount ?? '')
   const [note, setNote] = useState(params.note ?? '')
   const [stage, setStage] = useState<Stage>(params.amount ? 'review' : 'amount')
   const [entry, setEntry] = useState<Entry | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
+  // `rename=1` opens straight into naming them, e.g. from a link that says who someone is.
+  const [naming, setNaming] = useState(params.rename === '1')
 
   if (!params.to || !isAddress(params.to))
     return (
@@ -47,7 +51,8 @@ export default function SendTo() {
     )
 
   const address = getAddress(params.to)
-  const name = params.name || `${address.slice(0, 6)}…${address.slice(-4)}`
+  const saved = contacts.find((c) => c.address.toLowerCase() === address.toLowerCase())?.name
+  const name = (saved && !isUnnamed(saved) ? saved : params.name) || `${address.slice(0, 6)}…${address.slice(-4)}`
   const first = name.split(' ')[0]
   const theirs = (displayCurrencies as readonly string[]).includes(params.cur ?? '') ? (params.cur as DisplayCurrency) : null
   const dollars = typed === '' ? 0 : Number(typed)
@@ -241,12 +246,21 @@ export default function SendTo() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Header
           right={
-            <View style={styles.who}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={isUnnamed(name) ? 'Add a name' : `Rename ${name}`}
+              hitSlop={8}
+              onPress={() => setNaming(true)}
+              style={styles.who}
+            >
               <Avatar name={name} id={address} size={36} />
-            </View>
+              <View style={styles.pen}>
+                <Icon name={isUnnamed(name) ? 'plus' : 'pen'} size={10} color={colors.white} />
+              </View>
+            </Pressable>
           }
           title={`To ${first}`}
-          subtitle={`${address.slice(0, 6)}…${address.slice(-4)}`}
+          subtitle={isUnnamed(name) ? 'Tap their face to add a name' : `${address.slice(0, 6)}…${address.slice(-4)}`}
         />
         <View style={styles.entry}>
           <Txt weight="semi" size={72} style={[styles.big, typed === '' && { color: '#B4B9B8' }]} numberOfLines={1} adjustsFontSizeToFit>
@@ -281,6 +295,7 @@ export default function SendTo() {
             Balance {formatUsd(balance)} ({baseToNumber(balance) > 0 ? 'send less' : 'add money first'})
           </Txt>
         ) : null}
+        <NameSheet person={naming ? { address, name } : null} onClose={() => setNaming(false)} />
       </KeyboardAvoidingView>
     </Screen>
   )
@@ -306,6 +321,19 @@ const styles = StyleSheet.create({
   },
   feeRow: { flexDirection: 'row', justifyContent: 'space-between', paddingHorizontal: 28, marginTop: 18 },
   who: { marginRight: 4 },
+  pen: {
+    position: 'absolute',
+    right: -3,
+    bottom: -3,
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    borderWidth: 2,
+    borderColor: colors.paper,
+    backgroundColor: colors.coral,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   entry: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 24 },
   big: { letterSpacing: -2.5 },
   noteInput: {

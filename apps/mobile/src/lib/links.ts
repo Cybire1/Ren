@@ -11,6 +11,7 @@ import { displayCurrencies } from './money'
  */
 export type Scanned =
   | { kind: 'charge'; id: string }
+  | { kind: 'pair'; code: string }
   | {
       kind: 'person'
       address: Address
@@ -22,6 +23,8 @@ export type Scanned =
 
 export function parseScanned(text: string): Scanned | null {
   const value = text.trim()
+  const pairing = /^kova:\/\/pair\/([0-9A-Za-z-]{4,12})$/.exec(value)
+  if (pairing?.[1]) return { kind: 'pair', code: pairing[1] }
   const charge = /\/pay\/([A-Za-z0-9_]+)/.exec(value) ?? /^kova:\/\/pay\/([A-Za-z0-9_]+)/.exec(value)
   if (charge?.[1]) return { kind: 'charge', id: charge[1] }
 

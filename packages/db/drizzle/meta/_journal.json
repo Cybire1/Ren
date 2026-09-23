@@ -8,6 +8,13 @@
       "when": 1789868208105,
       "tag": "0000_cynical_texas_twister",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1790205226402,
+      "tag": "0001_terminal_pairings",
+      "breakpoints": true
     }
   ]
 }

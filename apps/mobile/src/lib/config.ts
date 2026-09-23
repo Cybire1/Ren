@@ -7,9 +7,6 @@ import { getNetwork, getToken, type NetworkId } from '@kova/tempo'
 export const apiUrl = process.env.EXPO_PUBLIC_KOVA_API_URL ?? 'http://localhost:4000'
 export const webUrl = process.env.EXPO_PUBLIC_KOVA_WEB_URL ?? 'http://localhost:3000'
 
-/** Development only: a merchant key for Terminal mode. A shipped terminal pairs for a device token. */
-export const merchantApiKey = process.env.EXPO_PUBLIC_KOVA_API_KEY
-
 export const networkId: NetworkId =
   process.env.EXPO_PUBLIC_KOVA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
 export const network = getNetwork(networkId)

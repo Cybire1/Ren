@@ -10,6 +10,7 @@ import { checkoutRoutes } from './routes/checkout.js'
 import { healthRoutes } from './routes/health.js'
 import { intentRoutes } from './routes/intents.js'
 import { reportRoutes } from './routes/reports.js'
+import { terminalRoutes } from './routes/terminals.js'
 import { startWatcher } from './workers/watcher.js'
 
 export const app = new Hono()
@@ -20,6 +21,7 @@ app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpo
 app.route('/health', healthRoutes)
 app.route('/v1/checkout', checkoutRoutes)
 app.route('/v1/payment_intents', intentRoutes)
+app.route('/v1/terminals', terminalRoutes)
 app.route('/v1', reportRoutes)
 
 // Tempo RPC with Kova sponsorship. Apps and terminals point their wallet transport here.

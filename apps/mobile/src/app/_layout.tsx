@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { PrefsProvider, usePrefs } from '@/lib/prefs'
+import { TerminalProvider } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { useWallet, WalletProvider } from '@/lib/wallet'
 
@@ -45,6 +46,7 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <PrefsProvider>
+          <TerminalProvider>
           <WalletProvider>
             <StatusBar style="dark" />
             <ArrivalWatcher />
@@ -56,6 +58,7 @@ export default function RootLayout() {
               <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
             </Stack>
           </WalletProvider>
+          </TerminalProvider>
         </PrefsProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

@@ -1,4 +1,4 @@
-import { router } from 'expo-router'
+import { Redirect, router } from 'expo-router'
 import { useState } from 'react'
 import { Pressable, StyleSheet, TextInput, View } from 'react-native'
 import { createCharge } from '@/lib/api'
@@ -8,6 +8,7 @@ import { colors, fonts } from '@/lib/theme'
 import { Keypad } from '@/ui/Keypad'
 import { PillButton, RoundButton, Screen, Txt } from '@/ui/primitives'
 import { useShop } from '@/lib/shop'
+import { useTerminal } from '@/lib/terminal'
 
 const currencies: DisplayCurrency[] = ['USD', 'EUR', 'GBP', 'NGN']
 
@@ -17,6 +18,7 @@ const currencies: DisplayCurrency[] = ['USD', 'EUR', 'GBP', 'NGN']
  */
 export default function Charge() {
   const shop = useShop()
+  const terminal = useTerminal()
   const { setMode } = usePrefs()
   const [typed, setTyped] = useState('')
   const [note, setNote] = useState('')
@@ -47,6 +49,9 @@ export default function Charge() {
     }
   }
 
+  // An unpaired phone has nothing to charge with: send it to pairing.
+  if (terminal.ready && !terminal.canCharge) return <Redirect href="/terminal/setup" />
+
   return (
     <Screen bg={colors.tealSoft}>
       <View style={styles.header}>
@@ -56,7 +61,7 @@ export default function Charge() {
             {shop.name}
           </Txt>
           <Txt size={13} color={colors.onTint}>
-            Kova Terminal
+            {terminal.paired?.name ?? 'Kova Terminal'}
           </Txt>
         </View>
         <RoundButton icon="chart" label="Today's sales" onPress={() => router.push('/terminal/today')} />
@@ -76,6 +81,21 @@ export default function Charge() {
               Switch to my wallet
             </Txt>
           </Pressable>
+          {terminal.paired ? (
+            <Pressable
+              accessibilityRole="button"
+              onPress={async () => {
+                await terminal.unpair()
+                setMenu(false)
+                router.replace('/terminal/setup')
+              }}
+              style={styles.menuItem}
+            >
+              <Txt weight="semi" size={16} color={colors.danger}>
+                Unpair {terminal.paired.name}
+              </Txt>
+            </Pressable>
+          ) : null}
         </View>
       ) : null}
 
