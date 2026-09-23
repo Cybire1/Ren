@@ -21,6 +21,11 @@ This is the running log required by the brief (§17). Newest entries go at the t
 
 ## 2026-09-23
 
+### D-015 · Kova stays on Tempo (Decided)
+**Decision:** Settlement, fee sponsorship and card keys stay on Tempo, and Kova enters the Crypto World's Fair Tempo track. The earlier mention of Monad is not pursued for the hackathon.
+
+**Why:** the whole payment path is built and proven on Tempo (D-009, D-014). Moving would mean rebuilding sponsorship, access keys and settlement weeks before the deadline, for no gain in the track we are entered in.
+
 ### D-014 · Kova Pay's wallet key is generated on the phone and gated by Face ID (Decided for the hackathon, revisit for mainnet)
 **Decision:** Kova Pay creates a secp256k1 key on the device and stores it in the iOS Keychain / Android Keystore with `requireAuthentication`, so reading it (every payment, every send) needs Face ID. The key never leaves the phone. Payments to merchants go through Kova's relay (fee sponsored, D-003); person-to-person sends pay Tempo's fee (under $0.01) from the sender's own dollars.
 

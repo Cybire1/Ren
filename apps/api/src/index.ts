@@ -1,4 +1,5 @@
 import { serve } from '@hono/node-server'
+import { runMigrations } from '@kova/db'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { feePayerAddress, network } from './chain.js'
@@ -36,6 +37,8 @@ if (relay)
   })
 
 if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')) {
+  await runMigrations(config.DATABASE_URL)
+
   // The watcher catches payments Kova did not submit, such as QR payments from any wallet.
   void startWatcher().catch((error) => console.error('[watcher] failed to start', error))
 
