@@ -1,5 +1,7 @@
 /**
- * Kova's illustrations: the painted artwork in assets/art, placed and labelled by the app.
+ * Kova's illustrations: the generated artwork in assets/art, used as painted and placed by the
+ * app. Positions below (flight routes, the receipt, the card bodies, where Kovi's feet land)
+ * were measured from these exact images; re-measure if an image is regenerated.
  *
  * Kovi, a coin with a face, carries the payment story: he rides the plane when money goes
  * abroad, catches coins when it arrives, cheers on the receipt when a shop is paid and naps
@@ -8,18 +10,27 @@
  */
 import { Image } from 'expo-image'
 import { View } from 'react-native'
-import Svg, { Circle, Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
-import { Kovi } from './kovi'
 import { Wordmark } from './Logo'
 import { Txt } from './primitives'
 
 const art = {
+  kovi: {
+    wave: require('../../assets/art/kovi-wave.png'),
+    cheer: require('../../assets/art/kovi-cheer.png'),
+    catch: require('../../assets/art/kovi-catch.png'),
+    key: require('../../assets/art/kovi-key.png'),
+    sleep: require('../../assets/art/kovi-sleep.png'),
+    ride: require('../../assets/art/kovi-ride.png'),
+    oops: require('../../assets/art/kovi-oops.png'),
+  },
+  peek: require('../../assets/art/kovi-peek.png'),
   welcome: require('../../assets/art/scene-welcome.png'),
   send: require('../../assets/art/scene-send.png'),
+  faceid: require('../../assets/art/scene-faceid.png'),
   terminal: require('../../assets/art/scene-paid-terminal.png'),
   cardActive: require('../../assets/art/card-active.png'),
-  cardFrozen: require('../../assets/art/card-frozen-body.png'),
+  cardFrozen: require('../../assets/art/card-frozen.png'),
   plane: require('../../assets/art/plane.png'),
   snowflakes: require('../../assets/art/snowflakes.png'),
   flakes: [
@@ -38,11 +49,11 @@ const art = {
     '₦': require('../../assets/art/coin-ngn.png'),
   } as Record<string, number>,
   sparkles: {
-    coin: require('../../assets/art/sparkle-mustard.png'),
-    white: require('../../assets/art/sparkle-white.png'),
-    soft: require('../../assets/art/sparkle-orchid.png'),
-    coral: require('../../assets/art/sparkle-tangerine.png'),
-  } as Record<string, number>,
+    gold: require('../../assets/art/sparkle-4.png'),
+    white: require('../../assets/art/sparkle-5.png'),
+    orchid: require('../../assets/art/sparkle-8.png'),
+    orange: require('../../assets/art/sparkle-11.png'),
+  },
   faces: [
     require('../../assets/art/avatar-1.png'),
     require('../../assets/art/avatar-2.png'),
@@ -50,6 +61,7 @@ const art = {
     require('../../assets/art/avatar-4.png'),
     require('../../assets/art/avatar-5.png'),
     require('../../assets/art/avatar-6.png'),
+    require('../../assets/art/avatar-7.png'),
   ],
 }
 
@@ -57,32 +69,50 @@ function Art({ source, width, height }: { source: number; width: number; height:
   return <Image source={source} style={{ width, height }} contentFit="contain" accessible={false} />
 }
 
-export { Floor, Kovi, KoviPeek, type KoviPose, koviFeet } from './kovi'
+export type KoviPose = keyof typeof art.kovi
 
-/** The peek artwork's edge is its bottom line. */
-export const peekEdge = 1
+/** Kovi in a square box of `size` points. Every pose is painted on the same 1024 canvas. */
+export function Kovi({ pose = 'wave', size = 120 }: { pose?: KoviPose; size?: number }) {
+  return <Art source={art.kovi[pose]} width={size} height={size} />
+}
+
+/** Where the bottom of Kovi's shoes sits in each pose, as a fraction of his box. */
+const FEET: Record<KoviPose, number> = {
+  wave: 981,
+  cheer: 934,
+  catch: 897,
+  key: 984,
+  sleep: 790,
+  ride: 806,
+  oops: 961,
+}
+export const koviFeet = (pose: KoviPose) => FEET[pose] / 1024
 
 /** Kovi riding his paper plane, facing right so a flight path can steer him. */
 export function Flyer({ size = 120 }: { size?: number }) {
-  return (
-    <View style={{ width: size, height: size }}>
-      <View style={{ position: 'absolute', left: size * 0.02, top: size * 0.2 }}>
-        <Art source={art.plane} width={size * 0.96} height={size * 0.96} />
-      </View>
-      {/* Seated: his seat line meets the plane's back, centred over its body. */}
-      <View style={{ position: 'absolute', left: size * 0.12, top: size * 0.06 }}>
-        <Kovi pose="ride" size={size * 0.72} />
-      </View>
-    </View>
-  )
+  return <Art source={art.kovi.ride} width={size} height={size} />
 }
+
+/** Kovi peeking over an edge. The edge line sits `peekEdge` of the way down the image. */
+export function KoviPeek({ width = 150 }: { width?: number }) {
+  return <Art source={art.peek} width={width} height={width / 2} />
+}
+export const peekEdge = 398 / 512
 
 export function Coin({ size = 44, symbol = '$' }: { size?: number; symbol?: string }) {
   return <Art source={art.coins[symbol] ?? art.coins.$} width={size} height={size} />
 }
 
+/** A painted sparkle. `fill` picks the nearest of the painted colours. */
 export function Sparkle({ size = 28, fill = colors.yellow }: { size?: number; fill?: string }) {
-  const key = fill === colors.white ? 'white' : fill === colors.coral ? 'coral' : fill === colors.coralSoft && fill !== colors.yellow ? 'soft' : 'coin'
+  const key =
+    fill === colors.white || fill === colors.surface
+      ? 'white'
+      : fill === colors.coral || fill === colors.coralDeep
+        ? 'orange'
+        : fill === colors.coralSoft && fill !== colors.yellow
+          ? 'orchid'
+          : 'gold'
   return <Art source={art.sparkles[key]} width={size} height={size} />
 }
 
@@ -104,16 +134,16 @@ type Route = { from: Point; via: Point; to: Point }
 
 /**
  * Welcome: a little planet with a shop and a home, and a dotted route between them. The
- * route is measured from the artwork, so Kovi's flight follows the painted dots.
+ * route is fitted to the painted dots, so Kovi's flight follows them.
  */
 export const welcomeScene = {
   aspect: 960 / 1170,
   route(width: number, top: number): Route {
     const s = width / 1170
     return {
-      from: { x: 252 * s, y: top + 494 * s },
-      via: { x: 582 * s, y: top + 97 * s },
-      to: { x: 912 * s, y: top + 481 * s },
+      from: { x: 323 * s, y: top + 471 * s },
+      via: { x: 593 * s, y: top + 284 * s },
+      to: { x: 863 * s, y: top + 492 * s },
     }
   },
 }
@@ -121,15 +151,15 @@ export function PlanetScene({ width }: { width: number }) {
   return <Art source={art.welcome} width={width} height={width * welcomeScene.aspect} />
 }
 
-/** Send: two skylines and the dotted route between them, measured from the artwork. */
+/** Send: two skylines and the dotted route between them, fitted to the painted dots. */
 export const sendScene = {
   aspect: 510 / 1026,
   route(width: number, left: number, top: number): Route {
     const s = width / 1026
     return {
-      from: { x: left + 242 * s, y: top + 203 * s },
-      via: { x: left + 510 * s, y: top - 79 * s },
-      to: { x: left + 777 * s, y: top + 197 * s },
+      from: { x: left + 150 * s, y: top + 254 * s },
+      via: { x: left + 521 * s, y: top - 98 * s },
+      to: { x: left + 891 * s, y: top + 265 * s },
     }
   },
 }
@@ -137,57 +167,16 @@ export function CitiesScene({ width }: { width: number }) {
   return <Art source={art.send} width={width} height={width * sendScene.aspect} />
 }
 
-/** Face ID setup: Kovi inside a scan frame, holding up the key to the wallet. */
+/** Face ID setup: Kovi inside the scan frame, holding up the key to the wallet. */
 export function KeyScene({ size = 300 }: { size?: number }) {
-  const h = (size * 900) / 1080
-  const r = h * 0.42
-  return (
-    <View style={{ width: size, height: h }}>
-      <Svg width={size} height={h} viewBox={`${-size / 2} ${-h / 2} ${size} ${h}`}>
-        <Circle cx={0} cy={0} r={r} fill={colors.surface} stroke={colors.ink} strokeWidth={2.6} />
-        <Path
-          d={frame(r * 0.62)}
-          fill="none"
-          stroke={colors.ink}
-          strokeWidth={5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-      </Svg>
-      <View style={{ position: 'absolute', left: size / 2 - r * 0.8, top: h / 2 - r * 0.84 }}>
-        <Kovi pose="key" size={r * 1.6} />
-      </View>
-      <View style={{ position: 'absolute', left: size * 0.06, top: h * 0.08 }}>
-        <Sparkle size={28} fill={colors.yellow} />
-      </View>
-      <View style={{ position: 'absolute', right: size * 0.06, top: h * 0.3 }}>
-        <Sparkle size={22} fill={colors.white} />
-      </View>
-      <View style={{ position: 'absolute', right: size * 0.1, bottom: h * 0.06 }}>
-        <Sparkle size={30} fill={colors.coral} />
-      </View>
-    </View>
-  )
-}
-
-/** Four rounded corner brackets of a face-scan frame, `half` from the centre. */
-function frame(half: number) {
-  const a = half
-  const b = half * 0.55
-  return [
-    `M${-a} ${-b} L${-a} ${-a} L${-b} ${-a}`,
-    `M${b} ${-a} L${a} ${-a} L${a} ${-b}`,
-    `M${a} ${b} L${a} ${a} L${b} ${a}`,
-    `M${-b} ${a} L${-a} ${a} L${-a} ${b}`,
-  ].join(' ')
+  return <Art source={art.faceid} width={size} height={(size * 900) / 1080} />
 }
 
 /**
- * Paid: the terminal printing a receipt, with the amount set on it by the app. The receipt's
- * top edge (where Kovi stands) and the blank strip under its printed lines were measured
- * from the artwork.
+ * Paid: the terminal printing a receipt, with the amount set on the receipt's blank lower half.
+ * `top` is the receipt's top edge, where Kovi stands.
  */
-export const receipt = { top: 54 / 750, amountY: 252 / 750, left: 224 / 720, width: 271 / 720 }
+export const receipt = { top: 34 / 750, amountY: 219 / 750, left: 277 / 720, width: 165 / 720 }
 export function ReceiptTerminal({ amount, width = 240 }: { amount: string; width?: number }) {
   const height = (width * 750) / 720
   return (
@@ -196,14 +185,17 @@ export function ReceiptTerminal({ amount, width = 240 }: { amount: string; width
       <View
         style={{
           position: 'absolute',
-          top: height * receipt.amountY - 12,
+          top: height * receipt.amountY - 16,
           left: width * receipt.left,
           width: width * receipt.width,
           alignItems: 'center',
         }}
       >
-        <Txt weight="bold" size={Math.round(width / 16)} numberOfLines={1} adjustsFontSizeToFit>
-          PAID {amount}
+        <Txt weight="bold" size={Math.round(width / 26)} color={colors.ink}>
+          PAID
+        </Txt>
+        <Txt weight="bold" size={Math.round(width / 18)} numberOfLines={1} adjustsFontSizeToFit color={colors.ink}>
+          {amount}
         </Txt>
       </View>
     </View>
@@ -211,50 +203,48 @@ export function ReceiptTerminal({ amount, width = 240 }: { amount: string; width
 }
 
 /**
- * The Kova Card, with the wordmark and number set by the app. `frozen` swaps in the frosted
- * card and puts Kovi to sleep on its top edge, with a few flakes around him. Both card images
- * are cropped so the card body starts 4px in.
+ * The Kova Card, with the wordmark and number set by the app. `width` is the card body's width.
+ * Frozen, it is the frosted card with Kovi asleep on top; the painted card bodies were
+ * measured so text lands on them.
  */
 export function CardArt({ width = 300, last4, frozen }: { width?: number; last4: string; frozen?: boolean }) {
-  const card = { x: 4, y: 4, w: 887, h: 566 }
-  const s = width / card.w
-  const img = { width: 897 * s, height: 576 * s }
-  const scale = width / 300
-  const kovi = width * 0.42
-  // Headroom above a frozen card for Kovi, whose body rests on the card's top edge.
-  const room = frozen ? kovi * 0.66 : 0
-  return (
-    <View style={{ width: img.width, height: img.height + room }}>
-      <View style={{ position: 'absolute', top: room }}>
-        <Art source={frozen ? art.cardFrozen : art.cardActive} width={img.width} height={img.height} />
-        <View style={{ position: 'absolute', left: (card.x + 70) * s, top: (card.y + 44) * s }}>
-          <Wordmark height={Math.round(24 * scale)} coin={frozen ? colors.surface : colors.yellow} />
+  if (frozen) {
+    // Frosted card: body 749×355 at (225, 349) inside a 1200×760 image, Kovi and snow above.
+    const bodyW = width * 0.84
+    const s = bodyW / 749
+    const left = (width - bodyW) / 2
+    return (
+      <View style={{ width, height: 720 * s }}>
+        <View style={{ position: 'absolute', left: left - 225 * s, top: 0 }}>
+          <Art source={art.cardFrozen} width={1200 * s} height={760 * s} />
         </View>
         <Txt
           weight="semi"
-          size={Math.round(17 * scale)}
-          style={{ position: 'absolute', left: (card.x + 70) * s, top: (card.y + card.h - 118) * s, letterSpacing: 3 }}
+          size={Math.round(bodyW * 0.052)}
+          style={{ position: 'absolute', left: left + 48 * s, top: (704 - 78) * s, letterSpacing: 3 }}
         >
           •••• {last4}
         </Txt>
       </View>
-      {frozen ? (
-        <>
-          <View style={{ position: 'absolute', left: img.width / 2 - kovi / 2, top: room - kovi * 0.7 }}>
-            <Kovi pose="sleep" size={kovi} />
-          </View>
-          {[
-            { x: 0.08, y: 0.1, size: 20, i: 0 },
-            { x: 0.26, y: 0.45, size: 14, i: 2 },
-            { x: 0.74, y: 0.2, size: 16, i: 3 },
-            { x: 0.9, y: 0.55, size: 22, i: 1 },
-          ].map((f) => (
-            <View key={f.i} style={{ position: 'absolute', left: f.x * img.width, top: f.y * room }}>
-              <Flake i={f.i} size={f.size} />
-            </View>
-          ))}
-        </>
-      ) : null}
+    )
+  }
+  // Normal card: body 1092×638 at (54, 126) inside a 1200×900 image.
+  const s = width / 1092
+  return (
+    <View style={{ width, height: 638 * s }}>
+      <View style={{ position: 'absolute', left: -54 * s, top: -126 * s }}>
+        <Art source={art.cardActive} width={1200 * s} height={900 * s} />
+      </View>
+      <View style={{ position: 'absolute', left: 76 * s, top: 70 * s }}>
+        <Wordmark height={Math.round(width * 0.085)} coin={colors.yellow} />
+      </View>
+      <Txt
+        weight="semi"
+        size={Math.round(width * 0.058)}
+        style={{ position: 'absolute', left: 76 * s, top: 638 * s - width * 0.14, letterSpacing: 3 }}
+      >
+        •••• {last4}
+      </Txt>
     </View>
   )
 }
@@ -274,14 +264,7 @@ function hash(text: string) {
  * same person always looks the same, whatever they are called), else from their name.
  */
 export function Avatar({ name, id, size = 56 }: { name: string; id?: string; size?: number }) {
-  return (
-    <Image
-      source={art.faces[hash(id || name || '?') % art.faces.length]}
-      style={{ width: size, height: size, borderRadius: size / 2 }}
-      contentFit="contain"
-      accessible={false}
-    />
-  )
+  return <Art source={art.faces[hash(id || name || '?') % art.faces.length]} width={size} height={size} />
 }
 
 /** A merchant's badge: a little shop front, for payments to businesses. */

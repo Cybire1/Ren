@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 import { View } from 'react-native'
 import { colors } from '@/lib/theme'
-import { Floor, Kovi, type KoviPose, koviFeet } from './kovi'
+import { Kovi, type KoviPose, koviFeet } from './art'
+import { Floor } from './Floor'
 import { Bounce, Bob } from './motion'
 
 /**
@@ -23,10 +24,11 @@ export function Stage({
 }) {
   const floorW = size * 0.86
   const floorH = floorW * 0.2
+  const feet = koviFeet(pose)
   const kovi = <Kovi pose={pose} size={size} />
   return (
-    <View style={{ width: size, height: size * koviFeet + floorH * 0.55, alignItems: 'center' }}>
-      <View style={{ position: 'absolute', top: size * koviFeet - floorH * 0.5, left: (size - floorW) / 2 }}>
+    <View style={{ width: size, height: size * feet + floorH * 0.55, alignItems: 'center' }}>
+      <View style={{ position: 'absolute', top: size * feet - floorH * 0.5, left: (size - floorW) / 2 }}>
         <Floor width={floorW} top={floor} />
       </View>
       {motion === 'bounce' ? <Bounce>{kovi}</Bounce> : motion === 'bob' ? <Bob>{kovi}</Bob> : kovi}

@@ -10,7 +10,7 @@ export function PaidScene({ amount, height = 320 }: { amount: string; height?: n
   const terminalTop = height - 250
   const kovi = 130
   // Stand Kovi's feet on the receipt's top edge.
-  const koviTop = terminalTop + 250 * receipt.top - kovi * koviFeet
+  const koviTop = terminalTop + 250 * receipt.top - kovi * koviFeet('cheer')
   return (
     <View style={{ height, width }}>
       <View style={[styles.receipt, { left: cx - 120, top: terminalTop }]}>

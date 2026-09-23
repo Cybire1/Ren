@@ -18,7 +18,8 @@ import { Chip, PillButton, Rise, RoundButton, Screen, Sticker, TextLink, Txt } f
  * only who, how much and how, then flips to PAID the moment the chain confirms it.
  */
 export default function CustomerDisplay() {
-  const { id, price, usd } = useLocalSearchParams<{ id: string; price: string; usd: string }>()
+  const params = useLocalSearchParams<{ id: string; price?: string; usd?: string }>()
+  const id = params.id
   const shop = useShop()
   const { width } = useWindowDimensions()
   const [intent, setIntent] = useState<PaymentIntent | null>(null)
@@ -47,6 +48,10 @@ export default function CustomerDisplay() {
     }
   }, [id])
 
+  // The price as the shop entered it travels in the link; reopened without it, fall back to the
+  // charge's own dollar amount.
+  const usd = params.usd ?? intent?.amount ?? '…'
+  const price = params.price ?? `$${usd}`
   const status = intent?.status ?? 'requires_payment'
   const next = () => router.replace('/terminal')
 
