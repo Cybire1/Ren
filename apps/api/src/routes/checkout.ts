@@ -7,6 +7,7 @@ import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
 import { decodeId } from '../ids.js'
 import { type PaymentIntent, serializeIntent } from '../services/intents.js'
+import { ordersForIntents } from '../services/orders.js'
 import { confirmTransaction } from '../services/settle.js'
 
 /**
@@ -54,7 +55,14 @@ const confirmBody = z.object({ tx_hash: z.string().regex(/^0x[0-9a-fA-F]{64}$/) 
 export const checkoutRoutes = new Hono()
   .get('/:id', async (c) => {
     const { intent, merchantName } = await load(c.req.param('id'))
-    return c.json(serializeCheckout(intent, merchantName))
+    const order = (await ordersForIntents([intent.id])).get(intent.id)
+    return c.json({
+      ...serializeCheckout(intent, merchantName),
+      // What was ordered, when this charge came from a stall or a till sale.
+      order: order
+        ? { lines: order.lines, customer_name: order.customer_name, note: order.note, pay_for_me: order.pay_for_me, stall: order.stall }
+        : null,
+    })
   })
   .post('/:id/confirm', async (c) => {
     const parsed = confirmBody.safeParse(await c.req.json().catch(() => ({})))

@@ -27,6 +27,9 @@ const schema = z.object({
   KOVA_MAX_SPONSORED_FEE: z.coerce.bigint().default(50_000n),
   /** How long a payment intent stays payable. */
   KOVA_INTENT_TTL_SECONDS: z.coerce.number().int().positive().default(900),
+  /** Reads menu photos into catalogue items ("Snap your menu"). Without it, that feature says so. */
+  ANTHROPIC_API_KEY: z.string().optional(),
+  KOVA_MENU_MODEL: z.string().default('claude-sonnet-5'),
 })
 
 export type Config = z.infer<typeof schema>

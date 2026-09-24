@@ -1,11 +1,14 @@
+import { sql } from 'drizzle-orm'
 import {
   bigint,
   boolean,
+  customType,
   index,
   integer,
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -21,6 +24,7 @@ const address = (name: string) => text(name)
 const id = () => uuid('id').primaryKey()
 const createdAt = () => timestamp('created_at', { withTimezone: true }).notNull().defaultNow()
 const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull().defaultNow()
+const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' })
 
 export const network = pgEnum('network', ['mainnet', 'testnet'])
 export const currency = pgEnum('currency', ['USDC', 'pathUSD', 'USDT0'])
@@ -393,4 +397,133 @@ export const auditLogs = pgTable(
     createdAt: createdAt(),
   },
   (t) => [index('audit_target_idx').on(t.targetType, t.targetId, t.createdAt)],
+)
+
+// --- Catalogue, stalls and orders -------------------------------------------
+
+/**
+ * Photos a shop uploads, for items and stall covers. They are resized on the phone before
+ * upload (a few hundred KB at most), so Postgres holds them comfortably for now; move them to
+ * object storage when that stops being true.
+ */
+export const images = pgTable(
+  'images',
+  {
+    id: id(),
+    merchantId: uuid('merchant_id')
+      .notNull()
+      .references(() => merchants.id),
+    contentType: text('content_type').notNull(),
+    bytes: bytea('bytes').notNull(),
+    size: integer('size').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('images_merchant_idx').on(t.merchantId)],
+)
+
+/** One list of what a shop sells, shared by its stalls, its till and barcode scanning. */
+export const catalogItems = pgTable(
+  'catalog_items',
+  {
+    id: id(),
+    merchantId: uuid('merchant_id')
+      .notNull()
+      .references(() => merchants.id),
+    name: text('name').notNull(),
+    description: text('description'),
+    /** In dollars, base units. What a customer pays is always priced from here, server side. */
+    price: amount('price').notNull(),
+    imageId: uuid('image_id').references(() => images.id),
+    /** EAN or UPC, digits only, as printed under the bars. */
+    barcode: text('barcode'),
+    soldOut: boolean('sold_out').notNull().default(false),
+    position: integer('position').notNull().default(0),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('catalog_items_merchant_idx').on(t.merchantId),
+    uniqueIndex('catalog_items_barcode_idx')
+      .on(t.merchantId, t.barcode)
+      .where(sql`${t.barcode} is not null and ${t.archivedAt} is null`),
+  ],
+)
+
+/** A shop's pocket storefront, public at /s/<slug>. */
+export const stalls = pgTable(
+  'stalls',
+  {
+    id: id(),
+    merchantId: uuid('merchant_id')
+      .notNull()
+      .references(() => merchants.id),
+    slug: text('slug').notNull(),
+    name: text('name').notNull(),
+    tagline: text('tagline'),
+    coverImageId: uuid('cover_image_id').references(() => images.id),
+    open: boolean('open').notNull().default(true),
+    archivedAt: timestamp('archived_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('stalls_slug_idx').on(t.slug), index('stalls_merchant_idx').on(t.merchantId)],
+)
+
+/** Which catalogue items a stall shows, in its order. */
+export const stallItems = pgTable(
+  'stall_items',
+  {
+    stallId: uuid('stall_id')
+      .notNull()
+      .references(() => stalls.id),
+    itemId: uuid('item_id')
+      .notNull()
+      .references(() => catalogItems.id),
+    position: integer('position').notNull().default(0),
+  },
+  (t) => [primaryKey({ columns: [t.stallId, t.itemId] })],
+)
+
+export const orderSource = pgEnum('order_source', ['stall', 'till'])
+
+export interface OrderLine {
+  item_id: string
+  name: string
+  /** Dollars, as a decimal string, at the moment of checkout. */
+  unit_price: string
+  quantity: number
+}
+
+/**
+ * What was bought: a stall order or a till sale. Its payment intent stays the source of truth
+ * for the money; the order keeps the items, the buyer's name and note, and whether it has been
+ * handed over.
+ */
+export const orders = pgTable(
+  'orders',
+  {
+    id: id(),
+    merchantId: uuid('merchant_id')
+      .notNull()
+      .references(() => merchants.id),
+    intentId: uuid('intent_id')
+      .notNull()
+      .references(() => paymentIntents.id),
+    stallId: uuid('stall_id').references(() => stalls.id),
+    source: orderSource('source').notNull(),
+    /** A snapshot at checkout, so later price changes never rewrite an order. */
+    lines: jsonb('lines').$type<OrderLine[]>().notNull(),
+    customerName: text('customer_name'),
+    note: text('note'),
+    /** The buyer sent the link to someone else to pay. */
+    payForMe: boolean('pay_for_me').notNull().default(false),
+    collectedAt: timestamp('collected_at', { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('orders_intent_idx').on(t.intentId),
+    index('orders_merchant_created_idx').on(t.merchantId, t.createdAt),
+    index('orders_stall_idx').on(t.stallId),
+  ],
 )

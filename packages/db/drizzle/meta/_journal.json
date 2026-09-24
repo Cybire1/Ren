@@ -22,6 +22,13 @@
       "when": 1790207028793,
       "tag": "0002_terminal_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790214019923,
+      "tag": "0003_catalog_stalls_orders",
+      "breakpoints": true
     }
   ]
 }

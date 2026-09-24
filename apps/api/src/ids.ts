@@ -16,6 +16,10 @@ export const prefixes = {
   apiKey: 'key',
   webhookEndpoint: 'whe',
   event: 'evt',
+  catalogItem: 'itm',
+  stall: 'stl',
+  order: 'ord',
+  image: 'img',
 } as const
 
 export type ObjectKind = keyof typeof prefixes
