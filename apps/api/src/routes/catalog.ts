@@ -10,6 +10,7 @@ import { decodeId, encodeId } from '../ids.js'
 import { isBarcode, lookupBarcode } from '../services/barcodes.js'
 import { serializeItem } from '../services/catalog.js'
 import { imageUrl, MAX_IMAGE_BYTES, sniffImage } from '../services/images.js'
+import { askJev } from '../services/jev.js'
 import { menuImportReady, readMenu } from '../services/menu-import.js'
 import { publicOrigin } from '../services/origin.js'
 
@@ -209,6 +210,41 @@ export const catalogRoutes = new Hono()
       item: item ? serializeItem(item, publicOrigin(c)) : null,
       suggestion: item ? null : await lookupBarcode(code),
     })
+  })
+
+  /**
+   * "Spot duplicate items": before a new product goes in, ask Jev whether the shop already sells
+   * it under another name ("Coca-Cola Original 330ml" and "Coke 33cl"). Candidates are narrowed
+   * by shared words first, so Jev only compares likely ones.
+   */
+  .post('/catalog/similar', requireApiKey, async (c) => {
+    const parsed = z.object({ name: z.string().trim().min(1).max(120) }).safeParse(await c.req.json().catch(() => ({})))
+    if (!parsed.success) throw new KovaError('invalid_request', 'Expected { name }')
+    const words = (text: string) => new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 1))
+    const wanted = words(parsed.data.name)
+    const rows = await db.query.catalogItems.findMany({
+      where: and(eq(schema.catalogItems.merchantId, c.get('merchant').id), isNull(schema.catalogItems.archivedAt)),
+    })
+    const candidates = rows
+      .map((r) => ({ r, shared: [...words(r.name)].filter((w) => wanted.has(w)).length }))
+      .filter((x) => x.shared > 0)
+      .sort((a, b) => b.shared - a.shared)
+      .slice(0, 40)
+      .map((x) => x.r)
+    if (candidates.length === 0) return c.json({ object: 'similar', item: null })
+    const answers = await askJev(
+      { new_product: parsed.data.name },
+      {
+        same: {
+          type: 'choice',
+          instructions: 'Is `new_product` the same product (same brand, kind and size) as one of these the shop already sells? If it is a different product, choose none.',
+          criteria: { none: 'None of these: it is a different product', ...Object.fromEntries(candidates.map((r) => [encodeId('catalogItem', r.id), r.name])) },
+        },
+      },
+    )
+    const choice = answers?.same?.choice
+    const match = choice && choice !== 'none' && (answers?.same?.confidence ?? 0) >= 0.6 ? candidates.find((r) => encodeId('catalogItem', r.id) === choice) : undefined
+    return c.json({ object: 'similar', item: match ? serializeItem(match, publicOrigin(c)) : null, confidence: answers?.same?.confidence ?? null })
   })
 
   /** Upload a photo (raw JPEG, PNG or WebP bytes). Returns its id for an item or a stall cover. */

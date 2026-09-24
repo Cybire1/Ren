@@ -8,6 +8,7 @@ import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { encodeId } from '../ids.js'
 import { findIntentByMemo, type PaymentIntent } from './intents.js'
+import { onIntentPaid } from './travel.js'
 
 export interface SettleResult {
   status: 'paid' | 'held' | 'failed' | 'ignored'
@@ -120,6 +121,9 @@ export async function settleFromReceipt(
       },
     })
   })
+
+  // The last share of a Kova Travel trip books it. Outside the transaction: booking calls Duffel.
+  if (status === 'paid') void onIntentPaid(intent.id).catch((error) => console.error('[travel] after payment', error))
 
   return { status, paymentId }
 }

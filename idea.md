@@ -114,3 +114,59 @@ two places.
 - A short domain for stall links (for example `kova.shop/ada`).
 - Buyer protection without chargebacks: verified stalls, receipts, a report button.
 - Which product database to use for barcode lookups, and what to do when a barcode is unknown.
+
+---
+
+# Kova Travel: fly or stay anywhere, pay in dollars
+
+Agreed 24 Sept 2026: flights and hotels in the first version, with all four extras, and Jev
+(TypeSafe's decision model) in four places across Kova.
+
+## The one-liner
+
+Search a flight or a hotel in Kova Pay, pay in dollars from your wallet with Face ID, and the
+ticket or booking is in the app a moment later. Or send the fare to family abroad to pay, or
+split the room with friends.
+
+## How it works
+
+- **Inventory: Duffel.** One API for 300+ airlines and 2M+ hotels (Stays), with seats, bags and
+  hold orders. Test mode for the hackathon. Amadeus closed its self-service APIs on 17 July 2026.
+- **Kova Travel is itself a Kova shop.** A booking is a payment (or several shares) to Kova
+  Travel's settlement address, settled like any Kova charge. When every share is paid, Kova
+  books with Duffel from its Duffel balance and the trip turns into a ticket or a voucher.
+- **Prices in dollars.** Fares in other currencies are converted at Kova's reference rates
+  (DECISIONS D-012), rounded up, and the original fare is always shown beside it.
+- **Holding the price.** Flights that allow it are held at once (a Duffel hold order), so a
+  pay-for-me link or a split has hours, not minutes. Otherwise the offer's own expiry applies
+  and the screen counts it down. Hotel quotes carry their own expiry.
+- **Privacy.** A trip is opened with a random token only the booking phone keeps; payers see only
+  what they're paying for. Passenger details go to Duffel and are not kept beyond names.
+- **Test mode honesty.** Duffel's test hotels live at one set of test coordinates, so in test
+  mode every hotel search shows them, labelled as test hotels.
+
+## Features
+
+1. **Flights**: one-way or return, passengers, cabin; results with airline, times, stops and
+   price; the itinerary, fare rules and bags included; passenger details; pay.
+2. **Hotels**: city and dates; hotels with photos, stars and reviews; rooms and rates with board
+   and cancellation terms; guest details; pay.
+3. **Someone else pays**: the fare becomes a pay link for family abroad, exactly like
+   pay-for-me on a stall.
+4. **Trip in a sentence**: "Lagos to London next Friday, back Sunday" becomes the search
+   (DeepSeek reads it; the form shows what it understood).
+5. **Split the hotel**: each friend gets their share as a link; the room is booked once all
+   are paid, before the quote expires.
+6. **Seats and bags**: the seat map and extra bags, where the airline offers them.
+7. **Your trips**: a boarding-pass style ticket with the booking reference; a hotel voucher.
+
+## Jev in Kova
+
+- **Spending categories**: each payment in Activity sorted into Food, Travel, Transport,
+  Groceries and more, for a monthly picture.
+- **Flag order notes**: allergy and dietary notes on stall tickets shown in coral.
+- **Spot duplicate items**: before adding a scanned product, ask whether it's one the shop
+  already sells.
+- **Match offers to the ask**: from what you typed ("non-stop, arrive before 6pm"), mark the
+  best-fitting flight or hotel. Kova pre-digests times and stops into words, since Jev is weak
+  at arithmetic and time comparisons.

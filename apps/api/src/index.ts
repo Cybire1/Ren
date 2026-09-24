@@ -10,12 +10,15 @@ import { accountRoutes } from './routes/account.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { checkoutRoutes } from './routes/checkout.js'
 import { healthRoutes } from './routes/health.js'
+import { insightRoutes } from './routes/insights.js'
 import { intentRoutes } from './routes/intents.js'
 import { orderRoutes } from './routes/orders.js'
 import { reportRoutes } from './routes/reports.js'
 import { stallRoutes } from './routes/stalls.js'
 import { expireStaleIntents } from './services/intents.js'
 import { terminalRoutes } from './routes/terminals.js'
+import { travelRoutes } from './routes/travel.js'
+import { expireTrips } from './services/travel.js'
 import { webhookRoutes } from './routes/webhooks.js'
 import { startWatcher } from './workers/watcher.js'
 import { startWebhookWorker } from './workers/webhooks.js'
@@ -33,6 +36,8 @@ app.route('/v1', accountRoutes)
 app.route('/v1', catalogRoutes)
 app.route('/v1', stallRoutes)
 app.route('/v1', orderRoutes)
+app.route('/v1', travelRoutes)
+app.route('/v1', insightRoutes)
 app.route('/v1', webhookRoutes)
 app.route('/v1', reportRoutes)
 
@@ -57,7 +62,10 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
   void startWatcher().catch((error) => console.error('[watcher] failed to start', error))
   startWebhookWorker()
   // Charges nobody paid close when their code expires, so "waiting" means someone could still pay.
-  const expire = () => void expireStaleIntents().catch((error) => console.error('[expiry]', error))
+  const expire = () => {
+    void expireStaleIntents().catch((error) => console.error('[expiry]', error))
+    void expireTrips().catch((error) => console.error('[expiry] trips', error))
+  }
   expire()
   setInterval(expire, 30_000)
 

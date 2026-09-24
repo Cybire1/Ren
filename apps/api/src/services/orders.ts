@@ -5,6 +5,7 @@ import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { decodeId, encodeId } from '../ids.js'
 import { createIntent, type PaymentIntent } from './intents.js'
+import { askJev } from './jev.js'
 
 type Merchant = typeof schema.merchants.$inferSelect
 type Stall = typeof schema.stalls.$inferSelect
@@ -106,7 +107,31 @@ export async function placeOrder(input: PlaceOrder): Promise<{ order: Order; int
     })
     .returning()
   if (!order) throw new KovaError('internal', 'Could not record the order')
+  // After the fact, so a slow or missing Jev never holds up a checkout.
+  if (order.note) void flagNote(order.id, order.note)
   return { order, intent }
+}
+
+/**
+ * "Flag order notes": Jev reads the buyer's note, and one that mentions an allergy or a diet
+ * the kitchen must respect is flagged, so the ticket shows it in coral.
+ */
+async function flagNote(orderId: string, note: string) {
+  const answers = await askJev(
+    { note },
+    {
+      allergy: {
+        type: 'noul',
+        instructions: 'Does `note` mention a food allergy, an intolerance, or a dietary requirement the kitchen must respect (like vegetarian, halal or no pork)?',
+      },
+    },
+  )
+  if ((answers?.allergy?.probability ?? 0) < 0.6) return
+  await db
+    .update(schema.orders)
+    .set({ flags: ['allergy'] })
+    .where(eq(schema.orders.id, orderId))
+    .catch(() => {})
 }
 
 export function serializeOrder(order: Order, extra: { stall?: { id: string; name: string; slug: string } | null } = {}) {
@@ -120,6 +145,8 @@ export function serializeOrder(order: Order, extra: { stall?: { id: string; name
     customer_name: order.customerName,
     note: order.note,
     pay_for_me: order.payForMe,
+    /** What the counter must notice in the note, like "allergy". */
+    flags: order.flags ?? [],
     collected_at: order.collectedAt?.toISOString() ?? null,
     created_at: order.createdAt.toISOString(),
   }

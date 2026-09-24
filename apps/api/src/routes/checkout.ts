@@ -9,6 +9,7 @@ import { decodeId } from '../ids.js'
 import { type PaymentIntent, serializeIntent } from '../services/intents.js'
 import { ordersForIntents } from '../services/orders.js'
 import { confirmTransaction } from '../services/settle.js'
+import { tripForCheckout } from '../services/travel.js'
 
 /**
  * The payer's side of a charge. No API key: anyone holding the charge's id (it is in the QR)
@@ -55,13 +56,16 @@ const confirmBody = z.object({ tx_hash: z.string().regex(/^0x[0-9a-fA-F]{64}$/) 
 export const checkoutRoutes = new Hono()
   .get('/:id', async (c) => {
     const { intent, merchantName } = await load(c.req.param('id'))
-    const order = (await ordersForIntents([intent.id])).get(intent.id)
+    const [orders, trip] = await Promise.all([ordersForIntents([intent.id]), tripForCheckout(intent.id)])
+    const order = orders.get(intent.id)
     return c.json({
       ...serializeCheckout(intent, merchantName),
       // What was ordered, when this charge came from a stall or a till sale.
       order: order
         ? { lines: order.lines, customer_name: order.customer_name, note: order.note, pay_for_me: order.pay_for_me, stall: order.stall }
         : null,
+      // The flight or hotel, when this charge is a share of a Kova Travel trip.
+      trip,
     })
   })
   .post('/:id/confirm', async (c) => {

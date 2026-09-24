@@ -1,6 +1,5 @@
-import Anthropic from '@anthropic-ai/sdk'
-import { config } from '../config.js'
 import { KovaError } from '../errors.js'
+import { ai, aiModel, aiRequestOptions, PER_USD } from './ai.js'
 
 /**
  * Reads a photo of a menu board or price list into catalogue items ("Snap your menu").
@@ -11,9 +10,6 @@ import { KovaError } from '../errors.js'
  * before anything is saved.
  */
 
-/** Local currency per US dollar. The same reference table as the app's lib/money.ts. */
-const PER_USD: Record<string, number> = { USD: 1, EUR: 0.92, GBP: 0.79, NGN: 1375, KES: 129, MXN: 18.4 }
-
 export interface MenuLine {
   name: string
   description: string | null
@@ -22,29 +18,15 @@ export interface MenuLine {
   original: { amount: number; currency: string }
 }
 
-/**
- * Claude, or DeepSeek through its Anthropic-compatible endpoint: the same request, image and
- * forced tool call go to either, so the reading and the conversion below don't change.
- */
-const provider = config.KOVA_MENU_PROVIDER ?? (config.ANTHROPIC_API_KEY ? 'anthropic' : config.DEEPSEEK_API_KEY ? 'deepseek' : null)
-const client =
-  provider === 'anthropic' && config.ANTHROPIC_API_KEY
-    ? new Anthropic({ apiKey: config.ANTHROPIC_API_KEY })
-    : provider === 'deepseek' && config.DEEPSEEK_API_KEY
-      ? new Anthropic({ apiKey: config.DEEPSEEK_API_KEY, baseURL: 'https://api.deepseek.com/anthropic' })
-      : null
-const model = config.KOVA_MENU_MODEL ?? (provider === 'deepseek' ? 'deepseek-flash' : 'claude-sonnet-5')
-
-export const menuImportReady = () => client !== null
+export const menuImportReady = () => ai !== null
 
 export async function readMenu(image: { data: string; mediaType: 'image/jpeg' | 'image/png' | 'image/webp' }): Promise<{ currency: string; items: MenuLine[] }> {
-  if (!client) throw new KovaError('invalid_request', 'Menu import is not set up on this server yet (it needs an Anthropic or DeepSeek API key).')
+  if (!ai) throw new KovaError('invalid_request', 'Menu import is not set up on this server yet (it needs an Anthropic or DeepSeek API key).')
 
-  const response = await client.messages.create({
-    model,
+  const response = await ai.messages.create({
+    model: aiModel,
     max_tokens: 4000,
-    // DeepSeek thinks by default, and thinking can't be combined with a forced tool call.
-    ...(provider === 'deepseek' ? { thinking: { type: 'disabled' as const } } : {}),
+    ...aiRequestOptions,
     tools: [
       {
         name: 'record_menu',

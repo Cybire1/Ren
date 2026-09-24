@@ -518,6 +518,8 @@ export const orders = pgTable(
     note: text('note'),
     /** The buyer sent the link to someone else to pay. */
     payForMe: boolean('pay_for_me').notNull().default(false),
+    /** What the note needs the counter to notice, like "allergy". Set by Jev after checkout. */
+    flags: jsonb('flags').$type<string[]>(),
     collectedAt: timestamp('collected_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
@@ -526,4 +528,101 @@ export const orders = pgTable(
     index('orders_merchant_created_idx').on(t.merchantId, t.createdAt),
     index('orders_stall_idx').on(t.stallId),
   ],
+)
+
+// --- Kova Travel ---------------------------------------------------------------------------
+
+export const tripKind = pgEnum('trip_kind', ['flight', 'stay'])
+export const tripStatus = pgEnum('trip_status', ['awaiting_payment', 'booking', 'booked', 'failed', 'expired', 'canceled'])
+
+/** What the traveller and anyone paying for the trip see: never the supplier's raw payload. */
+export interface TripSummary {
+  /** "Lagos to London" or the hotel's name. */
+  title: string
+  /** "Fri 3 Oct, back Sun 5 Oct · 2 adults" style detail line, preformatted by the API. */
+  subtitle: string
+  /** Airline or hotel chain, and its logo or photo. */
+  provider: { name: string; image: string | null }
+  /** Flights: one entry per slice. Stays: check-in and check-out. */
+  legs: { from: string; to: string; departs: string; arrives: string; carrier: string | null; flight: string | null; stops: number; duration: string | null }[]
+  /** Stays: room and board, and the cancellation terms in words. */
+  room?: { name: string; board: string; cancellation: string }
+  /** Extras added to a flight, in words ("1 checked bag", "Seat 14A"). */
+  extras: string[]
+  /** The name the traveller gave, shown to people they ask to pay. */
+  bookedBy: string
+}
+
+export interface TripTraveller {
+  given_name: string
+  family_name: string
+  /** Flights only, and only until the trip is booked. */
+  born_on?: string
+  gender?: 'm' | 'f'
+  title?: 'mr' | 'ms' | 'mrs' | 'miss' | 'dr'
+  email?: string
+  phone_number?: string
+  /** The supplier's passenger id from the offer (flights). */
+  supplier_id?: string
+}
+
+/**
+ * A flight or a hotel booked through Kova Travel. Its money is one or more payments to Kova
+ * Travel's settlement address (see trip_shares); once every share is paid, Kova books it with
+ * the supplier from its own balance. Whoever holds the trip's token can see and manage it.
+ */
+export const trips = pgTable(
+  'trips',
+  {
+    id: id(),
+    /** SHA-256 of the traveller's token. The token itself only lives on their phone. */
+    tokenHash: text('token_hash').notNull(),
+    kind: tripKind('kind').notNull(),
+    status: tripStatus('status').notNull().default('awaiting_payment'),
+    /** Kova Travel, the shop every share pays. */
+    merchantId: uuid('merchant_id')
+      .notNull()
+      .references(() => merchants.id),
+    summary: jsonb('summary').$type<TripSummary>().notNull(),
+    /** The fare as the supplier priced it. */
+    fareAmount: text('fare_amount').notNull(),
+    fareCurrency: text('fare_currency').notNull(),
+    /** What Kova Travel charges in total, in USDC base units. */
+    amount: amount('amount').notNull(),
+    /** Duffel's offer (flights) or rate (stays), and quote (stays). */
+    offerId: text('offer_id').notNull(),
+    quoteId: text('quote_id'),
+    /** Duffel's order (flights, including a hold) or booking (stays). */
+    supplierOrderId: text('supplier_order_id'),
+    bookingReference: text('booking_reference'),
+    travellers: jsonb('travellers').$type<TripTraveller[]>().notNull(),
+    /** Seats and bags: Duffel service ids and quantities. */
+    services: jsonb('services').$type<{ id: string; quantity: number }[]>(),
+    /** Stays: who the hotel contacts. Cleared once booked. */
+    contact: jsonb('contact').$type<{ email: string; phone_number: string }>(),
+    /** When the held price, the offer or the quote runs out. */
+    payBy: timestamp('pay_by', { withTimezone: true }).notNull(),
+    failure: text('failure'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('trips_status_idx').on(t.status), index('trips_pay_by_idx').on(t.payBy)],
+)
+
+/** One payment towards a trip: the traveller's own, a pay-for-me link, or a friend's share. */
+export const tripShares = pgTable(
+  'trip_shares',
+  {
+    id: id(),
+    tripId: uuid('trip_id')
+      .notNull()
+      .references(() => trips.id),
+    intentId: uuid('intent_id')
+      .notNull()
+      .references(() => paymentIntents.id),
+    /** Who this share is for: "You", "Tunde". */
+    label: text('label').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('trip_shares_intent_idx').on(t.intentId), index('trip_shares_trip_idx').on(t.tripId)],
 )

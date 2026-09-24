@@ -29,6 +29,13 @@
       "when": 1790214019923,
       "tag": "0003_catalog_stalls_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790220640703,
+      "tag": "0004_travel_and_order_flags",
+      "breakpoints": true
     }
   ]
 }

@@ -37,6 +37,16 @@ const schema = z.object({
   KOVA_MENU_PROVIDER: z.enum(['anthropic', 'deepseek']).optional(),
   /** Defaults to claude-sonnet-5 on Anthropic and deepseek-flash (its vision model) on DeepSeek. */
   KOVA_MENU_MODEL: z.string().optional(),
+  /** Kova Travel: flights and hotels through Duffel. A duffel_test_ token runs in Duffel's test mode. */
+  DUFFEL_API_KEY: z.string().optional(),
+  /**
+   * Where Kova Travel's payments settle. On testnet it defaults to the fee payer's address;
+   * on mainnet it must be set, to a wallet Kova's treasury controls.
+   */
+  KOVA_TRAVEL_SETTLEMENT_ADDRESS: z.string().optional(),
+  /** Jev, TypeSafe's decision model: spending categories, order-note flags, duplicate items, offer matching. */
+  TYPESAFE_API_KEY: z.string().optional(),
+  JEV_MODEL: z.string().optional(),
 })
 
 export type Config = z.infer<typeof schema>

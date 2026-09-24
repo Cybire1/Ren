@@ -20,6 +20,7 @@ export const prefixes = {
   stall: 'stl',
   order: 'ord',
   image: 'img',
+  trip: 'trp',
 } as const
 
 export type ObjectKind = keyof typeof prefixes
