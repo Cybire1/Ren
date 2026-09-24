@@ -194,6 +194,8 @@ export interface Order {
   customer_name: string | null
   note: string | null
   pay_for_me: boolean
+  /** What the counter must notice in the note, like "allergy" (read by Jev). */
+  flags?: string[]
   collected_at: string | null
   created_at: string
   amount?: string
@@ -286,6 +288,10 @@ export const createItem = (item: ItemInput & { stall_ids?: string[] }) =>
 export const updateItem = (id: string, patch: Partial<ItemInput>) =>
   request<CatalogItem>(`/v1/catalog/items/${id}`, { method: 'PATCH', auth: 'owner', body: JSON.stringify(patch) })
 
+/** Before adding a product: does the shop already sell it under another name? (Jev) */
+export const findSimilarItem = (name: string) =>
+  request<{ item: CatalogItem | null; confidence: number | null }>('/v1/catalog/similar', { method: 'POST', auth: 'owner', body: JSON.stringify({ name }) })
+
 export const removeItem = (id: string) => request<{ deleted: boolean }>(`/v1/catalog/items/${id}`, { method: 'DELETE', auth: 'owner' })
 
 /** Uploads a photo already on the phone (a file URI). Returns its id for an item. */
@@ -309,6 +315,17 @@ export interface MenuImport {
 /** Snap your menu: a photo of a menu board or price list in, suggested items out. Nothing is saved. */
 export const readMenuPhoto = (base64: string, mediaType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg') =>
   request<MenuImport>('/v1/catalog/import', { method: 'POST', auth: 'owner', body: JSON.stringify({ image: base64, media_type: mediaType }) })
+
+// --- insights ------------------------------------------------------------------------------
+
+export type SpendingCategory = 'food' | 'groceries' | 'travel' | 'transport' | 'shopping' | 'bills' | 'health' | 'people' | 'other'
+
+/** Sorts payments into spending categories (Jev). Nothing is stored on Kova's side. */
+export const categorize = (payments: { id: string; text: string }[]) =>
+  request<{ ready: boolean; data: Record<string, SpendingCategory> }>('/v1/insights/categories', {
+    method: 'POST',
+    body: JSON.stringify({ payments }),
+  })
 
 // --- links ---------------------------------------------------------------------------------
 

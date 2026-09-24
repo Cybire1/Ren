@@ -165,12 +165,26 @@ function Ticket({ order, onHandOver }: { order: Order; onHandOver?: () => void }
           </View>
         ))}
         {order.note ? (
-          <View style={styles.note}>
-            <Icon name="pen" size={16} />
-            <Txt weight="medium" size={15} style={{ flex: 1, lineHeight: 21 }}>
-              {order.note}
-            </Txt>
-          </View>
+          order.flags?.includes('allergy') ? (
+            <View style={[styles.note, styles.noteFlagged]} accessibilityLabel={`Allergy or diet: ${order.note}`}>
+              <View style={styles.flag}>
+                <Icon name="info" size={15} color={colors.white} strokeWidth={2.4} />
+                <Txt weight="bold" size={12} color={colors.white}>
+                  Allergy or diet
+                </Txt>
+              </View>
+              <Txt weight="semi" size={16} style={{ lineHeight: 22 }}>
+                {order.note}
+              </Txt>
+            </View>
+          ) : (
+            <View style={styles.note}>
+              <Icon name="pen" size={16} />
+              <Txt weight="medium" size={15} style={{ flex: 1, lineHeight: 21 }}>
+                {order.note}
+              </Txt>
+            </View>
+          )
         ) : null}
       </View>
 
@@ -288,7 +302,10 @@ const styles = StyleSheet.create({
   perforation: { marginHorizontal: 18, borderTopWidth: 2, borderColor: colors.sunken, borderStyle: 'dashed' },
   lineRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   qtyBox: { width: 30, height: 30, borderRadius: 9, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
-  note: { flexDirection: 'row', gap: 8, marginTop: 4, padding: 12, borderRadius: 16, backgroundColor: colors.coralSoft },
+  note: { flexDirection: 'row', gap: 8, marginTop: 4, padding: 12, borderRadius: 16, backgroundColor: colors.sunken },
+  /** Jev read an allergy or a diet in the note: it gets the pay colour and a label, so nobody misses it. */
+  noteFlagged: { flexDirection: 'column', gap: 8, backgroundColor: colors.coralSoft, borderWidth: 2, borderColor: colors.coral },
+  flag: { flexDirection: 'row', alignItems: 'center', gap: 5, alignSelf: 'flex-start', height: 24, paddingHorizontal: 9, borderRadius: 12, backgroundColor: colors.coralDeep },
   ticketFoot: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, paddingTop: 14 },
   handOver: {
     height: 52,

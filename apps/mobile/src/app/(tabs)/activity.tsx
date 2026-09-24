@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import type { SpendingCategory } from '@/lib/api'
+import { categoryInfo, useSpendingCategories } from '@/lib/categories'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { type Entry, useWallet } from '@/lib/wallet'
@@ -45,6 +47,8 @@ export default function Activity() {
   const { activity } = useWallet()
   const insets = useSafeAreaInsets()
   const [filter, setFilter] = useState<Filter>('all')
+  const [category, setCategory] = useState<SpendingCategory | null>(null)
+  const cats = useSpendingCategories(activity)
 
   const month = useMemo(() => {
     const start = new Date()
@@ -78,8 +82,30 @@ export default function Activity() {
     return { days, max }
   }, [activity])
 
+  // Where this month's money went, by category, biggest first.
+  const where = useMemo(() => {
+    const start = new Date()
+    start.setDate(1)
+    start.setHours(0, 0, 0, 0)
+    const totals = new Map<SpendingCategory, bigint>()
+    let unsorted = 0
+    for (const e of activity) {
+      if (e.at < start.getTime() || !cats.spending(e)) continue
+      const c = cats.of(e)
+      if (!c) {
+        unsorted += 1
+        continue
+      }
+      totals.set(c, (totals.get(c) ?? 0n) + BigInt(e.amount))
+    }
+    const list = [...totals.entries()].sort((a, b) => (b[1] > a[1] ? 1 : b[1] < a[1] ? -1 : 0))
+    return { list, total: list.reduce((sum, [, v]) => sum + v, 0n), unsorted }
+  }, [activity, cats])
+
   const groups = useMemo(() => {
-    const shown = activity.filter((e) => (filter === 'all' ? true : filter === 'in' ? incoming(e) : !incoming(e)))
+    const shown = activity.filter((e) =>
+      category ? cats.of(e) === category : filter === 'all' ? true : filter === 'in' ? incoming(e) : !incoming(e),
+    )
     const map = new Map<string, Entry[]>()
     for (const e of shown) map.set(dayLabel(e.at), [...(map.get(dayLabel(e.at)) ?? []), e])
     return [...map.entries()].map(([title, entries]) => ({
@@ -87,7 +113,7 @@ export default function Activity() {
       entries,
       net: entries.reduce((sum, e) => sum + (incoming(e) ? BigInt(e.amount) : -BigInt(e.amount)), 0n),
     }))
-  }, [activity, filter])
+  }, [activity, filter, category, cats])
 
   const total = month.got + month.out
   const inShare = total > 0n ? Number((month.got * 1000n) / total) / 1000 : 0.5
@@ -152,7 +178,65 @@ export default function Activity() {
         </View>
       </View>
 
-      <FilterSwitch value={filter} onChange={setFilter} />
+      {where.list.length > 0 ? (
+        <View style={styles.where}>
+          <View style={styles.whereHead}>
+            <Txt weight="semi" size={17}>
+              Where it went
+            </Txt>
+            <Txt size={13} color={colors.muted}>
+              {where.unsorted ? `Sorting ${where.unsorted} more` : month.name}
+            </Txt>
+          </View>
+          <View style={styles.whereBar}>
+            {where.list.map(([c, v]) => (
+              <View key={c} style={{ flex: Math.max(Number((v * 1000n) / (where.total || 1n)), 12), backgroundColor: categoryInfo[c].color, borderRadius: 5 }} />
+            ))}
+          </View>
+          {where.list.map(([c, v]) => {
+            const on = category === c
+            const pct = Math.round(Number((v * 1000n) / (where.total || 1n)) / 10)
+            return (
+              <Pressable
+                key={c}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={`${categoryInfo[c].label}, ${formatUsd(v)}, ${pct} percent. ${on ? 'Showing only these' : 'Show only these'}`}
+                onPress={() => {
+                  void Haptics.selectionAsync()
+                  setCategory(on ? null : c)
+                }}
+                style={({ pressed }) => [styles.whereRow, on && styles.whereRowOn, pressed && { opacity: 0.7 }]}
+              >
+                <View style={[styles.whereDot, { backgroundColor: categoryInfo[c].color }]} />
+                <Txt weight={on ? 'bold' : 'medium'} size={15} style={{ flex: 1 }}>
+                  {categoryInfo[c].label}
+                </Txt>
+                <Txt size={13} color={colors.muted}>
+                  {pct}%
+                </Txt>
+                <Txt weight="semi" size={15} style={{ minWidth: 76, textAlign: 'right' }}>
+                  {formatUsd(v)}
+                </Txt>
+              </Pressable>
+            )
+          })}
+        </View>
+      ) : null}
+
+      {category ? (
+        <Pressable accessibilityRole="button" onPress={() => setCategory(null)} style={styles.showing}>
+          <View style={[styles.whereDot, { backgroundColor: categoryInfo[category].color }]} />
+          <Txt weight="semi" size={15} style={{ flex: 1 }}>
+            Only {categoryInfo[category].label.toLowerCase()}
+          </Txt>
+          <Txt weight="semi" size={15} style={{ textDecorationLine: 'underline' }}>
+            Show all
+          </Txt>
+        </Pressable>
+      ) : (
+        <FilterSwitch value={filter} onChange={setFilter} />
+      )}
 
       {groups.length === 0 ? (
         <View style={styles.empty}>
@@ -269,4 +353,22 @@ const styles = StyleSheet.create({
   dayRow: { paddingVertical: 2 },
   dayRule: { borderBottomWidth: 1, borderColor: colors.sunken },
   empty: { alignItems: 'center', paddingTop: 36, paddingHorizontal: 20 },
+  where: { marginTop: 16, borderRadius: 26, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, padding: 14, paddingBottom: 8 },
+  whereHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', paddingHorizontal: 4 },
+  whereBar: { flexDirection: 'row', height: 14, gap: 3, marginTop: 12, marginBottom: 6 },
+  whereRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 9, paddingHorizontal: 6, borderRadius: 14 },
+  whereRowOn: { backgroundColor: colors.paper },
+  whereDot: { width: 10, height: 10, borderRadius: 5 },
+  showing: {
+    marginTop: 16,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingHorizontal: 16,
+  },
 })

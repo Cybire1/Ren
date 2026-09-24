@@ -4,7 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { type ReactNode, useEffect, useState } from 'react'
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { type CatalogItem, createItem, getCatalog, removeItem, updateItem, updateStall, uploadImage } from '@/lib/api'
+import { type CatalogItem, createItem, findSimilarItem, getCatalog, removeItem, updateItem, updateStall, uploadImage } from '@/lib/api'
 import { currencyInfo, type DisplayCurrency, formatLocal, localToUsd } from '@/lib/money'
 import { type PhotoSource, takePhoto } from '@/lib/photos'
 import { useShop } from '@/lib/shop'
@@ -45,6 +45,9 @@ export default function ItemEditor() {
   const [busy, setBusy] = useState<'save' | 'photo' | 'delete' | null>(null)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
+  /** A product the shop already sells that looks like this new one (Jev), and whether to add it anyway. */
+  const [twin, setTwin] = useState<CatalogItem | null>(null)
+  const [different, setDifferent] = useState(false)
 
   // Editing: load the item as it is now.
   useEffect(() => {
@@ -66,6 +69,12 @@ export default function ItemEditor() {
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.id])
+
+  // A new name is a new question: ask again on the next save.
+  useEffect(() => {
+    setTwin(null)
+    setDifferent(false)
+  }, [name])
 
   const info = currencyInfo[currency]
   const typed = Number(price.replace(/,/g, ''))
@@ -90,6 +99,16 @@ export default function ItemEditor() {
     setBusy('save')
     setProblem(null)
     try {
+      // A new product first gets checked against what the shop already sells.
+      if (!item && !different) {
+        const similar = await findSimilarItem(name.trim()).catch(() => null)
+        if (similar?.item) {
+          void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning)
+          setTwin(similar.item)
+          setBusy(null)
+          return
+        }
+      }
       let imageId: string | null | undefined
       if (photo.kind === 'local') imageId = (await uploadImage(photo.uri)).id
       // A product photo from the barcode lookup is a nice start, not a requirement.
@@ -318,6 +337,49 @@ export default function ItemEditor() {
           </ScrollView>
         )}
         <View style={styles.footer}>
+          {twin && !different ? (
+            <View style={styles.twin}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                <ItemFace item={twin} size={48} />
+                <View style={{ flex: 1 }}>
+                  <Txt weight="semi" size={16}>
+                    You already sell {twin.name}
+                  </Txt>
+                  <Txt size={13} color={colors.muted}>
+                    {dollars(twin.price)}. Is this the same product?
+                  </Txt>
+                </View>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={async () => {
+                    // Same product: keep one item, and give it this barcode if it didn't have one.
+                    if (barcode && !twin.barcode) await updateItem(twin.id, { barcode }).catch(() => {})
+                    await refresh().catch(() => {})
+                    router.back()
+                  }}
+                  style={[styles.twinButton, { backgroundColor: colors.ink }]}
+                >
+                  <Txt weight="semi" size={14} color={colors.white}>
+                    {barcode && !twin.barcode ? 'Same: add the barcode to it' : 'Same: keep that one'}
+                  </Txt>
+                </Pressable>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setDifferent(true)
+                    setTwin(null)
+                  }}
+                  style={styles.twinButton}
+                >
+                  <Txt weight="semi" size={14}>
+                    It’s different
+                  </Txt>
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
           {problem ? (
             <Txt weight="medium" size={14} color={colors.danger} style={{ marginBottom: 10, textAlign: 'center' }}>
               {problem}
@@ -448,4 +510,16 @@ const styles = StyleSheet.create({
   confirm: { alignSelf: 'stretch', borderRadius: 22, borderWidth: 2, borderColor: colors.ink, padding: 16, backgroundColor: colors.surface },
   small: { flex: 1, height: 44, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   footer: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 12 },
+  twin: { marginBottom: 12, padding: 14, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealSoft },
+  twinButton: {
+    flex: 1,
+    minHeight: 44,
+    paddingHorizontal: 10,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 })
