@@ -27,9 +27,16 @@ const schema = z.object({
   KOVA_MAX_SPONSORED_FEE: z.coerce.bigint().default(50_000n),
   /** How long a payment intent stays payable. */
   KOVA_INTENT_TTL_SECONDS: z.coerce.number().int().positive().default(900),
-  /** Reads menu photos into catalogue items ("Snap your menu"). Without it, that feature says so. */
+  /**
+   * Reads menu photos into catalogue items ("Snap your menu"): Claude with an Anthropic key, or
+   * DeepSeek with a DeepSeek key. With neither, that feature says so.
+   */
   ANTHROPIC_API_KEY: z.string().optional(),
-  KOVA_MENU_MODEL: z.string().default('claude-sonnet-5'),
+  DEEPSEEK_API_KEY: z.string().optional(),
+  /** Which one reads menus when both keys are set. Unset: Anthropic if its key is there, else DeepSeek. */
+  KOVA_MENU_PROVIDER: z.enum(['anthropic', 'deepseek']).optional(),
+  /** Defaults to claude-sonnet-5 on Anthropic and deepseek-flash (its vision model) on DeepSeek. */
+  KOVA_MENU_MODEL: z.string().optional(),
 })
 
 export type Config = z.infer<typeof schema>

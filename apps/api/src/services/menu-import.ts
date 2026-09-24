@@ -22,15 +22,26 @@ export interface MenuLine {
   original: { amount: number; currency: string }
 }
 
-const client = config.ANTHROPIC_API_KEY ? new Anthropic({ apiKey: config.ANTHROPIC_API_KEY }) : null
+/**
+ * Claude, or DeepSeek through its Anthropic-compatible endpoint: the same request, image and
+ * forced tool call go to either, so the reading and the conversion below don't change.
+ */
+const provider = config.KOVA_MENU_PROVIDER ?? (config.ANTHROPIC_API_KEY ? 'anthropic' : config.DEEPSEEK_API_KEY ? 'deepseek' : null)
+const client =
+  provider === 'anthropic' && config.ANTHROPIC_API_KEY
+    ? new Anthropic({ apiKey: config.ANTHROPIC_API_KEY })
+    : provider === 'deepseek' && config.DEEPSEEK_API_KEY
+      ? new Anthropic({ apiKey: config.DEEPSEEK_API_KEY, baseURL: 'https://api.deepseek.com/anthropic' })
+      : null
+const model = config.KOVA_MENU_MODEL ?? (provider === 'deepseek' ? 'deepseek-flash' : 'claude-sonnet-5')
 
 export const menuImportReady = () => client !== null
 
 export async function readMenu(image: { data: string; mediaType: 'image/jpeg' | 'image/png' | 'image/webp' }): Promise<{ currency: string; items: MenuLine[] }> {
-  if (!client) throw new KovaError('invalid_request', 'Menu import is not set up on this server yet (it needs an Anthropic API key).')
+  if (!client) throw new KovaError('invalid_request', 'Menu import is not set up on this server yet (it needs an Anthropic or DeepSeek API key).')
 
   const response = await client.messages.create({
-    model: config.KOVA_MENU_MODEL,
+    model,
     max_tokens: 4000,
     tools: [
       {
