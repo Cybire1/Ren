@@ -43,6 +43,8 @@ export async function readMenu(image: { data: string; mediaType: 'image/jpeg' | 
   const response = await client.messages.create({
     model,
     max_tokens: 4000,
+    // DeepSeek thinks by default, and thinking can't be combined with a forced tool call.
+    ...(provider === 'deepseek' ? { thinking: { type: 'disabled' as const } } : {}),
     tools: [
       {
         name: 'record_menu',
