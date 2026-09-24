@@ -2,6 +2,7 @@ import type { WebAuthnClient } from '@category-labs/mera'
 import { base64urlnopad } from '@scure/base'
 import { sha256 } from '@noble/hashes/sha2.js'
 import * as Passkeys from 'react-native-passkeys'
+import { stringToBytes } from 'viem'
 
 /**
  * Mera's WebAuthn client for Kova Pay, on the platform passkey API (iCloud Keychain on iOS 18,
@@ -14,7 +15,7 @@ import * as Passkeys from 'react-native-passkeys'
  */
 
 /** Kova's second salt. A different salt gives an unrelated key, so this never reveals the wallet. */
-export const VAULT_SALT = sha256(new TextEncoder().encode('kova.vault.prf.v1'))
+export const VAULT_SALT = sha256(stringToBytes('kova.vault.prf.v1'))
 
 let vaultOutput: Uint8Array | null = null
 

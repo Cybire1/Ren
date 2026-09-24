@@ -203,11 +203,42 @@ falls inside Metropolis's build window.
   Monad; the app and the API read them instead of the fixed table.
 - **Add money**: the Mercuryo widget, to AUSD or USDC on Monad.
 
+## How it's built (24 Sept 2026, branch `monad`)
+
+- **Payments**: the payer signs an EIP-3009 authorization whose nonce is the charge's Kova memo;
+  Kova's relayer checks the signature, estimates (which runs the token's own checks), and submits
+  with `eth_sendRawTransactionSync`, settling in the same request. Nobody but the relayer holds MON.
+  `POST /v1/checkout/:id/authorize` pays a charge; `POST /v1/transfers` relays a send.
+- **Watcher and index**: Monad's public RPCs answer 100 blocks of logs per call and about 25
+  requests a second, so the watcher reads finalized blocks in bounded steps with backoff, settles
+  charges paid by any route, and indexes every AUSD/USDC transfer; wallets read arrivals from
+  `GET /v1/wallets/:address/transfers`.
+- **Wallet**: a Mera passkey. One Face ID creates it; the same passkey restores it on any phone. A
+  second PRF salt in the same ceremony gives a separate vault key: an encrypted backup of name,
+  currency and contacts that Kova stores but can't read (`/v1/vaults/:id`, writable only by the
+  vault's own key). Signing sessions: no Face ID for payments up to $50 ($150 in all) within three
+  quiet minutes; leaving the app ends the session.
+- **Rates**: `apps/rates` is a CRE workflow (two sources, cross-checked on every node, the DON's
+  median) writing to `KovaRates` on Monad; `GET /v1/rates` reads it for the app, web and travel.
+- **Web**: any browser wallet (EIP-6963) pays a charge by signing, with test dollars on the spot.
+- **Deployed**: Railway environment `monad`: https://api-monad.up.railway.app and
+  https://web-monad.up.railway.app (serves the Apple association file). App bundle id
+  `xyz.kova.pay.monad`, passkey domain `web-monad.up.railway.app` until `monad.mykova.app` is live.
+
+## Found along the way
+
+- **Mercuryo sells only native MON on Monad** (no USDC, no AUSD), and not in the UK. A top-up would
+  be card → MON → swap to AUSD. Ramp Network sells AUSD and USDC on Monad directly.
+- **Agora's AUSD testnet faucet is dry** (it holds exactly one drip and reverts with
+  `InsufficientFunds()`), so Kova's testnet treasury (the relayer) tops up test dollars instead.
+- Circle's USDC on Monad: testnet `0x534b2f3A21130d7a60830c2Df862319e593943A3`, mainnet
+  `0x754704Bc059F8C67012fEd69BC8A327a5aafb603` (FiatTokenV2_2, domain "USDC" version "2").
+
 ## Open questions
 
 - Does the Agora prize require AUSD, and can one project also enter Colosseum? (rules are behind
   the hackathon login)
-- Mercuryo sandbox credentials come from their integration team (ask in the hackathon Discord).
+- Mercuryo: worth a card → MON → AUSD flow, or skip it for the Monad build?
 
 ---
 

@@ -6,15 +6,16 @@ import {
   formatAmount,
   parseSignedAuthorization,
   tokenByAddress,
+  vaultMessage,
 } from '@kova/monad'
-import { and, asc, eq, gt, or } from 'drizzle-orm'
+import { and, asc, eq, gt, lt, or } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { type Address, getAddress, type Hex, isAddress } from 'viem'
+import { type Address, getAddress, type Hex, isAddress, isAddressEqual, recoverMessageAddress } from 'viem'
 import { z } from 'zod'
 import { feePayerAddress, network, walletClient } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
-import { KovaError } from '../errors.js'
+import { KovaError, notFound } from '../errors.js'
 import { relayAuthorization } from '../relay.js'
 import { giveTestDollars } from '../services/faucet.js'
 import { indexedThrough } from '../workers/watcher.js'
@@ -26,6 +27,8 @@ import { indexedThrough } from '../workers/watcher.js'
  * - POST /transfers relays a transfer between people that the sender signed; Kova pays the gas.
  * - GET /wallets/:address/transfers lists what moved in or out, from Kova's index of the chain.
  * - POST /faucet sends test dollars, on testnet only.
+ * - GET and PUT /vaults/:id keep a wallet's encrypted backup (name, currency, contacts). Kova
+ *   stores ciphertext it can't read; only the vault's own key, from the same passkey, replaces it.
  */
 
 const hits = new Map<string, number[]>()
@@ -68,6 +71,19 @@ function serializeTransfer(row: TransferRow) {
 }
 
 const faucetBody = z.object({ address: z.string().refine((v) => isAddress(v), 'Not a Monad address') })
+
+const vaultBody = z.object({
+  ciphertext: z.string().regex(/^[A-Za-z0-9_-]+$/).max(96_000),
+  nonce: z.string().regex(/^[A-Za-z0-9_-]{32}$/),
+  signed_at: z.number().int().positive(),
+  signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
+})
+
+function vaultId(c: { req: { param: (name: string) => string } }): Address {
+  const id = c.req.param('id')
+  if (!isAddress(id)) throw new KovaError('invalid_request', 'Not a vault id.')
+  return getAddress(id)
+}
 
 export const walletRoutes = new Hono()
   .post('/transfers', async (c) => {
@@ -125,6 +141,37 @@ export const walletRoutes = new Hono()
     const last = rows.at(-1)
     const cursor = rows.length === page && last ? last.blockNumber - 1n : (through ?? BigInt(afterText))
     return c.json({ object: 'list', data: rows.map(serializeTransfer), indexed_through: cursor.toString(), has_more: rows.length === page })
+  })
+  .get('/vaults/:id', async (c) => {
+    const id = vaultId(c)
+    const vault = await db.query.walletVaults.findFirst({ where: eq(schema.walletVaults.id, id.toLowerCase()) })
+    if (!vault) throw notFound('vault', id)
+    return c.json({ object: 'vault', id, ciphertext: vault.ciphertext, nonce: vault.nonce, updated_at: vault.updatedAt.toISOString() })
+  })
+  .put('/vaults/:id', async (c) => {
+    const id = vaultId(c)
+    const parsed = vaultBody.safeParse(await c.req.json().catch(() => ({})))
+    if (!parsed.success) throw new KovaError('invalid_request', 'Expected { ciphertext, nonce, signed_at, signature }.')
+    const { ciphertext, nonce, signed_at, signature } = parsed.data
+    if (Math.abs(Date.now() / 1000 - signed_at) > 300) throw new KovaError('invalid_request', 'This backup was signed too long ago. Try again.')
+    const signer = await recoverMessageAddress({ message: vaultMessage(id, ciphertext, nonce, signed_at), signature: signature as Hex }).catch(() => null)
+    if (!signer || !isAddressEqual(signer, id)) throw new KovaError('forbidden', 'Only this vault’s own key can replace it.')
+    limit(`vault:${id.toLowerCase()}`, 60, 3_600_000, 'That’s a lot of backups in an hour. Try again later.')
+    limit(`vault-ip:${ip(c)}`, 120, 3_600_000, 'That’s a lot of backups from here. Try again later.')
+
+    const signedAt = BigInt(signed_at)
+    const [saved] = await db
+      .insert(schema.walletVaults)
+      .values({ id: id.toLowerCase(), ciphertext, nonce, signedAt })
+      .onConflictDoUpdate({
+        target: schema.walletVaults.id,
+        set: { ciphertext, nonce, signedAt, updatedAt: new Date() },
+        // An older signature never replaces a newer backup.
+        setWhere: lt(schema.walletVaults.signedAt, signedAt),
+      })
+      .returning()
+    if (!saved) throw new KovaError('conflict', 'A newer backup is already saved.')
+    return c.json({ object: 'vault', id, updated_at: saved.updatedAt.toISOString() })
   })
   .post('/faucet', async (c) => {
     if (config.KOVA_NETWORK !== 'testnet') throw new KovaError('forbidden', 'Test dollars are for testnet only.')

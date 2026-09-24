@@ -1,7 +1,7 @@
 import { createPasskeyWithPrfOutput, getPasskeyPrfOutput, isMeraError } from '@category-labs/mera'
 import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 import { type Address, getAddress, isAddress, isAddressEqual, type LocalAccount } from 'viem'
 import type { Checkout } from './api'
@@ -12,6 +12,7 @@ import { type DisplayCurrency, formatUsd } from './money'
 import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
 import { endSession, sessionAccount, spend, startSession } from './session'
 import { load, remove, save } from './storage'
+import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vault'
 
 /**
  * The wallet is a passkey (Mera). Creating it takes one Face ID: the passkey, which iCloud
@@ -204,6 +205,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return [...seen.values()]
   }, [activity, savedContacts])
 
+  // Back up the vault a moment after the owner changes their name, currency or a contact: the
+  // changes that set `edited`, not the ones that come from loading or restoring.
+  const edited = useRef(false)
+  useEffect(() => {
+    if (!edited.current || !profile?.name) return
+    const timer = setTimeout(() => {
+      edited.current = false
+      void saveVault({ v: 1, name: profile.name, currency: profile.currency, contacts: savedContacts }).catch(() => {})
+    }, 1500)
+    return () => clearTimeout(timer)
+  }, [profile?.name, profile?.currency, savedContacts])
+
   // The names you gave people, applied to every payment with them, past ones included.
   const named = useMemo(() => {
     const map = new Map<string, string>()
@@ -305,7 +318,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       }).catch((error) => {
         throw new Error(passkeyProblem(error))
       })
-      takeVaultOutput()
+      const vault = takeVaultOutput()
+      if (vault) await keepVaultSecret(vault)
       await keep(asserted.prfOutput)
       return begin(asserted.prfOutput, profile.address)
     },
@@ -321,7 +335,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     }).catch((error) => {
       throw new Error(passkeyProblem(error))
     })
-    takeVaultOutput()
+    const vault = takeVaultOutput()
+    if (vault) await keepVaultSecret(vault)
     await keep(created.prfOutput)
     const account = await begin(created.prfOutput)
     const next: Profile = {
@@ -336,21 +351,30 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setProfile(next)
     setBalance(0n)
     setStatus('ready')
+    void saveVault({ v: 1, name: next.name, currency: next.currency, contacts: [] }).catch(() => {})
   }, [])
 
   const restore = useCallback(async () => {
     const asserted = await getPasskeyPrfOutput({ rpId: passkeyDomain, webAuthnClient: kovaWebAuthnClient }).catch((error) => {
       throw new Error(passkeyProblem(error))
     })
-    takeVaultOutput()
+    const vault = takeVaultOutput()
+    if (vault) await keepVaultSecret(vault)
     await keep(asserted.prfOutput)
     const account = await begin(asserted.prfOutput)
+    // Who you are comes back from the vault this passkey sealed, if it sealed one.
+    const backup = vault ? await openVault(vault).catch(() => null) : null
+    const restoredContacts = (backup?.contacts ?? []).filter((c) => isAddress(c.address)) as Contact[]
+    if (restoredContacts.length) {
+      setSavedContacts(restoredContacts)
+      await save(CONTACTS, restoredContacts)
+    }
     // A fresh history for this wallet: Kova's index of the chain brings back what arrived.
     await remove(ACTIVITY, CURSOR, BALANCE)
     const next: Profile = {
-      name: '',
+      name: backup?.name ?? '',
       address: account.address,
-      currency: 'USD',
+      currency: (backup?.currency as DisplayCurrency | undefined) ?? 'USD',
       protected: true,
       createdAt: Date.now(),
       passkey: { credentialId: asserted.credentialId },
@@ -368,6 +392,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!profile || name.trim().length < 2) return
       const next = { ...profile, name: name.trim() }
       await save(PROFILE, next)
+      edited.current = true
       setProfile(next)
     },
     [profile],
@@ -378,6 +403,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!profile) return
       const next = { ...profile, currency }
       await save(PROFILE, next)
+      edited.current = true
       setProfile(next)
     },
     [profile],
@@ -422,6 +448,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       const merged = { ...before, ...contact, name, currency: contact.currency ?? before?.currency }
       const next = [merged, ...prev.filter((c) => !isAddressEqual(c.address, contact.address))].slice(0, 50)
       void save(CONTACTS, next)
+      edited.current = true
       return next
     })
   }, [])
@@ -435,6 +462,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         ? prev.map((c) => (c === before ? { ...c, name: clean } : c))
         : [{ address, name: clean }, ...prev].slice(0, 50)
       void save(CONTACTS, next)
+      edited.current = true
       return next
     })
   }, [])
@@ -467,6 +495,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     // The passkey itself stays in iCloud Keychain: it can bring this wallet back at any time.
     endSession()
     await SecureStore.deleteItemAsync(PRF)
+    await forgetVaultSecret()
     await remove(PROFILE, ACTIVITY, CONTACTS, CURSOR, BALANCE)
     setProfile(null)
     setBalance(null)

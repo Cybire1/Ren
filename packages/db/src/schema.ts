@@ -413,6 +413,24 @@ export const transfers = pgTable(
   ],
 )
 
+/**
+ * Encrypted backups of what a Kova Pay wallet knows about its owner: their name, their currency,
+ * the names they gave people. Sealed on the phone with a key derived from the wallet's passkey
+ * (its own PRF salt, separate from the wallet key), so Kova stores ciphertext it cannot read,
+ * and the same passkey brings it back on a new phone. The id is the address of a signing key
+ * from the same passkey; only that key can replace the vault.
+ */
+export const walletVaults = pgTable('wallet_vaults', {
+  /** Lowercase address of the vault's signing key. */
+  id: text('id').primaryKey(),
+  ciphertext: text('ciphertext').notNull(),
+  nonce: text('nonce').notNull(),
+  /** When the phone signed this version (unix seconds). An older signature never replaces a newer one. */
+  signedAt: bigint('signed_at', { mode: 'bigint' }).notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+})
+
 export const auditLogs = pgTable(
   'audit_logs',
   {
