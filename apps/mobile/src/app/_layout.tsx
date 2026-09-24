@@ -13,6 +13,7 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { PrefsProvider, usePrefs } from '@/lib/prefs'
 import { StallProvider } from '@/lib/stall'
+import { TravelProvider } from '@/lib/travel'
 import { TerminalProvider } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { useWallet, WalletProvider } from '@/lib/wallet'
@@ -50,6 +51,7 @@ export default function RootLayout() {
           <TerminalProvider>
             <WalletProvider>
               <StallProvider>
+                <TravelProvider>
                 <StatusBar style="dark" />
                 <ArrivalWatcher />
                 <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
@@ -60,7 +62,9 @@ export default function RootLayout() {
                   <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
                   <Stack.Screen name="open-stall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />
                 </Stack>
+                </TravelProvider>
               </StallProvider>
             </WalletProvider>
           </TerminalProvider>

@@ -81,6 +81,17 @@ export interface Checkout {
     pay_for_me: boolean
     stall: { id: string; name: string; slug: string } | null
   } | null
+  /** The flight or hotel, when this charge is a share of a Kova Travel trip. */
+  trip?: {
+    kind: 'flight' | 'stay'
+    title: string
+    subtitle: string
+    provider: { name: string; image: string | null }
+    booked_by: string
+    share: string
+    shares: number
+    pay_by: string
+  } | null
 }
 
 export const getCheckout = (id: string) => request<Checkout>(`/v1/checkout/${id}`)
@@ -315,6 +326,252 @@ export interface MenuImport {
 /** Snap your menu: a photo of a menu board or price list in, suggested items out. Nothing is saved. */
 export const readMenuPhoto = (base64: string, mediaType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg') =>
   request<MenuImport>('/v1/catalog/import', { method: 'POST', auth: 'owner', body: JSON.stringify({ image: base64, media_type: mediaType }) })
+
+// --- travel --------------------------------------------------------------------------------
+
+export interface Money {
+  /** What Kova Travel charges, in dollars. */
+  usd: string
+  /** As the airline or hotel priced it. */
+  amount: string
+  currency: string
+}
+
+export interface Place {
+  type: 'airport' | 'city'
+  iata: string
+  name: string
+  city: string
+  country: string
+  latitude: number | null
+  longitude: number | null
+}
+
+export interface Segment {
+  id: string
+  from: { iata: string; city: string }
+  to: { iata: string; city: string }
+  departs: string
+  arrives: string
+  minutes: number | null
+  carrier: { name: string; iata: string; logo: string | null }
+  operated_by: string | null
+  flight: string
+  aircraft: string | null
+}
+
+export interface Slice {
+  id: string
+  from: { iata: string; city: string; name: string }
+  to: { iata: string; city: string; name: string }
+  departs: string | null
+  arrives: string | null
+  minutes: number | null
+  stops: number
+  segments: Segment[]
+}
+
+export interface FlightOffer {
+  id: string
+  price: Money
+  expires_at: string
+  holdable: boolean
+  hold_until: string | null
+  owner: { name: string; iata: string; logo: string | null }
+  cabin: string | null
+  bags: { checked: number; carry_on: number }
+  refundable: boolean
+  changeable: boolean
+  passengers: { id: string; type: string; age: number | null }[]
+  slices: Slice[]
+}
+
+export interface ExtraBag {
+  id: string
+  kind: 'checked' | 'carry_on'
+  weight_kg: number | null
+  max: number
+  passenger_ids: string[]
+  segment_ids: string[]
+  price: Money
+}
+
+export type SeatCell =
+  | { kind: 'seat'; designator: string; name: string | null; available: boolean; services: { id: string; passenger_id: string; price: Money }[] }
+  | { kind: 'exit' | 'space' }
+
+export interface SeatMap {
+  id: string
+  segment_id: string
+  aisles: number
+  wings: { first_row_index: number; last_row_index: number } | null
+  rows: SeatCell[][][]
+}
+
+export interface StayResult {
+  id: string
+  check_in: string
+  check_out: string
+  rooms: number
+  guests: number
+  from_price: Money | null
+  accommodation: {
+    id: string
+    name: string
+    stars: number | null
+    review_score: number | null
+    review_count: number | null
+    photos: string[]
+    address: string
+    city: string
+    amenities: string[]
+    check_in_after: string | null
+    check_out_before: string | null
+    description: string | null
+  }
+}
+
+export interface StayRate {
+  id: string
+  price: Money
+  board: string
+  cancellation: string
+  pay_at_hotel: string | null
+  expires_at: string
+  payable: boolean
+}
+
+export interface StayDetail extends StayResult {
+  rooms_available: { name: string; photos: string[]; beds: string; rates: StayRate[] }[]
+}
+
+export interface TripShare {
+  label: string
+  amount: string
+  status: Checkout['status']
+  checkout: string | null
+}
+
+export interface Trip {
+  id: string
+  kind: 'flight' | 'stay'
+  status: 'awaiting_payment' | 'booking' | 'booked' | 'failed' | 'expired' | 'canceled'
+  test_mode: boolean
+  summary: {
+    title: string
+    subtitle: string
+    provider: { name: string; image: string | null }
+    legs: { from: string; to: string; departs: string; arrives: string; carrier: string | null; flight: string | null; stops: number; duration: string | null }[]
+    room?: { name: string; board: string; cancellation: string }
+    extras: string[]
+    bookedBy: string
+  }
+  amount: string
+  fare: { amount: string; currency: string }
+  pay_by: string
+  held: boolean
+  booking_reference: string | null
+  travellers: string[]
+  failure: string | null
+  shares: TripShare[]
+  created_at: string
+}
+
+export interface UnderstoodTrip {
+  kind: 'flight' | 'stay'
+  from: string | null
+  to: string | null
+  depart: string | null
+  return: string | null
+  adults: number
+  children: number
+  infants: number
+  cabin: 'economy' | 'premium_economy' | 'business' | 'first'
+  city: string | null
+  check_in: string | null
+  check_out: string | null
+  rooms: number
+  wishes: string | null
+  from_place: Place | null
+  to_place: Place | null
+  city_place: Place | null
+}
+
+export interface FlightSearch {
+  from: string
+  to: string
+  depart: string
+  return?: string | null
+  adults: number
+  children: number
+  infants: number
+  cabin: UnderstoodTrip['cabin']
+  wishes?: string | null
+}
+
+export interface StaySearch {
+  latitude?: number | null
+  longitude?: number | null
+  check_in: string
+  check_out: string
+  adults: number
+  children: number
+  rooms: number
+  wishes?: string | null
+}
+
+export interface TravellerInput {
+  given_name: string
+  family_name: string
+  born_on?: string
+  gender?: 'm' | 'f'
+  title?: 'mr' | 'ms' | 'mrs' | 'miss' | 'dr'
+  email?: string
+  phone_number?: string
+  passenger_id?: string
+}
+
+export const travelStatus = () => request<{ ready: boolean; test_mode: boolean; understands: boolean }>('/v1/travel')
+
+export const searchPlaces = (q: string) =>
+  request<{ data: Place[] }>(`/v1/travel/places?q=${encodeURIComponent(q)}`).then((r) => r.data)
+
+export const understandTrip = (text: string) =>
+  request<UnderstoodTrip>('/v1/travel/understand', { method: 'POST', body: JSON.stringify({ text, today: new Date().toISOString().slice(0, 10) }) })
+
+export const searchFlights = (search: FlightSearch) =>
+  request<{ data: FlightOffer[]; best: string | null; test_mode: boolean }>('/v1/travel/flights/search', { method: 'POST', body: JSON.stringify(search) })
+
+export const getFlightOffer = (id: string) => request<FlightOffer & { extra_bags: ExtraBag[] }>(`/v1/travel/flights/offers/${id}`)
+
+export const getSeatMaps = (offerId: string) => request<{ data: SeatMap[] }>(`/v1/travel/flights/offers/${offerId}/seats`).then((r) => r.data)
+
+export const searchStays = (search: StaySearch) =>
+  request<{ data: StayResult[]; best: string | null; test_mode: boolean }>('/v1/travel/stays/search', { method: 'POST', body: JSON.stringify(search) })
+
+export const getStay = (resultId: string) => request<StayDetail>(`/v1/travel/stays/results/${resultId}`)
+
+export type CreatedTrip = Omit<Trip, 'shares'> & { token: string; shares: (TripShare & { link: string })[] }
+
+export const createFlightTrip = (body: {
+  offer_id: string
+  travellers: TravellerInput[]
+  services: { id: string; quantity: number }[]
+  extras: string[]
+  payers: string[]
+  booked_by: string
+}) => request<CreatedTrip>('/v1/travel/trips', { method: 'POST', body: JSON.stringify({ kind: 'flight', ...body }) })
+
+export const createStayTrip = (body: {
+  rate_id: string
+  guests: { given_name: string; family_name: string }[]
+  email: string
+  phone_number: string
+  payers: string[]
+  booked_by: string
+}) => request<CreatedTrip>('/v1/travel/trips', { method: 'POST', body: JSON.stringify({ kind: 'stay', ...body }) })
+
+export const getTrip = (id: string, token: string) => request<Trip>(`/v1/travel/trips/${id}`, { headers: { 'x-trip-token': token } })
 
 // --- insights ------------------------------------------------------------------------------
 

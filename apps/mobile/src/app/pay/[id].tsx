@@ -6,6 +6,7 @@ import { type Checkout, getCheckout } from '@/lib/api'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { type Entry, useWallet } from '@/lib/wallet'
+import { Image } from 'expo-image'
 import { Avatar, ShopBadge } from '@/ui/art'
 import { Bob } from '@/ui/motion'
 import { PaidScene } from '@/ui/PaidScene'
@@ -108,8 +109,13 @@ export default function PayCharge() {
             Paid!
           </Txt>
           <Txt weight="medium" size={22} style={{ textAlign: 'center' }}>
-            {formatUsd(amount)} to {checkout.order?.stall?.name ?? checkout.merchant_name}
+            {checkout.trip ? `${formatUsd(amount)} for ${checkout.trip.title}` : `${formatUsd(amount)} to ${checkout.order?.stall?.name ?? checkout.merchant_name}`}
           </Txt>
+          {checkout.trip ? (
+            <Txt size={15} color={colors.onTint} style={{ textAlign: 'center' }}>
+              {checkout.trip.share === 'You' ? 'Kova is booking it now.' : `${checkout.trip.booked_by}’s trip gets booked once it’s all paid.`}
+            </Txt>
+          ) : null}
           {checkout.order?.pay_for_me && checkout.order.customer_name ? (
             <Txt size={15} color={colors.onTint}>
               for {checkout.order.customer_name}’s order
@@ -126,7 +132,11 @@ export default function PayCharge() {
           </Sticker>
         </View>
         <View style={[styles.footer, { gap: 14 }]}>
-          <PillButton label="Done" icon="check" onPress={() => router.replace('/(tabs)')} />
+          <PillButton
+            label="Done"
+            icon="check"
+            onPress={() => (checkout.trip?.share === 'You' && router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          />
           <View style={{ alignItems: 'center' }}>
             <TextLink label="See receipt" onPress={() => router.replace({ pathname: '/receipt/[id]', params: { id: entry.id } })} />
           </View>
@@ -135,20 +145,43 @@ export default function PayCharge() {
     )
 
   const order = checkout.order
-  const place = order?.stall?.name ?? checkout.merchant_name
-  const askedBy = order?.pay_for_me && order.customer_name ? order.customer_name : null
+  const trip = checkout.trip
+  const place = trip ? trip.title : (order?.stall?.name ?? checkout.merchant_name)
+  const askedBy = trip && trip.share !== 'You' ? trip.booked_by : order?.pay_for_me && order.customer_name ? order.customer_name : null
   const shown = order ? order.lines.slice(0, 4) : []
+  const lead = trip
+    ? trip.share === 'You'
+      ? `You’re paying for your ${trip.kind === 'flight' ? 'flight' : 'stay'}`
+      : trip.shares > 1
+        ? `${trip.booked_by} split this ${trip.kind === 'flight' ? 'trip' : 'stay'} with you. Your share of`
+        : `${trip.booked_by} asked you to pay for their ${trip.kind === 'flight' ? 'flight' : 'stay'}`
+    : askedBy
+      ? `${askedBy} asked you to pay for their order at`
+      : 'You’re paying'
   return (
     <Screen bg={colors.tealSoft}>
       <Header backIcon="close" title="Confirm" onBack={() => router.replace('/(tabs)')} />
       <ScrollView contentContainerStyle={styles.review}>
-        <Bob>{askedBy ? <Avatar name={askedBy} size={88} /> : <ShopBadge size={order ? 80 : 96} />}</Bob>
+        <Bob>
+          {trip?.provider.image ? (
+            <Image source={{ uri: trip.provider.image }} style={styles.tripArt} contentFit={trip.kind === 'flight' ? 'contain' : 'cover'} />
+          ) : askedBy ? (
+            <Avatar name={askedBy} size={88} />
+          ) : (
+            <ShopBadge size={order ? 80 : 96} />
+          )}
+        </Bob>
         <Txt size={18} style={{ marginTop: 16, textAlign: 'center' }}>
-          {askedBy ? `${askedBy} asked you to pay for their order at` : 'You’re paying'}
+          {lead}
         </Txt>
         <Txt weight="semi" size={26} style={{ textAlign: 'center' }}>
           {place}
         </Txt>
+        {trip ? (
+          <Txt size={14} color={colors.onTint} style={{ textAlign: 'center', marginTop: 2 }}>
+            {trip.subtitle}
+          </Txt>
+        ) : null}
         <Txt weight="bold" size={order ? 60 : 72} style={styles.amount} adjustsFontSizeToFit numberOfLines={1}>
           {formatUsd(amount)}
         </Txt>
@@ -182,6 +215,12 @@ export default function PayCharge() {
                 “{order.note}”
               </Txt>
             ) : null}
+          </View>
+        ) : trip ? (
+          <View style={styles.note}>
+            <Txt weight="medium" size={15}>
+              {trip.provider.name}. Pay by {new Date(trip.pay_by).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+            </Txt>
           </View>
         ) : checkout.reference ? (
           <View style={styles.note}>
@@ -259,6 +298,7 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   orderLine: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 3 },
+  tripArt: { width: 96, height: 96, borderRadius: 28, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white },
   amount: { letterSpacing: -2.5, marginTop: 8 },
   note: { marginTop: 14, paddingHorizontal: 14, height: 34, borderRadius: 17, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.ink, justifyContent: 'center' },
   lines: { paddingHorizontal: 18, paddingVertical: 6 },

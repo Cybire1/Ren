@@ -7,7 +7,7 @@ import { isTestnet } from '@/lib/config'
 import { colors } from '@/lib/theme'
 import { isUnnamed, useWallet } from '@/lib/wallet'
 import { ActionTile } from '@/ui/ActionTile'
-import { Avatar } from '@/ui/art'
+import { Avatar, Flyer } from '@/ui/art'
 import { BalanceCard } from '@/ui/BalanceCard'
 import { dockClearance } from '@/ui/Dock'
 import { EntryRow } from '@/ui/EntryRow'
@@ -90,6 +90,28 @@ export default function Home() {
           <ActionTile kind="request" onPress={() => router.push('/request')} />
         </View>
       </View>
+
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Travel. Flights and hotels, paid in dollars"
+        onPress={() => router.push('/travel')}
+        style={({ pressed }) => [styles.travel, pressed && { transform: [{ scale: 0.98 }] }]}
+      >
+        <View style={{ flex: 1 }}>
+          <Txt weight="bold" size={20} style={{ letterSpacing: -0.4 }}>
+            Travel
+          </Txt>
+          <Txt size={13} color={colors.onTint}>
+            Flights and hotels, paid in dollars
+          </Txt>
+        </View>
+        <View style={styles.travelPlane} pointerEvents="none">
+          <Flyer size={84} />
+        </View>
+        <View style={styles.travelGo}>
+          <Icon name="arrow" color={colors.white} />
+        </View>
+      </Pressable>
 
       {empty ? (
         <Pressable accessibilityRole="button" onPress={() => router.push('/add-money')} style={styles.notice}>
@@ -177,6 +199,22 @@ const styles = StyleSheet.create({
   payIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   waves: { position: 'absolute', right: -14, top: 40 },
   small: { flex: 1, padding: 14, paddingHorizontal: 16, justifyContent: 'space-between' },
+  travel: {
+    marginTop: 12,
+    height: 76,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.tealSoft,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingLeft: 18,
+    paddingRight: 12,
+    overflow: 'hidden',
+  },
+  travelPlane: { marginRight: -6, transform: [{ rotate: '-6deg' }] },
+  travelGo: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   notice: {
     marginTop: 22,
     borderRadius: 24,

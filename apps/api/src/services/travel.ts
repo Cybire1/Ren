@@ -10,6 +10,7 @@ import { KovaError, notFound } from '../errors.js'
 import { decodeId, encodeId } from '../ids.js'
 import { duffel, money, serializeOffer, travelTestMode } from './duffel.js'
 import { createIntent } from './intents.js'
+import { refundTrip } from './refunds.js'
 
 type Trip = typeof schema.trips.$inferSelect
 type Merchant = typeof schema.merchants.$inferSelect
@@ -336,6 +337,8 @@ export async function onIntentPaid(intentId: string) {
       .update(schema.trips)
       .set({ status: 'failed', failure: bookingFailure(message), updatedAt: new Date() })
       .where(eq(schema.trips.id, claimed.id))
+    // Nothing was booked: everyone who paid gets their money back.
+    await refundTrip(claimed.id, 'booking_failed')
   })
 }
 
@@ -407,6 +410,8 @@ export async function expireTrips(): Promise<number> {
       .update(schema.paymentIntents)
       .set({ status: 'canceled', updatedAt: new Date() })
       .where(and(inArray(schema.paymentIntents.id, shares.map((s) => s.intentId)), eq(schema.paymentIntents.status, 'requires_payment')))
+  // A split that only some friends paid: they get their shares back.
+  for (const trip of stale) await refundTrip(trip.id, 'trip_expired').catch((error) => console.error('[refund] trip', error))
   return stale.length
 }
 

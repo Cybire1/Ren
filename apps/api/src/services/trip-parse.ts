@@ -28,6 +28,8 @@ export interface UnderstoodTrip {
 
 export const understandReady = () => ai !== null
 
+const weekday = (iso: string) => new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-GB', { weekday: 'long', timeZone: 'UTC' })
+
 export async function understandTrip(text: string, today: string): Promise<UnderstoodTrip> {
   if (!ai) throw new KovaError('invalid_request', 'Typing a trip is not set up on this server yet.')
   const response = await ai.messages.create({
@@ -64,7 +66,7 @@ export async function understandTrip(text: string, today: string): Promise<Under
     messages: [
       {
         role: 'user',
-        content: `Today is ${today}. Work out relative dates ("next Friday", "for 3 nights") from today. The traveller wrote:\n\n${text.slice(0, 500)}`,
+        content: `Today is ${weekday(today)} ${today}. Work out relative dates ("this Friday", "next Friday", "for 3 nights") from today: "this Friday" or plain "Friday" is the coming one, and "next Friday" is the Friday of next week. The traveller wrote:\n\n${text.slice(0, 500)}`,
       },
     ],
   })
