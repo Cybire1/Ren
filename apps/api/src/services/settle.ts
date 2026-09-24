@@ -1,6 +1,6 @@
 import { schema, uuidv7 } from '@kova/db'
 import { decodeMemo, verifyPayment } from '@kova/tempo'
-import { eq } from 'drizzle-orm'
+import { and, eq, isNull } from 'drizzle-orm'
 import type { Address, Hash } from 'viem'
 import type { Transaction } from 'viem/tempo'
 import { publicClient } from '../chain.js'
@@ -100,6 +100,11 @@ export async function settleFromReceipt(
           refId: paymentId,
         },
       ])
+      // A till sale changes hands across the counter as it is paid: it is never waiting to be collected.
+      await tx
+        .update(schema.orders)
+        .set({ collectedAt: now })
+        .where(and(eq(schema.orders.intentId, intent.id), eq(schema.orders.source, 'till'), isNull(schema.orders.collectedAt)))
     }
 
     await tx.insert(schema.events).values({

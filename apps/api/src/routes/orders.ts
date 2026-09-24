@@ -20,6 +20,7 @@ const listQuery = z.object({
   /** open: paid and not yet handed over. */
   status: z.enum(['all', 'open', 'collected', 'unpaid']).default('all'),
   stall_id: z.string().optional(),
+  source: z.enum(['stall', 'till']).optional(),
   limit: z.coerce.number().int().min(1).max(100).default(50),
 })
 
@@ -35,7 +36,7 @@ export const orderRoutes = new Hono()
   .get('/orders', requireApiKey, async (c) => {
     const parsed = listQuery.safeParse(c.req.query())
     if (!parsed.success) throw new KovaError('invalid_request', 'Invalid query')
-    const { status, stall_id, limit } = parsed.data
+    const { status, stall_id, source, limit } = parsed.data
     const merchantId = c.get('merchant').id
     const stallId = stall_id ? decodeId('stall', stall_id) : undefined
     if (stall_id && !stallId) throw notFound('stall', stall_id)
@@ -48,6 +49,7 @@ export const orderRoutes = new Hono()
         and(
           eq(schema.orders.merchantId, merchantId),
           stallId ? eq(schema.orders.stallId, stallId) : undefined,
+          source ? eq(schema.orders.source, source) : undefined,
           status === 'open' ? and(eq(schema.paymentIntents.status, 'paid'), isNull(schema.orders.collectedAt)) : undefined,
           status === 'collected' ? isNotNull(schema.orders.collectedAt) : undefined,
           status === 'unpaid' ? inArray(schema.paymentIntents.status, ['requires_payment', 'processing']) : undefined,
