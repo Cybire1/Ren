@@ -39,14 +39,9 @@ export function ActionTile({
         <View style={[styles.disc, { backgroundColor: tone.disc }]}>
           <Icon name={tone.icon} size={18} color={colors.white} strokeWidth={2.2} />
         </View>
-        <View>
-          <Txt weight="bold" size={17} style={{ letterSpacing: -0.3 }}>
-            {tone.label}
-          </Txt>
-          <Txt size={11} color={send ? colors.onTint : colors.muted} numberOfLines={1}>
-            {tone.caption}
-          </Txt>
-        </View>
+        <Txt weight="bold" size={17} style={{ letterSpacing: -0.3 }}>
+          {tone.label}
+        </Txt>
       </View>
     </Sticker>
   )

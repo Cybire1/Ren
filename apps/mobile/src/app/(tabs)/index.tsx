@@ -80,7 +80,7 @@ export default function Home() {
             <Txt weight="bold" size={34} color={colors.white} style={{ letterSpacing: -1 }}>
               Pay
             </Txt>
-            <Txt size={14} color={colors.onInk}>
+            <Txt size={12} color={colors.onInk}>
               Scan, tap or pay a link
             </Txt>
           </View>
@@ -101,12 +101,13 @@ export default function Home() {
           <Txt weight="bold" size={20} style={{ letterSpacing: -0.4 }}>
             Travel
           </Txt>
-          <Txt size={13} color={colors.onTint}>
+          <Txt size={12} color={colors.onTint} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
             Flights and hotels, paid in dollars
           </Txt>
         </View>
+        {/* The plane flies over the top right, clear of the line of text below it. */}
         <View style={styles.travelPlane} pointerEvents="none">
-          <Flyer size={84} />
+          <Flyer size={70} />
         </View>
         <View style={styles.travelGo}>
           <Icon name="arrow" color={colors.white} />
@@ -213,7 +214,7 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     overflow: 'hidden',
   },
-  travelPlane: { marginRight: -6, transform: [{ rotate: '-6deg' }] },
+  travelPlane: { position: 'absolute', right: 58, top: -6, transform: [{ rotate: '-6deg' }] },
   travelGo: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   notice: {
     marginTop: 22,
