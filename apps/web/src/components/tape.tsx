@@ -44,7 +44,10 @@ export function Tape({ intents, fresh, connected, hop }: { intents: PaymentInten
             <span className="tape-title" data-none={intent.reference ? undefined : 'true'}>
               {intent.reference ?? 'Payment'}
             </span>
-            <span className="tape-from">{intent.terminal?.name ?? 'Online'}</span>
+            <span className="tape-from">
+              {intent.order?.stall?.name ?? intent.terminal?.name ?? 'Online'}
+              {intent.order?.customer_name ? `, for ${intent.order.customer_name}` : ''}
+            </span>
           </span>
           <span className="tape-money">
             <span className="tape-amount">{usd(intent.amount)}</span>

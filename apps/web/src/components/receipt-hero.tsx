@@ -16,7 +16,7 @@ interface Receipt {
   coin: Currency
 }
 
-/** Three sales, three cities, three currencies. Rates are illustrative; everything settles in dollars. */
+/** Three sales, three cities, three currencies, at the app's reference rates; everything settles in dollars. */
 const RECEIPTS: Receipt[] = [
   {
     shop: 'Ada’s Bakery',
@@ -27,7 +27,7 @@ const RECEIPTS: Receipt[] = [
       ['Almond croissant', '$3.50'],
     ],
     total: '$12.50',
-    saw: '£9.30',
+    saw: '£9.88',
     from: 'London',
     coin: 'gbp',
   },
@@ -40,7 +40,7 @@ const RECEIPTS: Receipt[] = [
       ['Tote bag', '$6.00'],
     ],
     total: '$24.00',
-    saw: '€20.50',
+    saw: '€22.08',
     from: 'Lisbon',
     coin: 'eur',
   },

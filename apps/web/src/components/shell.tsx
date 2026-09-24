@@ -9,6 +9,8 @@ import { Art, Icon, type IconName, LogoMark, Wordmark } from './brand'
 const NAV: { href: string; label: string; icon: IconName }[] = [
   { href: '/dashboard', label: 'Overview', icon: 'home' },
   { href: '/dashboard/payments', label: 'Payments', icon: 'list' },
+  { href: '/dashboard/stalls', label: 'Stalls', icon: 'stall' },
+  { href: '/dashboard/catalogue', label: 'Catalogue', icon: 'tag' },
   { href: '/dashboard/terminals', label: 'Terminals', icon: 'terminal' },
   { href: '/dashboard/developers', label: 'Developers', icon: 'code' },
   { href: '/dashboard/settings', label: 'Settings', icon: 'settings' },
@@ -95,9 +97,9 @@ export function Shell({ shop, demo, livemode, children }: { shop: string; demo: 
         <Link href="/charge" className="dock-charge" aria-label="New charge">
           <Icon name="tap" size={22} />
         </Link>
-        {NAV.slice(2, 4).map((item) => (
-          <DockLink key={item.href} {...item} current={active(path, item.href)} />
-        ))}
+        {[NAV[2], NAV[4]].map((item) =>
+          item ? <DockLink key={item.href} {...item} current={active(path, item.href)} /> : null,
+        )}
       </nav>
     </div>
   )

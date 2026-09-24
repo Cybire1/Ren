@@ -13,7 +13,8 @@
     "test:e2e": "tsx --env-file-if-exists=.env ./node_modules/vitest/vitest.mjs run",
     "demo:payments": "tsx --env-file-if-exists=.env src/scripts/demo-payments.ts",
     "pay:open": "tsx --env-file-if-exists=.env src/scripts/pay-open.ts",
-    "perf": "tsx --env-file-if-exists=.env src/scripts/profile.ts"
+    "perf": "tsx --env-file-if-exists=.env src/scripts/profile.ts",
+    "pay:checkout": "tsx src/scripts/pay-checkout.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",

@@ -91,8 +91,9 @@ export interface Summary {
   /** Today, one entry per hour 0–23 of the shop's day. */
   hourly: { hour: number; total: string; count: number }[]
   daily: { date: string; total: string; count: number }[]
-  /** Today's takings per terminal; `terminal: null` is everything taken through the API. */
+  /** Today's takings per terminal; `terminal: null` is everything else taken through the API. */
   by_terminal: { terminal: { id: string; name: string } | null; total: string; count: number }[]
+  by_stall: { stall: { id: string; name: string; slug: string }; total: string; count: number }[]
 }
 
 export type IntentStatus = 'requires_payment' | 'processing' | 'paid' | 'held' | 'failed' | 'canceled' | 'expired'
@@ -110,6 +111,8 @@ export interface PaymentIntent {
   paid_at: string | null
   /** The terminal that took it, when a paired phone did. */
   terminal?: { id: string; name: string } | null
+  /** What was bought, when it came from a stall or a till sale. */
+  order?: Order | null
 }
 
 export interface PaymentDetail extends PaymentIntent {
@@ -143,6 +146,13 @@ export interface Checkout {
   memo: string
   reference: string | null
   expires_at: string
+  order: {
+    lines: OrderLine[]
+    customer_name: string | null
+    note: string | null
+    pay_for_me: boolean
+    stall: { id: string; name: string; slug: string } | null
+  } | null
 }
 
 export interface Terminal {
@@ -183,4 +193,87 @@ export interface KovaEvent {
   data: Record<string, unknown>
   created_at: string
   deliveries: { endpoint: string; status: string; attempts: number; response_status: number | null; last_error: string | null; delivered_at: string | null }[]
+}
+
+export interface CatalogItem {
+  id: string
+  name: string
+  description: string | null
+  price: string
+  image_url: string | null
+  image_id: string | null
+  barcode: string | null
+  sold_out: boolean
+  created_at: string
+}
+
+export interface Stall {
+  id: string
+  slug: string
+  name: string
+  tagline: string | null
+  open: boolean
+  cover_url: string | null
+  cover_image_id: string | null
+  item_ids?: string[]
+  created_at: string
+}
+
+export interface StallDetail extends Stall {
+  items: CatalogItem[]
+}
+
+export interface PublicStall extends Stall {
+  shop_name: string
+  livemode: boolean
+  items: Omit<CatalogItem, 'barcode' | 'image_id'>[]
+}
+
+export interface OrderLine {
+  item_id: string
+  name: string
+  unit_price: string
+  quantity: number
+}
+
+export interface Order {
+  id: string
+  source: 'stall' | 'till'
+  payment_intent: string
+  stall: { id: string; name: string; slug: string } | null
+  lines: OrderLine[]
+  customer_name: string | null
+  note: string | null
+  pay_for_me: boolean
+  collected_at: string | null
+  created_at: string
+  amount?: string
+  payment_status?: IntentStatus
+  paid_at?: string | null
+}
+
+export interface MenuImport {
+  currency: string
+  items: { name: string; description: string | null; price: string; original: { amount: number; currency: string } }[]
+}
+
+export interface BarcodeLookup {
+  code: string
+  item: CatalogItem | null
+  suggestion: { name: string; brand: string | null; image_url: string | null; source: string } | null
+}
+
+/** Upload image bytes as the signed-in shop (route handlers only). */
+export async function kovaUpload(bytes: ArrayBuffer, contentType: string) {
+  const session = await getSession()
+  if (!session) throw new ApiError('Signed out', 401)
+  const response = await fetch(`${baseUrl}/v1/images`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${session.key}`, 'content-type': contentType },
+    body: bytes,
+    cache: 'no-store',
+  })
+  const body = (await response.json().catch(() => ({}))) as { id?: string; url?: string; error?: { message?: string } }
+  if (!response.ok) throw new ApiError(body.error?.message ?? `Upload failed (${response.status})`, response.status)
+  return body as { id: string; url: string }
 }

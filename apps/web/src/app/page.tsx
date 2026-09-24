@@ -178,16 +178,16 @@ export default async function Landing() {
             <Art name="coin-usd" size={44} /> $12.50
           </span>
           <span>
-            <Art name="coin-eur" size={44} /> €10.70
+            <Art name="coin-eur" size={44} /> €11.50
           </span>
           <span>
-            <Art name="coin-gbp" size={44} /> £9.30
+            <Art name="coin-gbp" size={44} /> £9.88
           </span>
           <span>
-            <Art name="coin-ngn" size={44} /> ₦17,190
+            <Art name="coin-ngn" size={44} /> ₦17,188
           </span>
         </div>
-        <small>Rates are illustrative. Payments always settle in dollars (USDC).</small>
+        <small>At Kova’s published reference rates. Payments always settle in dollars (USDC).</small>
       </section>
 
       {/* Developers -------------------------------------------------------------------------- */}

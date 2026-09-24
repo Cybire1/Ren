@@ -68,10 +68,29 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
       <section className="card payee">
         <Art name="badge-shop" size={84} priority />
         <p className="await-label" style={{ marginTop: '0.5rem' }}>
-          Pay {c.merchant_name}
+          {c.order?.pay_for_me && c.order.customer_name
+            ? `${c.order.customer_name} asked you to pay for their order at ${c.order.stall?.name ?? c.merchant_name}`
+            : c.order?.stall
+              ? `Your order from ${c.order.stall.name}`
+              : `Pay ${c.merchant_name}`}
         </p>
         <p className="await-amount">{usd(c.amount)}</p>
-        {c.reference ? <p className="await-label">{c.reference}</p> : null}
+        {c.order ? (
+          <ul className="pay-lines">
+            {c.order.lines.map((l) => (
+              <li key={l.item_id}>
+                <span>
+                  {l.quantity > 1 ? `${l.quantity} × ` : ''}
+                  {l.name}
+                </span>
+                <span>{usd(Number(l.unit_price) * l.quantity)}</span>
+              </li>
+            ))}
+            {c.order.note ? <li className="pay-note">“{c.order.note}”</li> : null}
+          </ul>
+        ) : c.reference ? (
+          <p className="await-label">{c.reference}</p>
+        ) : null}
         <Pill href={`kova://pay/${c.id}`} icon="tap" tone="coral" wide>
           Pay with Kova
         </Pill>

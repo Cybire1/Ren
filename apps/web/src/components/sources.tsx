@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import type { Summary, Terminal } from '@/lib/api'
 import { ago, usd } from '@/lib/format'
+import { Awning } from './awning'
 import { Art, Icon } from './brand'
 
 const MINUTE = 60_000
@@ -18,7 +19,7 @@ function status(t: Terminal): { word: string; state: 'live' | 'recent' | 'idle' 
  * Where today's money came from: each paired phone drawn as a phone with its own takings,
  * the API as its own tile, and a place to pair another. An idle phone's Kovi is asleep.
  */
-export function Sources({ terminals, byTerminal, onAdd }: { terminals: Terminal[]; byTerminal: Summary['by_terminal']; onAdd: () => void }) {
+export function Sources({ terminals, byTerminal, byStall, onAdd }: { terminals: Terminal[]; byTerminal: Summary['by_terminal']; byStall: Summary['by_stall']; onAdd: () => void }) {
   const online = byTerminal.find((b) => b.terminal === null)
   return (
     <section className="src" aria-label="Where today’s money came from">
@@ -48,6 +49,17 @@ export function Sources({ terminals, byTerminal, onAdd }: { terminals: Terminal[
             </Link>
           )
         })}
+        {byStall.map((s) => (
+          <Link key={s.stall.id} href="/dashboard/stalls" className="phone phone-stall">
+            <Awning height={40} />
+            <span className="phone-name">{s.stall.name}</span>
+            <span className="phone-status">Stall orders</span>
+            <span className="phone-money">{usd(s.total)}</span>
+            <span className="phone-count">
+              {s.count} {s.count === 1 ? 'order' : 'orders'} today
+            </span>
+          </Link>
+        ))}
         {online ? (
           <Link href="/dashboard/developers" className="phone phone-api">
             <span className="phone-api-icon">

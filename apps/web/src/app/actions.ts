@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { ApiError, type ApiKey, kova, kovaPublic, type Merchant, type WebhookEndpoint } from '@/lib/api'
+import { ApiError, type ApiKey, type BarcodeLookup, type CatalogItem, kova, kovaPublic, type Merchant, type Stall, type WebhookEndpoint } from '@/lib/api'
 import { endSession, startSession } from '@/lib/session'
 
 /** What a form shows after it runs: an error to fix, or a secret to copy once. */
@@ -144,6 +144,82 @@ export async function cancelCharge(id: string): Promise<FormState> {
   try {
     await kova(`/v1/payment_intents/${encodeURIComponent(id)}/cancel`, { method: 'POST' })
     revalidatePath(`/dashboard/payments/${id}`)
+    return { ok: true }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
+// --- Stalls, catalogue, orders ----------------------------------------------------------
+
+export async function createStall(_: FormState, form: FormData): Promise<FormState> {
+  const name = String(form.get('name') ?? '').trim()
+  const tagline = String(form.get('tagline') ?? '').trim()
+  if (name.length < 2) return { error: 'Give your stall a name.' }
+  let id: string
+  try {
+    const stall = await kova<Stall>('/v1/stalls', { method: 'POST', body: JSON.stringify({ name, tagline: tagline || undefined }) })
+    id = stall.id
+  } catch (error) {
+    return { error: message(error) }
+  }
+  revalidatePath('/dashboard/stalls')
+  redirect(`/dashboard/stalls/${id}`)
+}
+
+export async function updateStall(id: string, patch: { name?: string; tagline?: string | null; open?: boolean; cover_image_id?: string | null; item_ids?: string[] }): Promise<FormState & { stall?: Stall }> {
+  try {
+    const stall = await kova<Stall>(`/v1/stalls/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify(patch) })
+    revalidatePath('/dashboard/stalls')
+    return { ok: true, stall }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
+export async function closeStallForGood(id: string) {
+  await kova(`/v1/stalls/${encodeURIComponent(id)}`, { method: 'DELETE' })
+  revalidatePath('/dashboard/stalls')
+  redirect('/dashboard/stalls')
+}
+
+export async function saveItem(
+  id: string | null,
+  input: { name?: string; price?: string; description?: string | null; barcode?: string | null; image_id?: string | null; sold_out?: boolean; stall_ids?: string[] },
+): Promise<FormState & { item?: CatalogItem }> {
+  try {
+    const item = id
+      ? await kova<CatalogItem>(`/v1/catalog/items/${encodeURIComponent(id)}`, { method: 'PATCH', body: JSON.stringify({ ...input, stall_ids: undefined }) })
+      : await kova<CatalogItem>('/v1/catalog/items', { method: 'POST', body: JSON.stringify(input) })
+    revalidatePath('/dashboard/catalogue')
+    revalidatePath('/dashboard/stalls')
+    return { ok: true, item }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
+export async function removeItem(id: string): Promise<FormState> {
+  try {
+    await kova(`/v1/catalog/items/${encodeURIComponent(id)}`, { method: 'DELETE' })
+    revalidatePath('/dashboard/catalogue')
+    return { ok: true }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
+export async function lookupBarcode(code: string): Promise<FormState & { lookup?: BarcodeLookup }> {
+  try {
+    return { ok: true, lookup: await kova<BarcodeLookup>(`/v1/catalog/barcodes/${encodeURIComponent(code)}`) }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
+export async function markCollected(id: string, collected: boolean): Promise<FormState> {
+  try {
+    await kova(`/v1/orders/${encodeURIComponent(id)}/collect`, { method: 'POST', body: JSON.stringify({ collected }) })
     return { ok: true }
   } catch (error) {
     return { error: message(error) }

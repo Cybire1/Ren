@@ -150,7 +150,7 @@ export function OverviewLive({
 
       <DayChart hourly={summary.hourly} daily={summary.daily} />
 
-      <Sources terminals={terminals} byTerminal={summary.by_terminal} onAdd={() => setPairing(true)} />
+      <Sources terminals={terminals} byTerminal={summary.by_terminal} byStall={summary.by_stall ?? []} onAdd={() => setPairing(true)} />
 
       <Tape intents={intents} fresh={fresh} connected={connected} hop={hop} />
 
