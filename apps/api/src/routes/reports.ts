@@ -1,6 +1,6 @@
 import { schema } from '@kova/db'
 import { formatAmount } from '@kova/tempo'
-import { and, desc, eq, gte, ilike, inArray, lt, sql } from 'drizzle-orm'
+import { and, desc, eq, ilike, inArray, lt, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { requireApiKey } from '../auth.js'
@@ -19,6 +19,20 @@ const listQuery = z.object({
   /** Search the shop's own reference. */
   q: z.string().trim().max(100).optional(),
 })
+
+/**
+ * The shop's time zone decides what "today" and "noon" mean. Intl and Postgres read the same
+ * IANA database, so a zone Intl accepts is one Postgres knows. None given: UTC.
+ */
+function zone(tz: string | undefined) {
+  if (!tz) return 'UTC'
+  try {
+    new Intl.DateTimeFormat('en-US', { timeZone: tz })
+    return tz
+  } catch {
+    throw new KovaError('invalid_request', `Unknown time zone: ${tz}`)
+  }
+}
 
 /** Merchant-facing reads: the transaction feed and the day's totals. */
 export const reportRoutes = new Hono()
@@ -42,76 +56,79 @@ export const reportRoutes = new Hono()
     })
 
     const page = rows.slice(0, limit)
+    // Name the terminal that took each charge, so a feed can say "Front counter".
+    const terminalIds = [...new Set(page.flatMap((r) => (r.terminalId ? [r.terminalId] : [])))]
+    const terminals = terminalIds.length
+      ? await db.query.terminals.findMany({ where: inArray(schema.terminals.id, terminalIds) })
+      : []
+    const names = new Map(terminals.map((t) => [t.id, t.name]))
+
     return c.json({
       object: 'list',
-      data: page.map(serializeIntent),
+      data: page.map((r) => ({
+        ...serializeIntent(r),
+        terminal: r.terminalId ? { id: encodeId('terminal', r.terminalId), name: names.get(r.terminalId) ?? 'Terminal' } : null,
+      })),
       has_more: rows.length > limit,
       next_before: page.at(-1)?.createdAt.toISOString() ?? null,
     })
   })
-  /** Everything the dashboard header shows, in one call. */
+  /**
+   * Everything the dashboard overview shows, in one call: today (by hour and by terminal), the
+   * last fourteen days, and the shop's lifetime totals. "Today" is the shop's own day, from
+   * local midnight in `tz`.
+   */
   .get('/summary', async (c) => {
     const merchantId = c.get('merchant').id
-    const since = new Date()
-    since.setHours(0, 0, 0, 0)
+    const tz = zone(c.req.query('tz'))
+    const midnight = sql`timezone(${tz}, date_trunc('day', timezone(${tz}, now())))`
+    const paid = and(eq(schema.paymentIntents.merchantId, merchantId), eq(schema.paymentIntents.status, 'paid'))
+    const totals = {
+      total: sql<string>`coalesce(sum(${schema.paymentIntents.amount}), 0)`,
+      count: sql<number>`count(*)::int`,
+    }
 
-    const [today] = await db
-      .select({
-        total: sql<string>`coalesce(sum(${schema.paymentIntents.amount}), 0)`,
-        count: sql<number>`count(*)::int`,
-      })
-      .from(schema.paymentIntents)
-      .where(
-        and(
-          eq(schema.paymentIntents.merchantId, merchantId),
-          eq(schema.paymentIntents.status, 'paid'),
-          gte(schema.paymentIntents.paidAt, since),
+    const [[today], [allTime], [open], last, hourly, daily, byTerminal] = await Promise.all([
+      db.select(totals).from(schema.paymentIntents).where(and(paid, sql`${schema.paymentIntents.paidAt} >= ${midnight}`)),
+      db.select(totals).from(schema.paymentIntents).where(paid),
+      db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(schema.paymentIntents)
+        .where(
+          and(
+            eq(schema.paymentIntents.merchantId, merchantId),
+            inArray(schema.paymentIntents.status, ['requires_payment', 'processing']),
+          ),
         ),
-      )
-
-    const [allTime] = await db
-      .select({
-        total: sql<string>`coalesce(sum(${schema.paymentIntents.amount}), 0)`,
-        count: sql<number>`count(*)::int`,
-      })
-      .from(schema.paymentIntents)
-      .where(
-        and(
-          eq(schema.paymentIntents.merchantId, merchantId),
-          eq(schema.paymentIntents.status, 'paid'),
-        ),
-      )
-
-    const [open] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(schema.paymentIntents)
-      .where(
-        and(
-          eq(schema.paymentIntents.merchantId, merchantId),
-          inArray(schema.paymentIntents.status, ['requires_payment', 'processing']),
-        ),
-      )
-
-    const last = await db.query.paymentIntents.findFirst({
-      where: and(
-        eq(schema.paymentIntents.merchantId, merchantId),
-        eq(schema.paymentIntents.status, 'paid'),
-      ),
-      orderBy: desc(schema.paymentIntents.paidAt),
-    })
-
-    // The last 14 days, one bucket per UTC day, empty days included, for the dashboard chart.
-    const days = await db.execute<{ day: string; total: string; count: number }>(sql`
-      select to_char(d.day, 'YYYY-MM-DD') as day,
-             coalesce(sum(i.amount), 0)::text as total,
-             count(i.id)::int as count
-      from generate_series((now() at time zone 'utc')::date - 13, (now() at time zone 'utc')::date, interval '1 day') as d(day)
-      left join payment_intents i
-        on i.merchant_id = ${merchantId} and i.status = 'paid'
-       and (i.paid_at at time zone 'utc')::date = d.day
-      group by d.day
-      order by d.day
-    `)
+      db.query.paymentIntents.findFirst({ where: paid, orderBy: desc(schema.paymentIntents.paidAt) }),
+      db.execute<{ hour: number; total: string; count: number }>(sql`
+        select h.hour::int as hour, coalesce(sum(i.amount), 0)::text as total, count(i.id)::int as count
+        from generate_series(0, 23) as h(hour)
+        left join payment_intents i
+          on i.merchant_id = ${merchantId} and i.status = 'paid'
+         and i.paid_at >= ${midnight}
+         and extract(hour from timezone(${tz}, i.paid_at)) = h.hour
+        group by h.hour
+        order by h.hour
+      `),
+      db.execute<{ day: string; total: string; count: number }>(sql`
+        select to_char(d.day, 'YYYY-MM-DD') as day, coalesce(sum(i.amount), 0)::text as total, count(i.id)::int as count
+        from generate_series(timezone(${tz}, now())::date - 13, timezone(${tz}, now())::date, interval '1 day') as d(day)
+        left join payment_intents i
+          on i.merchant_id = ${merchantId} and i.status = 'paid'
+         and timezone(${tz}, i.paid_at)::date = d.day
+        group by d.day
+        order by d.day
+      `),
+      db.execute<{ terminal_id: string | null; name: string | null; total: string; count: number }>(sql`
+        select i.terminal_id, t.name, coalesce(sum(i.amount), 0)::text as total, count(*)::int as count
+        from payment_intents i
+        left join terminals t on t.id = i.terminal_id
+        where i.merchant_id = ${merchantId} and i.status = 'paid' and i.paid_at >= ${midnight}
+        group by i.terminal_id, t.name
+        order by sum(i.amount) desc
+      `),
+    ])
 
     const merchant = c.get('merchant')
     return c.json({
@@ -122,16 +139,18 @@ export const reportRoutes = new Hono()
         network: merchant.network,
         livemode: !merchant.isTest,
       },
-      today: {
-        total: formatAmount(BigInt(today?.total ?? 0)),
-        count: today?.count ?? 0,
-      },
-      all_time: {
-        total: formatAmount(BigInt(allTime?.total ?? 0)),
-        count: allTime?.count ?? 0,
-      },
+      timezone: tz,
+      today: { total: formatAmount(BigInt(today?.total ?? 0)), count: today?.count ?? 0 },
+      all_time: { total: formatAmount(BigInt(allTime?.total ?? 0)), count: allTime?.count ?? 0 },
       open_intents: open?.count ?? 0,
-      daily: [...days].map((d) => ({ date: d.day, total: formatAmount(BigInt(d.total)), count: d.count })),
       last_paid_at: last?.paidAt?.toISOString() ?? null,
+      hourly: [...hourly].map((h) => ({ hour: h.hour, total: formatAmount(BigInt(h.total)), count: h.count })),
+      daily: [...daily].map((d) => ({ date: d.day, total: formatAmount(BigInt(d.total)), count: d.count })),
+      /** Today's takings per terminal; `terminal: null` is everything taken through the API. */
+      by_terminal: [...byTerminal].map((t) => ({
+        terminal: t.terminal_id ? { id: encodeId('terminal', t.terminal_id), name: t.name ?? 'Terminal' } : null,
+        total: formatAmount(BigInt(t.total)),
+        count: t.count,
+      })),
     })
   })
