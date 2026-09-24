@@ -208,3 +208,24 @@ falls inside Metropolis's build window.
 - Does the Agora prize require AUSD, and can one project also enter Colosseum? (rules are behind
   the hackathon login)
 - Mercuryo sandbox credentials come from their integration team (ask in the hackathon Discord).
+
+---
+
+# Later
+
+## Offline transactions
+
+Added 24 Sept 2026, for after the hackathons. Pay and get paid when one side, or both, has no
+signal: a market with no data, a bus, a power cut.
+
+- **How**: the payer's phone signs a payment (an EIP-3009 style authorization, or a Tempo
+  transaction) and hands it over by QR or NFC. The shop's phone checks the signature and
+  balance it last saw, gives the goods, and submits the payment the moment either phone is
+  back online.
+- **The risk**: the payer spends the same money twice before either phone reconnects. So offline
+  payments get a small limit per payment and per day (like contactless cards), the payer's wallet
+  counts down its offline allowance, and the merchant can choose whether to accept them.
+- **Kova Card fits here**: the NFC card (already in the backlog) can carry a pre-authorized
+  offline allowance, so a tap works with no network on either side.
+- **Settles later, visibly**: both phones show "Paid offline, settles when online", and Activity
+  and Orders mark it until it lands on-chain.
