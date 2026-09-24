@@ -1,16 +1,22 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { Checkout } from '@/lib/api'
 import { usd } from '@/lib/format'
 import { Icon } from './brand'
+import type { EmbeddedWallet } from './privy-wallet'
+
+// Privy is only downloaded when someone chooses email or Google.
+const PrivyWallet = dynamic(() => import('./privy-wallet'), { ssr: false })
 
 /**
- * Paying a Kova charge from any Monad wallet in the browser: MetaMask, Rabby, Phantom, whatever
- * announces itself (EIP-6963). The wallet signs the same EIP-3009 authorization Kova Pay signs,
- * for exactly this charge, and Kova's relayer submits it and pays the gas: the payer needs AUSD
- * and nothing else, not even MON.
+ * Paying a Kova charge without the Kova app: with email or Google (Privy makes a wallet on the
+ * spot), or from any Monad wallet in the browser (MetaMask, Rabby, Phantom, whatever announces
+ * itself through EIP-6963). Every one signs the same EIP-3009 authorization Kova Pay signs, for
+ * exactly this charge, and Kova's relayer submits it and pays the gas: the payer needs AUSD and
+ * nothing else, not even MON.
  */
 
 interface Eip1193 {
@@ -31,6 +37,8 @@ type Stage =
   | { name: 'choose' }
   | { name: 'working'; wallet: string; step: 'connect' | 'network' | 'sign' | 'pay' }
   | { name: 'short'; wallet: Wallet; address: string; balance: bigint }
+  /** An email or Google wallet shows no prompt of its own, so the page asks before it signs. */
+  | { name: 'confirm'; wallet: Wallet; address: string; balance: bigint; who: string }
   | { name: 'paid' }
   | { name: 'problem'; message: string }
 
@@ -129,26 +137,20 @@ function explain(error: unknown): string {
   return e.message && e.message.length < 160 ? e.message : 'Something went wrong. Nothing was paid; try again.'
 }
 
-export function WalletPay({ checkout, testnet }: { checkout: Checkout; testnet: boolean }) {
+export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkout; testnet: boolean; privyAppId?: string | null }) {
   const router = useRouter()
   const wallets = useWallets()
   const [stage, setStage] = useState<Stage>({ name: 'choose' })
   const [mobile, setMobile] = useState(false)
   const [funding, setFunding] = useState(false)
+  const [privy, setPrivy] = useState<'off' | 'opening' | 'on'>('off')
+  const [embedded, setEmbedded] = useState<EmbeddedWallet | null>(null)
   useEffect(() => setMobile(/iphone|ipad|android/i.test(navigator.userAgent)), [])
 
-  const pay = async (wallet: Wallet) => {
+  /** Signs the authorization for exactly this charge and hands it to Kova. */
+  const sign = async (wallet: Wallet, address: string) => {
     const name = wallet.info.name
     try {
-      setStage({ name: 'working', wallet: name, step: 'connect' })
-      const [address] = (await wallet.provider.request({ method: 'eth_requestAccounts' })) as string[]
-      if (!address) throw new Error('Your wallet shared no account.')
-
-      setStage({ name: 'working', wallet: name, step: 'network' })
-      await switchToMonad(wallet.provider, checkout.chain_id)
-      const balance = await balanceOf(wallet.provider, checkout.token, address)
-      if (balance < BigInt(checkout.amount_base)) return setStage({ name: 'short', wallet, address, balance })
-
       setStage({ name: 'working', wallet: name, step: 'sign' })
       const signature = (await wallet.provider.request({
         method: 'eth_signTypedData_v4',
@@ -171,6 +173,28 @@ export function WalletPay({ checkout, testnet }: { checkout: Checkout; testnet: 
     }
   }
 
+  /**
+   * Connects, moves the wallet to Monad and checks it can pay. A browser wallet then signs at once
+   * (it asks its owner itself); an email or Google wallet waits for the owner's tap here first.
+   */
+  const prepare = async (wallet: Wallet, confirm?: { who: string }) => {
+    const name = wallet.info.name
+    try {
+      setStage({ name: 'working', wallet: name, step: 'connect' })
+      const [address] = (await wallet.provider.request({ method: 'eth_requestAccounts' })) as string[]
+      if (!address) throw new Error('Your wallet shared no account.')
+
+      setStage({ name: 'working', wallet: name, step: 'network' })
+      await switchToMonad(wallet.provider, checkout.chain_id)
+      const balance = await balanceOf(wallet.provider, checkout.token, address)
+      if (balance < BigInt(checkout.amount_base)) return setStage({ name: 'short', wallet, address, balance })
+      if (confirm) return setStage({ name: 'confirm', wallet, address, balance, who: confirm.who })
+      await sign(wallet, address)
+    } catch (error) {
+      setStage({ name: 'problem', message: explain(error) })
+    }
+  }
+
   const topUp = async (wallet: Wallet, address: string) => {
     setFunding(true)
     try {
@@ -181,7 +205,8 @@ export function WalletPay({ checkout, testnet }: { checkout: Checkout; testnet: 
       })
       const body = (await response.json().catch(() => ({}))) as { error?: string }
       if (!response.ok) throw new Error(body.error ?? 'The test-dollar faucet didn’t answer.')
-      await pay(wallet)
+      // They asked for test dollars "and pay", so this pays without another tap.
+      await prepare(wallet)
     } catch (error) {
       setStage({ name: 'problem', message: explain(error) })
     } finally {
@@ -189,12 +214,37 @@ export function WalletPay({ checkout, testnet }: { checkout: Checkout; testnet: 
     }
   }
 
+  const payWithEmbedded = (wallet: EmbeddedWallet) =>
+    prepare({ info: { uuid: 'privy', name: 'your Kova wallet', icon: '', rdns: 'privy' }, provider: wallet.provider }, { who: wallet.signedInAs })
+
+  const onPrivyWallet = useCallback(
+    (wallet: EmbeddedWallet) => {
+      setPrivy('on')
+      setEmbedded(wallet)
+      void payWithEmbedded(wallet)
+    },
+    // prepare reads the latest checkout on every call; it doesn't need to be a dependency.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [checkout.id],
+  )
+  const onPrivyCancel = useCallback(() => {
+    setPrivy('off')
+    setEmbedded(null)
+    setStage({ name: 'choose' })
+  }, [])
+
   const here = typeof window === 'undefined' ? '' : window.location.href
 
   return (
     <section className="manual wallet-pay" aria-live="polite">
-      <h2>Or pay from any Monad wallet</h2>
-      <p>Sign once in your wallet. Kova covers the network fee, so you only need {checkout.token_symbol ?? 'AUSD'}.</p>
+      <h2>Or pay here, without the app</h2>
+      <p>
+        {privyAppId ? 'Use your email or Google, or any Monad wallet.' : 'Use any Monad wallet.'} Kova covers the network fee, so you only need{' '}
+        {checkout.token_symbol ?? 'AUSD'}.
+      </p>
+      {privyAppId && privy !== 'off' ? (
+        <PrivyWallet appId={privyAppId} chainId={checkout.chain_id} onWallet={onPrivyWallet} onCancel={onPrivyCancel} />
+      ) : null}
 
       {stage.name === 'working' ? (
         <div className="wallet-status">
@@ -208,6 +258,21 @@ export function WalletPay({ checkout, testnet }: { checkout: Checkout; testnet: 
                   ? `Approve ${usd(checkout.amount)} to ${checkout.merchant_name} in ${stage.wallet}`
                   : 'Paying…'}
           </span>
+        </div>
+      ) : stage.name === 'confirm' ? (
+        <div className="wallet-short">
+          <p>
+            Your wallet ({stage.who}) has {usd(Number(stage.balance) / 1e6)}. Pay {usd(checkout.amount)} to {checkout.merchant_name}?
+          </p>
+          <button type="button" className="pill pill-block" data-tone="coral" onClick={() => void sign(stage.wallet, stage.address)}>
+            <span className="pill-label">Pay {usd(checkout.amount)}</span>
+            <span className="pill-cap">
+              <Icon name="arrow" size={18} />
+            </span>
+          </button>
+          <button type="button" className="textlink wallet-again" onClick={() => setStage({ name: 'choose' })}>
+            Not now
+          </button>
         </div>
       ) : stage.name === 'paid' ? (
         <div className="wallet-status wallet-done">
@@ -234,6 +299,30 @@ export function WalletPay({ checkout, testnet }: { checkout: Checkout; testnet: 
       ) : (
         <>
           {stage.name === 'problem' ? <p className="wallet-problem">{stage.message}</p> : null}
+          {privyAppId ? (
+            <ul className="wallet-list">
+              <li>
+                <button
+                  type="button"
+                  disabled={privy === 'opening'}
+                  onClick={() => {
+                    // Signed in already: go straight to paying. Otherwise Privy opens its sign-in.
+                    if (embedded) void payWithEmbedded(embedded)
+                    else setPrivy('opening')
+                  }}
+                >
+                  <span className="wallet-glyph wallet-glyph-coral">
+                    <Icon name="mail" size={16} />
+                  </span>
+                  <span>
+                    {privy === 'opening' ? 'Opening sign-in…' : 'Email or Google'}
+                    <small className="wallet-sub">A wallet is made for you. Nothing to install.</small>
+                  </span>
+                  <Icon name="arrow" size={18} />
+                </button>
+              </li>
+            </ul>
+          ) : null}
           {wallets === null ? (
             <div className="wallet-status">
               <span className="spinner" aria-hidden="true" />
@@ -243,7 +332,7 @@ export function WalletPay({ checkout, testnet }: { checkout: Checkout; testnet: 
             <ul className="wallet-list">
               {wallets.map((wallet) => (
                 <li key={wallet.info.uuid}>
-                  <button type="button" onClick={() => void pay(wallet)}>
+                  <button type="button" onClick={() => void prepare(wallet)}>
                     {wallet.info.icon ? <img src={wallet.info.icon} alt="" width={32} height={32} /> : <span className="wallet-glyph"><Icon name="key" size={16} /></span>}
                     <span>{wallet.info.name}</span>
                     <Icon name="arrow" size={18} />

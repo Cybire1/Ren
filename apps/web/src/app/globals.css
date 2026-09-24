@@ -1010,6 +1010,79 @@ p {
   color: #fff;
 }
 
+.wallet-glyph-coral {
+  background: var(--coral);
+  color: var(--ink);
+}
+
+.wallet-sub {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.wallet-list button:disabled {
+  cursor: progress;
+  opacity: 0.8;
+}
+
+.shop-wallet {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 3.75rem;
+  margin-top: 0.4rem;
+  padding: 0.6rem 1.1rem 0.6rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+}
+
+.shop-wallet > span:nth-child(2) {
+  flex: 1;
+}
+
+.shop-wallet code {
+  display: block;
+  font-family: var(--font);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.shop-wallet-make {
+  cursor: pointer;
+  transition: transform 0.4s var(--spring), background-color 0.3s var(--spring);
+}
+
+.shop-wallet-make:hover {
+  background: #fff;
+}
+
+.shop-wallet-make:active {
+  transform: scale(0.985);
+}
+
+.shop-wallet-make:disabled {
+  cursor: progress;
+  opacity: 0.8;
+}
+
+.inline-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+}
+
 .wallet-status {
   display: flex;
   align-items: center;

@@ -96,7 +96,7 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
         </Pill>
       </section>
 
-      <WalletPay checkout={c} testnet={c.network === 'testnet'} />
+      <WalletPay checkout={c} testnet={c.network === 'testnet'} privyAppId={process.env.PRIVY_APP_ID ?? null} />
 
       <p className="fineprint">Tap. Paid. Anywhere.</p>
       <WatchPaid id={c.id} />
