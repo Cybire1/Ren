@@ -170,3 +170,41 @@ split the room with friends.
 - **Match offers to the ask**: from what you typed ("non-stop, arrive before 6pm"), mark the
   best-fitting flight or hotel. Kova pre-digests times and stops into words, since Jev is weak
   at arithmetic and time comparisons.
+
+---
+
+# Kova on Monad (Metropolis)
+
+Agreed 24 Sept 2026: a separate Monad build of Kova for Metropolis (1 Sep to 13 Oct 2026), on
+its own branch, while the Tempo build stays the Colosseum entry. Kova's first commit (19 Sep)
+falls inside Metropolis's build window.
+
+## Prizes we're going for
+
+- **Consumer Products & Payments** track ($30k shared by three teams).
+- **Agora: Best Cross-Border Payments App on Monad** ($10k). Settle in AUSD, Agora's dollar.
+- **Mera (Monad Foundation)**: best Mera-powered UX, and "one passkey, many keys" ($2.5k each).
+- **Chainlink: best workflow with CRE** ($3k). Live reference rates.
+- **Mercuryo** (product credits for winners): add money with a card or a bank transfer.
+
+## What changes on Monad
+
+- **Money**: AUSD (testnet `0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC`, faucet contract
+  `0xd236c18D274E54FAccC3dd9DDA4b27965a73ee6C`; mainnet `0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a`)
+  and Circle's native USDC.
+- **Payments without gas and with a reference**: Tempo has memo transfers and a native fee payer;
+  Monad has neither. The payer signs an EIP-3009 transferWithAuthorization and Kova's relayer
+  submits it, paying the MON gas. The authorization's 32-byte nonce is the Kova memo, so the
+  AuthorizationUsed event ties the payment to its charge exactly as TransferWithMemo does on Tempo.
+- **Wallet**: a Mera passkey account instead of a key in the Keychain. The same passkey derives the
+  account on any phone, so losing the phone no longer loses the wallet. Needs mykova.app as the
+  passkey's relying party (associated domains).
+- **Rates**: a Chainlink CRE workflow publishes NGN, KES, EUR, GBP and MXN reference rates on
+  Monad; the app and the API read them instead of the fixed table.
+- **Add money**: the Mercuryo widget, to AUSD or USDC on Monad.
+
+## Open questions
+
+- Does the Agora prize require AUSD, and can one project also enter Colosseum? (rules are behind
+  the hackathon login)
+- Mercuryo sandbox credentials come from their integration team (ask in the hackathon Discord).
