@@ -1,0 +1,16 @@
+{
+  "name": "kova-rates-workflow",
+  "private": true,
+  "type": "module",
+  "description": "Chainlink CRE workflow: reference FX rates for Kova, written to Monad.",
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@chainlink/cre-sdk": "1.22.0",
+    "viem": "2.56.8"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

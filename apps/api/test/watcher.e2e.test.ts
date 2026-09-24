@@ -84,14 +84,18 @@ describe('chain watcher', () => {
     expect(before?.status).toBe('requires_payment')
 
     // Wait for the block to finalize (two blocks, well under a second), then start the watcher:
-    // its catch-up replays recent blocks and finds the payment.
+    // it replays recent blocks from its cursor and finds the payment within a few polls.
     for (let i = 0; i < 40; i++) {
       const finalized = await publicClient.getBlock({ blockTag: 'finalized' })
       if (finalized.number >= receipt.blockNumber) break
       await new Promise((r) => setTimeout(r, 250))
     }
     watcher = await startWatcher()
-    const after = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
+    let after = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
+    for (let i = 0; i < 60 && after?.status !== 'paid'; i++) {
+      await new Promise((r) => setTimeout(r, 500))
+      after = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
+    }
     expect(after?.status).toBe('paid')
 
     const payments = await db.query.payments.findMany({ where: eq(schema.payments.intentId, intentId) })

@@ -23,6 +23,11 @@ const schema = z.object({
    * margin, and refuses anything that estimates above this.
    */
   KOVA_MAX_RELAY_GAS: z.coerce.bigint().default(200_000n),
+  /** KovaRates on Monad: the reference exchange rates a Chainlink CRE workflow publishes. */
+  KOVA_RATES_ADDRESS: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{40}$/)
+    .optional(),
   /** How long a payment intent stays payable. */
   KOVA_INTENT_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   /**

@@ -1,5 +1,5 @@
 import { type Currency, DEFAULT_CURRENCY, getNetwork, getToken, supportedTokens } from '@kova/monad'
-import { type Address, createPublicClient, createWalletClient, http, nonceManager } from 'viem'
+import { type Address, createPublicClient, createWalletClient, fallback, http, nonceManager } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { config } from './config.js'
 
@@ -47,7 +47,21 @@ const trace = process.env.KOVA_TRACE_RPC
     }
   : {}
 
-const transport = http(rpcUrl, { ...trace, timeout: 10_000 })
+/**
+ * Public Monad RPCs allow about 25 requests a second per address, and Railway's outbound
+ * addresses are shared, so the limit is sometimes someone else's traffic. Requests retry with
+ * patience, and fail over to a second provider. Set MONAD_RPC_URL to a dedicated endpoint in
+ * production.
+ */
+const backups: Record<typeof network.id, string[]> = {
+  testnet: ['https://rpc.ankr.com/monad_testnet'],
+  mainnet: ['https://rpc.ankr.com/monad'],
+}
+const endpoint = (url: string) => http(url, { ...trace, timeout: 10_000, retryCount: 3, retryDelay: 400 })
+const transport = fallback([endpoint(rpcUrl), ...backups[network.id].filter((url) => url !== rpcUrl).map(endpoint)], {
+  rank: false,
+  retryCount: 2,
+})
 
 /** Monad makes a block every ~0.3s, so receipts are polled far faster than viem's default. */
 export const publicClient = createPublicClient({ chain: network.chain, transport, pollingInterval: 200 })

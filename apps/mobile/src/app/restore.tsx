@@ -1,0 +1,98 @@
+import { router } from 'expo-router'
+import { useState } from 'react'
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native'
+import { type DisplayCurrency, formatUsd } from '@/lib/money'
+import { colors } from '@/lib/theme'
+import { useWallet } from '@/lib/wallet'
+import { KeyScene } from '@/ui/art'
+import { Bob } from '@/ui/motion'
+import { Header, PillButton, Rise, Screen, Txt } from '@/ui/primitives'
+import { ProfileForm } from '@/ui/ProfileForm'
+
+/**
+ * A wallet coming back: on a new phone, or this one after it was removed. The passkey from
+ * iCloud Keychain is all it takes; the same wallet, with its money, opens after one Face ID.
+ */
+export default function Restore() {
+  const { restore, setName, setCurrency, balance } = useWallet()
+  const [step, setStep] = useState<'passkey' | 'name'>('passkey')
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState<string | null>(null)
+  const [name, setNameText] = useState('')
+  const [currency, setCurrencyChoice] = useState<DisplayCurrency>('USD')
+
+  const usePasskey = async () => {
+    setBusy(true)
+    setProblem(null)
+    try {
+      const profile = await restore()
+      if (profile.name) router.replace('/(tabs)')
+      else setStep('name')
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'The passkey didn’t open. Try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const finish = async () => {
+    await setName(name)
+    await setCurrency(currency)
+    router.replace('/(tabs)')
+  }
+
+  if (step === 'name')
+    return (
+      <Screen bg={colors.paper}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <Header />
+          <ProfileForm
+            title="Your wallet is back."
+            subtitle={`${balance === null ? 'Checking what it holds…' : `It holds ${formatUsd(balance)}.`} What should people call you?`}
+            name={name}
+            onName={setNameText}
+            currency={currency}
+            onCurrency={setCurrencyChoice}
+          />
+          <View style={styles.footer}>
+            <PillButton label="Open my wallet" disabled={name.trim().length < 2} onPress={finish} />
+          </View>
+        </KeyboardAvoidingView>
+      </Screen>
+    )
+
+  return (
+    <Screen bg={colors.tealSoft}>
+      <Header />
+      <View style={styles.center}>
+        <Bob duration={3000}>
+          <KeyScene size={320} />
+        </Bob>
+      </View>
+      <Rise style={styles.copy}>
+        <Txt weight="semi" size={38} style={styles.title}>
+          Welcome back.
+        </Txt>
+        <Txt size={17} color={colors.onTint} style={styles.body}>
+          Use the passkey you made with Kova. iCloud Keychain brings it to this phone, and your wallet comes with it.
+        </Txt>
+        {problem ? (
+          <Txt weight="medium" size={15} color={colors.danger} style={{ marginTop: 12 }}>
+            {problem}
+          </Txt>
+        ) : null}
+      </Rise>
+      <View style={styles.footer}>
+        <PillButton label="Use my passkey" icon="face" loading={busy} onPress={usePasskey} />
+      </View>
+    </Screen>
+  )
+}
+
+const styles = StyleSheet.create({
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  copy: { paddingHorizontal: 28, paddingBottom: 12 },
+  title: { letterSpacing: -1, lineHeight: 40 },
+  body: { lineHeight: 25, marginTop: 12 },
+  footer: { paddingHorizontal: 20, paddingBottom: 12, paddingTop: 8 },
+})

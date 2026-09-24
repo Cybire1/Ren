@@ -48,7 +48,8 @@ export default function Welcome() {
         </Rise>
         <View style={styles.actions}>
           <PillButton label="Create my wallet" onPress={() => router.push('/setup')} />
-          <View style={{ alignItems: 'center' }}>
+          <View style={styles.links}>
+            <TextLink label="I already have Kova" onPress={() => router.push('/restore')} />
             <TextLink label="I run a shop" onPress={() => router.push('/terminal/setup')} />
           </View>
         </View>
@@ -77,4 +78,5 @@ const styles = StyleSheet.create({
   title: { lineHeight: 48, letterSpacing: -1.6 },
   body: { lineHeight: 25, marginTop: 14 },
   actions: { gap: 18 },
+  links: { flexDirection: 'row', justifyContent: 'center', gap: 28 },
 })

@@ -1,0 +1,10 @@
+# Kova's Chainlink CRE project: one workflow, kova-rates, publishing reference exchange rates to Monad.
+staging-settings:
+  rpcs:
+    - chain-name: monad-testnet
+      url: https://testnet-rpc.monad.xyz
+
+production-settings:
+  rpcs:
+    - chain-name: monad-testnet
+      url: https://testnet-rpc.monad.xyz

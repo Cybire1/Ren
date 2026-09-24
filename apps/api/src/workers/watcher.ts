@@ -28,10 +28,14 @@ const tokens: Address[] = acceptedTokens.map((t) => t.address)
 const COLD_START_LOOKBACK = 3_000n
 /** About six hours. A longer outage skips ahead rather than crawling for minutes at startup. */
 const MAX_CATCH_UP = 70_000n
-/** Log windows fetched at once while catching up. */
-const CATCH_UP_CONCURRENCY = 4
+/** Log windows fetched at once while catching up: two stays well inside public RPC limits. */
+const CATCH_UP_CONCURRENCY = 2
+/** Windows per poll, so catching up after downtime is steady progress rather than a burst. */
+const WINDOWS_PER_TICK = 20n
 /** Blocks are ~0.31s, so a poll a second keeps the watcher a few blocks behind at worst. */
 const POLL_INTERVAL = 1_000
+/** After a failed poll, wait this long, doubling to a minute, before trying again. */
+const FIRST_BACKOFF = 2_000
 
 export interface WatcherHandle {
   stop: () => Promise<void>
@@ -146,42 +150,53 @@ export async function catchUp(fromBlock: bigint, toBlock: bigint): Promise<numbe
   return recorded
 }
 
+/**
+ * Starts watching, and never gives up: the cursor lives in the database, each poll moves it
+ * forward by at most a few thousand blocks, and a failed poll (a rate limit, an RPC outage) only
+ * pauses it, with backoff. It is never a one-shot catch-up that can die at startup.
+ */
 export async function startWatcher(): Promise<WatcherHandle> {
-  const head = await finalizedBlock()
-  let cursor = await loadCursor(head)
+  let cursor: bigint | null = null
   let stopped = false
-
-  const caught = await catchUp(cursor + 1n, head)
-  cursor = head
-  await saveCursor(cursor)
-  console.log(`[watcher] ${network.name}: caught up to block ${head} (${caught} transfers)`)
-
-  // Poll with a cursor and getLogs: server-side filters get dropped by public RPCs after a while.
   let inFlight = false
-  const poll = setInterval(() => {
-    void (async () => {
-      if (stopped || inFlight) return
-      inFlight = true
-      try {
-        const latest = await finalizedBlock()
-        if (latest > cursor) {
-          await catchUp(cursor + 1n, latest)
-          cursor = latest
-          await saveCursor(cursor)
-        }
-      } catch (error) {
-        console.error('[watcher] poll failed', error instanceof Error ? error.message.split('\n')[0] : error)
-      } finally {
-        inFlight = false
+  let backoff = 0
+  let resumeAt = 0
+  let caughtUp = false
+
+  const poll = async () => {
+    if (stopped || inFlight || Date.now() < resumeAt) return
+    inFlight = true
+    try {
+      const head = await finalizedBlock()
+      if (cursor === null) cursor = await loadCursor(head)
+      if (head > cursor) {
+        const until = cursor + LOG_RANGE * WINDOWS_PER_TICK < head ? cursor + LOG_RANGE * WINDOWS_PER_TICK : head
+        await catchUp(cursor + 1n, until)
+        cursor = until
+        await saveCursor(cursor)
       }
-    })()
-  }, POLL_INTERVAL)
+      if (!caughtUp && cursor >= head) {
+        caughtUp = true
+        console.log(`[watcher] ${network.name}: caught up to block ${head}`)
+      }
+      backoff = 0
+    } catch (error) {
+      backoff = backoff ? Math.min(backoff * 2, 60_000) : FIRST_BACKOFF
+      resumeAt = Date.now() + backoff
+      console.error(`[watcher] poll failed; retrying in ${backoff / 1000}s:`, error instanceof Error ? (error as { details?: string }).details ?? error.message.split('\n')[0] : error)
+    } finally {
+      inFlight = false
+    }
+  }
+
+  void poll()
+  const timer = setInterval(() => void poll(), POLL_INTERVAL)
 
   return {
     stop: async () => {
       stopped = true
-      clearInterval(poll)
-      await saveCursor(cursor)
+      clearInterval(timer)
+      if (cursor !== null) await saveCursor(cursor)
     },
   }
 }

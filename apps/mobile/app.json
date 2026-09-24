@@ -10,15 +10,22 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "xyz.kova.pay",
+      "bundleIdentifier": "xyz.kova.pay.monad",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSFaceIDUsageDescription": "Use Face ID to approve payments and unlock your Kova wallet.",
         "NFCReaderUsageDescription": "Hold a Kova Card near the top of your iPhone to take a payment."
-      }
+      },
+      "associatedDomains": [
+        "webcredentials:web-monad.up.railway.app",
+        "applinks:web-monad.up.railway.app",
+        "webcredentials:monad.mykova.app",
+        "applinks:monad.mykova.app"
+      ],
+      "appleTeamId": "5N8DU2A9WH"
     },
     "android": {
-      "package": "xyz.kova.pay",
+      "package": "xyz.kova.pay.monad",
       "edgeToEdgeEnabled": true,
       "permissions": [
         "android.permission.NFC"

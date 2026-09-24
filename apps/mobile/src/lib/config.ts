@@ -12,6 +12,13 @@ export const networkId: NetworkId =
 export const network = getNetwork(networkId)
 export const isTestnet = networkId === 'testnet'
 
+/**
+ * The domain Kova Pay's passkeys belong to. A wallet is bound to it for good, so it only
+ * changes before real users: web-monad serves the Apple association file today, and
+ * monad.mykova.app takes over once its DNS points there.
+ */
+export const passkeyDomain = process.env.EXPO_PUBLIC_KOVA_PASSKEY_DOMAIN ?? 'web-monad.up.railway.app'
+
 /** The chain, as people see it named. */
 export const chainName = 'Monad'
 

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native'
 import { type Checkout, getCheckout } from '@/lib/api'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/money'
+import { useSessionCovers } from '@/lib/session'
 import { colors } from '@/lib/theme'
 import { type Entry, useWallet } from '@/lib/wallet'
 import { Image } from 'expo-image'
@@ -15,7 +16,7 @@ import { Chip, Header, PillButton, Rise, RoundButton, Screen, Sticker, TextLink,
 
 type Stage = 'loading' | 'review' | 'paying' | 'paid' | 'problem'
 
-/** Paying a shop: see exactly what and to whom, approve with Face ID, and it's done. */
+/** Paying a shop: see exactly what and to whom, approve (Face ID, unless the wallet is already open), and it's done. */
 export default function PayCharge() {
   const { id } = useLocalSearchParams<{ id: string }>()
   const { profile, balance, payCheckout } = useWallet()
@@ -23,6 +24,8 @@ export default function PayCharge() {
   const [checkout, setCheckout] = useState<Checkout | null>(null)
   const [entry, setEntry] = useState<Entry | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
+  // Whether an open signing session will approve this without Face ID.
+  const covered = useSessionCovers(checkout ? BigInt(checkout.amount_base) : 0n)
 
   useEffect(() => {
     getCheckout(id)
@@ -247,7 +250,14 @@ export default function PayCharge() {
         {short ? (
           <PillButton label="Add money" icon="plus" onPress={() => router.push('/add-money')} />
         ) : (
-          <PillButton label={`Pay ${formatUsd(amount)}`} icon="face" loading={stage === 'paying'} onPress={pay} />
+          <>
+            <PillButton label={`Pay ${formatUsd(amount)}`} icon={covered ? 'bolt' : 'face'} loading={stage === 'paying'} onPress={pay} />
+            {covered ? (
+              <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
+                Your wallet is open, so this one needs no Face ID.
+              </Txt>
+            ) : null}
+          </>
         )}
       </View>
     </Screen>

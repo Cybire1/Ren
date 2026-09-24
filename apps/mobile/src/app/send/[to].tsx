@@ -16,6 +16,7 @@ import {
 } from '@/lib/money'
 import { colors, fonts } from '@/lib/theme'
 import { type Entry, isUnnamed, useWallet } from '@/lib/wallet'
+import { rateLabel } from '@/lib/rates'
 import { Avatar, CitiesScene, Flyer, sendScene } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Keypad } from '@/ui/Keypad'
@@ -199,7 +200,7 @@ export default function SendTo() {
           {theirs && theirs !== 'USD' ? (
             <View style={styles.rate}>
               <Txt weight="semi" size={14}>
-                1 USD ≈ {currencyInfo[theirs].perUsd.toLocaleString('en-US')} {theirs}, reference rate
+                1 USD ≈ {currencyInfo[theirs].perUsd.toLocaleString('en-US', { maximumFractionDigits: currencyInfo[theirs].decimals === 0 ? 0 : 4 })} {theirs}, {rateLabel()}
               </Txt>
             </View>
           ) : (

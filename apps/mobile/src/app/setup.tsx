@@ -1,14 +1,15 @@
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
-import { currencyInfo, type DisplayCurrency, displayCurrencies } from '@/lib/money'
-import { colors, fonts } from '@/lib/theme'
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native'
+import type { DisplayCurrency } from '@/lib/money'
+import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { KeyScene } from '@/ui/art'
 import { Bob } from '@/ui/motion'
 import { Header, PillButton, Rise, Screen, Txt } from '@/ui/primitives'
+import { ProfileForm } from '@/ui/ProfileForm'
 
-/** Two steps: who you are, then your face becomes the key. No passwords, no seed phrase. */
+/** Two steps: who you are, then one Face ID makes the passkey that is your wallet. No seed phrase. */
 export default function Setup() {
   const { create } = useWallet()
   const [step, setStep] = useState<1 | 2>(1)
@@ -48,10 +49,10 @@ export default function Setup() {
         </View>
         <Rise style={styles.copy}>
           <Txt weight="semi" size={38} style={styles.title}>
-            Your face is your key.
+            Your wallet is a passkey.
           </Txt>
           <Txt size={17} color={colors.onTint} style={styles.body}>
-            No passwords and no seed phrase to lose. Only your face can open your wallet or approve a payment.
+            Face ID makes it, and iCloud Keychain keeps it, so it opens your wallet on your next phone too. No seed phrase to write down, and nothing for Kova to hold.
           </Txt>
           {problem ? (
             <Txt weight="medium" size={15} color={colors.danger} style={{ marginTop: 12 }}>
@@ -60,7 +61,7 @@ export default function Setup() {
           ) : null}
         </Rise>
         <View style={styles.footer}>
-          <PillButton label="Turn on Face ID" icon="face" loading={busy} onPress={finish} />
+          <PillButton label="Create my passkey" icon="face" loading={busy} onPress={finish} />
         </View>
       </Screen>
     )
@@ -69,51 +70,14 @@ export default function Setup() {
     <Screen bg={colors.paper}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Header right={steps} />
-        <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
-          <Txt weight="semi" size={34} style={styles.title}>
-            What should people call you?
-          </Txt>
-          <Txt size={16} color={colors.muted} style={{ marginTop: 8 }}>
-            This is the name people see when you pay them or ask them for money.
-          </Txt>
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="Your name"
-            placeholderTextColor="#8C9799"
-            autoFocus
-            autoCapitalize="words"
-            autoComplete="name"
-            maxLength={40}
-            returnKeyType="next"
-            style={styles.input}
-          />
-          <Txt weight="semi" size={18} style={{ marginTop: 32 }}>
-            Show my money in
-          </Txt>
-          <View style={styles.currencies}>
-            {displayCurrencies.map((c) => {
-              const on = c === currency
-              return (
-                <Pressable
-                  key={c}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={currencyInfo[c].name}
-                  onPress={() => setCurrency(c)}
-                  style={[styles.currency, on && styles.currencyOn]}
-                >
-                  <Txt weight="semi" size={15} color={on ? colors.white : colors.ink}>
-                    {currencyInfo[c].symbol} {c}
-                  </Txt>
-                </Pressable>
-              )
-            })}
-          </View>
-          <Txt size={14} color={colors.muted} style={{ marginTop: 10 }}>
-            Your money is held in dollars. {currency === 'USD' ? 'No conversion needed.' : `We show it in ${currencyInfo[currency].name.toLowerCase()} at a reference rate.`}
-          </Txt>
-        </ScrollView>
+        <ProfileForm
+          title="What should people call you?"
+          subtitle="This is the name people see when you pay them or ask them for money."
+          name={name}
+          onName={setName}
+          currency={currency}
+          onCurrency={setCurrency}
+        />
         <View style={styles.footer}>
           <PillButton label="Continue" disabled={name.trim().length < 2} onPress={() => setStep(2)} />
         </View>
@@ -131,28 +95,4 @@ const styles = StyleSheet.create({
   title: { letterSpacing: -1, lineHeight: 40 },
   body: { lineHeight: 25, marginTop: 12 },
   footer: { paddingHorizontal: 20, paddingBottom: 12, paddingTop: 8 },
-  form: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 24 },
-  input: {
-    marginTop: 24,
-    height: 60,
-    borderRadius: 22,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    paddingHorizontal: 20,
-    fontFamily: fonts.medium,
-    fontSize: 20,
-    color: colors.ink,
-    backgroundColor: colors.sunken,
-  },
-  currencies: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  currency: {
-    height: 42,
-    paddingHorizontal: 16,
-    borderRadius: 21,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    justifyContent: 'center',
-    backgroundColor: colors.surface,
-  },
-  currencyOn: { backgroundColor: colors.ink },
 })

@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import type { PublicStall } from '@/lib/api'
 import { usd } from '@/lib/format'
-import { type Currency, inCurrency, RATES } from '@/lib/rates'
+import { type Currency, inCurrency, type LiveRates, RATES } from '@/lib/rates'
 import { Awning } from './awning'
 import { Art, Icon, LogoMark, Pill } from './brand'
 import { ItemFace } from './catalogue-manager'
@@ -15,7 +15,7 @@ type Placed = { id: string; checkout: { id: string; amount: string; expires_at: 
  * A stall, as a buyer sees it: the sign, what's for sale in their own currency, a basket, and
  * two ways to pay: now, or by sending the link to someone who will.
  */
-export function Storefront({ stall, preview }: { stall: PublicStall; preview: boolean }) {
+export function Storefront({ stall, preview, rates }: { stall: PublicStall; preview: boolean; rates?: LiveRates }) {
   const router = useRouter()
   const [basket, setBasket] = useState<Record<string, number>>({})
   const [currency, setCurrency] = useState<Currency>('USD')
@@ -104,7 +104,7 @@ export function Storefront({ stall, preview }: { stall: PublicStall; preview: bo
                   {item.description ? <span className="shop-item-desc">{item.description}</span> : null}
                   <span className="shop-item-price">
                     {usd(item.price)}
-                    {currency !== 'USD' ? <em>about {inCurrency(item.price, currency)}</em> : null}
+                    {currency !== 'USD' ? <em>about {inCurrency(item.price, currency, rates)}</em> : null}
                   </span>
                 </div>
                 {item.sold_out ? (
@@ -175,7 +175,7 @@ export function Storefront({ stall, preview }: { stall: PublicStall; preview: bo
                   <span>Total</span>
                   <strong>{usd(total)}</strong>
                 </p>
-                {currency !== 'USD' ? <p className="field-help basket-approx">About {inCurrency(total, currency)}. You pay in dollars.</p> : null}
+                {currency !== 'USD' ? <p className="field-help basket-approx">About {inCurrency(total, currency, rates)}. You pay in dollars.</p> : null}
                 <div className="stack-form">
                   <label className="field-label" htmlFor="buyer-name">
                     Your name <span className="optional">so they know it’s yours</span>

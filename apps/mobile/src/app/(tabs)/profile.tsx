@@ -175,13 +175,8 @@ export default function Profile() {
       </Group>
 
       <Group title="Security">
-        <Row
-          icon="face"
-          label="Face ID"
-          value={profile.protected ? 'Approves every payment' : 'Off on this device'}
-          badge={profile.protected ? { text: 'On', tone: colors.teal } : { text: 'Off', tone: colors.coral }}
-        />
-        <Row icon="lock" label="Your key" value="Never leaves this phone" last />
+        <Row icon="lock" label="Passkey" value="Your wallet, kept by iCloud Keychain" badge={{ text: 'On', tone: colors.teal }} />
+        <Row icon="face" label="Face ID" value="Asks above $50, and after 3 quiet minutes" last />
       </Group>
 
       <View style={{ marginTop: 26, alignItems: 'center' }}>
@@ -192,8 +187,8 @@ export default function Profile() {
             </Txt>
             <Txt size={14} color={colors.muted} style={{ marginTop: 4, lineHeight: 20 }}>
               {stall.owned
-                ? `The key is deleted and can’t be recovered, and ${stall.owned.name} pays into this wallet. Move your money out and point your shop at a new wallet on the Kova dashboard first.`
-                : 'The key is deleted and can’t be recovered. Move your money out first.'}
+                ? `Your money stays in the wallet, and ${stall.owned.name} keeps paying into it. Your passkey brings it back here any time: choose “I already have Kova”.`
+                : 'Your money stays in the wallet. Your passkey brings it back here, or on any phone, any time: choose “I already have Kova”.'}
             </Txt>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Pressable accessibilityRole="button" onPress={() => setConfirmRemove(false)} style={[styles.small, { backgroundColor: colors.surface }]}>

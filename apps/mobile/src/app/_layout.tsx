@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { PrefsProvider, usePrefs } from '@/lib/prefs'
+import { useLiveRates } from '@/lib/rates'
 import { StallProvider } from '@/lib/stall'
 import { TravelProvider } from '@/lib/travel'
 import { TerminalProvider } from '@/lib/terminal'
@@ -37,12 +38,14 @@ function ArrivalWatcher() {
 
 export default function RootLayout() {
   const [loaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold })
+  // Local prices on the first screen should already use today's rates.
+  const ratesReady = useLiveRates()
 
   useEffect(() => {
-    if (loaded) void SplashScreen.hideAsync()
-  }, [loaded])
+    if (loaded && ratesReady) void SplashScreen.hideAsync()
+  }, [loaded, ratesReady])
 
-  if (!loaded) return null
+  if (!loaded || !ratesReady) return null
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

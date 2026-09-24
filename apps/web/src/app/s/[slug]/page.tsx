@@ -22,12 +22,16 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
 
 export default async function StallPage(props: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string }> }) {
   const [{ slug }, { preview }] = await Promise.all([props.params, props.searchParams])
-  const stall = await load(slug)
+  const [stall, published] = await Promise.all([
+    load(slug),
+    kovaPublic<{ rates: Record<string, { per_usd: number }> }>('/v1/rates').catch(() => null),
+  ])
   if (!stall)
     return (
       <Notice title="This stall isn’t here">
         <p>The link may be mistyped, or the stall has closed for good.</p>
       </Notice>
     )
-  return <Storefront stall={stall} preview={preview === '1'} />
+  const rates = published ? Object.fromEntries(Object.entries(published.rates).map(([code, r]) => [code, r.per_usd])) : undefined
+  return <Storefront stall={stall} preview={preview === '1'} rates={rates} />
 }

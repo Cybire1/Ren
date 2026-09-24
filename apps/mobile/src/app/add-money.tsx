@@ -11,7 +11,7 @@ import { Stage } from '@/ui/Stage'
 import { Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /**
- * Adding money. On testnet, Agora's faucet sends free test AUSD (Kova pays the gas). On mainnet this is where
+ * Adding money. On testnet, Kova sends free test AUSD (from Agora's faucet, or its own when that runs dry). On mainnet this is where
  * card and bank on-ramps go; Kova itself never holds or converts the money (D-012).
  */
 export default function AddMoney() {
@@ -57,7 +57,7 @@ export default function AddMoney() {
               Free test dollars
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Kova is running on Monad’s test network. Agora’s faucet sends you test dollars to try every payment for real, and Kova pays the gas.
+              Kova is running on Monad’s test network. It sends you test dollars to try every payment for real, and pays the gas.
             </Txt>
           </>
         ) : (
@@ -84,7 +84,7 @@ export default function AddMoney() {
                 From
               </Txt>
               <Txt weight="semi" size={15}>
-                Agora’s AUSD faucet
+                Monad testnet faucet
               </Txt>
             </View>
           </Sticker>

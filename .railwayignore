@@ -1,0 +1,7 @@
+# Not part of any server image (the Dockerfiles ignore them too), so never uploaded.
+apps/mobile
+docs
+**/node_modules
+**/.next
+**/.env
+**/.env.*

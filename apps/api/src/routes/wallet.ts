@@ -3,7 +3,6 @@ import {
   AUSD_TESTNET_FAUCET,
   decodeMemo,
   explorerTxUrl,
-  faucetAbi,
   formatAmount,
   parseSignedAuthorization,
   tokenByAddress,
@@ -12,11 +11,12 @@ import { and, asc, eq, gt, or } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type Address, getAddress, type Hex, isAddress } from 'viem'
 import { z } from 'zod'
-import { network, walletClient } from '../chain.js'
+import { feePayerAddress, network, walletClient } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { relayAuthorization } from '../relay.js'
+import { giveTestDollars } from '../services/faucet.js'
 import { indexedThrough } from '../workers/watcher.js'
 
 /**
@@ -58,8 +58,11 @@ function serializeTransfer(row: TransferRow) {
     block: row.blockNumber.toString(),
     /** What the money was, when a Kova memo says: a payment, a refund, a payout. */
     kind: row.nonce ? (decodeMemo(row.nonce as Hex)?.kind ?? null) : null,
-    /** Test dollars from the testnet faucet rather than from a person. */
-    faucet: config.KOVA_NETWORK === 'testnet' && row.fromAddress === AUSD_TESTNET_FAUCET.toLowerCase(),
+    /** Test dollars (Agora's faucet, or Kova's testnet treasury topping up) rather than from a person. */
+    faucet:
+      config.KOVA_NETWORK === 'testnet' &&
+      !row.nonce &&
+      (row.fromAddress === AUSD_TESTNET_FAUCET.toLowerCase() || row.fromAddress === feePayerAddress?.toLowerCase()),
     explorer_url: explorerTxUrl(network, row.txHash as Hex),
   }
 }
@@ -132,19 +135,13 @@ export const walletRoutes = new Hono()
     limit(`faucet:${address.toLowerCase()}`, 3, 3_600_000, 'That wallet has had its test dollars for now. Try again in an hour.')
     limit(`faucet-ip:${ip(c)}`, 10, 3_600_000, 'Lots of test dollars from here. Try again in an hour.')
 
-    // Agora's faucet sends 10,000 test AUSD to whoever it is asked for; Kova's relayer asks, and pays the gas.
-    const receipt = await walletClient
-      .writeContractSync({ address: AUSD_TESTNET_FAUCET, abi: faucetAbi, functionName: 'requestFunds', args: [address], timeout: 10_000 })
-      .catch((error: Error) => {
-        console.error('[faucet]', error.message.split('\n')[0])
-        throw new KovaError('chain_error', 'The test-dollar faucet didn’t answer. Try again in a moment.')
-      })
-    if (receipt.status !== 'success') throw new KovaError('chain_error', 'The test-dollar faucet said no. Try again later.')
+    const drip = await giveTestDollars(address)
     return c.json({
       object: 'faucet',
-      amount: '10000.00',
+      amount: drip.amount,
       currency: 'AUSD',
-      tx_hash: receipt.transactionHash,
-      explorer_url: explorerTxUrl(network, receipt.transactionHash),
+      source: drip.from,
+      tx_hash: drip.txHash,
+      explorer_url: explorerTxUrl(network, drip.txHash),
     })
   })

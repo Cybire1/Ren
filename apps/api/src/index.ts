@@ -12,11 +12,13 @@ import { healthRoutes } from './routes/health.js'
 import { insightRoutes } from './routes/insights.js'
 import { intentRoutes } from './routes/intents.js'
 import { orderRoutes } from './routes/orders.js'
+import { rateRoutes } from './routes/rates.js'
 import { reportRoutes } from './routes/reports.js'
 import { stallRoutes } from './routes/stalls.js'
 import { expireStaleIntents } from './services/intents.js'
 import { terminalRoutes } from './routes/terminals.js'
 import { travelRoutes } from './routes/travel.js'
+import { rateBook } from './services/rates.js'
 import { expireTrips } from './services/travel.js'
 import { walletRoutes } from './routes/wallet.js'
 import { webhookRoutes } from './routes/webhooks.js'
@@ -38,9 +40,12 @@ app.route('/v1', stallRoutes)
 app.route('/v1', orderRoutes)
 app.route('/v1', travelRoutes)
 app.route('/v1', insightRoutes)
+// Public: wallets are addresses and prove themselves by signing. Mounted before any router whose
+// middleware covers all of /v1 (reports asks for an API key).
+app.route('/v1', walletRoutes)
+app.route('/v1', rateRoutes)
 app.route('/v1', webhookRoutes)
 app.route('/v1', reportRoutes)
-app.route('/v1', walletRoutes)
 
 if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')) {
   await runMigrations(config.DATABASE_URL)
@@ -55,6 +60,9 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
   }
   expire()
   setInterval(expire, 30_000)
+  // Rates change every 15 minutes at most; keep Kova Travel's copy fresh without waiting for a request.
+  void rateBook()
+  setInterval(() => void rateBook(), 5 * 60_000)
 
   serve({ fetch: app.fetch, port: config.PORT }, (info) => {
     console.log(

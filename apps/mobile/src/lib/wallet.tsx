@@ -1,22 +1,29 @@
-import * as LocalAuthentication from 'expo-local-authentication'
+import { createPasskeyWithPrfOutput, getPasskeyPrfOutput, isMeraError } from '@category-labs/mera'
+import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { AppState } from 'react-native'
-import { type Address, getAddress, type Hex, isAddress, isAddressEqual } from 'viem'
-import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
+import { type Address, getAddress, isAddress, isAddressEqual, type LocalAccount } from 'viem'
 import type { Checkout } from './api'
-import { confirmWithFace } from './auth'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
-import type { DisplayCurrency } from './money'
+import { passkeyDomain } from './config'
+import { openSigningSession } from './keys'
+import { type DisplayCurrency, formatUsd } from './money'
+import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
+import { endSession, sessionAccount, spend, startSession } from './session'
 import { load, remove, save } from './storage'
 
 /**
- * The wallet lives on the phone. Its key is generated here, kept in the iOS Keychain /
- * Android Keystore, and can only be read after Face ID (or the device's biometrics), so every
- * payment is approved by the owner's face. Kova's servers never see it.
+ * The wallet is a passkey (Mera). Creating it takes one Face ID: the passkey, which iCloud
+ * Keychain keeps and carries to your next phone, gives Kova a 32-byte secret, and the Monad
+ * account is derived from it. No seed phrase, and nothing for Kova's servers to hold.
+ *
+ * On this phone the secret waits in the Keychain behind Face ID. Approving a payment opens a
+ * short signing session (see session.ts), so a few small payments in a row need one Face ID.
+ * On a new phone, the same passkey brings the same wallet back.
  */
 
-const KEY = 'kova.wallet.key.v1'
+const PRF = 'kova.monad.prf.v1'
 const PROFILE = 'kova.profile.v1'
 // History, balance and the block cursor belong to one chain, so the Monad build keeps its own.
 const ACTIVITY = 'kova.monad.activity.v1'
@@ -32,6 +39,8 @@ export interface Profile {
   protected: boolean
   /** When the wallet was created on this phone (ms). Older wallets predate this field. */
   createdAt?: number
+  /** The passkey this wallet comes from, so Kova asks for that one and no other. */
+  passkey?: { credentialId: string; transports?: readonly string[] }
 }
 
 export type EntryKind = 'paid' | 'sent' | 'received' | 'added'
@@ -76,7 +85,11 @@ interface Wallet {
   arrival: Arrival | null
   clearArrival: () => void
   refresh: () => Promise<void>
+  /** Makes a passkey, and the wallet with it. One Face ID. */
   create: (name: string, currency: DisplayCurrency) => Promise<void>
+  /** Brings a wallet back from its passkey, on this phone or a new one. The name may be empty. */
+  restore: () => Promise<Profile>
+  setName: (name: string) => Promise<void>
   setCurrency: (currency: DisplayCurrency) => Promise<void>
   addMoney: () => Promise<void>
   payCheckout: (checkout: Checkout) => Promise<Entry>
@@ -96,6 +109,35 @@ export function useWallet(): Wallet {
 }
 
 const newId = () => `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+
+/** Keeps the passkey's secret on this phone, readable only after Face ID. */
+async function keep(prf: Uint8Array) {
+  await SecureStore.setItemAsync(PRF, base64urlnopad.encode(prf), {
+    requireAuthentication: true,
+    keychainAccessible: SecureStore.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY,
+  })
+}
+
+/** What went wrong with a passkey, in words someone can act on. */
+function passkeyProblem(error: unknown): string {
+  if (isMeraError(error) && error.code === 'PRF_UNAVAILABLE')
+    return 'This phone’s passkeys can’t hold a wallet yet. Kova needs iOS 18 or later, with iCloud Keychain on.'
+  const message = error instanceof Error ? error.message : ''
+  if (/cancel/i.test(message)) return 'Cancelled. Nothing was changed.'
+  return 'The passkey didn’t open. Try again.'
+}
+
+/** Opens a signing session from the passkey's secret, and checks it is this wallet's. */
+async function begin(prf: Uint8Array, expected?: Address): Promise<LocalAccount> {
+  const { session, account } = await openSigningSession(prf)
+  prf.fill(0)
+  if (expected && !isAddressEqual(account.address, expected)) {
+    session.end()
+    throw new Error('That passkey belongs to a different Kova wallet.')
+  }
+  startSession(session, account)
+  return account
+}
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading')
@@ -239,43 +281,97 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id)
   }, [profile, refresh])
 
-  /** Reads the key, which makes the OS ask for Face ID. Every signature goes through here. */
-  const unlock = useCallback(async () => {
-    if (!profile) throw new Error('No wallet on this phone')
-    const key = await SecureStore.getItemAsync(KEY, {
-      requireAuthentication: profile.protected,
-      authenticationPrompt: 'Approve with Face ID',
-    })
-    if (!key) throw new Error('Face ID was cancelled')
-    return privateKeyToAccount(key as Hex)
-  }, [profile])
+  /**
+   * The account that signs a payment of `amount`. Inside a live session it answers at once;
+   * otherwise Face ID opens the Keychain, and a new session starts. Every signature goes through here.
+   */
+  const unlock = useCallback(
+    async (amount: bigint) => {
+      if (!profile) throw new Error('No wallet on this phone')
+      const open = sessionAccount(amount)
+      if (open) return open
+      const stored = await SecureStore.getItemAsync(PRF, {
+        requireAuthentication: true,
+        authenticationPrompt: amount > 0n ? `Approve ${formatUsd(amount)}` : 'Open your wallet',
+      }).catch(() => {
+        throw new Error('Face ID was cancelled. Nothing was paid.')
+      })
+      if (stored) return begin(base64urlnopad.decode(stored), profile.address)
+      // The Keychain copy is gone (a new passcode, a restored phone): ask the passkey itself.
+      const asserted = await getPasskeyPrfOutput({
+        rpId: passkeyDomain,
+        ...(profile.passkey ? { credential: profile.passkey } : {}),
+        webAuthnClient: kovaWebAuthnClient,
+      }).catch((error) => {
+        throw new Error(passkeyProblem(error))
+      })
+      takeVaultOutput()
+      await keep(asserted.prfOutput)
+      return begin(asserted.prfOutput, profile.address)
+    },
+    [profile],
+  )
 
   const create = useCallback(async (name: string, currency: DisplayCurrency) => {
-    const [hardware, enrolled] = await Promise.all([
-      LocalAuthentication.hasHardwareAsync(),
-      LocalAuthentication.isEnrolledAsync(),
-    ])
-    const canProtect = hardware && enrolled
-    if (!canProtect && !__DEV__)
-      throw new Error('Turn on Face ID or a passcode in Settings first. Your wallet key needs it.')
-    if (canProtect) {
-      if (!(await confirmWithFace('Protect your wallet with Face ID'))) throw new Error('Face ID was cancelled')
+    const clean = name.trim()
+    const created = await createPasskeyWithPrfOutput({
+      rp: { id: passkeyDomain, name: 'Kova' },
+      user: { name: clean, displayName: clean },
+      webAuthnClient: kovaWebAuthnClient,
+    }).catch((error) => {
+      throw new Error(passkeyProblem(error))
+    })
+    takeVaultOutput()
+    await keep(created.prfOutput)
+    const account = await begin(created.prfOutput)
+    const next: Profile = {
+      name: clean,
+      address: account.address,
+      currency,
+      protected: true,
+      createdAt: Date.now(),
+      passkey: { credentialId: created.credentialId, ...(created.transports ? { transports: created.transports } : {}) },
     }
-    const key = generatePrivateKey()
-    await SecureStore.setItemAsync(
-      KEY,
-      key,
-      canProtect
-        ? { requireAuthentication: true, keychainAccessible: SecureStore.WHEN_PASSCODE_SET_THIS_DEVICE_ONLY }
-        : { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY },
-    )
-    const address = privateKeyToAccount(key).address
-    const next: Profile = { name: name.trim(), address, currency, protected: canProtect, createdAt: Date.now() }
     await save(PROFILE, next)
     setProfile(next)
     setBalance(0n)
     setStatus('ready')
   }, [])
+
+  const restore = useCallback(async () => {
+    const asserted = await getPasskeyPrfOutput({ rpId: passkeyDomain, webAuthnClient: kovaWebAuthnClient }).catch((error) => {
+      throw new Error(passkeyProblem(error))
+    })
+    takeVaultOutput()
+    await keep(asserted.prfOutput)
+    const account = await begin(asserted.prfOutput)
+    // A fresh history for this wallet: Kova's index of the chain brings back what arrived.
+    await remove(ACTIVITY, CURSOR, BALANCE)
+    const next: Profile = {
+      name: '',
+      address: account.address,
+      currency: 'USD',
+      protected: true,
+      createdAt: Date.now(),
+      passkey: { credentialId: asserted.credentialId },
+    }
+    await save(PROFILE, next)
+    setActivity([])
+    setProfile(next)
+    setBalance(null)
+    setStatus('ready')
+    return next
+  }, [])
+
+  const setName = useCallback(
+    async (name: string) => {
+      if (!profile || name.trim().length < 2) return
+      const next = { ...profile, name: name.trim() }
+      await save(PROFILE, next)
+      setProfile(next)
+    },
+    [profile],
+  )
 
   const setCurrency = useCallback(
     async (currency: DisplayCurrency) => {
@@ -295,9 +391,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const payCheckout = useCallback(
     async (checkout: Checkout) => {
-      const account = await unlock()
+      const amount = BigInt(checkout.amount_base)
+      const account = await unlock(amount)
       // Kova submits the signed payment and settles it before answering, so paid means paid.
       const { hash, ms } = await payCharge(account, checkout)
+      spend(amount)
       const entry: Entry = {
         id: newId(),
         kind: 'paid',
@@ -343,8 +441,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const send = useCallback(
     async (to: Contact, amount: bigint, note?: string) => {
-      const account = await unlock()
+      const account = await unlock(amount)
       const { hash, ms } = await sendMoney(account, to.address, amount)
+      spend(amount)
       const entry: Entry = {
         id: newId(),
         kind: 'sent',
@@ -365,7 +464,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   )
 
   const signOut = useCallback(async () => {
-    await SecureStore.deleteItemAsync(KEY)
+    // The passkey itself stays in iCloud Keychain: it can bring this wallet back at any time.
+    endSession()
+    await SecureStore.deleteItemAsync(PRF)
     await remove(PROFILE, ACTIVITY, CONTACTS, CURSOR, BALANCE)
     setProfile(null)
     setBalance(null)
@@ -384,6 +485,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     clearArrival: () => setArrival(null),
     refresh,
     create,
+    restore,
+    setName,
     setCurrency,
     addMoney,
     payCheckout,
