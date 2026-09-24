@@ -82,11 +82,17 @@ export interface Merchant {
 
 export interface Summary {
   merchant: { id: string; name: string; settlement_address: string; network: string; livemode: boolean }
+  /** The zone "today" was counted in. */
+  timezone: string
   today: { total: string; count: number }
   all_time: { total: string; count: number }
   open_intents: number
   last_paid_at: string | null
+  /** Today, one entry per hour 0–23 of the shop's day. */
+  hourly: { hour: number; total: string; count: number }[]
   daily: { date: string; total: string; count: number }[]
+  /** Today's takings per terminal; `terminal: null` is everything taken through the API. */
+  by_terminal: { terminal: { id: string; name: string } | null; total: string; count: number }[]
 }
 
 export type IntentStatus = 'requires_payment' | 'processing' | 'paid' | 'held' | 'failed' | 'canceled' | 'expired'
@@ -102,6 +108,8 @@ export interface PaymentIntent {
   expires_at: string
   created_at: string
   paid_at: string | null
+  /** The terminal that took it, when a paired phone did. */
+  terminal?: { id: string; name: string } | null
 }
 
 export interface PaymentDetail extends PaymentIntent {

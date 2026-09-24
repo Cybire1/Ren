@@ -1,7 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect } from 'react'
 import { signOut } from '@/app/actions'
 import { Art, Icon, type IconName, LogoMark, Wordmark } from './brand'
 
@@ -16,53 +17,56 @@ const NAV: { href: string; label: string; icon: IconName }[] = [
 const active = (path: string, href: string) => (href === '/dashboard' ? path === href : path.startsWith(href))
 
 /**
- * The dashboard frame. On a desk: an ink sidebar, with the charge button where the app's dock
- * keeps Pay. On a phone: a slim top bar and the same ink dock at the bottom.
+ * The dashboard frame. On a desk: a slim ink rail, the charge button in coral where the app's
+ * dock keeps Pay. On a phone: a top bar and the same ink dock at the bottom.
  */
 export function Shell({ shop, demo, livemode, children }: { shop: string; demo: boolean; livemode: boolean; children: React.ReactNode }) {
   const path = usePathname()
+  const router = useRouter()
+
+  // Tell the server this browser's time zone, so "today" is the shop's today.
+  useEffect(() => {
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
+    if (!tz || document.cookie.split('; ').includes(`kova_tz=${tz}`)) return
+    document.cookie = `kova_tz=${tz}; path=/; max-age=31536000; samesite=lax`
+    router.refresh()
+  }, [router])
+
   return (
     <div className="app">
-      <aside className="side" aria-label="Dashboard">
-        <Link href="/dashboard" className="side-brand" aria-label="Kova overview">
-          <LogoMark size={32} stem="#f1efea" />
-          <Wordmark height={19} ink="#f1efea" coin="var(--coral-soft)" />
+      <aside className="rail" aria-label="Dashboard">
+        <Link href="/dashboard" className="rail-mark" aria-label="Kova overview">
+          <LogoMark size={36} stem="#f1efea" />
         </Link>
 
-        <div className="side-shop">
-          <Art name="badge-shop" size={40} />
-          <div>
-            <p className="side-shop-name">{shop}</p>
-            <p className="side-shop-mode">
-              <span className="dot" data-tone={livemode ? 'live' : 'test'} />
-              {livemode ? 'Live' : 'Test mode'}
-              {demo ? ', demo shop' : ''}
-            </p>
-          </div>
-        </div>
-
-        <Link href="/charge" className="side-charge">
-          <span>New charge</span>
-          <span className="side-charge-cap">
-            <Icon name="tap" size={18} />
+        <Link href="/charge" className="rail-charge">
+          <span className="rail-charge-dot">
+            <Icon name="tap" size={22} />
           </span>
+          <span>Charge</span>
         </Link>
 
-        <nav className="side-nav">
+        <nav className="rail-nav" aria-label="Pages">
           {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="side-link" aria-current={active(path, item.href) ? 'page' : undefined}>
-              <Icon name={item.icon} size={19} />
-              {item.label}
+            <Link key={item.href} href={item.href} className="rail-link" aria-current={active(path, item.href) ? 'page' : undefined}>
+              <Icon name={item.icon} size={21} />
+              <span>{item.label}</span>
             </Link>
           ))}
         </nav>
 
-        <form action={signOut} className="side-foot">
-          <button type="submit" className="side-link">
-            <Icon name="out" size={19} />
-            Sign out
-          </button>
-        </form>
+        <div className="rail-foot">
+          <Link href="/dashboard/settings" className="rail-shop" title={`${shop}${livemode ? '' : ', test mode'}`} aria-label={`${shop} settings`}>
+            <Art name="badge-shop" size={42} />
+            {livemode ? null : <span className="rail-test" aria-hidden="true" />}
+          </Link>
+          <form action={signOut}>
+            <button type="submit" className="rail-link">
+              <Icon name="out" size={20} />
+              <span>Sign out</span>
+            </button>
+          </form>
+        </div>
       </aside>
 
       <header className="topnav">
@@ -78,8 +82,7 @@ export function Shell({ shop, demo, livemode, children }: { shop: string; demo: 
 
       {demo ? (
         <div className="demo-bar" role="note">
-          You’re exploring a shared demo shop on Tempo’s test network.{' '}
-          <Link href="/signup">Open your own shop</Link>
+          You’re exploring a shared demo shop on Tempo’s test network. <Link href="/signup">Open your own shop</Link>
         </div>
       ) : null}
 

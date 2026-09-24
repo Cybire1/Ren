@@ -148,8 +148,11 @@ p {
 
 .pill[data-tone="coral"] {
   --bg: var(--coral);
+  /* Ink on coral passes contrast at button size; white does not. */
+  --fg: var(--ink);
   --cap: #fff;
   --cap-fg: var(--coral-deep);
+  font-weight: 700;
 }
 
 .pill[data-tone="light"] {
@@ -284,13 +287,6 @@ p {
 
 /* --- Dashboard ------------------------------------------------------------------ */
 
-.dash {
-  display: grid;
-  grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-  gap: 1.25rem;
-  align-items: start;
-}
-
 .dash-side {
   display: grid;
   gap: 1.25rem;
@@ -298,98 +294,9 @@ p {
   top: 1.25rem;
 }
 
-@media (max-width: 860px) {
-  .dash {
-    grid-template-columns: minmax(0, 1fr);
-  }
+@media (max-width: 960px) {
   .dash-side {
     position: static;
-  }
-}
-
-.shopname {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.25rem;
-}
-
-.shopname h1 {
-  font-size: clamp(1.75rem, 4vw, 2.5rem);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-  line-height: 1.05;
-}
-
-.shopname p {
-  color: var(--muted);
-  font-weight: 500;
-}
-
-.hero {
-  position: relative;
-  overflow: hidden;
-  padding: 1.75rem 1.75rem 1.5rem;
-  border-radius: 2rem;
-  background: var(--ink);
-  color: #fff;
-  margin-bottom: 1.25rem;
-}
-
-.hero-label {
-  color: var(--on-ink);
-  font-weight: 600;
-  font-size: 0.9375rem;
-}
-
-.hero-amount {
-  margin-top: 0.25rem;
-  font-size: clamp(3rem, 9vw, 4.75rem);
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 1;
-}
-
-.hero-amount small {
-  margin-left: 0.5rem;
-  font-size: 1rem;
-  font-weight: 600;
-  letter-spacing: 0;
-  color: var(--on-ink);
-}
-
-.hero-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1.5rem;
-  max-width: calc(100% - 8rem);
-}
-
-.hero-stats span {
-  padding: 0.3rem 0.8rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.09);
-  color: #e6eeee;
-  font-size: 0.8125rem;
-  font-weight: 600;
-}
-
-.hero-art {
-  position: absolute;
-  right: 0.5rem;
-  bottom: 0.25rem;
-  width: 9rem;
-  height: auto;
-  pointer-events: none;
-}
-
-@media (max-width: 480px) {
-  .hero-art {
-    width: 7rem;
-  }
-  .hero-stats {
-    max-width: calc(100% - 5rem);
   }
 }
 
@@ -524,67 +431,6 @@ p {
 
 .empty .pill {
   margin-top: 0.75rem;
-}
-
-/* Terminals */
-
-.term {
-  display: grid;
-  grid-template-columns: 2.75rem minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 0.9rem;
-  padding: 0.75rem 1.25rem;
-}
-
-.term + .term {
-  box-shadow: 0 -1px 0 var(--hairline);
-}
-
-.term-icon {
-  display: grid;
-  place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
-  border-radius: 50%;
-  background: var(--ink);
-  color: var(--coral-soft);
-}
-
-.term[data-new="true"] {
-  animation: land 1.6s var(--spring);
-}
-
-.side-cta {
-  display: flex;
-  padding: 0.5rem 1.25rem 1.25rem;
-}
-
-.side-cta .pill,
-.charge-card .pill {
-  flex: 1;
-}
-
-.charge-card {
-  display: grid;
-}
-
-.charge-card {
-  display: grid;
-  gap: 1rem;
-  padding: 1.5rem;
-  border-radius: 1.75rem;
-  background: var(--teal-soft);
-}
-
-.charge-card h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
-}
-
-.charge-card p {
-  color: var(--ink);
-  opacity: 0.75;
 }
 
 /* --- Pairing sheet --------------------------------------------------------------- */
@@ -1133,21 +979,6 @@ p {
 
 .pill-wide .pill {
   flex: 1;
-}
-
-.term[data-confirming="true"] {
-  background: rgba(212, 101, 88, 0.1);
-}
-
-.term-actions {
-  display: flex;
-  gap: 0.4rem;
-}
-
-.term-remove {
-  width: 2.25rem;
-  height: 2.25rem;
-  color: var(--muted);
 }
 
 .mini {

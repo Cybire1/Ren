@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { toString as qrSvg } from 'qrcode'
 import { Art, Brand, Icon, Pill } from '@/components/brand'
+import { PaidCoin, ReceiptHero } from '@/components/receipt-hero'
 import { getSession } from '@/lib/session'
 import { signInDemo } from './actions'
 
@@ -15,7 +15,6 @@ const Coin = () => <span className="lp-coin" aria-hidden="true" />
 
 export default async function Landing() {
   const signedIn = Boolean(await getSession())
-  const qr = await qrSvg('kova://pay/pi_06gd1ajtn5yr71g1tdwpvk9fqm', { type: 'svg', margin: 0, color: { dark: '#0b1a1d', light: '#ffffff' } })
   return (
     <div className="lp">
       <header className="lp-nav">
@@ -54,7 +53,7 @@ export default async function Landing() {
             </span>
             <span className="lp-word" style={{ '--i': 1 } as React.CSSProperties}>
               Paid
-              <Coin />
+              <PaidCoin />
             </span>
             <span className="lp-word" style={{ '--i': 2 } as React.CSSProperties}>
               Anywhere
@@ -78,12 +77,8 @@ export default async function Landing() {
           <p className="lp-fine">Live on Tempo’s test network. Test dollars, real speed.</p>
         </div>
 
-        <div className="lp-hero-stage" aria-label="A Kova terminal taking a payment">
-          <Art name="coin-eur" size={74} className="lp-float lp-float-1" priority />
-          <Art name="coin-gbp" size={60} className="lp-float lp-float-2" priority />
-          <Art name="coin-ngn" size={66} className="lp-float lp-float-3" priority />
-          <Art name="coin-usd" size={84} className="lp-float lp-float-4" priority />
-          <Phone qr={qr} />
+        <div className="lp-hero-stage">
+          <ReceiptHero />
         </div>
       </section>
 
@@ -285,59 +280,6 @@ export default async function Landing() {
           <a href="#developers">Developers</a>
         </nav>
       </footer>
-    </div>
-  )
-}
-
-/**
- * The hero's live demo: a Kova Terminal on a phone, looping through a real payment. Pure CSS,
- * so it costs nothing to load; with reduced motion it rests on the Paid screen.
- */
-function Phone({ qr }: { qr: string }) {
-  return (
-    <div className="lp-phone">
-      <div className="lp-phone-notch" />
-      <div className="lp-screen lp-screen-1">
-        <p className="lp-scr-shop">Ada’s Bakery</p>
-        <p className="lp-scr-amount">
-          <span className="lp-type">$12.50</span>
-        </p>
-        <p className="lp-scr-sub">Two flat whites</p>
-        <div className="lp-keys" aria-hidden="true">
-          {['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', '⌫'].map((k) => (
-            <span key={k} data-plain={k === '⌫' ? 'true' : undefined}>
-              {k}
-            </span>
-          ))}
-        </div>
-        <span className="lp-scr-pill">Charge $12.50</span>
-      </div>
-      <div className="lp-screen lp-screen-2">
-        <p className="lp-scr-amount lp-scr-amount-sm">$12.50</p>
-        <p className="lp-scr-sub">Tap or scan to pay</p>
-        <div className="lp-qr" aria-hidden="true">
-          {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
-          <span className="lp-qr-code" dangerouslySetInnerHTML={{ __html: qr }} />
-          <span className="lp-waves">
-            <i />
-            <i />
-            <i />
-          </span>
-        </div>
-        <p className="lp-scr-wait">Waiting for payment</p>
-      </div>
-      <div className="lp-screen lp-screen-3">
-        <div className="lp-scr-receipt">
-          <Art name="scene-paid-terminal" size={200} priority />
-          <span className="lp-scr-receipt-text">
-            <small>PAID</small>
-            <b>$12.50</b>
-          </span>
-          <Art name="kovi-cheer" size={70} className="lp-scr-kovi" priority />
-        </div>
-        <p className="lp-scr-paid">Paid</p>
-        <p className="lp-scr-sub">Settled in about a second</p>
-      </div>
     </div>
   )
 }
