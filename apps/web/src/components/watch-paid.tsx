@@ -3,12 +3,12 @@
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 
-/** Keeps the customer's page honest: the moment the charge is paid, show the receipt. */
+/** Watches an open charge; the moment it is paid (or closes), the page re-renders. */
 export function WatchPaid({ id }: { id: string }) {
   const router = useRouter()
   useEffect(() => {
     const timer = setInterval(async () => {
-      const response = await fetch(`/api/intent/${id}`).catch(() => null)
+      const response = await fetch(`/api/checkout/${id}`).catch(() => null)
       if (!response?.ok) return
       const { status } = (await response.json()) as { status: string }
       if (status !== 'requires_payment' && status !== 'processing') {

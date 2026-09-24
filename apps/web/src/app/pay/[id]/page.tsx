@@ -3,35 +3,32 @@ import { Art, Brand, Pill } from '@/components/brand'
 import { CopyField } from '@/components/copy'
 import { Notice } from '@/components/notice'
 import { WatchPaid } from '@/components/watch-paid'
-import { kova, type PaymentIntent, type Summary } from '@/lib/api'
+import { type Checkout, kovaPublic } from '@/lib/api'
 import { usd } from '@/lib/format'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Pay' }
 
 /**
- * What a customer sees after scanning a terminal's code. Kova Pay opens it as a deep link; any
- * other Tempo wallet can pay the address and memo shown here.
+ * What a customer sees after scanning a terminal's code. Public: the charge id is the only
+ * credential. Kova Pay opens it as a deep link; any other Tempo wallet can pay the address and
+ * memo shown here, and the watcher settles it either way.
  */
 export default async function PayPage(context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params
 
-  let intent: PaymentIntent
-  let merchantName = 'this shop'
+  let c: Checkout
   try {
-    ;[intent, merchantName] = await Promise.all([
-      kova<PaymentIntent>(`/v1/payment_intents/${id}`),
-      kova<Summary>('/v1/summary').then((s) => s.merchant.name),
-    ])
+    c = await kovaPublic<Checkout>(`/v1/checkout/${encodeURIComponent(id)}`)
   } catch {
     return (
       <Notice title="This charge isn’t available">
-        <p>It may have expired. Ask the shop to show the code again.</p>
+        <p>The link may be incomplete. Ask the shop to show the code again.</p>
       </Notice>
     )
   }
 
-  if (intent.status === 'paid')
+  if (c.status === 'paid')
     return (
       <main className="page page-narrow">
         <header className="topbar">
@@ -39,27 +36,26 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
         </header>
         <section className="paid" aria-live="polite">
           <div className="receipt" style={{ marginTop: '3.5rem' }}>
-            <Art name="scene-paid-terminal" size={304} />
+            <Art name="scene-paid-terminal" size={304} priority />
             <div className="receipt-text">
               <small>PAID</small>
-              <strong>{usd(intent.amount)}</strong>
+              <strong>{usd(c.amount)}</strong>
             </div>
-            <Art name="kovi-cheer" size={88} className="kovi-cheer" />
+            <Art name="kovi-cheer" size={88} className="kovi-cheer" priority />
           </div>
-          <h1>Paid to {merchantName}</h1>
+          <h1>Paid to {c.merchant_name}</h1>
           <p>
-            {usd(intent.amount)}
-            {intent.reference ? ` for ${intent.reference}` : ''}. You can close this page.
+            {usd(c.amount)}
+            {c.reference ? ` for ${c.reference}` : ''}. You can close this page.
           </p>
         </section>
       </main>
     )
 
-  const closed = ['failed', 'expired', 'canceled'].includes(intent.status)
-  if (closed)
+  if (c.status !== 'requires_payment' && c.status !== 'processing')
     return (
       <Notice title="This charge has closed">
-        <p>Nothing was taken. Ask {merchantName} to start a new one.</p>
+        <p>Nothing was taken. Ask {c.merchant_name} to start a new one.</p>
       </Notice>
     )
 
@@ -70,26 +66,26 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
       </header>
 
       <section className="card payee">
-        <Art name="badge-shop" size={84} />
+        <Art name="badge-shop" size={84} priority />
         <p className="await-label" style={{ marginTop: '0.5rem' }}>
-          Pay {merchantName}
+          Pay {c.merchant_name}
         </p>
-        <p className="await-amount">{usd(intent.amount)}</p>
-        {intent.reference ? <p className="await-label">{intent.reference}</p> : null}
-        <Pill href={`kova://pay/${intent.id}`} icon="tap" tone="coral">
+        <p className="await-amount">{usd(c.amount)}</p>
+        {c.reference ? <p className="await-label">{c.reference}</p> : null}
+        <Pill href={`kova://pay/${c.id}`} icon="tap" tone="coral" wide>
           Pay with Kova
         </Pill>
       </section>
 
       <section className="manual">
         <h2>Paying from another wallet</h2>
-        <p>Send exactly {intent.amount} USDC on Tempo, with this memo attached so the shop sees it.</p>
-        <CopyField label="Address" value={intent.pay_to} />
-        <CopyField label="Memo" value={intent.memo} />
+        <p>Send exactly {c.amount} USDC on Tempo, with this memo attached so the shop sees it.</p>
+        <CopyField label="Address" value={c.pay_to} />
+        <CopyField label="Memo" value={c.memo} />
       </section>
 
       <p className="fineprint">Tap. Paid. Anywhere.</p>
-      <WatchPaid id={intent.id} />
+      <WatchPaid id={c.id} />
     </main>
   )
 }

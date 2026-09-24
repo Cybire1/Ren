@@ -1,8 +1,10 @@
 'use client'
 
+import Link from 'next/link'
 import { useCallback, useEffect, useState } from 'react'
 import { Art, Brand, Icon, Pill } from '@/components/brand'
 import type { PaymentIntent } from '@/lib/api'
+import { cancelCharge } from '../actions'
 import { usd } from '@/lib/format'
 
 type Stage = 'amount' | 'waiting' | 'paid' | 'problem'
@@ -47,9 +49,11 @@ export function Charge() {
       const response = await fetch('/api/charge', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ amount: Number(amount).toFixed(2), reference: reference.trim() || undefined }),
+        // One key per charge attempt: a double click or a retried request can't charge twice.
+        body: JSON.stringify({ amount: Number(amount).toFixed(2), reference: reference.trim() || undefined, idempotency_key: crypto.randomUUID() }),
       })
       const body = (await response.json()) as PaymentIntent & { error?: string }
+      if (response.status === 401) return window.location.assign('/signin?expired=1')
       if (!response.ok) throw new Error(body.error ?? 'Could not start the charge')
       const { toString } = await import('qrcode')
       setQr(await toString(`${window.location.origin}/pay/${body.id}`, { type: 'svg', margin: 0, color: { dark: '#0b1a1d', light: '#ffffff' } }))
@@ -110,10 +114,10 @@ export function Charge() {
 
   const top = (
     <header className="topbar">
-      <Brand label="Terminal" />
-      <a className="round" href="/" aria-label="Back to the dashboard">
+      <Brand label="Terminal" href="/dashboard" />
+      <Link className="round" href="/dashboard" aria-label="Back to the dashboard">
         <Icon name="close" size={18} />
-      </a>
+      </Link>
     </header>
   )
 
@@ -140,9 +144,9 @@ export function Charge() {
               <Pill icon="tap" onClick={reset}>
                 Next charge
               </Pill>
-              <a className="textlink" href="/">
-                Back to today
-              </a>
+              <Link className="textlink" href={`/dashboard/payments/${intent.id}`}>
+                See this payment
+              </Link>
             </div>
           </section>
         </main>
@@ -165,7 +169,17 @@ export function Charge() {
                 Waiting for payment
               </p>
             </div>
-            <button type="button" className="pill" data-tone="light" onClick={reset} style={{ marginTop: '0.5rem' }}>
+            <button
+              type="button"
+              className="pill"
+              data-tone="light"
+              onClick={() => {
+                // Close the charge on Kova too, so the code on screen can't be paid afterwards.
+                void cancelCharge(intent.id)
+                reset()
+              }}
+              style={{ marginTop: '0.5rem' }}
+            >
               <span className="pill-label">Cancel</span>
               <span className="pill-cap">
                 <Icon name="close" size={18} />

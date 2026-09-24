@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 /**
  * Kova's brand on the web: the Tap K mark, the wordmark (its o is a coin) and the painted art.
  * Geometry matches the app's ui/Logo.tsx and docs/design/logo/*.svg.
@@ -37,22 +39,81 @@ export function Wordmark({ height = 24, ink = 'var(--ink)', coin = 'var(--coral-
 }
 
 /** Mark + wordmark + what this surface is, e.g. "Merchant". */
-export function Brand({ label }: { label?: string }) {
+export function Brand({ label, href = '/' }: { label?: string; href?: string }) {
   return (
-    <a href="/" className="brand" aria-label="Kova home">
+    <Link href={href} className="brand" aria-label="Kova home">
       <LogoMark size={34} />
       <Wordmark height={20} />
       {label ? <span className="brand-label">{label}</span> : null}
-    </a>
+    </Link>
   )
 }
 
-type ArtName = 'kovi-wave' | 'kovi-cheer' | 'kovi-oops' | 'kovi-catch' | 'kovi-peek' | 'badge-shop' | 'scene-paid-terminal' | 'coin-usd' | 'plane'
+/** Painted art in /public/art, with each image's height over its width. */
+const ART = {
+  'kovi-wave': 1,
+  'kovi-cheer': 1,
+  'kovi-oops': 1,
+  'kovi-catch': 1,
+  'kovi-key': 1,
+  'kovi-ride': 1,
+  'kovi-sleep': 1,
+  'kovi-peek': 0.5,
+  'badge-shop': 1,
+  'badge-add': 1,
+  'scene-paid-terminal': 750 / 720,
+  'scene-welcome': 903 / 1100,
+  'scene-send': 510 / 1026,
+  'scene-faceid': 900 / 1080,
+  'scene-coin-rain': 846 / 1100,
+  'card-active': 825 / 1100,
+  'coin-usd': 1,
+  'coin-eur': 1,
+  'coin-gbp': 1,
+  'coin-ngn': 1,
+  'avatar-1': 1,
+  'avatar-2': 1,
+  'avatar-3': 1,
+  'avatar-4': 1,
+  'avatar-5': 1,
+  'avatar-6': 1,
+  plane: 1,
+  'sparkle-4': 1,
+  'sparkle-8': 1,
+  'sparkle-11': 1,
+} as const
 
-export function Art({ name, size, className, alt = '' }: { name: ArtName; size: number; className?: string; alt?: string }) {
-  const tall = name === 'scene-paid-terminal' ? 750 / 720 : name === 'kovi-peek' ? 0.5 : 1
-  // biome-ignore lint/performance/noImgElement: static painted art, sized explicitly
-  return <img src={`/art/${name}.png`} width={size} height={Math.round(size * tall)} className={className} alt={alt} draggable={false} />
+export type ArtName = keyof typeof ART
+
+export function Art({
+  name,
+  size,
+  className,
+  alt = '',
+  priority,
+  style,
+}: {
+  name: ArtName
+  size: number
+  className?: string
+  alt?: string
+  priority?: boolean
+  style?: React.CSSProperties
+}) {
+  return (
+    // biome-ignore lint/performance/noImgElement: pre-sized WebP art, no optimizer needed
+    <img
+      src={`/art/${name}.webp`}
+      width={size}
+      height={Math.round(size * ART[name])}
+      className={className}
+      alt={alt}
+      draggable={false}
+      loading={priority ? 'eager' : 'lazy'}
+      decoding="async"
+      style={style}
+    />
+  )
 }
 
 const glyphs = {
@@ -66,6 +127,22 @@ const glyphs = {
   del: ['M9 6h11v12H9l-5-6z', 'M12.5 9.5l5 5', 'M17.5 9.5l-5 5'],
   copy: ['M9 9h10v10H9z', 'M5 15V5h10'],
   refresh: ['M19 12a7 7 0 1 1-2.05-4.95', 'M19 4v4h-4'],
+  home: ['M4 11l8-7 8 7v9H4z', 'M10 20v-5h4v5'],
+  list: ['M8 6h12', 'M8 12h12', 'M8 18h12', 'M4 6h.01', 'M4 12h.01', 'M4 18h.01'],
+  code: ['M8 7l-5 5 5 5', 'M16 7l5 5-5 5', 'M13.5 4l-3 16'],
+  settings: ['M4 7h10', 'M18 7h2', 'M4 17h2', 'M10 17h10', 'M16 5v4', 'M8 15v4'],
+  search: ['M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14z', 'M20 20l-4-4'],
+  external: ['M14 4h6v6', 'M20 4l-9 9', 'M18 14v6H4V6h6'],
+  key: ['M14.5 13a5 5 0 1 0-4.24-2.35L4 17v3h3v-2h2v-2h2l1.5-1.5', 'M16 8h.01'],
+  bolt: ['M13 3L5 14h6l-1 7 8-11h-6z'],
+  out: ['M10 4H5v16h5', 'M15 8l4 4-4 4', 'M19 12H9'],
+  download: ['M12 4v11', 'M7 10l5 5 5-5', 'M5 20h14'],
+  chevron: ['M9.5 5.5L16 12l-6.5 6.5'],
+  eye: ['M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z', 'M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'],
+  globe: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M3 12h18', 'M12 3c2.5 2.7 3.5 5.7 3.5 9s-1 6.3-3.5 9c-2.5-2.7-3.5-5.7-3.5-9s1-6.3 3.5-9z'],
+  shield: ['M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', 'M8.5 12l2.5 2.5 4.5-5'],
+  send: ['M4 12l16-8-6 16-3-6z', 'M11 14l9-10'],
+  menu: ['M4 7h16', 'M4 12h16', 'M4 17h16'],
 } as const
 
 export type IconName = keyof typeof glyphs
@@ -89,14 +166,18 @@ export function Pill({
   disabled,
   tone = 'ink',
   type = 'button',
+  className,
+  wide,
 }: {
   children: React.ReactNode
   icon?: IconName
   href?: string
   onClick?: () => void
   disabled?: boolean
-  tone?: 'ink' | 'coral' | 'light'
+  tone?: 'ink' | 'coral' | 'light' | 'paper'
   type?: 'button' | 'submit'
+  className?: string
+  wide?: boolean
 }) {
   const inner = (
     <>
@@ -106,15 +187,20 @@ export function Pill({
       </span>
     </>
   )
+  const props = { className: `pill${wide ? ' pill-block' : ''}${className ? ` ${className}` : ''}`, 'data-tone': tone }
   if (href)
-    return (
-      <a className="pill" data-tone={tone} href={href}>
+    return href.startsWith('/') ? (
+      <Link href={href} {...props}>
+        {inner}
+      </Link>
+    ) : (
+      <a href={href} {...props}>
         {inner}
       </a>
     )
   return (
     // biome-ignore lint/a11y/useButtonType: type is passed in
-    <button className="pill" data-tone={tone} type={type} onClick={onClick} disabled={disabled}>
+    <button type={type} onClick={onClick} disabled={disabled} {...props}>
       {inner}
     </button>
   )

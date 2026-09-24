@@ -1,5 +1,8 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
+import '../styles/app.css'
+import '../styles/auth.css'
+import '../styles/landing.css'
 
 export const metadata: Metadata = {
   title: { default: 'Kova', template: '%s · Kova' },

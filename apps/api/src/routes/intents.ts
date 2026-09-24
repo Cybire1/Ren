@@ -40,9 +40,10 @@ export const intentRoutes = new Hono()
         issues: parsed.error.issues,
       })
 
+    // A paired phone's charges are its own: its key knows which terminal it is.
     const terminalId = parsed.data.terminal_id
       ? (decodeId('terminal', parsed.data.terminal_id) ?? undefined)
-      : undefined
+      : (c.get('apiKey').terminalId ?? undefined)
 
     const intent = await createIntent({
       merchant: c.get('merchant'),

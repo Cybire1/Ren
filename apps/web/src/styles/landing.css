@@ -1,0 +1,1099 @@
+/*
+ * The landing page. One loud thing (the tagline, its full stops drawn as coins) and one moving
+ * thing (a terminal taking a payment); everything else is quiet paper, teal and coral.
+ */
+
+.lp {
+  --lp-max: 78rem;
+  overflow-x: clip;
+}
+
+.lp-nav,
+.lp-hero,
+.lp-section,
+.lp-duo,
+.lp-dev,
+.lp-close,
+.lp-foot,
+.lp-fx {
+  width: min(100% - 2.5rem, var(--lp-max));
+  margin-inline: auto;
+}
+
+/* --- Nav ------------------------------------------------------------------------------- */
+
+.lp-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 0;
+}
+
+.lp-nav nav {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.3rem;
+  border-radius: 999px;
+  background: var(--surface);
+}
+
+.lp-nav nav a {
+  padding: 0.5rem 0.95rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.lp-nav nav a:hover {
+  background: var(--sunken);
+}
+
+.lp-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.lp-nav-actions .pill {
+  height: 3rem;
+  font-size: 0.9375rem;
+}
+
+.lp-nav-actions .pill-cap {
+  width: 2.3rem;
+  height: 2.3rem;
+}
+
+.lp-signin {
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.lp-signin:hover {
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+@media (max-width: 1000px) {
+  .lp-nav nav {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .lp-signin {
+    display: none;
+  }
+}
+
+/* --- Hero -------------------------------------------------------------------------------- */
+
+.lp-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 2rem;
+  align-items: center;
+  padding: 1.5rem 0 4.5rem;
+}
+
+.lp-title {
+  display: grid;
+  font-size: clamp(3.4rem, 8.4vw, 8.4rem);
+  font-weight: 800;
+  letter-spacing: -0.065em;
+  line-height: 0.88;
+}
+
+.lp-word {
+  display: block;
+  white-space: nowrap;
+  animation: word 0.9s var(--spring) both;
+  animation-delay: calc(var(--i) * 110ms + 80ms);
+}
+
+.lp-word:nth-child(2) {
+  color: var(--teal-deep);
+}
+
+@keyframes word {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+    filter: blur(6px);
+  }
+}
+
+.lp-coin {
+  display: inline-block;
+  width: 0.2em;
+  height: 0.2em;
+  margin-left: 0.05em;
+  border-radius: 50%;
+  background: var(--coral-soft);
+  box-shadow: inset 0 0 0 0.042em var(--ink);
+  vertical-align: 0.02em;
+}
+
+.lp-word:nth-child(2) .lp-coin {
+  background: var(--coral);
+}
+
+.lp-lead {
+  max-width: 34rem;
+  margin-top: 1.75rem;
+  font-size: 1.1875rem;
+  line-height: 1.55;
+  color: #2a3a3d;
+  font-weight: 500;
+  animation: word 0.9s var(--spring) 0.45s both;
+}
+
+.lp-ctas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 2rem;
+  animation: word 0.9s var(--spring) 0.55s both;
+}
+
+.lp-ctas-center {
+  justify-content: center;
+}
+
+.lp-fine {
+  margin-top: 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.lp-hero-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 36rem;
+}
+
+.lp-hero-stage::before {
+  content: "";
+  position: absolute;
+  width: min(34rem, 92%);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--teal-soft);
+}
+
+.lp-float {
+  position: absolute;
+  z-index: 2;
+  height: auto;
+  animation: bob 5s ease-in-out infinite;
+}
+
+.lp-float-1 {
+  top: 10%;
+  left: 6%;
+  animation-delay: -1s;
+}
+
+.lp-float-2 {
+  top: 22%;
+  right: 4%;
+  animation-delay: -2.5s;
+}
+
+.lp-float-3 {
+  bottom: 14%;
+  left: 2%;
+  animation-delay: -3.5s;
+}
+
+.lp-float-4 {
+  bottom: 8%;
+  right: 8%;
+  animation-delay: -0.5s;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-6deg);
+  }
+  50% {
+    transform: translateY(-14px) rotate(6deg);
+  }
+}
+
+/* The phone and its three screens, on a 10s loop. */
+
+.lp-phone {
+  --loop: 10s;
+  position: relative;
+  z-index: 1;
+  width: 16rem;
+  aspect-ratio: 9 / 18.5;
+  border-radius: 2.75rem;
+  background: var(--ink);
+  padding: 0.6rem;
+  animation: word 1s var(--spring) 0.3s both;
+}
+
+.lp-phone-notch {
+  position: absolute;
+  z-index: 3;
+  top: 1.1rem;
+  left: 50%;
+  width: 5.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: var(--ink);
+  transform: translateX(-50%);
+}
+
+.lp-screen {
+  position: absolute;
+  inset: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 3.25rem 1.1rem 1.25rem;
+  border-radius: 2.2rem;
+  background: var(--teal-soft);
+  opacity: 0;
+  animation: var(--loop) var(--spring) infinite both;
+}
+
+.lp-screen-1 {
+  animation-name: screen1;
+}
+
+.lp-screen-2 {
+  background: var(--surface);
+  animation-name: screen2;
+}
+
+.lp-screen-3 {
+  background: var(--paper);
+  animation-name: screen3;
+}
+
+@keyframes screen1 {
+  0% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  3%,
+  30% {
+    opacity: 1;
+    transform: none;
+  }
+  34%,
+  100% {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+}
+
+@keyframes screen2 {
+  0%,
+  31% {
+    opacity: 0;
+    transform: translateY(1rem);
+  }
+  35%,
+  60% {
+    opacity: 1;
+    transform: none;
+  }
+  64%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes screen3 {
+  0%,
+  61% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  65%,
+  96% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.lp-scr-shop {
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.lp-scr-amount {
+  margin-top: 1.2rem;
+  font-size: 2.9rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.lp-scr-amount-sm {
+  margin-top: 0.6rem;
+  font-size: 2.3rem;
+}
+
+.lp-type {
+  display: inline-block;
+  overflow: hidden;
+  white-space: nowrap;
+  vertical-align: bottom;
+  animation: type var(--loop) steps(6, end) infinite both;
+}
+
+@keyframes type {
+  0%,
+  4% {
+    max-width: 0.6em;
+  }
+  22%,
+  100% {
+    max-width: 4em;
+  }
+}
+
+.lp-scr-sub {
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #1f3438;
+}
+
+.lp-keys {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.45rem 0.6rem;
+  margin-top: auto;
+  width: 100%;
+  justify-items: center;
+}
+
+.lp-keys span {
+  display: grid;
+  place-items: center;
+  width: 2.7rem;
+  height: 2.7rem;
+  border: 1.5px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  font-weight: 600;
+}
+
+.lp-keys span[data-plain="true"] {
+  border-color: transparent;
+  background: none;
+}
+
+.lp-scr-pill {
+  display: block;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.7rem 1rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  animation: press var(--loop) var(--spring) infinite both;
+}
+
+@keyframes press {
+  0%,
+  26% {
+    transform: none;
+  }
+  28% {
+    transform: scale(0.95);
+  }
+  30%,
+  100% {
+    transform: none;
+  }
+}
+
+.lp-qr {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin-top: 1.1rem;
+  padding: 0.8rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: #fff;
+}
+
+.lp-qr-code {
+  display: block;
+  width: 8.5rem;
+  height: 8.5rem;
+}
+
+.lp-qr-code svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lp-waves {
+  position: absolute;
+  right: -2.4rem;
+  top: 50%;
+  display: flex;
+  gap: 0.2rem;
+  transform: translateY(-50%);
+}
+
+.lp-waves i {
+  width: 0.55rem;
+  height: 1.6rem;
+  border: 3px solid var(--coral);
+  border-left: 0;
+  border-radius: 0 999px 999px 0;
+  animation: wave 1.4s ease-in-out infinite;
+}
+
+.lp-waves i:nth-child(2) {
+  height: 2.4rem;
+  animation-delay: 0.15s;
+}
+
+.lp-waves i:nth-child(3) {
+  height: 3.2rem;
+  animation-delay: 0.3s;
+}
+
+.lp-waves {
+  align-items: center;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.lp-scr-wait {
+  margin-top: auto;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--coral-deep);
+}
+
+.lp-scr-receipt {
+  position: relative;
+  margin-top: 2.25rem;
+  width: 11.5rem;
+}
+
+.lp-scr-receipt > img:first-child {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.lp-scr-receipt-text {
+  position: absolute;
+  top: calc(29.2% - 0.8rem);
+  left: 38.5%;
+  width: 22.9%;
+  display: grid;
+  justify-items: center;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.lp-scr-receipt-text small {
+  font-size: 0.5rem;
+  letter-spacing: 0.08em;
+}
+
+.lp-scr-receipt-text b {
+  font-size: 0.66rem;
+}
+
+.lp-scr-kovi {
+  position: absolute;
+  left: 50%;
+  top: calc(4.53% - 4.375rem * 0.912 + 0.7rem);
+  width: 4.375rem;
+  height: auto;
+  transform: translateX(-50%);
+  animation: kovi var(--loop) var(--spring) infinite both;
+}
+
+@keyframes kovi {
+  0%,
+  64% {
+    transform: translate(-50%, 1rem) scale(0.5);
+    opacity: 0;
+  }
+  70% {
+    transform: translate(-50%, -0.5rem) scale(1.06);
+    opacity: 1;
+  }
+  74%,
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+.lp-scr-paid {
+  margin-top: 1.25rem;
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+@media (max-width: 900px) {
+  .lp-hero {
+    grid-template-columns: minmax(0, 1fr);
+    padding-top: 1rem;
+  }
+  .lp-hero-stage {
+    min-height: 34rem;
+  }
+}
+
+/* --- Facts ------------------------------------------------------------------------------- */
+
+.lp-facts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  background: var(--ink);
+  color: #e6eeee;
+}
+
+.lp-facts > div {
+  display: grid;
+  gap: 0.4rem;
+  padding: 2.5rem 2rem;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.lp-facts > div:first-child {
+  border-left: 0;
+}
+
+.lp-facts strong {
+  font-size: clamp(2.5rem, 5vw, 3.75rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  color: #fff;
+}
+
+.lp-facts > div:nth-child(2) strong {
+  color: var(--coral-soft);
+}
+
+.lp-facts span {
+  max-width: 15rem;
+  color: var(--on-ink);
+  font-weight: 500;
+}
+
+@media (max-width: 900px) {
+  .lp-facts {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .lp-facts > div:nth-child(3) {
+    border-left: 0;
+  }
+  .lp-facts > div:nth-child(n + 3) {
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+@media (max-width: 480px) {
+  .lp-facts > div {
+    padding: 1.75rem 1.25rem;
+  }
+}
+
+/* --- Sections ------------------------------------------------------------------------------ */
+
+.lp-section {
+  padding: 6rem 0 1rem;
+}
+
+.lp-h2 {
+  max-width: 52rem;
+  font-size: clamp(2.4rem, 5.5vw, 4.25rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.lp-steps {
+  list-style: none;
+  margin: 3rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  counter-reset: step;
+}
+
+.lp-steps li {
+  counter-increment: step;
+}
+
+.lp-step-art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 15rem;
+  border: 2px solid var(--ink);
+  border-radius: 2rem;
+  overflow: hidden;
+}
+
+.lp-step-art::before {
+  content: counter(step);
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  display: grid;
+  place-items: center;
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+  font-weight: 800;
+}
+
+.lp-tint-teal {
+  background: var(--teal-soft);
+}
+
+.lp-tint-coral {
+  background: var(--coral-soft);
+}
+
+.lp-tint-paper {
+  background: var(--surface);
+}
+
+.lp-step-art img {
+  max-height: 82%;
+  width: auto;
+}
+
+.lp-price {
+  position: absolute;
+  bottom: 1.25rem;
+  right: 1.25rem;
+  padding: 0.35rem 0.9rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.lp-steps h3 {
+  margin-top: 1.25rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.lp-steps p {
+  margin-top: 0.35rem;
+  max-width: 22rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+@media (max-width: 860px) {
+  .lp-steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --- Two sides ----------------------------------------------------------------------------- */
+
+.lp-duo {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+  padding-top: 6rem;
+}
+
+.lp-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 36rem;
+  padding: 2.25rem;
+  border-radius: 2.5rem;
+  overflow: hidden;
+  scroll-margin-top: 1.5rem;
+}
+
+.lp-panel-teal {
+  background: var(--teal-soft);
+}
+
+.lp-panel-coral {
+  background: var(--coral-soft);
+}
+
+.lp-panel-kicker {
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.lp-panel h2 {
+  margin-top: 0.5rem;
+  max-width: 24rem;
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.lp-panel ul {
+  list-style: none;
+  margin: 1.5rem 0 0;
+  padding: 0;
+  display: grid;
+  gap: 0.8rem;
+  max-width: 26rem;
+}
+
+.lp-panel li {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr;
+  gap: 0.7rem;
+  font-weight: 500;
+  color: #1f3438;
+}
+
+.lp-panel li svg {
+  margin-top: 0.2rem;
+}
+
+.lp-panel-art {
+  align-self: flex-end;
+  margin-top: auto;
+  height: auto;
+  margin-bottom: -2.25rem;
+}
+
+.lp-panel-art {
+  margin-bottom: -3.5rem;
+  transform: rotate(-6deg);
+}
+
+/* Kovi rides the dotted route between the two skylines, like the app's Send screen. */
+.lp-flight {
+  position: relative;
+  align-self: center;
+  width: min(100%, 22rem);
+  margin-top: auto;
+  padding-top: 3rem;
+}
+
+.lp-flight > img:first-child {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.lp-flight-kovi {
+  position: absolute;
+  left: 50.8%;
+  /* The route's highest point: y ≈ 81 on the 1026-wide image (the quadratic's peak, not its
+     control point at -98). Margins resolve against width, so this tracks the image's scale. */
+  top: 3rem;
+  margin-top: 7.9%;
+  width: 30%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  animation: glide 6s ease-in-out infinite;
+}
+
+@keyframes glide {
+  0%,
+  100% {
+    transform: translate(-50%, -66%) rotate(-4deg);
+  }
+  50% {
+    transform: translate(-44%, -74%) rotate(4deg);
+  }
+}
+
+@media (max-width: 860px) {
+  .lp-duo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lp-panel {
+    min-height: 0;
+    padding: 1.75rem;
+  }
+  .lp-panel-art {
+    margin-top: 1.5rem;
+  }
+}
+
+/* --- Currencies ---------------------------------------------------------------------------- */
+
+.lp-fx {
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 5rem 0 1rem;
+  text-align: center;
+}
+
+.lp-fx > p {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.lp-fx-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+}
+
+.lp-fx-row span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 1.25rem 0.5rem 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.lp-fx-row span img {
+  width: 2.5rem;
+  height: 2.5rem;
+}
+
+.lp-fx small {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* --- Developers ------------------------------------------------------------------------------ */
+
+.lp-dev {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 2.5rem;
+  align-items: center;
+  margin-top: 6rem;
+  padding: 3rem;
+  border-radius: 2.5rem;
+  background: var(--ink);
+  color: #e6eeee;
+  scroll-margin-top: 1.5rem;
+}
+
+.lp-dev h2 {
+  margin-top: 0.5rem;
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+  color: #fff;
+}
+
+.lp-dev .lp-panel-kicker {
+  color: var(--coral-soft);
+}
+
+.lp-dev-copy > p:not(.lp-panel-kicker) {
+  margin: 1rem 0 1.75rem;
+  color: var(--on-ink);
+  font-weight: 500;
+}
+
+.pill[data-tone="paper"] {
+  --bg: var(--surface);
+  --fg: var(--ink);
+  --cap: var(--ink);
+  --cap-fg: #fff;
+}
+
+.lp-code {
+  margin: 0;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  background: rgba(255, 255, 255, 0.06);
+  overflow-x: auto;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 0.8125rem;
+  line-height: 1.75;
+  white-space: pre;
+}
+
+.c-dim {
+  color: #6f8487;
+}
+
+.c-str {
+  color: var(--coral-soft);
+}
+
+.c-key {
+  color: var(--teal-soft);
+}
+
+.c-ok {
+  color: #8fe0bd;
+}
+
+@media (max-width: 960px) {
+  .lp-dev {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 1.75rem;
+  }
+}
+
+/* --- Trust --------------------------------------------------------------------------------- */
+
+.lp-trust {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+}
+
+.lp-trust > div {
+  padding: 1.75rem;
+  border-top: 3px solid var(--ink);
+}
+
+.lp-trust h3 {
+  margin: 0.9rem 0 0.4rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lp-trust p {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+@media (max-width: 860px) {
+  .lp-trust {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lp-trust > div {
+    padding: 1.25rem 0;
+  }
+}
+
+/* --- Closing ----------------------------------------------------------------------------------- */
+
+.lp-close {
+  position: relative;
+  margin-top: 9rem;
+  padding: 4.5rem 2rem 3.5rem;
+  border-radius: 2.5rem;
+  background: var(--coral-soft);
+  text-align: center;
+}
+
+.lp-close-peek {
+  position: absolute;
+  left: 50%;
+  /* His hands grip the panel's top edge, drawn 398/512 of the way down the image. */
+  top: calc(-220px * 0.5 * 0.777);
+  width: 220px;
+  height: auto;
+  transform: translateX(-50%);
+}
+
+.lp-close h2 {
+  max-width: 40rem;
+  margin: 0 auto;
+  font-size: clamp(2.4rem, 5.5vw, 4.25rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.98;
+}
+
+.lp-close > p {
+  max-width: 32rem;
+  margin: 1rem auto 0;
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: #3a2622;
+}
+
+/* --- Footer ------------------------------------------------------------------------------------ */
+
+.lp-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  padding: 3rem 0 2.5rem;
+}
+
+.lp-foot p {
+  flex: 1;
+  min-width: 16rem;
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.lp-foot nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.lp-foot nav a {
+  font-weight: 700;
+  font-size: 0.9375rem;
+  text-underline-offset: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-screen-1,
+  .lp-screen-2 {
+    display: none;
+  }
+  .lp-screen-3,
+  .lp-scr-kovi {
+    animation: none;
+    opacity: 1;
+  }
+  .lp-scr-kovi {
+    transform: translateX(-50%);
+  }
+}
