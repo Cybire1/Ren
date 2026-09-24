@@ -1,5 +1,5 @@
 // The app installs with npm on its own, outside the pnpm workspace, and reaches
-// @kova/tempo through a `file:` symlink. Metro needs to watch the repo root so it can follow
+// @kova/monad through a `file:` symlink. Metro needs to watch the repo root so it can follow
 // that link, and must keep normal node_modules lookup so npm's nested packages resolve.
 const { getDefaultConfig } = require('expo/metro-config')
 const path = require('node:path')
@@ -10,7 +10,7 @@ const workspaceRoot = path.resolve(projectRoot, '../..')
 const config = getDefaultConfig(projectRoot)
 config.watchFolders = [workspaceRoot]
 
-// @kova/tempo imports viem and ox. Resolve them from the app, not from the package's own
+// @kova/monad imports viem. Resolve them from the app, not from the package's own
 // pnpm copy, so the bundle carries one viem and values cross the boundary cleanly.
 const shared = ['viem', 'ox']
 const appPackage = path.join(projectRoot, 'package.json')

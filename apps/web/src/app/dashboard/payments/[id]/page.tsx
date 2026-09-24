@@ -43,7 +43,7 @@ export default async function PaymentPage(props: { params: Promise<{ id: string 
   const steps: { label: string; at?: string; state: 'done' | 'now' | 'off' }[] = [
     { label: 'Charge started', at: p.created_at, state: 'done' },
     p.status === 'paid'
-      ? { label: 'Paid and settled on Tempo', at: p.paid_at ?? undefined, state: 'done' }
+      ? { label: 'Paid and settled on Monad', at: p.paid_at ?? undefined, state: 'done' }
       : open
         ? { label: 'Waiting for the customer', state: 'now' }
         : { label: statusText[p.status], at: p.status === 'expired' ? p.expires_at : undefined, state: 'off' },
@@ -101,7 +101,7 @@ export default async function PaymentPage(props: { params: Promise<{ id: string 
               </div>
               <div>
                 <dt>Settles in</dt>
-                <dd>{p.currency} on Tempo {p.network === 'testnet' ? 'testnet' : ''}</dd>
+                <dd>{p.currency} on Monad {p.network === 'testnet' ? 'testnet' : ''}</dd>
               </div>
               <div>
                 <dt>Paid to</dt>
@@ -149,7 +149,7 @@ export default async function PaymentPage(props: { params: Promise<{ id: string 
               </div>
               {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
               <div className="qr qr-big" dangerouslySetInnerHTML={{ __html: qr }} />
-              <p className="code-meta">Scan with Kova Pay or any Tempo wallet. Code expires {clock(p.expires_at)}.</p>
+              <p className="code-meta">Scan with Kova Pay or any Monad wallet. Code expires {clock(p.expires_at)}.</p>
               <CopyField label="Pay link" value={payLink} />
               <div style={{ marginTop: '1rem' }}>
                 <CancelCharge id={p.id} />

@@ -84,7 +84,7 @@ export function Shell({ shop, demo, livemode, children }: { shop: string; demo: 
 
       {demo ? (
         <div className="demo-bar" role="note">
-          You’re exploring a shared demo shop on Tempo’s test network. <Link href="/signup">Open your own shop</Link>
+          You’re exploring a shared demo shop on Monad’s test network. <Link href="/signup">Open your own shop</Link>
         </div>
       ) : null}
 

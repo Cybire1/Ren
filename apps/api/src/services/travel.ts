@@ -1,9 +1,9 @@
 import { createHash, randomBytes } from 'node:crypto'
 import { schema, uuidv7 } from '@kova/db'
-import { formatAmount, parseAmount } from '@kova/tempo'
+import { formatAmount, parseAmount } from '@kova/monad'
 import { and, eq, inArray, lt } from 'drizzle-orm'
 import { getAddress, isAddress } from 'viem'
-import { feePayerAddress } from '../chain.js'
+import { feePayerAddress, settlementCurrency } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
@@ -92,7 +92,7 @@ async function createShares(trip: Trip, payers: string[], reference: string) {
     const intent = await createIntent({
       merchant: shop,
       amount: formatAmount(amounts[i] ?? 0n),
-      currency: 'USDC',
+      currency: settlementCurrency,
       reference: payers.length > 1 ? `${reference} (${label}'s share)` : reference,
       metadata: { trip: encodeId('trip', trip.id), share: label },
       expiresInSeconds: seconds,

@@ -12,12 +12,12 @@
     "ios:sim": "expo run:ios",
     "ios:device": "expo run:ios --device",
     "prebuild": "expo prebuild --clean",
-    "e2e:wallet": "node --env-file-if-exists=.env ../../node_modules/.pnpm/tsx@4.23.13/node_modules/tsx/dist/cli.mjs --tsconfig tsconfig.json scripts/wallet-e2e.ts"
+    "e2e:wallet": "node --env-file-if-exists=.env --env-file-if-exists=.env.monad ../../node_modules/.pnpm/tsx@4.23.13/node_modules/tsx/dist/cli.mjs --tsconfig tsconfig.json scripts/wallet-e2e.ts"
   },
   "dependencies": {
     "@expo-google-fonts/manrope": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
-    "@kova/tempo": "file:../../packages/tempo",
+    "@kova/monad": "file:../../packages/monad",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.4.0",
     "@react-navigation/elements": "^2.6.3",

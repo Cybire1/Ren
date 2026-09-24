@@ -15,7 +15,7 @@ import { decodeId, encodeId } from '../ids.js'
  * A shop's own account: signing up, its settings, and the keys that act for it.
  *
  * Kova never holds a shop's money. Signing up only records where payments settle (the shop's
- * own Tempo address, e.g. its Kova Pay wallet) and issues the key the dashboard signs in with.
+ * own Monad address, e.g. its Kova Pay wallet) and issues the key the dashboard signs in with.
  */
 
 type Merchant = typeof schema.merchants.$inferSelect
@@ -51,7 +51,7 @@ function serializeKey(k: typeof schema.apiKeys.$inferSelect, current?: string) {
 const address = z
   .string()
   .trim()
-  .refine((v) => isAddress(v), 'Not a Tempo address')
+  .refine((v) => isAddress(v), 'Not a Monad address')
   .transform((v) => getAddress(v))
 
 const signupBody = z.object({

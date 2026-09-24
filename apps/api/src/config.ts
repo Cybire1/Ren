@@ -4,27 +4,25 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().default('postgres://localhost:5432/kova_dev'),
-  /** Which Tempo network this instance serves. One process serves one network. */
+  /** Which Monad network this instance serves. One process serves one network. */
   KOVA_NETWORK: z.enum(['mainnet', 'testnet']).default('testnet'),
   /** Overrides the default public RPC (use a provider endpoint in production). */
-  TEMPO_RPC_URL: z.string().url().optional(),
+  MONAD_RPC_URL: z.string().url().optional(),
   /**
-   * Fee payer key. Kova pays every user's gas, so this key spends real money: in production
-   * it belongs in a KMS, and this env var is for local development only.
+   * The relayer key: it submits the payments people sign and pays their MON gas. It never holds
+   * anyone's money, but it spends MON on every payment: in production it belongs in a KMS, and
+   * this env var is for local development only.
    */
   KOVA_FEE_PAYER_PRIVATE_KEY: z
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/)
     .optional(),
   /**
-   * Hard cap on the fee Kova will sponsor for one transaction, in base units.
-   *
-   * A normal mainnet payment costs about $0.00005, and a first payment to a merchant who has
-   * never held the token about $0.0002, so $0.05 leaves a wide margin while still bounding
-   * what a single request can cost Kova. Moderato's fee estimates run far higher than
-   * mainnet's, so testnet deployments raise this.
+   * Hard cap on the gas the relayer will spend on one payment. Monad charges for the gas limit a
+   * transaction asks for, not the gas it uses, so the relayer asks for its estimate plus a small
+   * margin, and refuses anything that estimates above this.
    */
-  KOVA_MAX_SPONSORED_FEE: z.coerce.bigint().default(50_000n),
+  KOVA_MAX_RELAY_GAS: z.coerce.bigint().default(200_000n),
   /** How long a payment intent stays payable. */
   KOVA_INTENT_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   /**

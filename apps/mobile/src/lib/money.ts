@@ -1,7 +1,7 @@
-import { formatAmount, parseAmount } from '@kova/tempo'
+import { formatAmount, parseAmount } from '@kova/monad'
 
 /**
- * Money in the app is dollars on-chain (USDC), shown in whatever currency a person thinks in.
+ * Money in the app is dollars on-chain (AUSD), shown in whatever currency a person thinks in.
  *
  * Kova never converts money (DECISIONS D-012). Local amounts are shown at a published
  * reference rate, always labelled as approximate, so a price in euros or naira becomes a

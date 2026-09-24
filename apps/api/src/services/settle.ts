@@ -1,8 +1,7 @@
 import { schema, uuidv7 } from '@kova/db'
-import { decodeMemo, verifyPayment } from '@kova/tempo'
+import { decodeMemo, eip3009Abi, verifyPayment } from '@kova/monad'
 import { and, eq, isNull } from 'drizzle-orm'
-import type { Address, Hash } from 'viem'
-import type { Transaction } from 'viem/tempo'
+import { type Address, decodeEventLog, type Hash, type TransactionReceipt } from 'viem'
 import { publicClient } from '../chain.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
@@ -24,11 +23,9 @@ export interface SettleResult {
  * (which sees every transfer), and from a client calling /confirm, in any order.
  */
 export async function settleFromReceipt(
-  receipt: Transaction.TransactionReceipt,
+  receipt: TransactionReceipt,
   options: { credentialId?: string | undefined } = {},
 ): Promise<SettleResult> {
-  if (receipt.status === 'pending') return { status: 'ignored', reason: 'receipt not yet included' }
-
   const existing = await db.query.payments.findFirst({
     where: eq(schema.payments.txHash, receipt.transactionHash),
   })
@@ -40,7 +37,7 @@ export async function settleFromReceipt(
 
   const verdict = verifyPayment(receipt, {
     token: intent.tokenAddress as Address,
-    merchant: intent.payTo as Address,
+    payTo: intent.payTo as Address,
     amount: intent.amount,
     memo: intent.memo as `0x${string}`,
   })
@@ -49,7 +46,7 @@ export async function settleFromReceipt(
   if (verdict.status === 'unmatched' || verdict.status === 'memo_mismatch')
     return { status: 'ignored', reason: verdict.status }
 
-  const status = verdict.status === 'paid' ? 'paid' : verdict.status === 'held' ? 'held' : 'failed'
+  const status: 'paid' | 'failed' = verdict.status === 'paid' ? 'paid' : 'failed'
   const paymentId = uuidv7()
   const now = new Date()
 
@@ -65,14 +62,15 @@ export async function settleFromReceipt(
       tokenAddress: intent.tokenAddress,
       status,
       gasUsed: receipt.gasUsed,
-      feePayerAddress: receipt.feePayer ?? null,
+      // Whoever submitted the authorization paid the gas: Kova's relayer, or the payer's own wallet.
+      feePayerAddress: receipt.from,
       confirmedAt: status === 'paid' ? now : null,
     })
 
     await tx
       .update(schema.paymentIntents)
       .set({
-        status: status === 'paid' ? 'paid' : status === 'held' ? 'held' : 'failed',
+        status,
         paidAt: status === 'paid' ? now : null,
         updatedAt: now,
       })
@@ -128,14 +126,18 @@ export async function settleFromReceipt(
   return { status, paymentId }
 }
 
-async function findIntentForReceipt(
-  receipt: Transaction.TransactionReceipt,
-): Promise<PaymentIntent | undefined> {
+/** The intent a receipt claims to pay: the authorization whose nonce is a Kova payment memo. */
+async function findIntentForReceipt(receipt: TransactionReceipt): Promise<PaymentIntent | undefined> {
   for (const log of receipt.logs) {
-    // TransferWithMemo puts the memo in topic3.
-    const memo = log.topics[3]
-    if (!memo || !decodeMemo(memo)) continue
-    const intent = await findIntentByMemo(memo)
+    let nonce: `0x${string}`
+    try {
+      const event = decodeEventLog({ abi: eip3009Abi, eventName: 'AuthorizationUsed', data: log.data, topics: log.topics })
+      nonce = event.args.nonce
+    } catch {
+      continue
+    }
+    if (decodeMemo(nonce)?.kind !== 'payment') continue
+    const intent = await findIntentByMemo(nonce)
     if (intent) return intent
   }
   return undefined
@@ -146,11 +148,9 @@ export async function confirmTransaction(
   txHash: Hash,
   options: { credentialId?: string | undefined } = {},
 ): Promise<SettleResult> {
-  let receipt: Transaction.TransactionReceipt
+  let receipt: TransactionReceipt
   try {
-    receipt = (await publicClient.getTransactionReceipt({
-      hash: txHash,
-    })) as Transaction.TransactionReceipt
+    receipt = await publicClient.getTransactionReceipt({ hash: txHash })
   } catch (error) {
     throw new KovaError('chain_error', `Could not read transaction ${txHash}`, {
       cause: String(error),

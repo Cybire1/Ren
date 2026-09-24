@@ -138,7 +138,7 @@ export function Charge() {
             <h1>Paid</h1>
             <p>
               {usd(intent.amount)}
-              {intent.reference ? ` for ${intent.reference}` : ''}, settled on Tempo
+              {intent.reference ? ` for ${intent.reference}` : ''}, settled on Monad
             </p>
             <div className="paid-actions">
               <Pill icon="tap" onClick={reset}>
@@ -161,7 +161,7 @@ export function Charge() {
           <section className="await">
             <div className="await-card">
               <p className="await-amount">{usd(intent.amount)}</p>
-              <p className="await-label">{intent.reference ?? 'Scan with Kova Pay or any Tempo wallet'}</p>
+              <p className="await-label">{intent.reference ?? 'Scan with Kova Pay or any Monad wallet'}</p>
               {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
               {qr ? <div className="qr qr-big" aria-label="Payment QR code" dangerouslySetInnerHTML={{ __html: qr }} /> : null}
               <p className="waiting">
@@ -215,7 +215,7 @@ export function Charge() {
           <p className="amount-value" data-empty={amount === '' ? 'true' : undefined} aria-live="polite">
             {typedDollars(amount)}
           </p>
-          <p className="amount-sub">Customer pays {usd(amount || '0')} in USDC</p>
+          <p className="amount-sub">Customer pays {usd(amount || '0')} in AUSD</p>
           <input
             className="amount-ref"
             value={reference}

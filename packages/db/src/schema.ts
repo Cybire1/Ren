@@ -27,7 +27,8 @@ const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull(
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' })
 
 export const network = pgEnum('network', ['mainnet', 'testnet'])
-export const currency = pgEnum('currency', ['USDC', 'pathUSD', 'USDT0'])
+/** Tempo's dollars (USDC, pathUSD, USDT0) and, on Monad, AUSD beside Circle's USDC. */
+export const currency = pgEnum('currency', ['USDC', 'pathUSD', 'USDT0', 'AUSD'])
 
 // --- Accounts -------------------------------------------------------------
 
@@ -382,6 +383,35 @@ export const watcherState = pgTable('watcher_state', {
   lastBlock: bigint('last_block', { mode: 'bigint' }).notNull(),
   updatedAt: updatedAt(),
 })
+
+/**
+ * Every transfer of a token Kova settles in, as the watcher reads it off the chain. Monad's RPCs
+ * answer log queries 100 blocks (about 30 seconds) at a time, so a phone that was closed for a
+ * day cannot catch up on its own: it asks Kova what arrived, and reads its balance on-chain.
+ */
+export const transfers = pgTable(
+  'transfers',
+  {
+    id: id(),
+    network: network('network').notNull(),
+    tokenAddress: address('token_address').notNull(),
+    /** Lowercase, so lookups by address need no case folding. */
+    fromAddress: address('from_address').notNull(),
+    toAddress: address('to_address').notNull(),
+    amount: amount('amount').notNull(),
+    txHash: text('tx_hash').notNull(),
+    logIndex: integer('log_index').notNull(),
+    blockNumber: bigint('block_number', { mode: 'bigint' }).notNull(),
+    /** The EIP-3009 nonce when the transfer was authorized by signature: a Kova memo for charges and refunds. */
+    nonce: text('nonce'),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex('transfers_tx_log_idx').on(t.txHash, t.logIndex),
+    index('transfers_to_block_idx').on(t.toAddress, t.blockNumber),
+    index('transfers_from_block_idx').on(t.fromAddress, t.blockNumber),
+  ],
+)
 
 export const auditLogs = pgTable(
   'audit_logs',

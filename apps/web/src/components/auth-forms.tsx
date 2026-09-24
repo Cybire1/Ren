@@ -95,7 +95,7 @@ export function SignUpForm() {
         </label>
         <input id="address" name="address" placeholder="0x…" className="mono-input" spellCheck={false} required pattern="0x[0-9a-fA-F]{40}" />
         <p className="field-help">
-          Your Tempo address. In the Kova app it’s on your Profile, under <em>Your address on Tempo</em>. Payments go straight there; Kova never holds them.
+          Your Monad address. In the Kova app it’s on your Profile, under <em>Your address on Monad</em>. Payments go straight there; Kova never holds them.
         </p>
         {state.error ? <p className="form-error">{state.error}</p> : null}
         <Pill type="submit" icon="arrow" tone="coral" disabled={pending} wide>

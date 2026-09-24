@@ -46,7 +46,7 @@ export default async function PosterPage(props: { params: Promise<{ slug: string
               <LogoMark size={46} />
             </span>
           </div>
-          <p className="poster-small">No app needed. Pay in dollars with Kova Pay or any Tempo wallet. No card fees.</p>
+          <p className="poster-small">No app needed. Pay in dollars with Kova Pay or any Monad wallet. No card fees.</p>
           <div className="poster-foot">
             <Art name="kovi-wave" size={104} />
             <div>

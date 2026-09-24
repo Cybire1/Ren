@@ -83,7 +83,7 @@ export default function Profile() {
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Txt size={12} color={colors.onInk}>
-                  Your address on Tempo
+                  Your address on Monad
                 </Txt>
                 <View style={styles.network}>
                   <View style={[styles.dot, { backgroundColor: network.id === 'testnet' ? colors.yellow : colors.tealLight }]} />

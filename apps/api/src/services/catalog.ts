@@ -1,5 +1,5 @@
 import { schema } from '@kova/db'
-import { formatAmount } from '@kova/tempo'
+import { formatAmount } from '@kova/monad'
 import { encodeId } from '../ids.js'
 import { imageUrl } from './images.js'
 

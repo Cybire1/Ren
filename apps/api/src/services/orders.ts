@@ -1,11 +1,12 @@
 import { schema, uuidv7 } from '@kova/db'
-import { formatAmount, parseAmount } from '@kova/tempo'
+import { formatAmount, parseAmount } from '@kova/monad'
 import { and, eq, inArray, isNull } from 'drizzle-orm'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { decodeId, encodeId } from '../ids.js'
 import { createIntent, type PaymentIntent } from './intents.js'
 import { askJev } from './jev.js'
+import { settlementCurrency } from '../chain.js'
 
 type Merchant = typeof schema.merchants.$inferSelect
 type Stall = typeof schema.stalls.$inferSelect
@@ -84,7 +85,7 @@ export async function placeOrder(input: PlaceOrder): Promise<{ order: Order; int
   const intent = await createIntent({
     merchant: input.merchant,
     amount: formatAmount(total),
-    currency: 'USDC',
+    currency: settlementCurrency,
     reference: summarize(lines),
     metadata: { order: encodeId('order', orderId), ...(input.stall ? { stall: encodeId('stall', input.stall.id) } : {}) },
     terminalId: input.terminalId,

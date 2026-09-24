@@ -16,6 +16,7 @@ import {
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { settlementToken } from '@/lib/config'
 import { type BarcodeLookup, type CatalogItem, createCharge, lookupBarcode, ringUp } from '@/lib/api'
 import { sameBarcode, useCatalog } from '@/lib/catalog'
 import { applyKey, currencyInfo, type DisplayCurrency, formatLocal, groupTyped, localToUsd } from '@/lib/money'
@@ -283,7 +284,7 @@ function KeypadPanel({ bottom }: { bottom: number }) {
             {label}
           </Txt>
           <Txt size={14} color={colors.onTint} numberOfLines={1} adjustsFontSizeToFit>
-            {shop.currency === 'USD' ? `Customer pays $${usd} in USDC` : `Customer pays $${usd} USDC at ${formatLocal(1, shop.currency)} per dollar`}
+            {shop.currency === 'USD' ? `Customer pays $${usd} in ${settlementToken.symbol}` : `Customer pays $${usd} ${settlementToken.symbol} at ${formatLocal(1, shop.currency)} per dollar`}
           </Txt>
           {roomy ? (
             <TextInput

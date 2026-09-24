@@ -1,12 +1,12 @@
 import * as LocalAuthentication from 'expo-local-authentication'
 import * as SecureStore from 'expo-secure-store'
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react'
 import { AppState } from 'react-native'
 import { type Address, getAddress, type Hex, isAddress, isAddressEqual } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { confirmCheckout, type Checkout } from './api'
+import type { Checkout } from './api'
 import { confirmWithFace } from './auth'
-import { fundFromFaucet, getBalance, incomingSince, payCharge, publicClient, sendMoney } from './chain'
+import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
 import type { DisplayCurrency } from './money'
 import { load, remove, save } from './storage'
 
@@ -18,13 +18,11 @@ import { load, remove, save } from './storage'
 
 const KEY = 'kova.wallet.key.v1'
 const PROFILE = 'kova.profile.v1'
-const ACTIVITY = 'kova.activity.v1'
+// History, balance and the block cursor belong to one chain, so the Monad build keeps its own.
+const ACTIVITY = 'kova.monad.activity.v1'
 const CONTACTS = 'kova.contacts.v1'
-const CURSOR = 'kova.cursor.v1'
-const BALANCE = 'kova.balance.v1'
-/** How far back the incoming-money scan will catch up, and where a fresh scan starts. */
-const MAX_CATCH_UP = 2_000_000n
-const RECENT = 50_000n
+const CURSOR = 'kova.monad.cursor.v1'
+const BALANCE = 'kova.monad.balance.v1'
 
 export interface Profile {
   name: string
@@ -106,8 +104,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [activity, setActivity] = useState<Entry[]>([])
   const [savedContacts, setSavedContacts] = useState<Contact[]>([])
   const [arrival, setArrival] = useState<Arrival | null>(null)
-  /** Faucet top-ups in flight, so their arrival is logged as "Added" rather than "Received". */
-  const funding = useRef(false)
 
   useEffect(() => {
     void (async () => {
@@ -186,7 +182,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [contacts],
   )
 
-  // Watch the chain for money arriving while the app is open.
+  // Watch for money arriving while the app is open. Kova's index of the chain answers; a wallet
+  // with no cursor yet (new, or restored on a fresh phone) gets everything it ever received.
   useEffect(() => {
     if (!profile) return
     let stopped = false
@@ -196,28 +193,24 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       busy = true
       try {
         const saved = await load<string | null>(CURSOR, null)
-        const latest = await publicClient.getBlockNumber()
-        // A missing or broken cursor (say, saved as 0 while offline) starts from the recent
-        // past rather than crawling the whole chain.
-        const cursor =
-          saved && BigInt(saved) > 0n && latest - BigInt(saved) < MAX_CATCH_UP ? BigInt(saved) : latest - RECENT
+        const cursor = saved && /^\d+$/.test(saved) ? BigInt(saved) : 0n
         const { transfers, head } = await incomingSince(profile.address, cursor)
         if (stopped) return
         await save(CURSOR, head.toString())
         for (const t of transfers) {
-          const topUp = funding.current
-          const name = topUp ? 'Test dollars' : (nameFor(t.from) ?? `${t.from.slice(0, 6)}…${t.from.slice(-4)}`)
+          const refund = t.kind === 'refund'
+          const name = t.faucet ? 'Test dollars' : refund ? 'Refund' : (nameFor(t.from) ?? `${t.from.slice(0, 6)}…${t.from.slice(-4)}`)
           await record({
             id: newId(),
-            kind: topUp ? 'added' : 'received',
+            kind: t.faucet ? 'added' : 'received',
             amount: t.amount.toString(),
             name,
-            detail: topUp ? 'Tempo testnet faucet' : 'Arrived',
+            detail: t.faucet ? 'AUSD test faucet' : refund ? 'Money back from a booking' : 'Arrived',
             address: t.from,
             txHash: t.hash,
             at: Date.now(),
           })
-          if (!topUp) setArrival({ amount: t.amount, name, address: t.from, hash: t.hash })
+          if (!t.faucet) setArrival({ amount: t.amount, name, address: t.from, hash: t.hash })
         }
         if (transfers.length) void refresh()
       } catch (error) {
@@ -279,8 +272,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const address = privateKeyToAccount(key).address
     const next: Profile = { name: name.trim(), address, currency, protected: canProtect, createdAt: Date.now() }
     await save(PROFILE, next)
-    const head = await publicClient.getBlockNumber().catch(() => null)
-    if (head !== null) await save(CURSOR, head.toString())
     setProfile(next)
     setBalance(0n)
     setStatus('ready')
@@ -298,29 +289,15 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const addMoney = useCallback(async () => {
     if (!profile) return
-    funding.current = true
-    try {
-      await fundFromFaucet(profile.address)
-      await refresh()
-    } finally {
-      // Let the watcher see the faucet's transfer before arrivals count as gifts again.
-      setTimeout(() => {
-        funding.current = false
-      }, 10_000)
-    }
+    await fundFromFaucet(profile.address)
+    await refresh()
   }, [profile, refresh])
 
   const payCheckout = useCallback(
     async (checkout: Checkout) => {
       const account = await unlock()
-      const { hash, ms } = await payCharge(account, {
-        token: checkout.token,
-        payTo: checkout.pay_to,
-        amount: BigInt(checkout.amount_base),
-        memo: checkout.memo,
-      })
-      // Kova checks the transaction against the chain itself; this only makes it instant.
-      await confirmCheckout(checkout.id, hash).catch(() => {})
+      // Kova submits the signed payment and settles it before answering, so paid means paid.
+      const { hash, ms } = await payCharge(account, checkout)
       const entry: Entry = {
         id: newId(),
         kind: 'paid',

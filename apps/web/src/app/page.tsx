@@ -7,7 +7,7 @@ import { signInDemo } from './actions'
 
 export const metadata: Metadata = {
   title: { absolute: 'Kova · Tap. Paid. Anywhere.' },
-  description: 'Turn any phone into a till for digital dollars. Customers tap or scan, and it settles on Tempo in about a second, straight to your own wallet.',
+  description: 'Turn any phone into a till for digital dollars. Customers tap or scan, and it settles on Monad in about a second, straight to your own wallet.',
 }
 
 /** A full stop drawn as the brand's coin, the same as the o in the wordmark. */
@@ -61,7 +61,7 @@ export default async function Landing() {
             </span>
           </h1>
           <p className="lp-lead">
-            Kova turns any phone into a till for digital dollars. Your customer taps or scans, and the money settles on Tempo in about a second, straight to your own
+            Kova turns any phone into a till for digital dollars. Your customer taps or scans, and the money settles on Monad in about a second, straight to your own
             wallet. No card machine, no card fees, no waiting days to get paid.
           </p>
           <div className="lp-ctas">
@@ -74,7 +74,7 @@ export default async function Landing() {
               </Pill>
             </form>
           </div>
-          <p className="lp-fine">Live on Tempo’s test network. Test dollars, real speed.</p>
+          <p className="lp-fine">Live on Monad’s test network. Test dollars, real speed.</p>
         </div>
 
         <div className="lp-hero-stage">
@@ -86,7 +86,7 @@ export default async function Landing() {
       <section className="lp-facts" aria-label="Kova in numbers">
         <div>
           <strong>≈1s</strong>
-          <span>from tap to settled, final on Tempo</span>
+          <span>from tap to settled, final on Monad</span>
         </div>
         <div>
           <strong>$0.00</strong>
@@ -119,7 +119,7 @@ export default async function Landing() {
               <Art name="scene-faceid" size={220} />
             </div>
             <h3>They tap or scan</h3>
-            <p>With Kova Pay it’s one tap and Face ID. Any other Tempo wallet can scan the code and pay too.</p>
+            <p>With Kova Pay it’s one tap and Face ID. Any other Monad wallet can scan the code and pay too, and Kova covers the network fee.</p>
           </li>
           <li>
             <div className="lp-step-art lp-tint-paper">
@@ -187,7 +187,7 @@ export default async function Landing() {
             <Art name="coin-ngn" size={44} /> ₦17,188
           </span>
         </div>
-        <small>At Kova’s published reference rates. Payments always settle in dollars (USDC).</small>
+        <small>At Kova’s published reference rates. Payments always settle in dollars (AUSD, Agora’s dollar).</small>
       </section>
 
       {/* Developers -------------------------------------------------------------------------- */}
@@ -249,7 +249,7 @@ export default async function Landing() {
           <div>
             <Icon name="check" size={24} />
             <h3>Checked on-chain</h3>
-            <p>Every payment carries a memo tying it to its charge, and Kova verifies it on Tempo before anything says Paid.</p>
+            <p>Every payment carries a memo tying it to its charge, and Kova verifies it on Monad before anything says Paid.</p>
           </div>
         </div>
       </section>
@@ -273,7 +273,7 @@ export default async function Landing() {
 
       <footer className="lp-foot">
         <Brand />
-        <p>Tap. Paid. Anywhere. Built on Tempo. A test network preview: no real money moves.</p>
+        <p>Tap. Paid. Anywhere. Built on Monad. A test network preview: no real money moves.</p>
         <nav aria-label="Footer">
           <Link href="/signin">Sign in</Link>
           <Link href="/signup">Open a shop</Link>

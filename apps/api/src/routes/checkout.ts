@@ -1,20 +1,24 @@
 import { schema } from '@kova/db'
-import { formatAmount } from '@kova/tempo'
+import { explorerTxUrl, formatAmount, parseSignedAuthorization, tokenByAddress } from '@kova/monad'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { type Address, isAddressEqual } from 'viem'
 import { z } from 'zod'
+import { network } from '../chain.js'
+import { config } from '../config.js'
 import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
 import { decodeId } from '../ids.js'
+import { relayAuthorization } from '../relay.js'
 import { type PaymentIntent, serializeIntent } from '../services/intents.js'
 import { ordersForIntents } from '../services/orders.js'
-import { confirmTransaction } from '../services/settle.js'
+import { confirmTransaction, settleFromReceipt } from '../services/settle.js'
 import { tripForCheckout } from '../services/travel.js'
 
 /**
  * The payer's side of a charge. No API key: anyone holding the charge's id (it is in the QR)
- * can read what to pay and report a transaction. Nothing here can move money or change an
- * intent except through a transaction Kova verifies on-chain itself.
+ * can read what to pay, hand Kova a signed authorization to submit, or report a transaction.
+ * Nothing here can move money or change an intent except a payment Kova verifies on-chain.
  */
 
 async function load(id: string): Promise<{ intent: PaymentIntent; merchantName: string }> {
@@ -32,7 +36,8 @@ async function load(id: string): Promise<{ intent: PaymentIntent; merchantName: 
 
 function serializeCheckout(intent: PaymentIntent, merchantName: string) {
   const expired = intent.status === 'requires_payment' && intent.expiresAt.getTime() < Date.now()
-  const { id, status, token, pay_to, memo, reference, network, currency } = serializeIntent(intent)
+  const { id, status, token, pay_to, memo, reference, network: networkId, currency } = serializeIntent(intent)
+  const tokenInfo = tokenByAddress(config.KOVA_NETWORK, intent.tokenAddress as Address)
   return {
     object: 'checkout',
     id,
@@ -42,13 +47,25 @@ function serializeCheckout(intent: PaymentIntent, merchantName: string) {
     amount_base: intent.amount.toString(),
     currency,
     status: expired ? 'expired' : status,
-    network,
+    network: networkId,
+    chain_id: network.chainId,
     token,
+    /** What a wallet signs against: the token's EIP-712 name and version. */
+    token_symbol: tokenInfo?.symbol ?? null,
+    token_domain: tokenInfo?.domain ?? null,
     pay_to,
     memo,
     reference,
     expires_at: intent.expiresAt.toISOString(),
   }
+}
+
+/** The payment that settled a charge, for a payer who just paid it. */
+async function paymentOf(intent: PaymentIntent) {
+  const payment = await db.query.payments.findFirst({ where: eq(schema.payments.intentId, intent.id) })
+  return payment
+    ? { payer: payment.payerAddress, tx_hash: payment.txHash, explorer_url: explorerTxUrl(network, payment.txHash as `0x${string}`) }
+    : null
 }
 
 const confirmBody = z.object({ tx_hash: z.string().regex(/^0x[0-9a-fA-F]{64}$/) })
@@ -66,6 +83,49 @@ export const checkoutRoutes = new Hono()
         : null,
       // The flight or hotel, when this charge is a share of a Kova Travel trip.
       trip,
+    })
+  })
+  /**
+   * Pays a charge with a signed EIP-3009 authorization: the payer signs, Kova submits and pays
+   * the gas. The authorization must be for exactly this charge (its memo as the nonce, its
+   * amount, token and recipient), so a signature for one charge can never pay another.
+   */
+  .post('/:id/authorize', async (c) => {
+    const signed = parseSignedAuthorization(await c.req.json().catch(() => null))
+    if (!signed) throw new KovaError('invalid_request', 'Expected a signed transfer authorization.')
+    const { authorization, signature } = signed
+    const { intent, merchantName } = await load(c.req.param('id'))
+
+    if (intent.status === 'paid') {
+      // A retry after a dropped connection: the same payer gets the same answer.
+      const payment = await paymentOf(intent)
+      if (payment && isAddressEqual(payment.payer as Address, authorization.from))
+        return c.json({ ...serializeCheckout(intent, merchantName), payment })
+      throw new KovaError('conflict', 'This charge has already been paid.')
+    }
+    if (intent.status !== 'requires_payment') throw new KovaError('conflict', `This charge is ${intent.status}.`)
+    if (intent.expiresAt.getTime() < Date.now()) throw new KovaError('conflict', 'This charge has expired. Ask for a new code.')
+
+    const token = tokenByAddress(config.KOVA_NETWORK, signed.token)
+    if (!token || !isAddressEqual(token.address, intent.tokenAddress as Address))
+      throw new KovaError('invalid_request', 'Pay in the dollar this charge asks for.')
+    if (authorization.nonce !== intent.memo.toLowerCase())
+      throw new KovaError('invalid_request', 'This approval is for a different charge.')
+    if (!isAddressEqual(authorization.to, intent.payTo as Address))
+      throw new KovaError('invalid_request', 'This approval pays someone else.')
+    if (authorization.value !== intent.amount) throw new KovaError('invalid_request', 'This approval is for a different amount.')
+
+    const { receipt, ms } = await relayAuthorization(token, authorization, signature)
+    await settleFromReceipt(receipt)
+    const settled = await load(c.req.param('id'))
+    return c.json({
+      ...serializeCheckout(settled.intent, settled.merchantName),
+      payment: {
+        payer: authorization.from,
+        tx_hash: receipt.transactionHash,
+        explorer_url: explorerTxUrl(network, receipt.transactionHash),
+        ms: Math.round(ms),
+      },
     })
   })
   .post('/:id/confirm', async (c) => {

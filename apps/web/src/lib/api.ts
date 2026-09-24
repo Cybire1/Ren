@@ -140,8 +140,16 @@ export interface Checkout {
   id: string
   merchant_name: string
   amount: string
+  /** Base units (6 decimals). */
+  amount_base: string
   currency: string
   status: IntentStatus
+  network: string
+  chain_id: number
+  token: string
+  token_symbol: string | null
+  /** What a wallet signs against: the token's EIP-712 name and version. */
+  token_domain: { name: string; version: string } | null
   pay_to: string
   memo: string
   reference: string | null

@@ -4,9 +4,9 @@ import { requireApiKey } from '../auth.js'
 import { idempotent } from '../idempotency.js'
 import { KovaError, notFound } from '../errors.js'
 import { schema } from '@kova/db'
-import { explorerTxUrl } from '@kova/tempo'
+import { currencies, explorerTxUrl } from '@kova/monad'
 import { eq } from 'drizzle-orm'
-import { network } from '../chain.js'
+import { network, settlementCurrency } from '../chain.js'
 import { db } from '../db.js'
 import { decodeId, encodeId } from '../ids.js'
 import { cancelIntent, createIntent, getIntent, serializeIntent } from '../services/intents.js'
@@ -14,7 +14,7 @@ import { confirmTransaction } from '../services/settle.js'
 
 const createBody = z.object({
   amount: z.string(),
-  currency: z.enum(['USDC', 'pathUSD', 'USDT0']).default('USDC'),
+  currency: z.enum(currencies).default(settlementCurrency),
   reference: z.string().max(200).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   terminal_id: z.string().optional(),

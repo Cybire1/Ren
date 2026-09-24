@@ -33,7 +33,7 @@ export default async function SettingsPage() {
           <dl className="facts facts-flat">
             <div>
               <dt>Chain</dt>
-              <dd>Tempo {merchant.network === 'testnet' ? 'testnet (Moderato)' : 'mainnet'}</dd>
+              <dd>Monad {merchant.network === 'testnet' ? 'testnet' : 'mainnet'}</dd>
             </div>
             <div>
               <dt>Mode</dt>
@@ -41,7 +41,7 @@ export default async function SettingsPage() {
             </div>
             <div>
               <dt>Settles in</dt>
-              <dd>USDC, final in about a second</dd>
+              <dd>AUSD, final in about a second</dd>
             </div>
             <div>
               <dt>Fees</dt>

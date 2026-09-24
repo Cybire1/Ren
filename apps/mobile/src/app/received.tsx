@@ -68,7 +68,7 @@ export default function Received() {
               Arrived
             </Txt>
             <Txt weight="semi" size={15}>
-              On Tempo, final in under a second
+              On Monad, final in under a second
             </Txt>
           </View>
         </Sticker>

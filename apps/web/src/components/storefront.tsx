@@ -132,7 +132,7 @@ export function Storefront({ stall, preview }: { stall: PublicStall; preview: bo
 
       <footer className="shop-foot">
         <LogoMark size={22} />
-        <span>Pay in dollars with Kova or any Tempo wallet. No card fees.</span>
+        <span>Pay in dollars with Kova or any Monad wallet. No card fees.</span>
       </footer>
 
       {count > 0 && !open ? (
@@ -239,7 +239,7 @@ function AskedToPay({ stall, placed }: { stall: PublicStall; placed: Placed }) {
     <div className="asked">
       <Art name="kovi-ride" size={130} />
       <h2>Send it to whoever’s paying</h2>
-      <p className="sheet-lead">They can pay from anywhere, with Kova Pay or any Tempo wallet. The link stays open for 24 hours, and this page updates when it’s paid.</p>
+      <p className="sheet-lead">They can pay from anywhere, with Kova Pay or any Monad wallet. The link stays open for 24 hours, and this page updates when it’s paid.</p>
       <div className="field-value">
         <code>{link}</code>
         <button

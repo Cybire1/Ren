@@ -1,26 +1,23 @@
 import { serve } from '@hono/node-server'
 import { schema, uuidv7 } from '@kova/db'
-import { getNetwork, getToken } from '@kova/tempo'
+import { randomNonce, toSignedAuthorization, transferAuthorizationTypedData } from '@kova/monad'
 import { eq } from 'drizzle-orm'
-import { parseUnits } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { Actions, createClient, http, withRelay } from 'viem/tempo'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { generateApiKey } from '../src/auth.js'
-import { feePayerAddress } from '../src/chain.js'
+import { feePayerAddress, network, publicClient, settlementToken } from '../src/chain.js'
 import { db } from '../src/db.js'
 import { app } from '../src/index.js'
+import { type Checkout, fund, getCheckout, pay } from '../src/scripts/customer.js'
 
 /**
- * The full Kova payment path, through the real API and the real relay, against Moderato:
- * create an intent, pay it with a sponsored transfer, confirm it, and check that the
- * sponsorship gate refuses anything that is not that exact payment.
+ * The full Kova payment path on Monad testnet, through the real API and the real relayer:
+ * create a charge, sign an authorization for it as Kova Pay does, let Kova submit it and pay
+ * the gas, and check that nothing but that exact payment gets relayed.
  *
- * Requires: a local Postgres with migrations applied, and `pnpm setup:dev` for the fee payer.
+ * Requires: a local Postgres with migrations applied, and a relayer with testnet MON
+ * (`pnpm setup:dev`).
  */
-
-const network = getNetwork('testnet')
-const token = getToken('testnet', 'USDC')
 
 let server: ReturnType<typeof serve>
 let baseUrl: string
@@ -32,20 +29,21 @@ const payer = privateKeyToAccount(generatePrivateKey())
 async function api(path: string, init: RequestInit = {}) {
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      'content-type': 'application/json',
-      ...init.headers,
-    },
+    headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json', ...init.headers },
   })
   return { status: response.status, body: (await response.json()) as Record<string, never> }
 }
 
-beforeAll(async () => {
-  if (!feePayerAddress) throw new Error('no fee payer configured: run `pnpm setup:dev` first')
+async function newCharge(amount: string): Promise<Checkout> {
+  const created = await api('/v1/payment_intents', { method: 'POST', body: JSON.stringify({ amount, reference: `order_${amount}` }) })
+  expect(created.status).toBe(201)
+  return getCheckout(baseUrl, (created.body as unknown as { id: string }).id)
+}
 
-  const merchantWallet = privateKeyToAccount(generatePrivateKey())
-  merchantAddress = merchantWallet.address
+beforeAll(async () => {
+  if (!feePayerAddress) throw new Error('no relayer configured: run `pnpm setup:dev` first')
+
+  merchantAddress = privateKeyToAccount(generatePrivateKey()).address
   const merchantId = uuidv7()
   await db.insert(schema.merchants).values({
     id: merchantId,
@@ -55,7 +53,6 @@ beforeAll(async () => {
     network: 'testnet',
     isTest: true,
   })
-
   const generated = generateApiKey(true)
   apiKey = generated.secret
   await db.insert(schema.apiKeys).values({
@@ -73,108 +70,84 @@ beforeAll(async () => {
   if (!address || typeof address === 'string') throw new Error('server did not bind')
   baseUrl = `http://127.0.0.1:${address.port}`
 
-  // Fund the payer from the faucet.
-  const funder = createClient({ testnet: true, transport: http(network.rpcUrl) })
-  await Actions.faucet.fund(funder, { account: payer.address })
-  for (let i = 0; i < 40; i++) {
-    const balance = await Actions.token.getBalance(funder, {
-      account: payer.address,
-      token: token.address,
-    })
-    if (balance.amount > 0n) return
-    await new Promise((r) => setTimeout(r, 500))
-  }
-  throw new Error('faucet did not fund the payer')
+  await fund(baseUrl, payer.address)
 }, 120_000)
 
 afterAll(() => {
   server?.close()
 })
 
-/** A payer wallet that routes through Kova's relay, so the user never needs a gas token. */
-function payerClient() {
-  return createClient({
-    account: payer,
-    testnet: true,
-    feeToken: token.address,
-    transport: withRelay(http(network.rpcUrl), http(`${baseUrl}/rpc/relay`)),
-  })
-}
-
 describe('payment flow', () => {
-  it('creates an intent, pays it sponsored, and confirms it as paid', async () => {
-    const created = await api('/v1/payment_intents', {
-      method: 'POST',
-      body: JSON.stringify({ amount: '4.50', reference: 'order_1' }),
-    })
-    expect(created.status).toBe(201)
-    const intent = created.body as unknown as {
-      id: string
-      amount: string
-      status: string
-      pay_to: string
-      memo: string
-      token: string
-    }
-    expect(intent.status).toBe('requires_payment')
-    expect(intent.pay_to.toLowerCase()).toBe(merchantAddress.toLowerCase())
+  it('pays a charge from a signature alone: Kova submits it and pays the gas', async () => {
+    const checkout = await newCharge('4.50')
+    expect(checkout.status).toBe('requires_payment')
+    expect(checkout.currency).toBe('AUSD')
+    expect(checkout.chain_id).toBe(network.chainId)
+    expect(checkout.pay_to.toLowerCase()).toBe(merchantAddress.toLowerCase())
 
-    const started = Date.now()
-    const { receipt } = await payerClient().token.transferSync({
-      token: intent.token as `0x${string}`,
-      to: intent.pay_to as `0x${string}`,
-      amount: parseUnits('4.50', 6),
-      memo: intent.memo as `0x${string}`,
-      feePayer: true,
-    })
-    expect(receipt.status).toBe('success')
-    // Kova paid, not the payer.
-    expect(receipt.feePayer?.toLowerCase()).toBe(feePayerAddress?.toLowerCase())
+    const paid = await pay(baseUrl, checkout, payer)
+    expect(paid.status).toBe('paid')
+    console.log(`${checkout.id} paid in ${paid.roundTripMs}ms (relay ${paid.payment.ms}ms) · ${paid.payment.explorer_url}`)
 
-    const confirmed = await api(`/v1/payment_intents/${intent.id}/confirm`, {
-      method: 'POST',
-      body: JSON.stringify({ tx_hash: receipt.transactionHash }),
-    })
-    expect(confirmed.status).toBe(200)
-    expect(confirmed.body.status).toBe('paid')
-    console.log(
-      `intent ${intent.id} paid in ${Date.now() - started}ms · ${network.explorerUrl}/tx/${receipt.transactionHash}`,
-    )
+    // The payer holds no MON: Kova's relayer submitted it and paid.
+    const receipt = await publicClient.getTransactionReceipt({ hash: paid.payment.tx_hash })
+    expect(receipt.from.toLowerCase()).toBe(feePayerAddress?.toLowerCase())
+    expect(await publicClient.getBalance({ address: payer.address })).toBe(0n)
 
-    // Confirming twice must not create a second payment.
-    const again = await api(`/v1/payment_intents/${intent.id}/confirm`, {
-      method: 'POST',
-      body: JSON.stringify({ tx_hash: receipt.transactionHash }),
-    })
-    expect(again.body.status).toBe('paid')
-    const payments = await db.query.payments.findMany({
-      where: eq(schema.payments.txHash, receipt.transactionHash),
-    })
+    // Paying again is answered, not repeated: one payment, one balanced pair of ledger rows.
+    const again = await pay(baseUrl, checkout, payer)
+    expect(again.payment.tx_hash).toBe(paid.payment.tx_hash)
+    const payments = await db.query.payments.findMany({ where: eq(schema.payments.txHash, paid.payment.tx_hash) })
     expect(payments).toHaveLength(1)
-
-    // The ledger balances: one debit, one credit, same amount.
-    const entries = await db.query.ledgerEntries.findMany({
-      where: eq(schema.ledgerEntries.refId, payments[0]?.id as string),
-    })
+    const entries = await db.query.ledgerEntries.findMany({ where: eq(schema.ledgerEntries.refId, payments[0]?.id as string) })
     expect(entries).toHaveLength(2)
-    expect(entries.filter((e) => e.direction === 'debit')[0]?.amount).toBe(
-      entries.filter((e) => e.direction === 'credit')[0]?.amount,
-    )
+    expect(entries.find((e) => e.direction === 'debit')?.amount).toBe(entries.find((e) => e.direction === 'credit')?.amount)
   }, 120_000)
 
-  it('refuses to sponsor a transfer that is not an open Kova payment', async () => {
-    const stranger = privateKeyToAccount(generatePrivateKey()).address
-    // Right shape, wrong recipient and no matching memo: the relay must not pay for it.
-    await expect(
-      payerClient().token.transferSync({
-        token: token.address,
-        to: stranger,
-        amount: parseUnits('1.00', 6),
-        memo: `0x${'11'.repeat(32)}`,
-        feePayer: true,
-      }),
-    ).rejects.toThrow()
+  it('refuses any approval that is not for exactly this charge, without spending gas', async () => {
+    const checkout = await newCharge('3.00')
+    const nonceBefore = await publicClient.getTransactionCount({ address: feePayerAddress as `0x${string}` })
+    const base = {
+      from: payer.address,
+      to: checkout.pay_to,
+      value: BigInt(checkout.amount_base),
+      validAfter: 0n,
+      validBefore: BigInt(Math.floor(Date.parse(checkout.expires_at) / 1000)),
+      nonce: checkout.memo,
+    }
+    const attempt = async (authorization: typeof base, signer = payer) => {
+      const signature = await signer.signTypedData(transferAuthorizationTypedData(settlementToken, network.chainId, authorization))
+      return api(`/v1/checkout/${checkout.id}/authorize`, {
+        method: 'POST',
+        body: JSON.stringify(toSignedAuthorization(settlementToken.address, authorization, signature)),
+      })
+    }
+    expect((await attempt({ ...base, value: 1_000_000n })).status).toBe(400)
+    expect((await attempt({ ...base, nonce: randomNonce() })).status).toBe(400)
+    expect((await attempt({ ...base, to: payer.address })).status).toBe(400)
+    // Signed by someone other than the wallet it would take money from.
+    const impostor = await attempt(base, privateKeyToAccount(generatePrivateKey()))
+    expect(impostor.status).toBe(400)
+    expect(await publicClient.getTransactionCount({ address: feePayerAddress as `0x${string}` })).toBe(nonceBefore)
   }, 60_000)
+
+  it('will not relay a charge’s memo through the plain send door', async () => {
+    const checkout = await newCharge('1.00')
+    const authorization = {
+      from: payer.address,
+      to: checkout.pay_to,
+      value: 1_000_000n,
+      validAfter: 0n,
+      validBefore: BigInt(Math.floor(Date.now() / 1000) + 600),
+      nonce: checkout.memo,
+    }
+    const signature = await payer.signTypedData(transferAuthorizationTypedData(settlementToken, network.chainId, authorization))
+    const response = await api('/v1/transfers', {
+      method: 'POST',
+      body: JSON.stringify(toSignedAuthorization(settlementToken.address, authorization, signature)),
+    })
+    expect(response.status).toBe(400)
+  })
 
   it('rejects an unauthenticated request', async () => {
     const response = await fetch(`${baseUrl}/v1/payment_intents`, {
@@ -185,11 +158,12 @@ describe('payment flow', () => {
     expect(response.status).toBe(401)
   })
 
-  it('reports health with chain and fee-payer state', async () => {
+  it('reports health with the chain and the relayer', async () => {
     const response = await fetch(`${baseUrl}/health`)
-    const body = (await response.json()) as { status: string; fee_payer: string | null }
+    const body = (await response.json()) as { status: string; relayer: string | null; chain_id: number }
     expect(response.status).toBe(200)
     expect(body.status).toBe('ok')
-    expect(body.fee_payer?.toLowerCase()).toBe(feePayerAddress?.toLowerCase())
+    expect(body.chain_id).toBe(10143)
+    expect(body.relayer?.toLowerCase()).toBe(feePayerAddress?.toLowerCase())
   })
 })

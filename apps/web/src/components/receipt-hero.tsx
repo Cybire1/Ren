@@ -184,7 +184,7 @@ export function ReceiptHero() {
               </div>
               <div>
                 <dt>Settled</dt>
-                <dd>On Tempo, about a second</dd>
+                <dd>On Monad, about a second</dd>
               </div>
               <div>
                 <dt>Card fees</dt>

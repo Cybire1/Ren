@@ -33,7 +33,7 @@ export function AddressForm({ address, explorer }: { address: string; explorer: 
   return (
     <form action={action} className="setting-form">
       <span className="field-label">Where money lands</span>
-      <p className="field-help">Every payment settles straight to this Tempo address. Kova never holds your money.</p>
+      <p className="field-help">Every payment settles straight to this Monad address. Kova never holds your money.</p>
       {editing && !state.ok ? (
         <>
           <input name="address" value={value} onChange={(e) => setValue(e.target.value)} className="mono-input" spellCheck={false} aria-label="Settlement address" />

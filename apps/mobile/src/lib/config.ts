@@ -1,4 +1,4 @@
-import { getNetwork, getToken, type NetworkId } from '@kova/tempo'
+import { getNetwork, getToken, type NetworkId } from '@kova/monad'
 
 /**
  * Where the app points. On a physical phone `localhost` is the phone itself, so set these to
@@ -12,8 +12,8 @@ export const networkId: NetworkId =
 export const network = getNetwork(networkId)
 export const isTestnet = networkId === 'testnet'
 
-/** The token Kova settles in: USDC.e on mainnet, AlphaUSD standing in for it on testnet. */
-export const settlementToken = getToken(networkId, 'USDC')
+/** The chain, as people see it named. */
+export const chainName = 'Monad'
 
-/** Kova's fee-payer relay. Merchant payments go through it so the payer never needs gas. */
-export const relayUrl = `${apiUrl}/rpc/relay`
+/** The dollar Kova settles in on Monad: AUSD, Agora's dollar, on mainnet and testnet alike. */
+export const settlementToken = getToken(networkId, 'AUSD')

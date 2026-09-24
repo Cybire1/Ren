@@ -936,6 +936,150 @@ p {
   color: var(--muted);
 }
 
+/* Paying from a browser wallet */
+
+.wallet-pay > p {
+  max-width: 30rem;
+}
+
+.wallet-list {
+  display: grid;
+  gap: 0.5rem;
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.wallet-list button,
+.wallet-list a {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.6rem 1.1rem 0.6rem 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 650;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.4s var(--spring), background-color 0.3s var(--spring);
+}
+
+.wallet-list button > span:nth-child(2),
+.wallet-list a > span:nth-child(2) {
+  flex: 1;
+}
+
+.wallet-list button:hover,
+.wallet-list a:hover {
+  background: #fff;
+}
+
+.wallet-list button:hover > svg,
+.wallet-list a:hover > svg {
+  transform: translateX(3px);
+}
+
+.wallet-list button > svg,
+.wallet-list a > svg {
+  transition: transform 0.5s var(--spring);
+}
+
+.wallet-list button:active,
+.wallet-list a:active {
+  transform: scale(0.985);
+}
+
+.wallet-list img,
+.wallet-glyph {
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 0.7rem;
+}
+
+.wallet-glyph {
+  display: grid;
+  place-items: center;
+  background: var(--ink);
+  color: #fff;
+}
+
+.wallet-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1.25rem;
+  background: var(--surface);
+  font-weight: 650;
+}
+
+.wallet-done {
+  background: var(--positive);
+  color: #fff;
+}
+
+.spinner {
+  flex: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border: 2.5px solid var(--hairline);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}
+
+.wallet-short {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.wallet-short > p,
+.wallet-problem,
+.wallet-none {
+  margin: 0.75rem 0 0;
+  font-size: 0.9375rem;
+}
+
+.wallet-problem {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.wallet-none {
+  color: var(--muted);
+}
+
+.wallet-again {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.9375rem;
+}
+
 /* --- Notices ----------------------------------------------------------------------------- */
 
 .notice {

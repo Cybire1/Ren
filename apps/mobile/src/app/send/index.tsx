@@ -133,7 +133,7 @@ export default function PickPerson() {
                   Send to {direct.name || short(direct.address)}
                 </Txt>
                 <Txt size={13} color={colors.onInk}>
-                  {direct.amount ? `They asked for $${direct.amount}` : 'Tempo address, ready to pay'}
+                  {direct.amount ? `They asked for $${direct.amount}` : 'Monad address, ready to pay'}
                 </Txt>
               </View>
               <View style={styles.directGo}>

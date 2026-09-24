@@ -36,6 +36,13 @@
       "when": 1790220640703,
       "tag": "0004_travel_and_order_flags",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1790236224466,
+      "tag": "0005_monad_ausd_and_transfers",
+      "breakpoints": true
     }
   ]
 }

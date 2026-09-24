@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
+import { settlementToken } from '@/lib/config'
 import { cancelCharge, getCharge, type PaymentIntent, payLinkFor } from '@/lib/api'
 import { useShop } from '@/lib/shop'
 import { colors } from '@/lib/theme'
@@ -75,7 +76,7 @@ export default function CustomerDisplay() {
             {intent?.reference ? ` for ${intent.reference}` : ''}
           </Txt>
           <Txt size={15} color={colors.onTint}>
-            ${usd} USDC is in your settlement wallet.
+            ${usd} {settlementToken.symbol} is in your settlement wallet.
           </Txt>
         </Rise>
         <View style={{ paddingHorizontal: 20 }}>
@@ -137,7 +138,7 @@ export default function CustomerDisplay() {
           {price}
         </Txt>
         <Txt weight="medium" size={16} color={colors.onTint}>
-          {price.startsWith('$') ? 'in USDC' : `$${usd} USDC`}
+          {price.startsWith('$') ? `in ${settlementToken.symbol}` : `$${usd} ${settlementToken.symbol}`}
           {intent?.reference ? `  ·  ${intent.reference}` : ''}
         </Txt>
         {/* Room above the code for Kovi's head, so he never covers what's being paid for. */}
@@ -157,7 +158,7 @@ export default function CustomerDisplay() {
             <Icon name="scan" size={18} color={colors.white} />
           </View>
           <Txt weight="medium" size={15}>
-            Scan with Kova Pay or any Tempo wallet
+            Scan with Kova Pay or any Monad wallet
           </Txt>
         </View>
       </View>

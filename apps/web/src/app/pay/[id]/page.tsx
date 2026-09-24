@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Art, Brand, Pill } from '@/components/brand'
-import { CopyField } from '@/components/copy'
 import { Notice } from '@/components/notice'
+import { WalletPay } from '@/components/wallet-pay'
 import { WatchPaid } from '@/components/watch-paid'
 import { type Checkout, kovaPublic } from '@/lib/api'
 import { usd } from '@/lib/format'
@@ -11,8 +11,8 @@ export const metadata: Metadata = { title: 'Pay' }
 
 /**
  * What a customer sees after scanning a terminal's code. Public: the charge id is the only
- * credential. Kova Pay opens it as a deep link; any other Tempo wallet can pay the address and
- * memo shown here, and the watcher settles it either way.
+ * credential. Kova Pay opens it as a deep link; any browser wallet can pay it by signing the
+ * same authorization Kova Pay signs, and Kova's relayer pays the gas either way.
  */
 export default async function PayPage(context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params
@@ -96,12 +96,7 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
         </Pill>
       </section>
 
-      <section className="manual">
-        <h2>Paying from another wallet</h2>
-        <p>Send exactly {c.amount} USDC on Tempo, with this memo attached so the shop sees it.</p>
-        <CopyField label="Address" value={c.pay_to} />
-        <CopyField label="Memo" value={c.memo} />
-      </section>
+      <WalletPay checkout={c} testnet={c.network === 'testnet'} />
 
       <p className="fineprint">Tap. Paid. Anywhere.</p>
       <WatchPaid id={c.id} />

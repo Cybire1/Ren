@@ -47,7 +47,7 @@ export async function signUp(_: FormState, form: FormData): Promise<FormState> {
   const name = String(form.get('name') ?? '').trim()
   const address = String(form.get('address') ?? '').trim()
   if (name.length < 2) return { error: 'Give your shop a name.' }
-  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return { error: 'That isn’t a Tempo address. It starts with 0x and has 40 more characters.' }
+  if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return { error: 'That isn’t a Monad address. It starts with 0x and has 40 more characters.' }
   try {
     const shop = await kovaPublic<Merchant & { key: string }>('/v1/merchants', {
       method: 'POST',

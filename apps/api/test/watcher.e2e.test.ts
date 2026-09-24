@@ -1,20 +1,26 @@
 import { schema, uuidv7 } from '@kova/db'
-import { encodeMemo, getNetwork, getToken, parseAmount } from '@kova/tempo'
-import { eq } from 'drizzle-orm'
+import {
+  AUSD_TESTNET_FAUCET,
+  eip3009Abi,
+  encodeMemo,
+  faucetAbi,
+  parseAmount,
+  transferAuthorizationTypedData,
+  transferWithAuthorizationArgs,
+} from '@kova/monad'
+import { and, eq } from 'drizzle-orm'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { Actions, createClient, http, withRelay } from 'viem/tempo'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { network, publicClient, settlementToken, walletClient } from '../src/chain.js'
 import { db } from '../src/db.js'
 import { catchUp, startWatcher, type WatcherHandle } from '../src/workers/watcher.js'
 
 /**
- * A payment Kova did not submit — a customer scanning a QR code and paying from their own
- * wallet — must still settle. Here the payer uses Tempo's public sponsor, so Kova's relay
- * never sees the transaction and only the watcher can find it.
+ * A payment Kova's API never saw must still settle: here the signed authorization goes
+ * on-chain directly, as another relayer or the payer's own wallet would submit it, and only the
+ * watcher can find it. The same scan puts the transfer in the index wallets read from.
  */
 
-const network = getNetwork('testnet')
-const token = getToken('testnet', 'USDC')
 const payer = privateKeyToAccount(generatePrivateKey())
 const merchant = privateKeyToAccount(generatePrivateKey())
 
@@ -22,6 +28,7 @@ let watcher: WatcherHandle | undefined
 let merchantId: string
 
 beforeAll(async () => {
+  if (!walletClient) throw new Error('no relayer configured: run `pnpm setup:dev` first')
   merchantId = uuidv7()
   await db.insert(schema.merchants).values({
     id: merchantId,
@@ -31,18 +38,7 @@ beforeAll(async () => {
     network: 'testnet',
     isTest: true,
   })
-
-  const funder = createClient({ testnet: true, transport: http(network.rpcUrl) })
-  await Actions.faucet.fund(funder, { account: payer.address })
-  for (let i = 0; i < 40; i++) {
-    const balance = await Actions.token.getBalance(funder, {
-      account: payer.address,
-      token: token.address,
-    })
-    if (balance.amount > 0n) return
-    await new Promise((r) => setTimeout(r, 500))
-  }
-  throw new Error('faucet did not fund the payer')
+  await walletClient.writeContractSync({ address: AUSD_TESTNET_FAUCET, abi: faucetAbi, functionName: 'requestFunds', args: [payer.address] })
 }, 120_000)
 
 afterAll(async () => {
@@ -50,7 +46,7 @@ afterAll(async () => {
 })
 
 describe('chain watcher', () => {
-  it('settles a payment Kova never submitted', async () => {
+  it('settles a payment Kova never submitted, and indexes it for wallets', async () => {
     const intentId = uuidv7()
     const memo = encodeMemo({ kind: 'payment', id: intentId })
     const amount = parseAmount('2.25')
@@ -58,54 +54,60 @@ describe('chain watcher', () => {
       id: intentId,
       merchantId,
       amount,
-      currency: 'USDC',
-      tokenAddress: token.address,
+      currency: 'AUSD',
+      tokenAddress: settlementToken.address,
       network: 'testnet',
       payTo: merchant.address,
       memo,
       expiresAt: new Date(Date.now() + 900_000),
     })
 
-    // An outside wallet pays, sponsored by Tempo's public testnet sponsor, not by Kova.
-    const outside = createClient({
-      account: payer,
-      testnet: true,
-      feeToken: token.address,
-      transport: withRelay(http(network.rpcUrl), http(network.publicSponsorUrl)),
-    })
-    const { receipt } = await outside.token.transferSync({
-      token: token.address,
+    const authorization = {
+      from: payer.address,
       to: merchant.address,
-      amount,
-      memo,
-      feePayer: true,
+      value: amount,
+      validAfter: 0n,
+      validBefore: BigInt(Math.floor(Date.now() / 1000) + 900),
+      nonce: memo,
+    }
+    const signature = await payer.signTypedData(transferAuthorizationTypedData(settlementToken, network.chainId, authorization))
+    // Straight to the chain: Kova's checkout never hears about it.
+    const receipt = await walletClient!.writeContractSync({
+      address: settlementToken.address,
+      abi: eip3009Abi,
+      functionName: 'transferWithAuthorization',
+      args: transferWithAuthorizationArgs(authorization, signature),
     })
     expect(receipt.status).toBe('success')
 
-    // Kova has recorded nothing yet: nobody told it.
-    const before = await db.query.paymentIntents.findFirst({
-      where: eq(schema.paymentIntents.id, intentId),
-    })
+    const before = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
     expect(before?.status).toBe('requires_payment')
 
-    // Starting the watcher replays recent blocks and finds it.
+    // Wait for the block to finalize (two blocks, well under a second), then start the watcher:
+    // its catch-up replays recent blocks and finds the payment.
+    for (let i = 0; i < 40; i++) {
+      const finalized = await publicClient.getBlock({ blockTag: 'finalized' })
+      if (finalized.number >= receipt.blockNumber) break
+      await new Promise((r) => setTimeout(r, 250))
+    }
     watcher = await startWatcher()
-    const after = await db.query.paymentIntents.findFirst({
-      where: eq(schema.paymentIntents.id, intentId),
-    })
+    const after = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
     expect(after?.status).toBe('paid')
 
-    const payments = await db.query.payments.findMany({
-      where: eq(schema.payments.intentId, intentId),
-    })
+    const payments = await db.query.payments.findMany({ where: eq(schema.payments.intentId, intentId) })
     expect(payments).toHaveLength(1)
     expect(payments[0]?.payerAddress.toLowerCase()).toBe(payer.address.toLowerCase())
 
-    // Replaying the same range must not double-record it.
-    await catchUp(receipt.blockNumber, receipt.blockNumber)
-    const again = await db.query.payments.findMany({
-      where: eq(schema.payments.intentId, intentId),
+    const indexed = await db.query.transfers.findMany({
+      where: and(eq(schema.transfers.txHash, receipt.transactionHash), eq(schema.transfers.toAddress, merchant.address.toLowerCase())),
     })
-    expect(again).toHaveLength(1)
+    expect(indexed).toHaveLength(1)
+    expect(indexed[0]?.nonce).toBe(memo)
+    expect(indexed[0]?.amount).toBe(amount)
+
+    // Replaying the same range must not double-record anything.
+    await catchUp(receipt.blockNumber, receipt.blockNumber)
+    expect(await db.query.payments.findMany({ where: eq(schema.payments.intentId, intentId) })).toHaveLength(1)
+    expect(await db.query.transfers.findMany({ where: eq(schema.transfers.txHash, receipt.transactionHash) })).toHaveLength(1)
   }, 180_000)
 })

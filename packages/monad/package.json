@@ -1,0 +1,29 @@
+{
+  "name": "@kova/monad",
+  "version": "0.1.0",
+  "description": "Monad primitives for Kova: networks, AUSD and USDC, gasless EIP-3009 payments, verification",
+  "license": "Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "viem": "2.56.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "typescript": "6.0.3",
+    "vitest": "5.0.1"
+  }
+}

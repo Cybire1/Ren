@@ -1,25 +1,29 @@
-import { type Currency, getNetwork, getToken } from '@kova/tempo'
-import type { Address } from 'viem'
+import { type Currency, DEFAULT_CURRENCY, getNetwork, getToken, supportedTokens } from '@kova/monad'
+import { type Address, createPublicClient, createWalletClient, http, nonceManager } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { createClient, http } from 'viem/tempo'
 import { config } from './config.js'
 
 export const network = getNetwork(config.KOVA_NETWORK)
-export const rpcUrl = config.TEMPO_RPC_URL ?? network.rpcUrl
+export const rpcUrl = config.MONAD_RPC_URL ?? network.rpcUrl
 
-/** The token Kova settles in on this network, and the token it pays fees in. */
-export const settlementToken = getToken(config.KOVA_NETWORK, 'USDC')
+/** The dollar Kova settles in on Monad: AUSD, Agora's dollar. */
+export const settlementCurrency: Currency = DEFAULT_CURRENCY
+export const settlementToken = getToken(config.KOVA_NETWORK, settlementCurrency)
+
+/** Every token Kova accepts on this network. A transfer in anything else is not a Kova payment. */
+export const acceptedTokens = supportedTokens(config.KOVA_NETWORK)
 
 export function tokenFor(currency: Currency) {
   return getToken(config.KOVA_NETWORK, currency)
 }
 
 /**
- * Kova's fee payer. It signs only the fee-payer half of a transaction, never a payment, so a
- * compromise costs gas and nothing else. Fee payers must be secp256k1 keys.
+ * Kova's relayer. Payers sign EIP-3009 authorizations and never hold MON; this account submits
+ * them and pays the gas. It can only move money someone signed over, so a compromise costs gas
+ * and nothing else. The nonce manager lets concurrent payments go out without colliding.
  */
 export const feePayerAccount = config.KOVA_FEE_PAYER_PRIVATE_KEY
-  ? privateKeyToAccount(config.KOVA_FEE_PAYER_PRIVATE_KEY as `0x${string}`)
+  ? privateKeyToAccount(config.KOVA_FEE_PAYER_PRIVATE_KEY as `0x${string}`, { nonceManager })
   : undefined
 
 export const feePayerAddress: Address | undefined = feePayerAccount?.address
@@ -43,9 +47,12 @@ const trace = process.env.KOVA_TRACE_RPC
     }
   : {}
 
-/** Read-only client. Writes go through the relay, which is the only thing holding a key. */
-export const publicClient = createClient({
-  testnet: config.KOVA_NETWORK === 'testnet',
-  feeToken: settlementToken.address,
-  transport: http(rpcUrl, trace),
-})
+const transport = http(rpcUrl, { ...trace, timeout: 10_000 })
+
+/** Monad makes a block every ~0.3s, so receipts are polled far faster than viem's default. */
+export const publicClient = createPublicClient({ chain: network.chain, transport, pollingInterval: 200 })
+
+/** Signs and submits as the relayer. Undefined when this deployment has no relayer key. */
+export const walletClient = feePayerAccount
+  ? createWalletClient({ account: feePayerAccount, chain: network.chain, transport, pollingInterval: 200 })
+  : undefined

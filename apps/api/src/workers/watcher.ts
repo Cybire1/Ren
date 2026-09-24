@@ -1,55 +1,52 @@
-import { schema } from '@kova/db'
-import { decodeMemo } from '@kova/tempo'
+import { schema, uuidv7 } from '@kova/db'
+import { decodeAuthorizedTransfers, decodeMemo, eip3009Abi, LOG_RANGE } from '@kova/monad'
 import { eq } from 'drizzle-orm'
-import type { Address, Hash, Log } from 'viem'
-import { Abis } from 'viem/tempo'
-import { network, publicClient, settlementToken, tokenFor } from '../chain.js'
+import { type Address, decodeEventLog, getAbiItem, type Hash, isAddressEqual, type Log } from 'viem'
+import { acceptedTokens, network, publicClient } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { settleFromReceipt } from '../services/settle.js'
 
 /**
- * Watches Tempo for transfers that pay Kova intents.
+ * Watches Monad for money moving in the tokens Kova accepts. One scan does two jobs:
  *
- * The relay only sees payments Kova submits. A customer paying a QR code from any other
- * wallet is invisible to it, so this is what makes those payments land. It is also the
- * backstop when a client never calls /confirm: settlement is idempotent, so the watcher
- * re-reporting a payment the relay already recorded is a no-op.
+ * - It settles charges paid by any route. An authorization whose nonce is a Kova memo pays its
+ *   charge whoever submits it (Kova's relayer, a browser wallet paying its own gas, anyone), and
+ *   the watcher is the backstop if the relayer stops between submitting a payment and recording
+ *   it. Settlement is idempotent, so seeing a payment the relayer already recorded is a no-op.
+ * - It indexes every transfer, so wallets can ask Kova what arrived. Monad's RPCs answer log
+ *   queries 100 blocks (about 30 seconds) at a time, too little for a phone to catch up itself.
+ *
+ * It reads only finalized blocks (two behind the tip, about 0.6s), so nothing it records can be
+ * reorganized away.
  */
 
-const TRANSFER_WITH_MEMO = Abis.tip20.find(
-  (item) => item.type === 'event' && item.name === 'TransferWithMemo',
-) as never
+const events = [getAbiItem({ abi: eip3009Abi, name: 'AuthorizationUsed' }), getAbiItem({ abi: eip3009Abi, name: 'Transfer' })]
+const tokens: Address[] = acceptedTokens.map((t) => t.address)
 
-/** Tokens Kova accepts. A transfer in anything else is not a Kova payment. */
-const watchedTokens: Address[] = [
-  settlementToken.address,
-  tokenFor('pathUSD').address,
-  tokenFor('USDT0').address,
-]
-
-/** How far back to look on a cold start, so a fresh deployment is not blind to open intents. */
-const COLD_START_LOOKBACK = 2_000n
-
-/** Blocks are ~0.56s, so this is about two blocks behind at worst. */
+/** About 15 minutes of blocks: a fresh deployment still sees every charge that could be open. */
+const COLD_START_LOOKBACK = 3_000n
+/** About six hours. A longer outage skips ahead rather than crawling for minutes at startup. */
+const MAX_CATCH_UP = 70_000n
+/** Log windows fetched at once while catching up. */
+const CATCH_UP_CONCURRENCY = 4
+/** Blocks are ~0.31s, so a poll a second keeps the watcher a few blocks behind at worst. */
 const POLL_INTERVAL = 1_000
 
 export interface WatcherHandle {
   stop: () => Promise<void>
 }
 
-async function loadCursor(): Promise<bigint> {
+const finalizedBlock = async () => (await publicClient.getBlock({ blockTag: 'finalized' })).number
+
+async function loadCursor(head: bigint): Promise<bigint> {
   const row = await db.query.watcherState.findFirst({
     where: eq(schema.watcherState.network, config.KOVA_NETWORK),
   })
-  if (row) return row.lastBlock
-
-  const head = await publicClient.getBlockNumber()
+  if (row && head - row.lastBlock <= MAX_CATCH_UP) return row.lastBlock
   const from = head > COLD_START_LOOKBACK ? head - COLD_START_LOOKBACK : 0n
-  await db
-    .insert(schema.watcherState)
-    .values({ network: config.KOVA_NETWORK, lastBlock: from })
-    .onConflictDoNothing()
+  if (row) console.warn(`[watcher] ${head - row.lastBlock} blocks behind; skipping ahead to ${from}`)
+  await saveCursor(from)
   return from
 }
 
@@ -63,64 +60,117 @@ async function saveCursor(block: bigint): Promise<void> {
     })
 }
 
-/** Settles one transfer, if its memo belongs to Kova. */
-export async function handleTransferLog(log: Log): Promise<void> {
-  const memo = log.topics[3]
-  if (!memo || !decodeMemo(memo)) return
-  if (!log.transactionHash) return
-  await settleTransaction(log.transactionHash)
+/** The block the index is complete up to. Wallets use it as their cursor. */
+export async function indexedThrough(): Promise<bigint | null> {
+  const row = await db.query.watcherState.findFirst({
+    where: eq(schema.watcherState.network, config.KOVA_NETWORK),
+  })
+  return row?.lastBlock ?? null
+}
+
+/** Records a batch of logs: every transfer into the index, and any charge they pay. */
+export async function handleLogs(logs: Log[]): Promise<number> {
+  const byTx = new Map<Hash, Log[]>()
+  for (const log of logs) {
+    if (!log.transactionHash) continue
+    const list = byTx.get(log.transactionHash) ?? []
+    list.push(log)
+    byTx.set(log.transactionHash, list)
+  }
+
+  let recorded = 0
+  for (const [hash, txLogs] of byTx) {
+    const rows: (typeof schema.transfers.$inferInsert)[] = []
+    let paysACharge = false
+    for (const token of tokens) {
+      const tokenLogs = txLogs.filter((log) => isAddressEqual(log.address, token))
+      if (tokenLogs.length === 0) continue
+      const authorized = decodeAuthorizedTransfers(tokenLogs, token)
+      if (authorized.some((a) => decodeMemo(a.nonce)?.kind === 'payment')) paysACharge = true
+      for (const log of tokenLogs) {
+        let transfer: { from: Address; to: Address; value: bigint }
+        try {
+          const event = decodeEventLog({ abi: eip3009Abi, eventName: 'Transfer', data: log.data, topics: log.topics })
+          transfer = event.args
+        } catch {
+          continue
+        }
+        if (log.logIndex === null || log.blockNumber === null) continue
+        rows.push({
+          id: uuidv7(),
+          network: config.KOVA_NETWORK,
+          tokenAddress: token.toLowerCase(),
+          fromAddress: transfer.from.toLowerCase(),
+          toAddress: transfer.to.toLowerCase(),
+          amount: transfer.value,
+          txHash: hash,
+          logIndex: log.logIndex,
+          blockNumber: log.blockNumber,
+          nonce: authorized.find((a) => a.transferLogIndex === log.logIndex)?.nonce ?? null,
+        })
+      }
+    }
+    if (rows.length) {
+      await db.insert(schema.transfers).values(rows).onConflictDoNothing()
+      recorded += rows.length
+    }
+    if (paysACharge) await settleTransaction(hash)
+  }
+  return recorded
 }
 
 async function settleTransaction(hash: Hash): Promise<void> {
-  const existing = await db.query.payments.findFirst({
-    where: eq(schema.payments.txHash, hash),
-  })
+  const existing = await db.query.payments.findFirst({ where: eq(schema.payments.txHash, hash) })
   if (existing) return
-
   const receipt = await publicClient.getTransactionReceipt({ hash })
-  const result = await settleFromReceipt(receipt as never)
+  const result = await settleFromReceipt(receipt)
   if (result.status !== 'ignored') console.log(`[watcher] ${hash} -> ${result.status}`)
 }
 
-/** Replays a block range. Used on startup and to fill gaps after downtime. */
+/** Replays a block range in 100-block windows, a few at a time, recording them in order. */
 export async function catchUp(fromBlock: bigint, toBlock: bigint): Promise<number> {
-  if (toBlock < fromBlock) return 0
-  const logs = await publicClient.getLogs({
-    address: watchedTokens,
-    event: TRANSFER_WITH_MEMO,
-    fromBlock,
-    toBlock,
-  })
-  for (const log of logs) await handleTransferLog(log)
-  return logs.length
+  let recorded = 0
+  let start = fromBlock
+  while (start <= toBlock) {
+    const windows: [bigint, bigint][] = []
+    for (let i = 0; i < CATCH_UP_CONCURRENCY && start <= toBlock; i++) {
+      const end = start + LOG_RANGE - 1n < toBlock ? start + LOG_RANGE - 1n : toBlock
+      windows.push([start, end])
+      start = end + 1n
+    }
+    const batches = await Promise.all(
+      windows.map(([from, to]) => publicClient.getLogs({ address: tokens, events, fromBlock: from, toBlock: to })),
+    )
+    for (const logs of batches) recorded += await handleLogs(logs as Log[])
+  }
+  return recorded
 }
 
 export async function startWatcher(): Promise<WatcherHandle> {
-  let cursor = await loadCursor()
+  const head = await finalizedBlock()
+  let cursor = await loadCursor(head)
   let stopped = false
 
-  const head = await publicClient.getBlockNumber()
   const caught = await catchUp(cursor + 1n, head)
   cursor = head
   await saveCursor(cursor)
-  console.log(`[watcher] ${network.id}: caught up to block ${head} (${caught} transfers)`)
+  console.log(`[watcher] ${network.name}: caught up to block ${head} (${caught} transfers)`)
 
-  // Poll for new logs. viem's watchEvent uses server-side filters, which this RPC drops
-  // after a while ("filter not found"); a cursor plus getLogs has no such state.
+  // Poll with a cursor and getLogs: server-side filters get dropped by public RPCs after a while.
   let inFlight = false
   const poll = setInterval(() => {
     void (async () => {
       if (stopped || inFlight) return
       inFlight = true
       try {
-        const latest = await publicClient.getBlockNumber()
+        const latest = await finalizedBlock()
         if (latest > cursor) {
           await catchUp(cursor + 1n, latest)
           cursor = latest
           await saveCursor(cursor)
         }
       } catch (error) {
-        console.error('[watcher] poll failed', error)
+        console.error('[watcher] poll failed', error instanceof Error ? error.message.split('\n')[0] : error)
       } finally {
         inFlight = false
       }
