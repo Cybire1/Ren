@@ -1,12 +1,12 @@
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native'
 import { type Checkout, getCheckout } from '@/lib/api'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { type Entry, useWallet } from '@/lib/wallet'
-import { ShopBadge } from '@/ui/art'
+import { Avatar, ShopBadge } from '@/ui/art'
 import { Bob } from '@/ui/motion'
 import { PaidScene } from '@/ui/PaidScene'
 import { Stage as KoviStage } from '@/ui/Stage'
@@ -107,9 +107,14 @@ export default function PayCharge() {
           <Txt weight="bold" size={64} style={{ letterSpacing: -2 }}>
             Paid!
           </Txt>
-          <Txt weight="medium" size={22}>
-            {formatUsd(amount)} to {checkout.merchant_name}
+          <Txt weight="medium" size={22} style={{ textAlign: 'center' }}>
+            {formatUsd(amount)} to {checkout.order?.stall?.name ?? checkout.merchant_name}
           </Txt>
+          {checkout.order?.pay_for_me && checkout.order.customer_name ? (
+            <Txt size={15} color={colors.onTint}>
+              for {checkout.order.customer_name}’s order
+            </Txt>
+          ) : null}
         </Rise>
         <View style={{ paddingHorizontal: 20 }}>
           <Sticker radius={26}>
@@ -129,20 +134,22 @@ export default function PayCharge() {
       </Screen>
     )
 
+  const order = checkout.order
+  const place = order?.stall?.name ?? checkout.merchant_name
+  const askedBy = order?.pay_for_me && order.customer_name ? order.customer_name : null
+  const shown = order ? order.lines.slice(0, 4) : []
   return (
     <Screen bg={colors.tealSoft}>
       <Header backIcon="close" title="Confirm" onBack={() => router.replace('/(tabs)')} />
-      <View style={styles.review}>
-        <Bob>
-          <ShopBadge size={96} />
-        </Bob>
-        <Txt size={18} style={{ marginTop: 18 }}>
-          You’re paying
+      <ScrollView contentContainerStyle={styles.review}>
+        <Bob>{askedBy ? <Avatar name={askedBy} size={88} /> : <ShopBadge size={order ? 80 : 96} />}</Bob>
+        <Txt size={18} style={{ marginTop: 16, textAlign: 'center' }}>
+          {askedBy ? `${askedBy} asked you to pay for their order at` : 'You’re paying'}
         </Txt>
-        <Txt weight="semi" size={26}>
-          {checkout.merchant_name}
+        <Txt weight="semi" size={26} style={{ textAlign: 'center' }}>
+          {place}
         </Txt>
-        <Txt weight="bold" size={72} style={styles.amount} adjustsFontSizeToFit numberOfLines={1}>
+        <Txt weight="bold" size={order ? 60 : 72} style={styles.amount} adjustsFontSizeToFit numberOfLines={1}>
           {formatUsd(amount)}
         </Txt>
         {profile && profile.currency !== 'USD' ? (
@@ -150,14 +157,40 @@ export default function PayCharge() {
             about {formatLocal(baseToNumber(amount), profile.currency)}
           </Txt>
         ) : null}
-        {checkout.reference ? (
+        {order ? (
+          <View style={styles.order}>
+            {shown.map((l) => (
+              <View key={l.item_id} style={styles.orderLine}>
+                <Txt weight="semi" size={15} style={{ width: 30 }}>
+                  {l.quantity}×
+                </Txt>
+                <Txt weight="medium" size={15} style={{ flex: 1 }} numberOfLines={1}>
+                  {l.name}
+                </Txt>
+                <Txt size={15} color={colors.muted}>
+                  ${(Number(l.unit_price) * l.quantity).toFixed(2)}
+                </Txt>
+              </View>
+            ))}
+            {order.lines.length > shown.length ? (
+              <Txt size={13} color={colors.muted}>
+                and {order.lines.length - shown.length} more
+              </Txt>
+            ) : null}
+            {order.note ? (
+              <Txt size={14} color={colors.onTint} style={{ marginTop: 4 }} numberOfLines={2}>
+                “{order.note}”
+              </Txt>
+            ) : null}
+          </View>
+        ) : checkout.reference ? (
           <View style={styles.note}>
             <Txt weight="medium" size={15}>
               {checkout.reference}
             </Txt>
           </View>
         ) : null}
-      </View>
+      </ScrollView>
       <View style={{ paddingHorizontal: 20 }}>
         <Sticker radius={24}>
           <View style={styles.lines}>
@@ -213,12 +246,24 @@ const styles = StyleSheet.create({
   title: { marginTop: 16, letterSpacing: -0.6 },
   body: { textAlign: 'center', marginTop: 8, lineHeight: 23 },
   footer: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 12, marginTop: 'auto' },
-  review: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24 },
+  review: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, paddingVertical: 12 },
+  order: {
+    alignSelf: 'stretch',
+    marginTop: 16,
+    padding: 14,
+    paddingVertical: 10,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    gap: 2,
+  },
+  orderLine: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 3 },
   amount: { letterSpacing: -2.5, marginTop: 8 },
   note: { marginTop: 14, paddingHorizontal: 14, height: 34, borderRadius: 17, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.ink, justifyContent: 'center' },
   lines: { paddingHorizontal: 18, paddingVertical: 6 },
   line: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 10 },
   paidTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8 },
-  paidCopy: { alignItems: 'center', marginTop: 4, marginBottom: 18 },
+  paidCopy: { alignItems: 'center', marginTop: 4, marginBottom: 18, paddingHorizontal: 24 },
   stats: { flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 8 },
 })

@@ -9,6 +9,7 @@ import { network } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, displayCurrencies, formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
+import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Avatar } from '@/ui/art'
@@ -24,6 +25,7 @@ import { Txt } from '@/ui/primitives'
 export default function Profile() {
   const { profile, activity, contacts, setCurrency, signOut } = useWallet()
   const { setMode } = usePrefs()
+  const stall = useStall()
   const insets = useSafeAreaInsets()
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -144,10 +146,26 @@ export default function Profile() {
 
       <Group title="For businesses">
         <Row
-          icon="terminal"
+          icon="stall"
           tint={colors.coral}
+          label={stall.complete ? (stall.owned?.name ?? 'Your stall') : stall.owned ? 'Finish opening your stall' : 'Open a stall'}
+          value={
+            stall.complete
+              ? stall.stall
+                ? `${stall.stall.open ? 'Open' : 'Closed'}, ${stall.stall.items.length} ${stall.stall.items.length === 1 ? 'item' : 'items'}`
+                : 'Your stall'
+              : 'Sell from a link. Get paid in dollars'
+          }
+          onPress={() => {
+            if (!stall.complete) return router.push('/open-stall')
+            setMode('terminal')
+            router.replace('/terminal/stall')
+          }}
+        />
+        <Row
+          icon="terminal"
           label="Kova Terminal"
-          value="Take payments at your counter"
+          value={stall.complete ? 'Charge, scan barcodes and hand over orders' : 'Take payments at your counter'}
           onPress={() => {
             setMode('terminal')
             router.replace('/terminal')
@@ -173,7 +191,9 @@ export default function Profile() {
               Remove this wallet from the phone?
             </Txt>
             <Txt size={14} color={colors.muted} style={{ marginTop: 4, lineHeight: 20 }}>
-              The key is deleted and can’t be recovered. Move your money out first.
+              {stall.owned
+                ? `The key is deleted and can’t be recovered, and ${stall.owned.name} pays into this wallet. Move your money out and point your shop at a new wallet on the Kova dashboard first.`
+                : 'The key is deleted and can’t be recovered. Move your money out first.'}
             </Txt>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Pressable accessibilityRole="button" onPress={() => setConfirmRemove(false)} style={[styles.small, { backgroundColor: colors.surface }]}>

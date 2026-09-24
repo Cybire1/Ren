@@ -325,7 +325,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         id: newId(),
         kind: 'paid',
         amount: checkout.amount_base,
-        name: checkout.merchant_name,
+        name: checkout.order?.stall?.name ?? checkout.merchant_name,
         detail: checkout.reference ?? 'Scan to pay',
         address: getAddress(checkout.pay_to),
         txHash: hash,

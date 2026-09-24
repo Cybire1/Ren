@@ -66,11 +66,11 @@ export default function CustomerDisplay() {
           <Chip label="Settled" dot={colors.tealLight} />
         </View>
         <PaidScene amount={price} height={340} />
-        <Rise style={{ alignItems: 'center', marginBottom: 18 }}>
+        <Rise style={{ alignItems: 'center', marginBottom: 18, paddingHorizontal: 24 }}>
           <Txt weight="bold" size={64} style={{ letterSpacing: -2 }}>
             Paid!
           </Txt>
-          <Txt weight="medium" size={22}>
+          <Txt weight="medium" size={22} style={{ textAlign: 'center' }} numberOfLines={2}>
             {price}
             {intent?.reference ? ` for ${intent.reference}` : ''}
           </Txt>
@@ -140,7 +140,8 @@ export default function CustomerDisplay() {
           {price.startsWith('$') ? 'in USDC' : `$${usd} USDC`}
           {intent?.reference ? `  ·  ${intent.reference}` : ''}
         </Txt>
-        <View style={{ marginTop: 26 }}>
+        {/* Room above the code for Kovi's head, so he never covers what's being paid for. */}
+        <View style={{ marginTop: 56 }}>
           <Sticker radius={34} style={{ width: qr + 52, height: qr + 52 }}>
             <View style={styles.qr}>
               <QRCode value={payLinkFor(id)} size={qr} color={colors.ink} backgroundColor={colors.surface} ecl="M" />

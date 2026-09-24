@@ -3,7 +3,9 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { usePrefs } from '@/lib/prefs'
+import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
+import { useWallet } from '@/lib/wallet'
 import { colors, fonts } from '@/lib/theme'
 import { Kovi, ShopBadge } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
@@ -22,6 +24,8 @@ export default function TerminalSetup() {
   const params = useLocalSearchParams<{ code?: string }>()
   const { setMode } = usePrefs()
   const { paired, pair } = useTerminal()
+  const stall = useStall()
+  const { profile } = useWallet()
   const [code, setCode] = useState(clean(params.code ?? ''))
   const [name, setName] = useState('Front counter')
   const [busy, setBusy] = useState(false)
@@ -94,8 +98,36 @@ export default function TerminalSetup() {
               <Kovi pose="wave" size={96} />
             </View>
           </View>
+          {stall.owned ? (
+            <View style={styles.own}>
+              <Txt weight="semi" size={17}>
+                {stall.owned.name} is yours
+              </Txt>
+              <Txt size={14} color={colors.muted} style={{ marginTop: 2, marginBottom: 12, lineHeight: 20 }}>
+                This phone opened it. Make it the till again with one tap, no code needed.
+              </Txt>
+              <PillButton
+                label={busy ? 'Pairing' : `Make it ${stall.owned.name}’s till`}
+                icon="terminal"
+                loading={busy}
+                onPress={async () => {
+                  setBusy(true)
+                  setProblem(null)
+                  try {
+                    await stall.open({ name: stall.owned?.name ?? 'My stall', phone: `${profile?.name.split(' ')[0] ?? 'My'}’s phone`, settleTo: profile?.address ?? '' })
+                    void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+                    start()
+                  } catch (error) {
+                    setProblem(error instanceof Error ? error.message : 'That didn’t work. Try again.')
+                  } finally {
+                    setBusy(false)
+                  }
+                }}
+              />
+            </View>
+          ) : null}
           <Txt weight="bold" size={32} style={{ letterSpacing: -1, lineHeight: 36 }}>
-            Pair this phone with your shop
+            {stall.owned ? 'Or pair with another shop' : 'Pair this phone with your shop'}
           </Txt>
           <Txt size={16} color={colors.muted} style={{ marginTop: 8, lineHeight: 23 }}>
             In your Kova dashboard, tap Add a terminal. Type the code it shows, or scan it.
@@ -124,7 +156,7 @@ export default function TerminalSetup() {
             }}
             autoCapitalize="characters"
             autoCorrect={false}
-            autoFocus={!params.code}
+            autoFocus={!params.code && !stall.owned}
             maxLength={LENGTH + 2}
             style={styles.hidden}
           />
@@ -169,6 +201,7 @@ function Fact({ icon, text, last }: { icon: IconName; text: string; last?: boole
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 24, paddingBottom: 24 },
+  own: { marginBottom: 26, padding: 16, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealSoft },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   pairedArt: { width: 200, height: 150, alignItems: 'center', justifyContent: 'flex-end' },
   pairedKovi: { position: 'absolute', right: -6, top: -18 },

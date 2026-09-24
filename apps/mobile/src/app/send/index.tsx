@@ -69,6 +69,7 @@ export default function PickPerson() {
     if (!scanned) return setProblem('That isn’t a Kova link or a wallet address.')
     if (scanned.kind === 'charge') return router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
     if (scanned.kind === 'pair') return router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
+    if (scanned.kind === 'stall') return router.replace({ pathname: '/s/[slug]', params: { slug: scanned.slug } })
     router.push({
       pathname: '/send/[to]',
       params: { to: scanned.address, name: scanned.name ?? '', cur: scanned.currency ?? '', amount: scanned.amount ?? '', note: scanned.note ?? '' },

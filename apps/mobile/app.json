@@ -50,9 +50,17 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Kova uses the camera to scan payment codes.",
+          "cameraPermission": "Kova uses the camera to scan payment codes and barcodes, and to photograph what you sell.",
           "microphonePermission": false,
           "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Kova lets you pick photos of what you sell for your stall.",
+          "cameraPermission": "Kova uses the camera to scan payment codes and barcodes, and to photograph what you sell.",
+          "microphonePermission": false
         }
       ],
       [

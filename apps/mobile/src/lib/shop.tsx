@@ -7,11 +7,13 @@ import { load, save } from './storage'
 
 interface Shop {
   name: string
+  /** This phone's name as a terminal, like "Front counter". */
+  terminal: string
   currency: DisplayCurrency
   setCurrency: (c: DisplayCurrency) => void
 }
 
-const ShopContext = createContext<Shop>({ name: 'Your shop', currency: 'USD', setCurrency: () => {} })
+const ShopContext = createContext<Shop>({ name: 'Your shop', terminal: 'Kova Terminal', currency: 'USD', setCurrency: () => {} })
 export const useShop = () => useContext(ShopContext)
 
 /** The merchant side shares one idea of the shop: its name and the currency it prices in. */
@@ -42,5 +44,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     void save('kova.shop.currency', c)
   }
 
-  return <ShopContext.Provider value={{ name, currency, setCurrency }}>{children}</ShopContext.Provider>
+  return (
+    <ShopContext.Provider value={{ name, terminal: paired?.name ?? 'Kova Terminal', currency, setCurrency }}>{children}</ShopContext.Provider>
+  )
 }

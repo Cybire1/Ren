@@ -6,11 +6,13 @@ import { displayCurrencies } from './money'
  * What a scanned code or opened link means.
  *
  * - A charge: a terminal's QR (`https://…/pay/<id>`) or `kova://pay/<id>`.
+ * - A stall: its table poster or shared link (`https://…/s/<slug>`), or `kova://s/<slug>`.
  * - A person: `kova://to/<address>?name=Maya&cur=EUR&amount=24.00&note=Dinner`, from someone's
  *   Receive or Request screen. A bare address works too.
  */
 export type Scanned =
   | { kind: 'charge'; id: string }
+  | { kind: 'stall'; slug: string }
   | { kind: 'pair'; code: string }
   | {
       kind: 'person'
@@ -27,6 +29,8 @@ export function parseScanned(text: string): Scanned | null {
   if (pairing?.[1]) return { kind: 'pair', code: pairing[1] }
   const charge = /\/pay\/([A-Za-z0-9_]+)/.exec(value) ?? /^kova:\/\/pay\/([A-Za-z0-9_]+)/.exec(value)
   if (charge?.[1]) return { kind: 'charge', id: charge[1] }
+  const stall = /^(?:https?:\/\/[^/]+|kova:\/)\/s\/([a-z0-9-]{1,64})\/?(?:[?#].*)?$/.exec(value)
+  if (stall?.[1]) return { kind: 'stall', slug: stall[1] }
 
   if (isAddress(value)) return { kind: 'person', address: value }
 

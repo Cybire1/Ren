@@ -12,6 +12,8 @@ export interface Paired {
   id: string
   name: string
   merchantName: string
+  /** Missing on phones paired before it was recorded. */
+  merchantId?: string
 }
 
 interface TerminalState {
@@ -42,7 +44,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const saved = JSON.parse(raw) as Paired & { key: string }
         setDeviceKey(saved.key)
-        setPaired({ id: saved.id, name: saved.name, merchantName: saved.merchantName })
+        setPaired({ id: saved.id, name: saved.name, merchantName: saved.merchantName, merchantId: saved.merchantId })
       }
       setReady(true)
     })()
@@ -50,7 +52,7 @@ export function TerminalProvider({ children }: { children: ReactNode }) {
 
   const pair = useCallback(async (code: string, name: string) => {
     const result = await pairTerminal(code, name, { os: Platform.OS, version: String(Platform.Version) })
-    const next: Paired = { id: result.id, name: result.name, merchantName: result.merchant.name }
+    const next: Paired = { id: result.id, name: result.name, merchantName: result.merchant.name, merchantId: result.merchant.id }
     await SecureStore.setItemAsync(STORE, JSON.stringify({ ...next, key: result.key }), {
       keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     })

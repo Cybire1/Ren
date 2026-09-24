@@ -12,6 +12,7 @@ import { useEffect } from 'react'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { PrefsProvider, usePrefs } from '@/lib/prefs'
+import { StallProvider } from '@/lib/stall'
 import { TerminalProvider } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { useWallet, WalletProvider } from '@/lib/wallet'
@@ -47,17 +48,21 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <PrefsProvider>
           <TerminalProvider>
-          <WalletProvider>
-            <StatusBar style="dark" />
-            <ArrivalWatcher />
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
-              <Stack.Screen name="index" options={{ animation: 'none' }} />
-              <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-              <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-              <Stack.Screen name="received" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
-              <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
-            </Stack>
-          </WalletProvider>
+            <WalletProvider>
+              <StallProvider>
+                <StatusBar style="dark" />
+                <ArrivalWatcher />
+                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
+                  <Stack.Screen name="index" options={{ animation: 'none' }} />
+                  <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+                  <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="received" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+                  <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
+                  <Stack.Screen name="open-stall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
+                </Stack>
+              </StallProvider>
+            </WalletProvider>
           </TerminalProvider>
         </PrefsProvider>
       </SafeAreaProvider>
