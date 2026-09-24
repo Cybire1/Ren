@@ -6,12 +6,15 @@ import { feePayerAddress, network } from './chain.js'
 import { config } from './config.js'
 import { errorHandler } from './errors.js'
 import { relayHandler, relayPath } from './relay.js'
+import { accountRoutes } from './routes/account.js'
 import { checkoutRoutes } from './routes/checkout.js'
 import { healthRoutes } from './routes/health.js'
 import { intentRoutes } from './routes/intents.js'
 import { reportRoutes } from './routes/reports.js'
 import { terminalRoutes } from './routes/terminals.js'
+import { webhookRoutes } from './routes/webhooks.js'
 import { startWatcher } from './workers/watcher.js'
+import { startWebhookWorker } from './workers/webhooks.js'
 
 export const app = new Hono()
 app.use(logger())
@@ -22,6 +25,8 @@ app.route('/health', healthRoutes)
 app.route('/v1/checkout', checkoutRoutes)
 app.route('/v1/payment_intents', intentRoutes)
 app.route('/v1/terminals', terminalRoutes)
+app.route('/v1', accountRoutes)
+app.route('/v1', webhookRoutes)
 app.route('/v1', reportRoutes)
 
 // Tempo RPC with Kova sponsorship. Apps and terminals point their wallet transport here.
@@ -43,6 +48,7 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
 
   // The watcher catches payments Kova did not submit, such as QR payments from any wallet.
   void startWatcher().catch((error) => console.error('[watcher] failed to start', error))
+  startWebhookWorker()
 
   serve({ fetch: app.fetch, port: config.PORT }, (info) => {
     console.log(

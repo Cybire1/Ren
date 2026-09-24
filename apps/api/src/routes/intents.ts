@@ -2,7 +2,12 @@ import { Hono } from 'hono'
 import { z } from 'zod'
 import { requireApiKey } from '../auth.js'
 import { KovaError, notFound } from '../errors.js'
-import { decodeId } from '../ids.js'
+import { schema } from '@kova/db'
+import { explorerTxUrl } from '@kova/tempo'
+import { eq } from 'drizzle-orm'
+import { network } from '../chain.js'
+import { db } from '../db.js'
+import { decodeId, encodeId } from '../ids.js'
 import { cancelIntent, createIntent, getIntent, serializeIntent } from '../services/intents.js'
 import { confirmTransaction } from '../services/settle.js'
 
@@ -49,9 +54,29 @@ export const intentRoutes = new Hono()
     })
     return c.json(serializeIntent(intent), 201)
   })
+  /** One charge, with the transaction that paid it and the terminal that took it. */
   .get('/:id', async (c) => {
     const intent = await getIntent(c.get('merchant').id, intentUuid(c.req.param('id')))
-    return c.json(serializeIntent(intent))
+    const [payment, terminal] = await Promise.all([
+      db.query.payments.findFirst({ where: eq(schema.payments.intentId, intent.id) }),
+      intent.terminalId ? db.query.terminals.findFirst({ where: eq(schema.terminals.id, intent.terminalId) }) : undefined,
+    ])
+    return c.json({
+      ...serializeIntent(intent),
+      terminal: terminal ? { id: encodeId('terminal', terminal.id), name: terminal.name } : null,
+      payment: payment
+        ? {
+            id: encodeId('payment', payment.id),
+            status: payment.status,
+            tx_hash: payment.txHash,
+            payer: payment.payerAddress,
+            block_number: payment.blockNumber?.toString() ?? null,
+            fee_payer: payment.feePayerAddress,
+            confirmed_at: payment.confirmedAt?.toISOString() ?? null,
+            explorer_url: explorerTxUrl(network, payment.txHash as `0x${string}`),
+          }
+        : null,
+    })
   })
   .post('/:id/cancel', async (c) => {
     const intent = await cancelIntent(c.get('merchant').id, intentUuid(c.req.param('id')))

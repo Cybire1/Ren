@@ -1,6 +1,6 @@
 import { schema } from '@kova/db'
 import { formatAmount } from '@kova/tempo'
-import { and, desc, eq, gte, inArray, lt, sql } from 'drizzle-orm'
+import { and, desc, eq, gte, ilike, inArray, lt, sql } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { requireApiKey } from '../auth.js'
@@ -16,6 +16,8 @@ const listQuery = z.object({
     .optional(),
   /** Cursor: return intents created strictly before this ISO timestamp. */
   before: z.string().datetime().optional(),
+  /** Search the shop's own reference. */
+  q: z.string().trim().max(100).optional(),
 })
 
 /** Merchant-facing reads: the transaction feed and the day's totals. */
@@ -25,7 +27,7 @@ export const reportRoutes = new Hono()
     const parsed = listQuery.safeParse(c.req.query())
     if (!parsed.success)
       throw new KovaError('invalid_request', 'Invalid query', { issues: parsed.error.issues })
-    const { limit, status, before } = parsed.data
+    const { limit, status, before, q } = parsed.data
     const merchantId = c.get('merchant').id
 
     const rows = await db.query.paymentIntents.findMany({
@@ -33,6 +35,7 @@ export const reportRoutes = new Hono()
         eq(schema.paymentIntents.merchantId, merchantId),
         status ? eq(schema.paymentIntents.status, status) : undefined,
         before ? lt(schema.paymentIntents.createdAt, new Date(before)) : undefined,
+        q ? ilike(schema.paymentIntents.reference, `%${q.replace(/[%_\\]/g, (m) => `\\${m}`)}%`) : undefined,
       ),
       orderBy: desc(schema.paymentIntents.createdAt),
       limit: limit + 1,
@@ -97,6 +100,19 @@ export const reportRoutes = new Hono()
       orderBy: desc(schema.paymentIntents.paidAt),
     })
 
+    // The last 14 days, one bucket per UTC day, empty days included, for the dashboard chart.
+    const days = await db.execute<{ day: string; total: string; count: number }>(sql`
+      select to_char(d.day, 'YYYY-MM-DD') as day,
+             coalesce(sum(i.amount), 0)::text as total,
+             count(i.id)::int as count
+      from generate_series((now() at time zone 'utc')::date - 13, (now() at time zone 'utc')::date, interval '1 day') as d(day)
+      left join payment_intents i
+        on i.merchant_id = ${merchantId} and i.status = 'paid'
+       and (i.paid_at at time zone 'utc')::date = d.day
+      group by d.day
+      order by d.day
+    `)
+
     const merchant = c.get('merchant')
     return c.json({
       merchant: {
@@ -115,6 +131,7 @@ export const reportRoutes = new Hono()
         count: allTime?.count ?? 0,
       },
       open_intents: open?.count ?? 0,
+      daily: [...days].map((d) => ({ date: d.day, total: formatAmount(BigInt(d.total)), count: d.count })),
       last_paid_at: last?.paidAt?.toISOString() ?? null,
     })
   })
