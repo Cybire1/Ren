@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { requireApiKey } from '../auth.js'
+import { idempotent } from '../idempotency.js'
 import { KovaError, notFound } from '../errors.js'
 import { schema } from '@kova/db'
 import { explorerTxUrl } from '@kova/tempo'
@@ -32,7 +33,7 @@ function intentUuid(id: string): string {
 
 export const intentRoutes = new Hono()
   .use(requireApiKey)
-  .post('/', async (c) => {
+  .post('/', idempotent, async (c) => {
     const parsed = createBody.safeParse(await c.req.json().catch(() => ({})))
     if (!parsed.success)
       throw new KovaError('invalid_request', 'Invalid request body', {

@@ -11,6 +11,7 @@ import { checkoutRoutes } from './routes/checkout.js'
 import { healthRoutes } from './routes/health.js'
 import { intentRoutes } from './routes/intents.js'
 import { reportRoutes } from './routes/reports.js'
+import { expireStaleIntents } from './services/intents.js'
 import { terminalRoutes } from './routes/terminals.js'
 import { webhookRoutes } from './routes/webhooks.js'
 import { startWatcher } from './workers/watcher.js'
@@ -49,6 +50,10 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
   // The watcher catches payments Kova did not submit, such as QR payments from any wallet.
   void startWatcher().catch((error) => console.error('[watcher] failed to start', error))
   startWebhookWorker()
+  // Charges nobody paid close when their code expires, so "waiting" means someone could still pay.
+  const expire = () => void expireStaleIntents().catch((error) => console.error('[expiry]', error))
+  expire()
+  setInterval(expire, 30_000)
 
   serve({ fetch: app.fetch, port: config.PORT }, (info) => {
     console.log(
