@@ -77,6 +77,7 @@ const ART = {
   'avatar-4': 1,
   'avatar-5': 1,
   'avatar-6': 1,
+  'avatar-7': 1,
   plane: 1,
   'sparkle-4': 1,
   'sparkle-8': 1,
@@ -153,6 +154,22 @@ const glyphs = {
   bag: ['M5.5 8h13l-1.2 12.5H6.7z', 'M9 10V7a3 3 0 0 1 6 0v3'],
   share: ['M12 15V4', 'M8 8l4-4 4 4', 'M5 12v7h14v-7'],
   trash: ['M5 7h14', 'M9 7V5h6v2', 'M7 7l1 13h8l1-13'],
+  // The wallet's glyphs, as the app draws them (apps/mobile src/ui/Icon.tsx), circles and boxes as paths.
+  bell: ['M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z', 'M10 20a2 2 0 0 0 4 0'],
+  scan: ['M4 8V6a2 2 0 0 1 2-2h2', 'M16 4h2a2 2 0 0 1 2 2v2', 'M20 16v2a2 2 0 0 1-2 2h-2', 'M8 20H6a2 2 0 0 1-2-2v-2', 'M7 12h10'],
+  receive: ['M12 4v11', 'M7 10l5 5 5-5', 'M5 20h14'],
+  request: ['M12 20V9', 'M7 14l5-5 5 5', 'M5 4h14'],
+  minus: ['M5 12h14'],
+  clock: ['M12 3.5a8.5 8.5 0 1 0 0 17.0a8.5 8.5 0 1 0 0 -17.0z', 'M12 8v4l3 2'],
+  user: ['M12 4a4 4 0 1 0 0 8a4 4 0 1 0 0 -8z', 'M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6'],
+  face: ['M4 8V6a2 2 0 0 1 2-2h2', 'M16 4h2a2 2 0 0 1 2 2v2', 'M20 16v2a2 2 0 0 1-2 2h-2', 'M8 20H6a2 2 0 0 1-2-2v-2', 'M9 9.5v1', 'M15 9.5v1', 'M9 15c1.8 1.4 4.2 1.4 6 0'],
+  lock: ['M7 11h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z', 'M8 11V8a4 4 0 0 1 8 0v3'],
+  info: ['M12 3.5a8.5 8.5 0 1 0 0 17.0a8.5 8.5 0 1 0 0 -17.0z', 'M12 11v5', 'M12 8h.01'],
+  pen: ['M4 20h4L19 9l-4-4L4 16z', 'M13.5 6.5l4 4'],
+  eyeOff: ['M4 4l16 16', 'M9.9 5.7A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.2 3.9', 'M6.3 7.4C3.9 9.2 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.5 0 2.9-.4 4.1-1'],
+  chevronDown: ['M6.5 9.5l5.5 5.5 5.5-5.5'],
+  card: ['M5 5.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z', 'M3 10h18'],
+  down: ['M12 5v14', 'M6 13l6 6 6-6'],
 } as const
 
 export type IconName = keyof typeof glyphs

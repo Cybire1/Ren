@@ -181,6 +181,29 @@
     -webkit-backdrop-filter: blur(14px);
   }
 
+  .topnav-end {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+  }
+
+  .topnav-wallet {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 0.3rem;
+    height: 2.1rem;
+    padding: 0 0.8rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.8125rem;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
   .topnav-shop {
     display: flex;
     align-items: center;

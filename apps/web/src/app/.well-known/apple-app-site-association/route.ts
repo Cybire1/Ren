@@ -2,8 +2,8 @@
  * Tells iOS which apps this domain vouches for:
  * - webcredentials: Kova Pay may create and use passkeys for this domain. On Monad the wallet
  *   is a Mera passkey, so this file is what makes a wallet possible at all.
- * - applinks: scanning a shop's code (a /pay/… link) or opening a stall (/s/…) with the iPhone
- *   camera opens Kova Pay straight at it, when it's installed.
+ * - applinks: scanning a shop's code (a /pay/… link), opening a stall (/s/…) or someone's request
+ *   (/to/…) with the iPhone camera opens Kova Pay straight at it, when it's installed.
  *
  * Served as JSON with no redirect, as Apple requires.
  */
@@ -17,7 +17,7 @@ export function GET() {
   return Response.json({
     webcredentials: { apps },
     applinks: {
-      details: [{ appIDs: apps, components: [{ '/': '/pay/*' }, { '/': '/s/*' }] }],
+      details: [{ appIDs: apps, components: [{ '/': '/pay/*' }, { '/': '/s/*' }, { '/': '/to/*' }] }],
     },
   })
 }

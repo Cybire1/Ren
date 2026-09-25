@@ -82,6 +82,25 @@ export async function signInWithWallet(proof: { message: string; signature: stri
   }
 }
 
+/**
+ * Opens a shop owned by a wallet that signed Kova's "open a shop" message: the Kova wallet on the
+ * web, with its passkey. Payments land in that wallet, and it signs in to the shop from then on.
+ */
+export async function openShopWithWallet(input: { name: string; address: string; message: string; signature: string }): Promise<{ ok?: boolean; error?: string }> {
+  const name = input.name.trim()
+  if (name.length < 2) return { error: 'Give your shop a name.' }
+  try {
+    const shop = await kovaPublic<Merchant & { key: string }>('/v1/merchants', {
+      method: 'POST',
+      body: JSON.stringify({ name, settlement_address: input.address, owner: { message: input.message, signature: input.signature } }),
+    })
+    await startSession({ key: shop.key, demo: false })
+    return { ok: true }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
 export async function signInDemo() {
   const key = process.env.DEMO_API_KEY
   if (!key) redirect('/signin?demo=off')

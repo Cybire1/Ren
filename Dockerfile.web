@@ -6,10 +6,13 @@ WORKDIR /repo
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
+COPY packages/monad/package.json packages/monad/
 RUN pnpm install --frozen-lockfile --filter "@kova/web..."
 COPY tsconfig*.json ./
+# The web signs the same payments as the app and the API, with the same Monad package.
+COPY packages/monad packages/monad
 COPY apps/web apps/web
-RUN pnpm --filter @kova/web build
+RUN pnpm --filter "@kova/web..." build
 
 FROM node:22-slim
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 HOSTNAME=0.0.0.0 PORT=3000

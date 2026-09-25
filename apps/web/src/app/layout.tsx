@@ -4,6 +4,7 @@ import '../styles/app.css'
 import '../styles/auth.css'
 import '../styles/landing.css'
 import '../styles/stalls.css'
+import '../styles/wallet.css'
 
 export const metadata: Metadata = {
   title: { default: 'Kova', template: '%s · Kova' },

@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "check:passkey": "node ../../node_modules/.pnpm/tsx@4.23.13/node_modules/tsx/dist/cli.mjs scripts/passkey-check.ts",
     "dev": "next dev --port 3000",
     "build": "next build",
     "start": "next start",
@@ -11,7 +12,14 @@
     "test": "vitest run --passWithNoTests"
   },
   "dependencies": {
+    "@category-labs/mera": "0.2.0",
+    "@kova/monad": "workspace:*",
+    "@noble/ciphers": "^1.3.0",
+    "@noble/hashes": "^2.4.0",
     "@privy-io/react-auth": "3.45.0",
+    "@scure/base": "^2.4.0",
+    "@scure/bip32": "^2.4.0",
+    "@scure/bip39": "^2.4.0",
     "next": "16.3.5",
     "qrcode": "^1.5.4",
     "react": "19.3.0",

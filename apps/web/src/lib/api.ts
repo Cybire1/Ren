@@ -1,4 +1,5 @@
 import 'server-only'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { getSession } from './session'
 
@@ -23,12 +24,30 @@ export class ApiError extends Error {
   }
 }
 
+/**
+ * Everyone on this site reaches Kova from this server's one address, so Kova's per-address limits
+ * would count them all as one. The server passes on who's asking, vouched for with a secret only
+ * it and the API share (KOVA_PROXY_SECRET); without the secret the API ignores the claim.
+ */
+async function visitor(): Promise<Record<string, string>> {
+  const secret = process.env.KOVA_PROXY_SECRET
+  if (!secret) return {}
+  try {
+    const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim()
+    return ip ? { 'x-kova-proxy-secret': secret, 'x-kova-client-ip': ip } : {}
+  } catch {
+    // Outside a request (a build, a script): nobody to vouch for.
+    return {}
+  }
+}
+
 async function call<T>(path: string, init: RequestInit, key?: string): Promise<T> {
   const response = await fetch(`${baseUrl}${path}`, {
     ...init,
     headers: {
       ...(key ? { authorization: `Bearer ${key}` } : {}),
       'content-type': 'application/json',
+      ...(await visitor()),
       ...init.headers,
     },
     cache: 'no-store',

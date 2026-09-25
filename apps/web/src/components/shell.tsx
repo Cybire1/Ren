@@ -58,6 +58,11 @@ export function Shell({ shop, demo, livemode, children }: { shop: string; demo: 
         </nav>
 
         <div className="rail-foot">
+          {/* Kova is one app: your shop and your wallet, a tap apart. */}
+          <Link href="/wallet" className="rail-link rail-wallet">
+            <Icon name="card" size={21} />
+            <span>Wallet</span>
+          </Link>
           <Link href="/dashboard/settings" className="rail-shop" title={`${shop}${livemode ? '' : ', test mode'}`} aria-label={`${shop} settings`}>
             <Art name="badge-shop" size={42} />
             {livemode ? null : <span className="rail-test" aria-hidden="true" />}
@@ -76,10 +81,15 @@ export function Shell({ shop, demo, livemode, children }: { shop: string; demo: 
           <LogoMark size={30} />
           <Wordmark height={18} />
         </Link>
-        <Link href="/dashboard/settings" className="topnav-shop">
-          <span>{shop}</span>
-          <Art name="badge-shop" size={32} />
-        </Link>
+        <span className="topnav-end">
+          <Link href="/wallet" className="topnav-wallet" aria-label="Your wallet">
+            <Icon name="card" size={16} /> Wallet
+          </Link>
+          <Link href="/dashboard/settings" className="topnav-shop">
+            <span>{shop}</span>
+            <Art name="badge-shop" size={32} />
+          </Link>
+        </span>
       </header>
 
       {demo ? (

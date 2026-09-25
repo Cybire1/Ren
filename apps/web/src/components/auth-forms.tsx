@@ -56,6 +56,16 @@ export function SignInForm({
       </p>
       {notice ? <p className="form-note">{notice}</p> : null}
       <div className="signin-ways">
+        <Link href="/wallet/shop?go=signin" className="shop-wallet shop-wallet-make">
+          <span className="wallet-glyph">
+            <Icon name="face" size={16} />
+          </span>
+          <span>
+            Use my Kova passkey
+            <small className="wallet-sub">The one from the Kova app, or your Kova wallet on the web</small>
+          </span>
+          <Icon name="arrow" size={18} />
+        </Link>
         {privyAppId ? <EmailSignIn appId={privyAppId} chainId={chainId} /> : null}
         {withKey ? (
           <KeySignIn keyStart={keyStart} focus={Boolean(privyAppId)} />
@@ -528,6 +538,17 @@ export function SignUpForm({
           </>
         ) : (
           <>
+            {/* The Kova wallet: sales land where the Kova app and the web wallet both see them. */}
+            <Link href="/wallet/shop?go=open" className="shop-wallet shop-wallet-make">
+              <span className="wallet-glyph">
+                <Icon name="face" size={16} />
+              </span>
+              <span>
+                Use my Kova wallet
+                <small className="wallet-sub">Sales land in the wallet your passkey opens, in the app and on the web.</small>
+              </span>
+              <Icon name="arrow" size={18} />
+            </Link>
             <button
               type="button"
               className="shop-wallet shop-wallet-make"
