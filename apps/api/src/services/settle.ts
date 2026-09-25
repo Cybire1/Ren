@@ -131,7 +131,9 @@ async function findIntentForReceipt(receipt: TransactionReceipt): Promise<Paymen
   for (const log of receipt.logs) {
     let nonce: `0x${string}`
     try {
-      const event = decodeEventLog({ abi: eip3009Abi, eventName: 'AuthorizationUsed', data: log.data, topics: log.topics })
+      // decodeEventLog decodes whatever event the log is; it doesn't enforce the name asked for.
+      const event = decodeEventLog({ abi: eip3009Abi, data: log.data, topics: log.topics })
+      if (event.eventName !== 'AuthorizationUsed') continue
       nonce = event.args.nonce
     } catch {
       continue

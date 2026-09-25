@@ -1,7 +1,7 @@
 import { schema, uuidv7 } from '@kova/db'
-import { decodeAuthorizedTransfers, decodeMemo, eip3009Abi, LOG_RANGE } from '@kova/monad'
+import { decodeAuthorizedTransfers, decodeMemo, decodeTokenTransfers, eip3009Abi, LOG_RANGE } from '@kova/monad'
 import { eq } from 'drizzle-orm'
-import { type Address, decodeEventLog, getAbiItem, type Hash, isAddressEqual, type Log } from 'viem'
+import { type Address, getAbiItem, type Hash, isAddressEqual, type Log } from 'viem'
 import { acceptedTokens, network, publicClient } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
@@ -91,15 +91,9 @@ export async function handleLogs(logs: Log[]): Promise<number> {
       if (tokenLogs.length === 0) continue
       const authorized = decodeAuthorizedTransfers(tokenLogs, token)
       if (authorized.some((a) => decodeMemo(a.nonce)?.kind === 'payment')) paysACharge = true
-      for (const log of tokenLogs) {
-        let transfer: { from: Address; to: Address; value: bigint }
-        try {
-          const event = decodeEventLog({ abi: eip3009Abi, eventName: 'Transfer', data: log.data, topics: log.topics })
-          transfer = event.args
-        } catch {
-          continue
-        }
-        if (log.logIndex === null || log.blockNumber === null) continue
+      for (const transfer of decodeTokenTransfers(tokenLogs, token)) {
+        const log = tokenLogs.find((l) => l.logIndex === transfer.logIndex)
+        if (!log || log.blockNumber === null) continue
         rows.push({
           id: uuidv7(),
           network: config.KOVA_NETWORK,
@@ -108,9 +102,9 @@ export async function handleLogs(logs: Log[]): Promise<number> {
           toAddress: transfer.to.toLowerCase(),
           amount: transfer.value,
           txHash: hash,
-          logIndex: log.logIndex,
+          logIndex: transfer.logIndex,
           blockNumber: log.blockNumber,
-          nonce: authorized.find((a) => a.transferLogIndex === log.logIndex)?.nonce ?? null,
+          nonce: transfer.nonce,
         })
       }
     }

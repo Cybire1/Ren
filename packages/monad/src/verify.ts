@@ -45,6 +45,46 @@ export function decodeAuthorizedTransfers(logs: readonly Log[], token: Address):
   })
 }
 
+export interface TokenTransfer {
+  from: Address
+  to: Address
+  value: bigint
+  logIndex: number
+  /** The authorization nonce that moved it (a Kova memo for charges and refunds), if it was authorized by signature. */
+  nonce: Hex | null
+}
+
+/**
+ * Every Transfer of `token` in these logs, each with the nonce of the authorization that moved it.
+ *
+ * Decoding checks the event it actually got: viem's decodeEventLog picks the event by the log's
+ * own signature and does not enforce an eventName, so an AuthorizationUsed log "decodes" too,
+ * with no from or to.
+ */
+export function decodeTokenTransfers(logs: readonly Log[], token: Address): TokenTransfer[] {
+  const authorized = decodeAuthorizedTransfers(logs, token)
+  const transfers: TokenTransfer[] = []
+  logs.forEach((log, position) => {
+    if (!isAddressEqual(log.address, token)) return
+    let event: ReturnType<typeof decodeEventLog<typeof eip3009Abi>>
+    try {
+      event = decodeEventLog({ abi: eip3009Abi, data: log.data, topics: log.topics })
+    } catch {
+      return
+    }
+    if (event.eventName !== 'Transfer') return
+    const logIndex = log.logIndex ?? position
+    transfers.push({
+      from: event.args.from,
+      to: event.args.to,
+      value: event.args.value,
+      logIndex,
+      nonce: authorized.find((a) => a.transferLogIndex === logIndex)?.nonce ?? null,
+    })
+  })
+  return transfers
+}
+
 export type PaymentStatus = 'paid' | 'pending' | 'failed' | 'unmatched' | 'memo_mismatch'
 
 export interface ExpectedPayment {

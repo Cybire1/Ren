@@ -3,6 +3,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { describe, expect, it } from 'vitest'
 import {
   decodeAuthorizedTransfers,
+  decodeTokenTransfers,
   decodeMemo,
   eip3009Abi,
   encodeMemo,
@@ -149,5 +150,23 @@ describe('tokens', () => {
     expect(getToken('testnet').currency).toBe('AUSD')
     expect(getToken('testnet', 'USDC').domain).toEqual({ name: 'USDC', version: '2' })
     expect(getToken('mainnet', 'AUSD').domain).toEqual({ name: 'Agora Dollar', version: '1' })
+  })
+})
+
+describe('reading transfers out of real receipts', () => {
+  it('never mistakes an AuthorizationUsed log for a Transfer', () => {
+    // The shape that stopped the watcher: an authorization, then the transfer it moved.
+    const logs = [usedLog(payer.address, memo, 7), transferLog(payer.address, merchant, 12_500_000n, 8)]
+    const transfers = decodeTokenTransfers(logs, ausd.address)
+    expect(transfers).toEqual([{ from: payer.address, to: merchant, value: 12_500_000n, logIndex: 8, nonce: memo }])
+  })
+
+  it('reads a plain transfer with no authorization', () => {
+    const transfers = decodeTokenTransfers([transferLog(merchant, payer.address, 1n, 0)], ausd.address)
+    expect(transfers).toEqual([{ from: merchant, to: payer.address, value: 1n, logIndex: 0, nonce: null }])
+  })
+
+  it('reads nothing from an authorization alone', () => {
+    expect(decodeTokenTransfers([usedLog(payer.address, memo, 0)], ausd.address)).toEqual([])
   })
 })
