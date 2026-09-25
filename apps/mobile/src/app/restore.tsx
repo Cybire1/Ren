@@ -1,7 +1,7 @@
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native'
-import { type DisplayCurrency, formatUsd } from '@/lib/money'
+import { type DisplayCurrency, guessCurrency } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { KeyScene } from '@/ui/art'
@@ -19,7 +19,7 @@ export default function Restore() {
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [name, setNameText] = useState('')
-  const [currency, setCurrencyChoice] = useState<DisplayCurrency>('USD')
+  const [currency, setCurrencyChoice] = useState<DisplayCurrency>(guessCurrency)
 
   const usePasskey = async () => {
     setBusy(true)
@@ -47,12 +47,14 @@ export default function Restore() {
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <Header />
           <ProfileForm
-            title="Your wallet is back."
-            subtitle={`${balance === null ? 'Checking what it holds…' : `It holds ${formatUsd(balance)}.`} What should people call you?`}
+            heading="Your wallet is back."
+            note="Give it the name people see when you pay them or ask them for money."
             name={name}
             onName={setNameText}
             currency={currency}
             onCurrency={setCurrencyChoice}
+            onSubmit={() => name.trim().length >= 2 && void finish()}
+            balance={balance}
           />
           <View style={styles.footer}>
             <PillButton label="Open my wallet" disabled={name.trim().length < 2} onPress={finish} />

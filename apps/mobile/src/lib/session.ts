@@ -62,6 +62,37 @@ export const sessionOpen = () => live !== null && Date.now() - live.lastUsed <= 
 export const sessionCovers = (amount: bigint) =>
   sessionOpen() && live !== null && amount <= TAP_LIMIT && live.spent + amount <= SESSION_LIMIT
 
+export interface SessionState {
+  open: boolean
+  /** Until the quiet limit ends it. */
+  msLeft: number
+  /** The most one payment can be without Face ID right now. */
+  canApprove: bigint
+}
+
+export function sessionState(now = Date.now()): SessionState {
+  if (!live) return { open: false, msLeft: 0, canApprove: 0n }
+  const msLeft = SESSION_IDLE_MS - (now - live.lastUsed)
+  if (msLeft <= 0) return { open: false, msLeft: 0, canApprove: 0n }
+  const left = SESSION_LIMIT - live.spent
+  return { open: true, msLeft, canApprove: left < TAP_LIMIT ? left : TAP_LIMIT }
+}
+
+/** The session as it stands, ticking each second while it's open, for a live countdown. */
+export function useSessionState(): SessionState {
+  const [state, setState] = useState(() => sessionState())
+  useEffect(() => {
+    const tick = () => setState(sessionState())
+    const unsubscribe = onSessionChange(tick)
+    const timer = setInterval(tick, 1000)
+    return () => {
+      unsubscribe()
+      clearInterval(timer)
+    }
+  }, [])
+  return state
+}
+
 /** Re-renders when the session opens or closes, so the screen can say whether Face ID will ask. */
 export function useSessionCovers(amount: bigint): boolean {
   const [covered, setCovered] = useState(() => sessionCovers(amount))

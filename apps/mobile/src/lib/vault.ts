@@ -1,5 +1,6 @@
 import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
+import { load, save } from './storage'
 import { openVault, sealAndUpload, type VaultContents } from './vault-core'
 
 /**
@@ -23,8 +24,15 @@ export async function forgetVaultSecret() {
   await SecureStore.deleteItemAsync(SECRET)
 }
 
+const SAVED_AT = 'kova.monad.vault.saved.v1'
+
 /** Backs up the vault. Quietly does nothing before the passkey has given a vault key. */
 export async function saveVault(contents: VaultContents): Promise<void> {
   const stored = await SecureStore.getItemAsync(SECRET)
-  if (stored) await sealAndUpload(base64urlnopad.decode(stored), contents)
+  if (!stored) return
+  await sealAndUpload(base64urlnopad.decode(stored), contents)
+  await save(SAVED_AT, Date.now())
 }
+
+/** When this phone last backed the vault up, if it ever has. */
+export const vaultSavedAt = () => load<number | null>(SAVED_AT, null)

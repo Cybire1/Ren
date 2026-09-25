@@ -1,34 +1,46 @@
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
-import { router } from 'expo-router'
-import { type ReactNode, useMemo, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { router, useLocalSearchParams } from 'expo-router'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { network } from '@/lib/config'
 import { personLink } from '@/lib/links'
-import { currencyInfo, displayCurrencies, formatUsd } from '@/lib/money'
+import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
+import { rateLabel, ratesLive } from '@/lib/rates'
+import { endSession, SESSION_IDLE_MS, SESSION_LIMIT, TAP_LIMIT, useSessionState } from '@/lib/session'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
+import { vaultSavedAt } from '@/lib/vault'
 import { useWallet } from '@/lib/wallet'
-import { Avatar } from '@/ui/art'
+import { Avatar, ReceiptTerminal } from '@/ui/art'
+import { Awning } from '@/ui/Awning'
 import { dockClearance } from '@/ui/Dock'
-import { Icon, type IconName } from '@/ui/Icon'
+import { Icon } from '@/ui/Icon'
+import { Ping } from '@/ui/motion'
 import { Txt } from '@/ui/primitives'
+import { CurrencySheet } from '@/ui/ProfileForm'
 
 /**
  * You, as a Kova pass: an identity card with your face, your address and your code, torn
- * along a perforation like a boarding pass. Below it, what you've done with Kova, then the
- * few settings that matter, grouped so each reads at a glance.
+ * along a perforation like a boarding pass. Below it, what you've done with Kova, then three
+ * cards that each show something true rather than a setting: your money at today's rate, the
+ * two ways to sell, and how your keys protect you right now.
  */
 export default function Profile() {
   const { profile, activity, contacts, setCurrency, signOut } = useWallet()
-  const { setMode } = usePrefs()
   const stall = useStall()
   const insets = useSafeAreaInsets()
   const [confirmRemove, setConfirmRemove] = useState(false)
   const [copied, setCopied] = useState(false)
+  // Development only: kova://profile?scroll=end opens at the bottom, for checking the cards there.
+  const { scroll } = useLocalSearchParams<{ scroll?: string }>()
+  const scroller = useRef<ScrollView>(null)
+  useEffect(() => {
+    if (__DEV__ && scroll === 'end') setTimeout(() => scroller.current?.scrollToEnd({ animated: false }), 400)
+  }, [scroll])
 
   const stats = useMemo(() => {
     const out = activity.filter((e) => e.kind === 'paid' || e.kind === 'sent')
@@ -49,6 +61,7 @@ export default function Profile() {
 
   return (
     <ScrollView
+      ref={scroller}
       style={{ flex: 1, backgroundColor: colors.paper }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: dockClearance + insets.bottom }}
     >
@@ -116,68 +129,15 @@ export default function Profile() {
         <Stat value={formatUsd(stats.moved).replace(/\.\d+$/, '')} label="Moved" />
       </View>
 
-      {/* Settings */}
-      <Group title="Money">
-        <Row icon="swap" label="Show my money in" value={currencyInfo[profile.currency].name} last>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.currencies}>
-            {displayCurrencies.map((c) => {
-              const on = c === profile.currency
-              return (
-                <Pressable
-                  key={c}
-                  accessibilityRole="radio"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={currencyInfo[c].name}
-                  onPress={() => {
-                    void Haptics.selectionAsync()
-                    void setCurrency(c)
-                  }}
-                  style={[styles.currency, on && styles.currencyOn]}
-                >
-                  <Txt weight="semi" size={14} color={on ? colors.white : colors.ink}>
-                    {currencyInfo[c].symbol} {c}
-                  </Txt>
-                </Pressable>
-              )
-            })}
-          </ScrollView>
-        </Row>
-      </Group>
-
-      <Group title="For businesses">
-        <Row
-          icon="stall"
-          tint={colors.coral}
-          label={stall.complete ? (stall.owned?.name ?? 'Your stall') : stall.owned ? 'Finish opening your stall' : 'Open a stall'}
-          value={
-            stall.complete
-              ? stall.stall
-                ? `${stall.stall.open ? 'Open' : 'Closed'}, ${stall.stall.items.length} ${stall.stall.items.length === 1 ? 'item' : 'items'}`
-                : 'Your stall'
-              : 'Sell from a link. Get paid in dollars'
-          }
-          onPress={() => {
-            if (!stall.complete) return router.push('/open-stall')
-            setMode('terminal')
-            router.replace('/terminal/stall')
-          }}
-        />
-        <Row
-          icon="terminal"
-          label="Kova Terminal"
-          value={stall.complete ? 'Charge, scan barcodes and hand over orders' : 'Take payments at your counter'}
-          onPress={() => {
-            setMode('terminal')
-            router.replace('/terminal')
-          }}
-          last
-        />
-      </Group>
-
-      <Group title="Security">
-        <Row icon="lock" label="Passkey" value="Your wallet, kept by iCloud Keychain" badge={{ text: 'On', tone: colors.teal }} />
-        <Row icon="face" label="Face ID" value="Asks above $50, and after 3 quiet minutes" last />
-      </Group>
+      <MoneyCard
+        currency={profile.currency}
+        onChange={(next) => {
+          void Haptics.selectionAsync()
+          void setCurrency(next)
+        }}
+      />
+      <BusinessDoors />
+      <KeysCard />
 
       <View style={{ marginTop: 26, alignItems: 'center' }}>
         {confirmRemove ? (
@@ -235,69 +195,213 @@ function Stat({ value, label }: { value: string; label: string }) {
   )
 }
 
-function Group({ title, children }: { title: string; children: ReactNode }) {
+/** Secondary text on teal. */
+const onTeal = '#DCEBEA'
+
+/** Your currency, at today's rate, with where that rate comes from. */
+function MoneyCard({ currency, onChange }: { currency: DisplayCurrency; onChange: (currency: DisplayCurrency) => void }) {
+  const [picking, setPicking] = useState(false)
+  const info = currencyInfo[currency]
+  const rate = info.perUsd.toLocaleString('en-US', { maximumFractionDigits: info.decimals === 0 ? 2 : 4 })
   return (
-    <View style={{ marginTop: 24 }}>
-      <Txt weight="semi" size={13} color={colors.muted} style={{ marginBottom: 8, marginLeft: 4 }}>
-        {title}
-      </Txt>
-      <View style={styles.group}>{children}</View>
+    <View style={styles.money}>
+      <View style={styles.moneyTop}>
+        <View style={{ flex: 1 }}>
+          <Txt size={13} color={onTeal}>
+            Your money shows in
+          </Txt>
+          <Txt weight="bold" size={26} color={colors.white} style={{ letterSpacing: -0.6 }}>
+            {info.symbol} {info.name}
+          </Txt>
+        </View>
+        <Pressable accessibilityRole="button" accessibilityLabel="Change currency" onPress={() => setPicking(true)} style={({ pressed }) => [styles.change, pressed && { opacity: 0.8 }]}>
+          <Txt weight="semi" size={14}>
+            Change
+          </Txt>
+          <Icon name="chevronDown" size={14} />
+        </Pressable>
+      </View>
+      <View style={styles.moneyRule} />
+      {currency === 'USD' ? (
+        <Txt size={14} color={onTeal}>
+          Dollars, just as they are.
+        </Txt>
+      ) : (
+        <View style={styles.rateLine}>
+          <Txt weight="bold" size={19} color={colors.white}>
+            $1 = {info.symbol}
+            {rate}
+          </Txt>
+          <View style={styles.provenance}>
+            <Icon name={ratesLive() ? 'check' : 'info'} size={13} color={onTeal} />
+            <Txt size={12} color={onTeal}>
+              {ratesLive() ? rateLabel() : 'Reference rate'}
+            </Txt>
+          </View>
+        </View>
+      )}
+      <CurrencySheet
+        visible={picking}
+        value={currency}
+        onClose={() => setPicking(false)}
+        onPick={(next) => {
+          onChange(next)
+          setPicking(false)
+        }}
+      />
     </View>
   )
 }
 
-function Row({
-  icon,
-  label,
-  value,
-  tint = colors.tealSoft,
-  badge,
-  onPress,
-  last,
-  children,
-}: {
-  icon: IconName
-  label: string
-  value?: string
-  tint?: string
-  badge?: { text: string; tone: string }
-  onPress?: () => void
-  last?: boolean
-  children?: ReactNode
-}) {
-  const body = (
-    <View style={[styles.row, !last && styles.rowRule]}>
-      <View style={styles.rowTop}>
-        <View style={[styles.rowIcon, { backgroundColor: tint }]}>
-          <Icon name={icon} size={19} color={tint === colors.coral ? colors.white : colors.ink} />
+/** The two ways to sell with Kova, as two doors: a stall under its awning, and the counter terminal. */
+function BusinessDoors() {
+  const stall = useStall()
+  const { setMode } = usePrefs()
+  const { width } = useWindowDimensions()
+  const tile = (width - 40 - 10) / 2
+  const shop = stall.stall
+  const title = stall.complete ? (stall.owned?.name ?? 'Your stall') : stall.owned ? 'Finish your stall' : 'Open a stall'
+  const line = stall.complete
+    ? shop
+      ? `${shop.open ? 'Open' : 'Closed'}, ${shop.items.length} ${shop.items.length === 1 ? 'item' : 'items'}`
+      : 'Your stall'
+    : 'Sell from a link, get paid in dollars'
+  return (
+    <View style={styles.doors}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        onPress={() => {
+          if (!stall.complete) return router.push('/open-stall')
+          setMode('terminal')
+          router.replace('/terminal/stall')
+        }}
+        style={({ pressed }) => [styles.door, { width: tile }, pressed && styles.pressed]}
+      >
+        <View style={styles.doorHead}>
+          <Awning width={tile - 4} height={34} stripe={18} tone={shop && !shop.open ? 'teal' : 'coral'} />
         </View>
-        <View style={{ flex: 1 }}>
-          <Txt weight="semi" size={16}>
-            {label}
+        <View style={styles.doorBody}>
+          <Txt weight="bold" size={16} numberOfLines={2} style={{ lineHeight: 20 }}>
+            {title}
           </Txt>
-          {value ? (
-            <Txt size={13} color={colors.muted} numberOfLines={1}>
-              {value}
-            </Txt>
-          ) : null}
+          <Txt size={13} color={colors.muted} numberOfLines={2} style={{ marginTop: 2 }}>
+            {line}
+          </Txt>
         </View>
-        {badge ? (
-          <View style={[styles.badge, { backgroundColor: badge.tone }]}>
-            <Txt weight="semi" size={12} color={colors.white}>
-              {badge.text}
-            </Txt>
-          </View>
-        ) : null}
-        {onPress ? <Icon name="arrow" size={20} /> : null}
-      </View>
-      {children}
+        <View style={styles.doorCap}>
+          <Icon name="arrow" size={16} />
+        </View>
+      </Pressable>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Kova Terminal"
+        onPress={() => {
+          setMode('terminal')
+          router.replace('/terminal')
+        }}
+        style={({ pressed }) => [styles.door, { width: tile }, pressed && styles.pressed]}
+      >
+        <View style={[styles.doorHead, styles.terminalArt]} pointerEvents="none">
+          <ReceiptTerminal amount="$4.50" width={46} />
+        </View>
+        <View style={styles.doorBody}>
+          <Txt weight="bold" size={16} numberOfLines={1}>
+            Kova Terminal
+          </Txt>
+          <Txt size={13} color={colors.muted} numberOfLines={2} style={{ marginTop: 2 }}>
+            {stall.complete ? 'Charge, scan and hand over orders' : 'Take payments at your counter'}
+          </Txt>
+        </View>
+        <View style={styles.doorCap}>
+          <Icon name="arrow" size={16} />
+        </View>
+      </Pressable>
     </View>
   )
-  if (!onPress) return body
+}
+
+const dollars = (base: bigint) => formatUsd(base).replace(/\.00$/, '')
+
+/**
+ * How your keys protect you, live: the wallet is a passkey, and after one Face ID a short
+ * session can approve small payments without asking again. This shows whether one is open, for
+ * how long, how much it can still approve, the rules it keeps, and whether the vault is backed up.
+ */
+function KeysCard() {
+  const session = useSessionState()
+  const [backedUp, setBackedUp] = useState<number | null>(null)
+  useEffect(() => {
+    void vaultSavedAt().then(setBackedUp)
+  }, [])
+  const minutes = Math.floor(session.msLeft / 60_000)
+  const seconds = String(Math.floor((session.msLeft % 60_000) / 1000)).padStart(2, '0')
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => pressed && { opacity: 0.7 }}>
-      {body}
-    </Pressable>
+    <View style={styles.keys}>
+      <View style={styles.keysTop}>
+        <View style={styles.keyIcon}>
+          <Icon name="lock" size={19} color={colors.white} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Txt weight="bold" size={17}>
+            Your wallet is a passkey
+          </Txt>
+          <Txt size={13} color={colors.muted} style={{ lineHeight: 18 }}>
+            iCloud Keychain keeps it, and it opens this wallet on any phone you sign in on.
+          </Txt>
+        </View>
+      </View>
+
+      <View style={[styles.session, session.open && styles.sessionOpen]} accessibilityLiveRegion="polite">
+        <View style={styles.liveDotWrap}>
+          {session.open ? <Ping size={12} color={colors.teal} /> : null}
+          <View style={[styles.liveDot, { backgroundColor: session.open ? colors.teal : colors.muted }]} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Txt weight="semi" size={15}>
+            {session.open ? `Open for ${minutes}:${seconds}` : 'Locked'}
+          </Txt>
+          <Txt size={13} color={colors.muted}>
+            {session.open ? `Pays up to ${dollars(session.canApprove)} without Face ID` : 'Face ID opens it when you pay'}
+          </Txt>
+        </View>
+        {session.open ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Lock now"
+            onPress={() => {
+              void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+              endSession()
+            }}
+            style={({ pressed }) => [styles.lock, pressed && { opacity: 0.7 }]}
+          >
+            <Icon name="lock" size={14} />
+            <Txt weight="semi" size={13}>
+              Lock
+            </Txt>
+          </Pressable>
+        ) : null}
+      </View>
+
+      <View style={styles.rules}>
+        {[`${dollars(TAP_LIMIT)} a tap`, `${dollars(SESSION_LIMIT)} a session`, `${SESSION_IDLE_MS / 60_000} quiet minutes`].map((rule) => (
+          <View key={rule} style={styles.rule}>
+            <Txt weight="semi" size={12}>
+              {rule}
+            </Txt>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.backup}>
+        <Icon name={backedUp ? 'check' : 'info'} size={15} color={backedUp ? colors.positive : colors.muted} />
+        <Txt size={13} color={colors.muted} style={{ flex: 1, lineHeight: 18 }}>
+          {backedUp
+            ? 'Your name and contacts are backed up, sealed by your passkey. Kova can’t read them.'
+            : 'Your name and contacts back up, sealed by your passkey, the next time you change them.'}
+        </Txt>
+      </View>
+    </View>
   )
 }
 
@@ -340,22 +444,84 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
-  group: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, overflow: 'hidden' },
-  row: { paddingHorizontal: 14, paddingVertical: 12 },
-  rowRule: { borderBottomWidth: 1, borderColor: colors.sunken },
-  rowTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  rowIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  badge: { height: 24, paddingHorizontal: 10, borderRadius: 12, justifyContent: 'center' },
-  currencies: { gap: 8, paddingTop: 12, paddingLeft: 50, paddingRight: 4 },
-  currency: {
+  money: {
+    marginTop: 14,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.teal,
+    padding: 16,
+  },
+  moneyTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  change: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     height: 36,
     paddingHorizontal: 14,
     borderRadius: 18,
     borderWidth: 2,
     borderColor: colors.ink,
-    justifyContent: 'center',
+    backgroundColor: colors.surface,
   },
-  currencyOn: { backgroundColor: colors.ink },
+  moneyRule: { height: 2, borderRadius: 1, backgroundColor: colors.tealDeep, marginVertical: 12 },
+  rateLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
+  provenance: { flexDirection: 'row', alignItems: 'center', gap: 5 },
+  doors: { flexDirection: 'row', gap: 10, marginTop: 12 },
+  door: {
+    minHeight: 158,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  pressed: { transform: [{ scale: 0.98 }] },
+  doorHead: { height: 52 },
+  terminalArt: { paddingLeft: 12, paddingTop: 4 },
+  doorBody: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 44 },
+  doorCap: {
+    position: 'absolute',
+    right: 10,
+    bottom: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.paper,
+  },
+  keys: { marginTop: 12, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, padding: 16 },
+  keysTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  keyIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  session: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginTop: 14,
+    padding: 12,
+    borderRadius: 18,
+    backgroundColor: colors.sunken,
+  },
+  sessionOpen: { backgroundColor: '#DCEBEA' },
+  liveDotWrap: { width: 12, height: 12, alignItems: 'center', justifyContent: 'center' },
+  liveDot: { width: 12, height: 12, borderRadius: 6 },
+  lock: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    height: 34,
+    paddingHorizontal: 12,
+    borderRadius: 17,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+  },
+  rules: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
+  rule: { height: 28, paddingHorizontal: 10, borderRadius: 14, borderWidth: 1.5, borderColor: colors.ink, justifyContent: 'center' },
+  backup: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12 },
   confirm: { alignSelf: 'stretch', borderRadius: 22, borderWidth: 2, borderColor: colors.ink, padding: 16, backgroundColor: colors.surface },
   small: { flex: 1, height: 44, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
 })

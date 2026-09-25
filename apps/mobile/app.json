@@ -17,10 +17,10 @@
         "NFCReaderUsageDescription": "Hold a Kova Card near the top of your iPhone to take a payment."
       },
       "associatedDomains": [
+        "webcredentials:mykova.app",
+        "applinks:mykova.app",
         "webcredentials:web-monad.up.railway.app",
-        "applinks:web-monad.up.railway.app",
-        "webcredentials:monad.mykova.app",
-        "applinks:monad.mykova.app"
+        "applinks:web-monad.up.railway.app"
       ],
       "appleTeamId": "5N8DU2A9WH"
     },

@@ -19,6 +19,23 @@ export const currencyInfo: Record<DisplayCurrency, { symbol: string; name: strin
   MXN: { symbol: 'MX$', name: 'Mexican pesos', perUsd: 18.4, decimals: 2 },
 }
 
+const EURO_REGIONS = new Set(['AT', 'BE', 'CY', 'DE', 'EE', 'ES', 'FI', 'FR', 'GR', 'HR', 'IE', 'IT', 'LT', 'LU', 'LV', 'MT', 'NL', 'PT', 'SI', 'SK'])
+
+/** A first guess at the currency someone thinks in, from their phone's region. They can change it. */
+export function guessCurrency(): DisplayCurrency {
+  try {
+    const region = Intl.DateTimeFormat().resolvedOptions().locale.split(/[-_]/)[1]?.toUpperCase()
+    if (region === 'NG') return 'NGN'
+    if (region === 'KE') return 'KES'
+    if (region === 'GB') return 'GBP'
+    if (region === 'MX') return 'MXN'
+    if (region && EURO_REGIONS.has(region)) return 'EUR'
+  } catch {
+    // No Intl region: dollars.
+  }
+  return 'USD'
+}
+
 function grouped(value: number, decimals: number) {
   return value.toLocaleString('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
 }

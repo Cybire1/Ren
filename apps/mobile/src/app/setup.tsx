@@ -1,7 +1,7 @@
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native'
-import type { DisplayCurrency } from '@/lib/money'
+import { type DisplayCurrency, guessCurrency } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { KeyScene } from '@/ui/art'
@@ -14,7 +14,7 @@ export default function Setup() {
   const { create } = useWallet()
   const [step, setStep] = useState<1 | 2>(1)
   const [name, setName] = useState('')
-  const [currency, setCurrency] = useState<DisplayCurrency>('USD')
+  const [currency, setCurrency] = useState<DisplayCurrency>(guessCurrency)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
 
@@ -71,12 +71,13 @@ export default function Setup() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Header right={steps} />
         <ProfileForm
-          title="What should people call you?"
-          subtitle="This is the name people see when you pay them or ask them for money."
+          heading={"What should people\ncall you?"}
+          note="This is how you show up when you pay someone or ask them for money."
           name={name}
           onName={setName}
           currency={currency}
           onCurrency={setCurrency}
+          onSubmit={() => name.trim().length >= 2 && setStep(2)}
         />
         <View style={styles.footer}>
           <PillButton label="Continue" disabled={name.trim().length < 2} onPress={() => setStep(2)} />
