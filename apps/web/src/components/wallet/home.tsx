@@ -2,6 +2,7 @@
 
 import Link from 'next/link'
 import { useState } from 'react'
+import { Awning } from '@/components/awning'
 import { Art, Icon } from '@/components/brand'
 import { formatUsd, toBase } from '@/lib/wallet/money'
 import { isUnnamed, useWallet } from './provider'
@@ -132,8 +133,9 @@ export function Home() {
 }
 
 /**
- * Your shop, one of the wallet's features: the way into shop mode. Signed in, it shows today's
- * takings; otherwise the passkey signs you in on the way; with no shop yet, it opens one.
+ * Your shop, one of the wallet's features, under the stall's awning as in the app: the way into
+ * shop mode. Signed in, it shows today's takings; otherwise the passkey signs you in on the way;
+ * with no shop yet, it opens one.
  */
 function ShopCard() {
   const { shop, knownShop } = useWallet()
@@ -144,21 +146,24 @@ function ShopCard() {
       ? `${formatUsd(toBase(today.total))} today, ${today.count} ${today.count === 1 ? 'sale' : 'sales'}`
       : 'No sales yet today'
     : name
-      ? 'Your shop. Your passkey opens it.'
+      ? 'Your passkey signs you in'
       : 'Take payments into this wallet'
   return (
     <Link
       href={shop ? '/dashboard' : name ? '/wallet/shop?go=signin' : '/wallet/shop?go=open'}
       className="w-shopcard"
     >
-      <Art name="badge-shop" size={56} className="w-face w-shopcard-art" />
-      <span className="w-shopcard-text">
-        <small>{name ? 'Your shop' : 'Run a shop?'}</small>
-        <strong>{name ?? 'Open a shop'}</strong>
-        <span>{line}</span>
-      </span>
-      <span className="w-shopcard-go">
-        <Icon name="arrow" size={18} />
+      <Awning height={22} stripe={16} />
+      <span className="w-shopcard-body">
+        <Art name="badge-shop" size={50} className="w-face" />
+        <span className="w-shopcard-text">
+          <small>{name ? 'Your shop' : 'Run a shop?'}</small>
+          <strong>{name ?? 'Open a shop'}</strong>
+          <span>{line}</span>
+        </span>
+        <span className="w-shopcard-go">
+          <Icon name="arrow" size={18} />
+        </span>
       </span>
     </Link>
   )
