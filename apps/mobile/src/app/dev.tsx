@@ -13,6 +13,7 @@ import { Txt } from '@/ui/primitives'
 
 /**
  * Development only: `kova://dev?name=Maya&cur=EUR&fund=1&mode=pay&to=/send` sets up a wallet
+ * (`fake=1` makes it from a random key, without the passkey sheet)
  * and jumps to a screen; `pay=<charge>` or `send=<address>&amount=<base units>` runs the real
  * payment code, so every screen can be reached on a simulator without tapping. `pair=<code>`
  * pairs this phone as a terminal, `unpair=1` forgets it, `rename=<address>:<name>` names a contact,
@@ -31,7 +32,7 @@ const SEED = [
 ]
 
 export default function Dev() {
-  const params = useLocalSearchParams<{ name?: string; cur?: string; fund?: string; mode?: string; to?: string; reset?: string; pay?: string; send?: string; amount?: string; pair?: string; unpair?: string; rename?: string; stall?: string; tagline?: string; seed?: string; till?: string; sell?: string }>()
+  const params = useLocalSearchParams<{ name?: string; cur?: string; fake?: string; fund?: string; mode?: string; to?: string; reset?: string; pay?: string; send?: string; amount?: string; pair?: string; unpair?: string; rename?: string; stall?: string; tagline?: string; seed?: string; till?: string; sell?: string }>()
   const wallet = useWallet()
   const prefs = usePrefs()
   const terminal = useTerminal()
@@ -45,7 +46,9 @@ export default function Dev() {
       if (params.mode) prefs.setMode(params.mode as Mode)
       if (params.name && wallet.status === 'none') {
         setStep('creating wallet')
-        await wallet.create(params.name, (params.cur as DisplayCurrency) || 'USD')
+        // fake=1: no passkey sheet, for a simulator nobody is tapping.
+        if (params.fake && wallet.createForDev) await wallet.createForDev(params.name, (params.cur as DisplayCurrency) || 'USD')
+        else await wallet.create(params.name, (params.cur as DisplayCurrency) || 'USD')
       }
       if (params.fund) {
         setStep('funding')

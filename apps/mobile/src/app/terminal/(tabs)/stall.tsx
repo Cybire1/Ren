@@ -10,12 +10,13 @@ import { useCatalog } from '@/lib/catalog'
 import { useShop } from '@/lib/shop'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
-import { Kovi } from '@/ui/art'
 import { Awning } from '@/ui/Awning'
+import { Kovi } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
 import { about, dollars, ItemFace } from '@/ui/StallParts'
+import { WalletBack } from '@/ui/WalletBack'
 
 /**
  * Your stall: its sign, whether it's open, how to share it, and everything it sells. On a phone
@@ -100,6 +101,9 @@ function OwnerStall() {
       {/* The sign: the awning runs up under the status bar, like the canopy over a real stall. */}
       <View style={{ height: insets.top + 64, justifyContent: 'flex-end', overflow: 'hidden' }}>
         <Awning width={width} height={insets.top + 64} stripe={30} tone={stall.open ? 'coral' : 'teal'} />
+        <View style={{ position: 'absolute', top: insets.top + 12, left: 16 }}>
+          <WalletBack />
+        </View>
       </View>
       <View style={styles.sign}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>

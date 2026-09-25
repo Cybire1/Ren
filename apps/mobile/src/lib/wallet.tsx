@@ -88,6 +88,12 @@ interface Wallet {
   refresh: () => Promise<void>
   /** Makes a passkey, and the wallet with it. One Face ID. */
   create: (name: string, currency: DisplayCurrency) => Promise<void>
+  /**
+   * Development only: a wallet from a random secret, without the passkey sheet a simulator can't
+   * be tapped through, so the dev link reaches every screen. It keeps no secret: its session is
+   * all it has, and it ends with the app.
+   */
+  createForDev?: (name: string, currency: DisplayCurrency) => Promise<void>
   /** Brings a wallet back from its passkey, on this phone or a new one. The name may be empty. */
   restore: () => Promise<Profile>
   setName: (name: string) => Promise<void>
@@ -98,6 +104,11 @@ interface Wallet {
   rememberContact: (contact: Contact) => Promise<void>
   /** Your own name for someone. It replaces their address everywhere, past payments included. */
   renameContact: (address: Address, name: string) => Promise<void>
+  /**
+   * Signs a message as this wallet (the open session, or Face ID): Kova's shop sign-in and shop
+   * ownership, which the web checks the same way. It moves no money.
+   */
+  signMessage: (message: string) => Promise<`0x${string}`>
   signOut: () => Promise<void>
 }
 
@@ -504,6 +515,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setStatus('none')
   }, [])
 
+  const signMessage = useCallback(async (message: string) => (await unlock(0n)).signMessage({ message }), [unlock])
+
+  const createForDev = useCallback(async (name: string, currency: DisplayCurrency) => {
+    if (!__DEV__) throw new Error('Development only')
+    const account = await begin(crypto.getRandomValues(new Uint8Array(32)))
+    const next: Profile = { name: name.trim(), address: account.address, currency, protected: false, createdAt: Date.now() }
+    await save(PROFILE, next)
+    setProfile(next)
+    setBalance(0n)
+    setStatus('ready')
+  }, [])
+
   const value: Wallet = {
     status,
     profile,
@@ -514,6 +537,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     clearArrival: () => setArrival(null),
     refresh,
     create,
+    ...(__DEV__ ? { createForDev } : {}),
     restore,
     setName,
     setCurrency,
@@ -522,6 +546,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     send,
     rememberContact,
     renameContact,
+    signMessage,
     signOut,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>

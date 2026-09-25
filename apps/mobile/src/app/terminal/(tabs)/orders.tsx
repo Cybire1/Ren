@@ -14,6 +14,7 @@ import { Ping } from '@/ui/motion'
 import { Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
 import { dollars } from '@/ui/StallParts'
+import { WalletBack } from '@/ui/WalletBack'
 
 type Filter = 'hand' | 'waiting' | 'done'
 
@@ -60,6 +61,9 @@ export default function Orders() {
         />
       }
     >
+      <View style={{ marginBottom: 10 }}>
+        <WalletBack />
+      </View>
       <View style={styles.titleRow}>
         <Txt weight="bold" size={32} style={{ letterSpacing: -1 }}>
           Orders

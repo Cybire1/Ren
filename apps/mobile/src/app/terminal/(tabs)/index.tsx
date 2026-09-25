@@ -1,6 +1,6 @@
+import { useIsFocused } from '@react-navigation/native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
-import { useIsFocused } from '@react-navigation/native'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
@@ -16,9 +16,9 @@ import {
   View,
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { settlementToken } from '@/lib/config'
 import { type BarcodeLookup, type CatalogItem, createCharge, lookupBarcode, ringUp } from '@/lib/api'
 import { sameBarcode, useCatalog } from '@/lib/catalog'
+import { settlementToken } from '@/lib/config'
 import { applyKey, currencyInfo, type DisplayCurrency, formatLocal, groupTyped, localToUsd } from '@/lib/money'
 import { useShop } from '@/lib/shop'
 import { useStall } from '@/lib/stall'
@@ -30,6 +30,7 @@ import { Keypad } from '@/ui/Keypad'
 import { PillButton, Screen, Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
 import { about, dollars, ItemFace, Stepper } from '@/ui/StallParts'
+import { WalletBack } from '@/ui/WalletBack'
 
 const priceCurrencies: DisplayCurrency[] = ['USD', 'EUR', 'GBP', 'NGN', 'KES', 'MXN']
 /** Height the price, its dollar line and the note need above the keypad. */
@@ -102,6 +103,9 @@ export default function Till() {
 
   return (
     <Screen bg={colors.tealSoft} edges={['top']}>
+      <View style={styles.back}>
+        <WalletBack />
+      </View>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
           <Txt weight="bold" size={22} numberOfLines={1} style={{ letterSpacing: -0.5 }}>
@@ -695,6 +699,7 @@ function NotInCatalogue({
 }
 
 const styles = StyleSheet.create({
+  back: { paddingHorizontal: 20, paddingTop: 6 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10, gap: 12 },
   currency: {
     height: 40,

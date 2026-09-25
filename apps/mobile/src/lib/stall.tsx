@@ -2,17 +2,20 @@ import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 import {
+  createOwnerKey,
   createPairing,
   createStall,
   getStall,
   listStalls,
   onOwnerKeyRevoked,
   openShop,
-  setOwnerKey,
   type StallDetail,
+  setOwnerKey,
+  shopChallenge,
 } from './api'
 import { confirmWithFace } from './auth'
 import { useTerminal } from './terminal'
+import { useWallet } from './wallet'
 
 /**
  * The shop this phone opened, if it opened one.
@@ -63,6 +66,7 @@ async function save(saved: Saved) {
 
 export function StallProvider({ children }: { children: ReactNode }) {
   const terminal = useTerminal()
+  const wallet = useWallet()
   const [ready, setReady] = useState(false)
   const [owned, setOwned] = useState<Owned | null>(null)
   const [stall, setStall] = useState<StallDetail | null>(null)
@@ -140,9 +144,18 @@ export function StallProvider({ children }: { children: ReactNode }) {
       let current = saved.current
       if (!current) {
         onStep?.('shop')
-        const shop = await openShop(name, settleTo)
-        current = { merchantId: shop.id, name: shop.name, stallId: null, key: shop.key }
+        // The wallet opening the shop owns it, so its passkey signs in to the same shop on the
+        // web. One Face ID, or none if the wallet is already open.
+        const me = wallet.profile?.address
+        if (!me) throw new Error('Open your wallet first.')
+        const challenge = await shopChallenge(me, 'open_shop')
+        const signature = await wallet.signMessage(challenge.message)
+        const shop = await openShop(name, settleTo, { message: challenge.message, signature })
+        // That sign-in key lapses with a web session; the till gets a lasting owner key of its own.
         setOwnerKey(shop.key)
+        const lasting = await createOwnerKey('Kova app')
+        setOwnerKey(lasting.secret)
+        current = { merchantId: shop.id, name: shop.name, stallId: null, key: lasting.secret }
         await remember(current)
       }
       if (!current.stallId) {
@@ -161,7 +174,7 @@ export function StallProvider({ children }: { children: ReactNode }) {
       await refresh()
       onStep?.('done')
     },
-    [remember, refresh, terminal],
+    [remember, refresh, terminal, wallet],
   )
 
   const revealKey = useCallback(async () => {

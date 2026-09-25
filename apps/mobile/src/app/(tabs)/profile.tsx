@@ -2,32 +2,30 @@ import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { network } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
-import { usePrefs } from '@/lib/prefs'
 import { rateLabel, ratesLive } from '@/lib/rates'
 import { endSession, SESSION_IDLE_MS, SESSION_LIMIT, TAP_LIMIT, useSessionState } from '@/lib/session'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
 import { vaultSavedAt } from '@/lib/vault'
 import { useWallet } from '@/lib/wallet'
-import { Avatar, ReceiptTerminal } from '@/ui/art'
-import { Awning } from '@/ui/Awning'
+import { Avatar } from '@/ui/art'
 import { dockClearance } from '@/ui/Dock'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
-import { Txt } from '@/ui/primitives'
 import { CurrencySheet } from '@/ui/ProfileForm'
+import { Txt } from '@/ui/primitives'
 
 /**
  * You, as a Kova pass: an identity card with your face, your address and your code, torn
  * along a perforation like a boarding pass. Below it, what you've done with Kova, then three
- * cards that each show something true rather than a setting: your money at today's rate, the
- * two ways to sell, and how your keys protect you right now.
+ * cards that each show something true rather than a setting: your money at today's rate and how
+ * your keys protect you right now. Your shop is on Home, under Pay.
  */
 export default function Profile() {
   const { profile, activity, contacts, setCurrency, signOut } = useWallet()
@@ -136,7 +134,6 @@ export default function Profile() {
           void setCurrency(next)
         }}
       />
-      <BusinessDoors />
       <KeysCard />
 
       <View style={{ marginTop: 26, alignItems: 'center' }}>
@@ -249,74 +246,6 @@ function MoneyCard({ currency, onChange }: { currency: DisplayCurrency; onChange
           setPicking(false)
         }}
       />
-    </View>
-  )
-}
-
-/** The two ways to sell with Kova, as two doors: a stall under its awning, and the counter terminal. */
-function BusinessDoors() {
-  const stall = useStall()
-  const { setMode } = usePrefs()
-  const { width } = useWindowDimensions()
-  const tile = (width - 40 - 10) / 2
-  const shop = stall.stall
-  const title = stall.complete ? (stall.owned?.name ?? 'Your stall') : stall.owned ? 'Finish your stall' : 'Open a stall'
-  const line = stall.complete
-    ? shop
-      ? `${shop.open ? 'Open' : 'Closed'}, ${shop.items.length} ${shop.items.length === 1 ? 'item' : 'items'}`
-      : 'Your stall'
-    : 'Sell from a link, get paid in dollars'
-  return (
-    <View style={styles.doors}>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={title}
-        onPress={() => {
-          if (!stall.complete) return router.push('/open-stall')
-          setMode('terminal')
-          router.replace('/terminal/stall')
-        }}
-        style={({ pressed }) => [styles.door, { width: tile }, pressed && styles.pressed]}
-      >
-        <View style={styles.doorHead}>
-          <Awning width={tile - 4} height={34} stripe={18} tone={shop && !shop.open ? 'teal' : 'coral'} />
-        </View>
-        <View style={styles.doorBody}>
-          <Txt weight="bold" size={16} numberOfLines={2} style={{ lineHeight: 20 }}>
-            {title}
-          </Txt>
-          <Txt size={13} color={colors.muted} numberOfLines={2} style={{ marginTop: 2 }}>
-            {line}
-          </Txt>
-        </View>
-        <View style={styles.doorCap}>
-          <Icon name="arrow" size={16} />
-        </View>
-      </Pressable>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Kova Terminal"
-        onPress={() => {
-          setMode('terminal')
-          router.replace('/terminal')
-        }}
-        style={({ pressed }) => [styles.door, { width: tile }, pressed && styles.pressed]}
-      >
-        <View style={[styles.doorHead, styles.terminalArt]} pointerEvents="none">
-          <ReceiptTerminal amount="$4.50" width={46} />
-        </View>
-        <View style={styles.doorBody}>
-          <Txt weight="bold" size={16} numberOfLines={1}>
-            Kova Terminal
-          </Txt>
-          <Txt size={13} color={colors.muted} numberOfLines={2} style={{ marginTop: 2 }}>
-            {stall.complete ? 'Charge, scan and hand over orders' : 'Take payments at your counter'}
-          </Txt>
-        </View>
-        <View style={styles.doorCap}>
-          <Icon name="arrow" size={16} />
-        </View>
-      </Pressable>
     </View>
   )
 }
@@ -467,32 +396,6 @@ const styles = StyleSheet.create({
   moneyRule: { height: 2, borderRadius: 1, backgroundColor: colors.tealDeep, marginVertical: 12 },
   rateLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
   provenance: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  doors: { flexDirection: 'row', gap: 10, marginTop: 12 },
-  door: {
-    minHeight: 158,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.surface,
-    overflow: 'hidden',
-  },
-  pressed: { transform: [{ scale: 0.98 }] },
-  doorHead: { height: 52 },
-  terminalArt: { paddingLeft: 12, paddingTop: 4 },
-  doorBody: { paddingHorizontal: 14, paddingTop: 6, paddingBottom: 44 },
-  doorCap: {
-    position: 'absolute',
-    right: 10,
-    bottom: 10,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.paper,
-  },
   keys: { marginTop: 12, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, padding: 16 },
   keysTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
   keyIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },

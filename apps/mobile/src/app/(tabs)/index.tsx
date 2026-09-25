@@ -1,18 +1,24 @@
 import { router } from 'expo-router'
-import { useCallback, useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
+import { useCallback, useEffect, useState } from 'react'
+import { Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
+import { getSummary } from '@/lib/api'
 import { isTestnet } from '@/lib/config'
+import { usePrefs } from '@/lib/prefs'
+import { useStall } from '@/lib/stall'
+import { useTerminal } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { isUnnamed, useWallet } from '@/lib/wallet'
 import { ActionTile } from '@/ui/ActionTile'
-import { Avatar, Flyer } from '@/ui/art'
+import { Awning } from '@/ui/Awning'
+import { Avatar, Flyer, ShopBadge } from '@/ui/art'
 import { BalanceCard } from '@/ui/BalanceCard'
 import { dockClearance } from '@/ui/Dock'
 import { EntryRow } from '@/ui/EntryRow'
 import { Icon } from '@/ui/Icon'
 import { RoundButton, Txt } from '@/ui/primitives'
+import { dollars } from '@/ui/StallParts'
 
 /**
  * Home is for paying, but you should never have to look for your money. The balance opens the
@@ -90,6 +96,8 @@ export default function Home() {
           <ActionTile kind="request" onPress={() => router.push('/request')} />
         </View>
       </View>
+
+      <ShopCard />
 
       <Pressable
         accessibilityRole="button"
@@ -186,7 +194,96 @@ export default function Home() {
   )
 }
 
+/**
+ * Your shop, one of the wallet's features: the way into shop mode, as on the web. With a shop it
+ * shows today's takings and opens the shop; on a phone that's a shop's till it opens the till;
+ * with neither, it opens a shop, owned by this wallet.
+ */
+function ShopCard() {
+  const stall = useStall()
+  const terminal = useTerminal()
+  const { setMode } = usePrefs()
+  const { width } = useWindowDimensions()
+  const [today, setToday] = useState<{ total: string; count: number } | null>(null)
+
+  useEffect(() => {
+    if (!terminal.paired) return
+    let live = true
+    getSummary()
+      .then((s) => live && setToday(s.today ?? null))
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [terminal.paired])
+
+  const owned = stall.owned
+  const till = !owned ? terminal.paired : null
+  const shop = stall.stall
+  const enter = (to: '/terminal' | '/terminal/today') => {
+    setMode('terminal')
+    router.replace(to)
+  }
+  const card =
+    owned && stall.complete
+      ? {
+          label: 'Your shop',
+          title: owned.name,
+          line: today
+            ? today.count > 0
+              ? `${dollars(today.total)} today, ${today.count} ${today.count === 1 ? 'sale' : 'sales'}`
+              : 'No sales yet today'
+            : shop
+              ? `${shop.open ? 'Open' : 'Closed'}, ${shop.items.length} ${shop.items.length === 1 ? 'item' : 'items'}`
+              : 'Your shop',
+          go: () => enter('/terminal/today'),
+        }
+      : till
+        ? { label: 'Your till', title: till.merchantName, line: `This phone is ${till.name}`, go: () => enter('/terminal') }
+        : owned
+          ? { label: 'Your shop', title: 'Finish your shop', line: 'A step or two left', go: () => router.push('/open-stall') }
+          : { label: 'Run a shop?', title: 'Open a shop', line: 'Take payments into this wallet', go: () => router.push('/open-stall') }
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${card.title}. ${card.line}`}
+      onPress={card.go}
+      style={({ pressed }) => [styles.shop, pressed && { transform: [{ scale: 0.98 }] }]}
+    >
+      <Awning width={width - 44} height={22} stripe={16} tone={shop && !shop.open ? 'teal' : 'coral'} />
+      <View style={styles.shopBody}>
+        <ShopBadge size={50} />
+        <View style={{ flex: 1 }}>
+          <Txt size={12} weight="semi" color={colors.onTint}>
+            {card.label}
+          </Txt>
+          <Txt weight="bold" size={19} numberOfLines={1} style={{ letterSpacing: -0.4 }}>
+            {card.title}
+          </Txt>
+          <Txt size={13} color={colors.onTint} numberOfLines={1}>
+            {card.line}
+          </Txt>
+        </View>
+        <View style={styles.shopGo}>
+          <Icon name="arrow" color={colors.white} />
+        </View>
+      </View>
+    </Pressable>
+  )
+}
+
 const styles = StyleSheet.create({
+  shop: {
+    marginTop: 12,
+    borderRadius: 26,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  shopBody: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 14, paddingRight: 12, paddingTop: 8, paddingBottom: 12 },
+  shopGo: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   header: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
   hero: { flexDirection: 'row', gap: 12, height: 204, marginTop: 14 },
   pay: {

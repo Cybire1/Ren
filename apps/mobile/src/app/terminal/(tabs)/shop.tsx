@@ -17,6 +17,7 @@ import { ShopBadge } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
+import { WalletBack } from '@/ui/WalletBack'
 
 const priceCurrencies: DisplayCurrency[] = ['USD', 'EUR', 'GBP', 'NGN', 'KES', 'MXN']
 
@@ -49,6 +50,9 @@ export default function ShopTab() {
       style={{ flex: 1, backgroundColor: colors.paper }}
       contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: shopDockClearance + insets.bottom }}
     >
+      <View style={{ marginBottom: 10 }}>
+        <WalletBack />
+      </View>
       <Txt weight="bold" size={32} style={{ letterSpacing: -1 }}>
         Shop
       </Txt>

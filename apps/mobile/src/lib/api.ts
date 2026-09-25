@@ -1,4 +1,4 @@
-import { apiUrl, webUrl } from './config'
+import { apiUrl, passkeyDomain, webUrl } from './config'
 
 /**
  * The Kova API, from both sides of a payment.
@@ -267,9 +267,29 @@ export interface OpenedShop {
   key: string
 }
 
-/** Opens a shop whose payments settle in `settlementAddress`: this phone's own wallet. */
-export const openShop = (name: string, settlementAddress: string) =>
-  request<OpenedShop>('/v1/merchants', { method: 'POST', body: JSON.stringify({ name, settlement_address: settlementAddress }) })
+/**
+ * The message a wallet signs to prove it owns a shop (EIP-4361), for Kova's own site: the same
+ * proof the web asks for, so the web signs this wallet in to the same shop.
+ */
+export const shopChallenge = (address: string, purpose: 'sign_in' | 'open_shop') =>
+  request<{ message: string }>('/v1/sign_in/challenge', {
+    method: 'POST',
+    body: JSON.stringify({ address, purpose, domain: passkeyDomain, uri: webUrl }),
+  })
+
+/**
+ * Opens a shop whose payments settle in `settlementAddress`: this phone's own wallet. With the
+ * wallet's signed "open a shop" message, the wallet owns it: its passkey signs in to it on the web.
+ */
+export const openShop = (name: string, settlementAddress: string, owner?: { message: string; signature: string }) =>
+  request<OpenedShop>('/v1/merchants', {
+    method: 'POST',
+    body: JSON.stringify({ name, settlement_address: settlementAddress, ...(owner ? { owner } : {}) }),
+  })
+
+/** A lasting owner key for this phone: a shop opened with a wallet signs in with a key that lapses. */
+export const createOwnerKey = (name: string) =>
+  request<{ secret: string }>('/v1/api_keys', { method: 'POST', body: JSON.stringify({ name }), auth: 'owner' })
 
 /** A one-time code to pair a terminal; the phone that opened the shop pairs itself with one. */
 export const createPairing = () => request<{ code: string; link: string }>('/v1/terminals/pairings', { method: 'POST', auth: 'owner' })

@@ -10,6 +10,7 @@ import { Avatar, Kovi, ShopBadge } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
+import { WalletBack } from '@/ui/WalletBack'
 
 const labels: Record<PaymentIntent['status'], { text: string; color: string }> = {
   paid: { text: 'Paid', color: colors.positive },
@@ -71,6 +72,9 @@ export default function Today() {
       }
       ListHeaderComponent={
         <>
+          <View style={{ marginBottom: 10 }}>
+            <WalletBack />
+          </View>
           <Txt weight="bold" size={32} style={{ letterSpacing: -1 }}>
             Today
           </Txt>
