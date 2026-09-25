@@ -1,9 +1,10 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { ApiError, type ApiKey, type BarcodeLookup, type CatalogItem, kova, kovaPublic, type Merchant, type Stall, type WebhookEndpoint } from '@/lib/api'
-import { endSession, startSession } from '@/lib/session'
+import { endSession, getSession, startSession } from '@/lib/session'
 
 /** What a form shows after it runs: an error to fix, or a secret to copy once. */
 export interface FormState {
@@ -31,6 +32,56 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
   redirect('/dashboard')
 }
 
+/**
+ * This site as a wallet sees it. A sign-in message names it, and Kova only accepts messages that
+ * name one of its own sites, so a signature collected anywhere else is useless here. The Host
+ * header, because the host only routes Kova's own domains here; a forwarded header is only a claim.
+ */
+async function thisSite() {
+  const h = await headers()
+  const host = (h.get('host') ?? h.get('x-forwarded-host') ?? 'localhost:3000').split(',')[0]?.trim() || 'localhost:3000'
+  const proto = (h.get('x-forwarded-proto') ?? (host.startsWith('localhost') ? 'http' : 'https')).split(',')[0]?.trim()
+  return { domain: host, uri: `${proto}://${host}` }
+}
+
+/** The message a wallet signs to sign in to its shop, or to open one. Good once, for ten minutes. */
+export async function walletChallenge(address: string, purpose: 'sign_in' | 'open_shop'): Promise<{ message?: string; error?: string }> {
+  try {
+    const challenge = await kovaPublic<{ message: string }>('/v1/sign_in/challenge', { method: 'POST', body: JSON.stringify({ address, purpose, ...(await thisSite()) }) })
+    return { message: challenge.message }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
+export interface ShopChoice {
+  id: string
+  name: string
+  created_at: string
+}
+
+export interface WalletSignIn {
+  ok?: boolean
+  error?: string
+  /** No shop signs in with this wallet yet. */
+  noShop?: boolean
+  /** The wallet signs in to several shops, and should pick one. */
+  shops?: ShopChoice[]
+}
+
+/** Signs in with a signed challenge: the shop's owner, the way they opened it, with email or Google. */
+export async function signInWithWallet(proof: { message: string; signature: string; merchant?: string }): Promise<WalletSignIn> {
+  try {
+    const session = await kovaPublic<{ key: string }>('/v1/sign_in', { method: 'POST', body: JSON.stringify(proof) })
+    await startSession({ key: session.key, demo: false })
+    return { ok: true }
+  } catch (error) {
+    if (error instanceof ApiError && error.details?.reason === 'no_shop') return { noShop: true }
+    if (error instanceof ApiError && error.details?.reason === 'choose_shop') return { shops: error.details.shops as ShopChoice[] }
+    return { error: message(error) }
+  }
+}
+
 export async function signInDemo() {
   const key = process.env.DEMO_API_KEY
   if (!key) redirect('/signin?demo=off')
@@ -39,6 +90,9 @@ export async function signInDemo() {
 }
 
 export async function signOut() {
+  const session = await getSession()
+  // This browser's key stops working. The shared demo key and a shop's secret keys carry on.
+  if (session && !session.demo) await kovaPublic('/v1/sign_out', { method: 'POST' }, session.key).catch(() => {})
   await endSession()
   redirect('/')
 }
@@ -48,13 +102,19 @@ export async function signUp(_: FormState, form: FormData): Promise<FormState> {
   const address = String(form.get('address') ?? '').trim()
   if (name.length < 2) return { error: 'Give your shop a name.' }
   if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return { error: 'That isn’t a Monad address. It starts with 0x and has 40 more characters.' }
+  // A shop whose wallet was made with email or Google proves it with a signature, and its owner
+  // signs in with that wallet from then on.
+  const ownerMessage = String(form.get('owner_message') ?? '')
+  const ownerSignature = String(form.get('owner_signature') ?? '')
+  const owner = ownerMessage && ownerSignature ? { message: ownerMessage, signature: ownerSignature } : undefined
   try {
     const shop = await kovaPublic<Merchant & { key: string }>('/v1/merchants', {
       method: 'POST',
-      body: JSON.stringify({ name, settlement_address: address, country: String(form.get('country') ?? '') || undefined }),
+      body: JSON.stringify({ name, settlement_address: address, country: String(form.get('country') ?? '') || undefined, owner }),
     })
     await startSession({ key: shop.key, demo: false })
-    return { ok: true, secret: shop.key, name: shop.name }
+    // Only a shop without an owner's wallet has a secret key to keep: it's how that shop signs in.
+    return shop.owner_address ? { ok: true, name: shop.name } : { ok: true, secret: shop.key, name: shop.name }
   } catch (error) {
     return { error: message(error) }
   }

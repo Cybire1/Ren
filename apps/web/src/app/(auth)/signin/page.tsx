@@ -5,9 +5,22 @@ import { getSession } from '@/lib/session'
 
 export const metadata: Metadata = { title: 'Sign in' }
 
-export default async function SignInPage(props: { searchParams: Promise<{ expired?: string; demo?: string }> }) {
+export default async function SignInPage(props: {
+  searchParams: Promise<{ expired?: string; demo?: string }>
+}) {
   const params = await props.searchParams
   if (!params.expired && (await getSession())) redirect('/dashboard')
-  const notice = params.expired ? 'That key was revoked or has expired. Sign in again.' : params.demo === 'off' ? 'The demo shop isn’t available right now.' : undefined
-  return <SignInForm notice={notice} />
+  const notice = params.expired
+    ? 'You were signed out. Sign in again to carry on.'
+    : params.demo === 'off'
+      ? 'The demo shop isn’t available right now.'
+      : undefined
+  // Read at request time, so the Privy app can be set on the server without rebuilding the site.
+  return (
+    <SignInForm
+      notice={notice}
+      privyAppId={process.env.PRIVY_APP_ID ?? null}
+      chainId={process.env.KOVA_NETWORK === 'mainnet' ? 143 : 10143}
+    />
+  )
 }

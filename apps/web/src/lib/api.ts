@@ -15,6 +15,9 @@ export class ApiError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    /** Kova's error code, e.g. not_found, and any details it gave. */
+    readonly code?: string,
+    readonly details?: Record<string, unknown>,
   ) {
     super(message)
   }
@@ -32,8 +35,8 @@ async function call<T>(path: string, init: RequestInit, key?: string): Promise<T
   })
   const body = (await response.json().catch(() => ({}))) as Record<string, unknown>
   if (!response.ok) {
-    const error = body.error as { message?: string } | undefined
-    throw new ApiError(error?.message ?? `Kova is unreachable (${response.status})`, response.status)
+    const error = body.error as { message?: string; code?: string; details?: Record<string, unknown> } | undefined
+    throw new ApiError(error?.message ?? `Kova is unreachable (${response.status})`, response.status, error?.code, error?.details)
   }
   return body as T
 }
@@ -73,6 +76,8 @@ export interface Merchant {
   id: string
   name: string
   settlement_address: string
+  /** The wallet the owner signs in with; null when the shop signs in with its secret key. */
+  owner_address: string | null
   network: string
   country: string
   livemode: boolean

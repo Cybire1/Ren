@@ -62,6 +62,12 @@ export const merchants = pgTable(
     /** Registered virtual-address master id, when the merchant supports per-intent addresses. */
     virtualMasterId: integer('virtual_master_id'),
     ownerUserId: uuid('owner_user_id').references(() => users.id),
+    /**
+     * The wallet the shop's owner signs in with (lowercase), proven by a signature when the shop
+     * was opened. It may differ from where money lands: that can change, and whoever receives the
+     * money doesn't get to run the shop because of it.
+     */
+    ownerAddress: address('owner_address'),
     country: text('country').notNull().default('NG'),
     category: text('category'),
     status: text('status').notNull().default('active'), // active | suspended
@@ -70,7 +76,7 @@ export const merchants = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [uniqueIndex('merchants_slug_idx').on(t.slug)],
+  (t) => [uniqueIndex('merchants_slug_idx').on(t.slug), index('merchants_owner_idx').on(t.ownerAddress)],
 )
 
 export const terminals = pgTable(
@@ -298,6 +304,11 @@ export const apiKeys = pgTable(
     isTest: boolean('is_test').notNull().default(true),
     lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
     revokedAt: timestamp('revoked_at', { withTimezone: true }),
+    /**
+     * Set on a signed-in browser's key: it lapses with the session and is revoked on sign-out.
+     * The shop's secret keys never expire, and only they are listed as the shop's keys.
+     */
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [uniqueIndex('api_keys_prefix_idx').on(t.prefix)],
@@ -429,6 +440,20 @@ export const walletVaults = pgTable('wallet_vaults', {
   signedAt: bigint('signed_at', { mode: 'bigint' }).notNull(),
   createdAt: createdAt(),
   updatedAt: updatedAt(),
+})
+
+/**
+ * A message Kova asked a wallet to sign, to sign in to a shop or open one (EIP-4361). Each is
+ * good once, for one wallet and one purpose, for ten minutes.
+ */
+export const signInChallenges = pgTable('sign_in_challenges', {
+  nonce: text('nonce').primaryKey(),
+  /** Lowercase. */
+  address: address('address').notNull(),
+  purpose: text('purpose').notNull(), // sign_in | open_shop
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: createdAt(),
 })
 
 export const auditLogs = pgTable(

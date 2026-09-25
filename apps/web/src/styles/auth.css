@@ -174,3 +174,75 @@
     margin-bottom: 2.5rem;
   }
 }
+
+/* Signing in: the ways in, stacked like the choice they are. */
+
+.signin-ways {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.signin-ways .shop-wallet {
+  margin-top: 0;
+}
+
+.signin-ways .wallet-glyph .spinner {
+  border-color: rgba(15, 21, 18, 0.18);
+  border-top-color: var(--ink);
+}
+
+.signin-key {
+  margin-top: 0.35rem;
+  animation: rise 0.5s var(--spring);
+}
+
+.signin-panel {
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.15rem 1.15rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.5rem;
+  background: var(--surface);
+  animation: rise 0.5s var(--spring);
+}
+
+.signin-panel-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.signin-panel-body {
+  margin-top: -0.4rem;
+  color: var(--muted);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.signin-panel .pill {
+  margin-top: 0.25rem;
+}
+
+.signin-shops {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.signin-shops .shop-wallet {
+  margin-top: 0;
+}
+
+.signin-again {
+  justify-self: center;
+  color: var(--muted);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.signin-foot {
+  margin-top: 1rem;
+  text-align: center;
+}

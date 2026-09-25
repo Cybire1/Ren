@@ -16,6 +16,7 @@ import { feePayerAddress, network, walletClient } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
+import { clientIp as ip, limit } from '../limits.js'
 import { relayAuthorization } from '../relay.js'
 import { giveTestDollars } from '../services/faucet.js'
 import { indexedThrough } from '../workers/watcher.js'
@@ -30,16 +31,6 @@ import { indexedThrough } from '../workers/watcher.js'
  * - GET and PUT /vaults/:id keep a wallet's encrypted backup (name, currency, contacts). Kova
  *   stores ciphertext it can't read; only the vault's own key, from the same passkey, replaces it.
  */
-
-const hits = new Map<string, number[]>()
-function limit(key: string, max: number, windowMs: number, message: string) {
-  const now = Date.now()
-  const recent = (hits.get(key) ?? []).filter((t) => now - t < windowMs)
-  if (recent.length >= max) throw new KovaError('rate_limited', message)
-  hits.set(key, [...recent, now])
-}
-const ip = (c: { req: { header: (name: string) => string | undefined } }) =>
-  c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'local'
 
 /** An approval to send is used within seconds; one that lives longer is only a risk to its signer. */
 const MAX_SEND_VALIDITY = 3_600n

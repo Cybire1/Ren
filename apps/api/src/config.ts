@@ -28,6 +28,12 @@ const schema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/)
     .optional(),
+  /**
+   * The sites a shop can sign in from with its wallet, comma-separated, as a signed message names
+   * them (host, and port if any). Defaults to mykova.app and the Railway web service, plus
+   * localhost outside production. A signature made for any other site is refused.
+   */
+  KOVA_SIGN_IN_DOMAINS: z.string().optional(),
   /** How long a payment intent stays payable. */
   KOVA_INTENT_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   /**

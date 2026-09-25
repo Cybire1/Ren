@@ -58,6 +58,7 @@ export const requireApiKey = createMiddleware(async (c, next) => {
   if (!key || !constantTimeEqual(key.secretHash, hashSecret(secret)))
     throw new KovaError('unauthorized', 'Invalid API key')
   if (key.revokedAt) throw new KovaError('unauthorized', 'This API key was revoked')
+  if (key.expiresAt && key.expiresAt.getTime() <= Date.now()) throw new KovaError('unauthorized', 'This sign-in has expired')
 
   const merchant = await db.query.merchants.findFirst({
     where: eq(schema.merchants.id, key.merchantId),

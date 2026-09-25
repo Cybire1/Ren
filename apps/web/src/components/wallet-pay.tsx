@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import type { Checkout } from '@/lib/api'
 import { usd } from '@/lib/format'
+import { returningFromPrivy } from '@/lib/privy-return'
 import { Icon } from './brand'
 import type { EmbeddedWallet } from './privy-wallet'
 
@@ -144,6 +145,10 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
   const [mobile, setMobile] = useState(false)
   const [funding, setFunding] = useState(false)
   const [privy, setPrivy] = useState<'off' | 'opening' | 'on'>('off')
+  // Back from Google: load Privy at once so it can finish signing them in.
+  useEffect(() => {
+    if (returningFromPrivy()) setPrivy('opening')
+  }, [])
   const [embedded, setEmbedded] = useState<EmbeddedWallet | null>(null)
   useEffect(() => setMobile(/iphone|ipad|android/i.test(navigator.userAgent)), [])
 

@@ -1,18 +1,20 @@
 'use client'
 
 import { PrivyProvider, useLogin, usePrivy, useWallets } from '@privy-io/react-auth'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { monad, monadTestnet } from 'viem/chains'
+import { returningFromPrivy } from '@/lib/privy-return'
 
 /**
  * A wallet for people who don't have one: log in with email or Google, and Privy makes an
  * embedded wallet on the spot, with nothing to install. It hands back a standard EIP-1193
  * provider, so paying with it is the same signed authorization as any other wallet, and Kova's
- * relayer pays the gas.
+ * relayer pays the gas. A shop's owner signs in to Kova with the same wallet.
  *
  * Loaded only when someone asks for it (next/dynamic), so the pay page stays light on a phone
  * that just scanned a code. The provider must stay mounted while the wallet is in use: the
- * embedded wallet lives inside it.
+ * embedded wallet lives inside it. Google sends people away and back, so a page that comes back
+ * from Google mounts this straight away, and it finishes the sign-in rather than starting one.
  */
 
 export interface EmbeddedWallet {
@@ -20,6 +22,8 @@ export interface EmbeddedWallet {
   provider: { request(args: { method: string; params?: unknown }): Promise<unknown> }
   /** How they signed in, to show them: an email address, or "Google". */
   signedInAs: string
+  /** Ends the Privy session on this browser, so the next person here isn't signed in as them. */
+  logout: () => Promise<void>
 }
 
 interface Props {
@@ -27,44 +31,82 @@ interface Props {
   chainId: number
   onWallet: (wallet: EmbeddedWallet) => void
   onCancel: () => void
+  /** The heading on Privy's sign-in. */
+  title?: string
+  /** Ask who they are even if someone is still signed in to Privy here. */
+  fresh?: boolean
 }
 
-export default function PrivyWallet({ appId, chainId, onWallet, onCancel }: Props) {
+export default function PrivyWallet({
+  appId,
+  chainId,
+  onWallet,
+  onCancel,
+  title = 'Your Kova wallet',
+  fresh = false,
+}: Props) {
   const chain = chainId === monad.id ? monad : monadTestnet
   return (
     <PrivyProvider
       appId={appId}
       config={{
         loginMethods: ['email', 'google'],
-        appearance: { theme: 'light', accentColor: '#d46558', landingHeader: 'Your Kova wallet', showWalletLoginFirst: false },
-        embeddedWallets: { ethereum: { createOnLogin: 'users-without-wallets' }, showWalletUIs: false },
+        appearance: {
+          theme: 'light',
+          accentColor: '#d46558',
+          landingHeader: title,
+          showWalletLoginFirst: false,
+        },
+        embeddedWallets: {
+          ethereum: { createOnLogin: 'users-without-wallets' },
+          showWalletUIs: false,
+        },
         defaultChain: chain,
         supportedChains: [chain],
       }}
     >
-      <Connect onWallet={onWallet} onCancel={onCancel} />
+      <Connect onWallet={onWallet} onCancel={onCancel} fresh={fresh} />
     </PrivyProvider>
   )
 }
 
-function Connect({ onWallet, onCancel }: Pick<Props, 'onWallet' | 'onCancel'>) {
-  const { ready, authenticated, user } = usePrivy()
+function Connect({
+  onWallet,
+  onCancel,
+  fresh,
+}: Pick<Props, 'onWallet' | 'onCancel'> & { fresh: boolean }) {
+  const { ready, authenticated, user, logout } = usePrivy()
   const { wallets, ready: walletsReady } = useWallets()
+  // Back from Google: Privy is finishing that sign-in, so neither start another nor end it.
+  const [resuming] = useState(returningFromPrivy)
+  // In fresh mode, whoever was signed in before is signed out before anything is delivered.
+  const [cleared, setCleared] = useState(!fresh || resuming)
+  const clearing = useRef(false)
   const asked = useRef(false)
   const delivered = useRef(false)
   // Closing Privy's sign-in without finishing counts as changing their mind.
   const { login } = useLogin({ onError: () => !delivered.current && onCancel() })
 
-  // Open Privy's sign-in once it's ready, unless they're already signed in from before.
   useEffect(() => {
-    if (!ready || authenticated || asked.current) return
+    if (!ready || cleared || clearing.current) return
+    if (!authenticated) {
+      setCleared(true)
+      return
+    }
+    clearing.current = true
+    void logout().finally(() => setCleared(true))
+  }, [ready, authenticated, cleared, logout])
+
+  // Open Privy's sign-in once it's ready, unless they're already signed in or coming back from Google.
+  useEffect(() => {
+    if (!ready || !cleared || authenticated || resuming || asked.current) return
     asked.current = true
     login()
-  }, [ready, authenticated, login])
+  }, [ready, cleared, authenticated, resuming, login])
 
   // The embedded wallet appears moments after sign-in.
   useEffect(() => {
-    if (!authenticated || !walletsReady || delivered.current) return
+    if (!cleared || !authenticated || !walletsReady || delivered.current) return
     const embedded = wallets.find((w) => w.walletClientType === 'privy')
     if (!embedded) return
     delivered.current = true
@@ -73,9 +115,10 @@ function Connect({ onWallet, onCancel }: Pick<Props, 'onWallet' | 'onCancel'>) {
         address: embedded.address as `0x${string}`,
         provider,
         signedInAs: user?.email?.address ?? user?.google?.email ?? 'your email',
+        logout,
       }),
     )
-  }, [authenticated, walletsReady, wallets, user, onWallet])
+  }, [cleared, authenticated, walletsReady, wallets, user, onWallet, logout])
 
   return null
 }
