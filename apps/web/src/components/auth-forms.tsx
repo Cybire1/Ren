@@ -298,7 +298,7 @@ function EmailSignIn({ appId, chainId }: { appId: string; chainId: number }) {
               <Icon name="mail" size={16} />
             </span>
             <span>
-              {step.at === 'privy' ? 'Opening sign-in…' : 'Continue with email or Google'}
+              {step.at === 'privy' ? 'Opening sign-in…' : 'Continue with email or\u00a0Google'}
               <small className="wallet-sub">The one you opened your shop with</small>
             </span>
             <Icon name="arrow" size={18} />
