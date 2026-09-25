@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { KovaError } from '../errors.js'
+import { clientIp } from '../limits.js'
 import { askJev, jevReady } from '../services/jev.js'
 
 /**
@@ -30,7 +31,7 @@ const body = z.object({
 })
 
 export const insightRoutes = new Hono().post('/insights/categories', async (c) => {
-  const ip = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'local'
+  const ip = clientIp(c)
   const now = Date.now()
   const recent = (hits.get(ip) ?? []).filter((t) => now - t < 600_000)
   if (recent.length >= 30) throw new KovaError('rate_limited', 'Try again in a few minutes.')

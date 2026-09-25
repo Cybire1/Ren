@@ -8,7 +8,7 @@ import {
   tokenByAddress,
   vaultMessage,
 } from '@kova/monad'
-import { and, asc, eq, gt, lt, or } from 'drizzle-orm'
+import { and, asc, eq, gt, inArray, lt, or } from 'drizzle-orm'
 import { Hono } from 'hono'
 import { type Address, getAddress, type Hex, isAddress, isAddressEqual, recoverMessageAddress } from 'viem'
 import { z } from 'zod'
@@ -37,7 +37,22 @@ const MAX_SEND_VALIDITY = 3_600n
 
 type TransferRow = typeof schema.transfers.$inferSelect
 
-function serializeTransfer(row: TransferRow) {
+/** Who was paid, for transfers that paid a Kova charge: the shop's name and its reference. */
+type Shops = Map<string, { name: string; reference: string | null }>
+
+async function shopsPaid(rows: TransferRow[]): Promise<Shops> {
+  const ids = [...new Set(rows.map((r) => (r.nonce ? decodeMemo(r.nonce as Hex) : null)).filter((m) => m?.kind === 'payment').map((m) => m?.id as string))]
+  if (ids.length === 0) return new Map()
+  const intents = await db
+    .select({ id: schema.paymentIntents.id, reference: schema.paymentIntents.reference, name: schema.merchants.name })
+    .from(schema.paymentIntents)
+    .innerJoin(schema.merchants, eq(schema.merchants.id, schema.paymentIntents.merchantId))
+    .where(inArray(schema.paymentIntents.id, ids))
+  return new Map(intents.map((i) => [i.id, { name: i.name, reference: i.reference }]))
+}
+
+function serializeTransfer(row: TransferRow, shops: Shops = new Map()) {
+  const memo = row.nonce ? decodeMemo(row.nonce as Hex) : null
   const token = tokenByAddress(config.KOVA_NETWORK, row.tokenAddress as Address)
   return {
     object: 'transfer',
@@ -51,7 +66,11 @@ function serializeTransfer(row: TransferRow) {
     tx_hash: row.txHash,
     block: row.blockNumber.toString(),
     /** What the money was, when a Kova memo says: a payment, a refund, a payout. */
-    kind: row.nonce ? (decodeMemo(row.nonce as Hex)?.kind ?? null) : null,
+    kind: memo?.kind ?? null,
+    /** The shop a payment went to, when it paid a Kova charge. */
+    shop: memo?.kind === 'payment' ? (shops.get(memo.id) ?? null) : null,
+    /** When Kova saw it land: within seconds of the block, as the watcher follows Monad. */
+    created_at: row.createdAt.toISOString(),
     /** Test dollars (Agora's faucet, or Kova's testnet treasury topping up) rather than from a person. */
     faucet:
       config.KOVA_NETWORK === 'testnet' &&
@@ -131,7 +150,8 @@ export const walletRoutes = new Hono()
     // wallet drop the few it has already seen.
     const last = rows.at(-1)
     const cursor = rows.length === page && last ? last.blockNumber - 1n : (through ?? BigInt(afterText))
-    return c.json({ object: 'list', data: rows.map(serializeTransfer), indexed_through: cursor.toString(), has_more: rows.length === page })
+    const shops = await shopsPaid(rows)
+    return c.json({ object: 'list', data: rows.map((row) => serializeTransfer(row, shops)), indexed_through: cursor.toString(), has_more: rows.length === page })
   })
   .get('/vaults/:id', async (c) => {
     const id = vaultId(c)

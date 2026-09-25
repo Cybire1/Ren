@@ -34,6 +34,11 @@ const schema = z.object({
    * localhost outside production. A signature made for any other site is refused.
    */
   KOVA_SIGN_IN_DOMAINS: z.string().optional(),
+  /**
+   * Shared with Kova's website, which calls on its visitors' behalf from one address: with it, the
+   * site can say which visitor is asking, so per-address limits count people, not the site.
+   */
+  KOVA_PROXY_SECRET: z.string().min(32).optional(),
   /** How long a payment intent stays payable. */
   KOVA_INTENT_TTL_SECONDS: z.coerce.number().int().positive().default(900),
   /**

@@ -2,6 +2,7 @@ import { formatAmount } from '@kova/monad'
 import { Hono } from 'hono'
 import { z } from 'zod'
 import { KovaError } from '../errors.js'
+import { clientIp } from '../limits.js'
 import { encodeId } from '../ids.js'
 import { encodeCheckoutLink } from '../services/links.js'
 import {
@@ -33,7 +34,7 @@ function limit(key: string, max: number, windowMs: number) {
   if (recent.length >= max) throw new KovaError('rate_limited', 'Lots of searches from here. Try again in a few minutes.')
   hits.set(key, [...recent, now])
 }
-const ip = (c: { req: { header: (name: string) => string | undefined } }) => c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'local'
+const ip = clientIp
 
 function client() {
   if (!duffel) throw new KovaError('invalid_request', 'Kova Travel is not set up on this server yet (it needs a Duffel key).')

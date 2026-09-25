@@ -7,6 +7,7 @@ import { z } from 'zod'
 import { requireApiKey, requireMerchantKey } from '../auth.js'
 import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
+import { clientIp } from '../limits.js'
 import { decodeId, encodeId } from '../ids.js'
 import { serializeItem, serializeStall, slugify } from '../services/catalog.js'
 import { encodeCheckoutLink } from '../services/links.js'
@@ -228,7 +229,7 @@ export const stallRoutes = new Hono()
    * payment; the buyer pays it like any Kova charge, or sends the link to someone who will.
    */
   .post('/public/stalls/:slug/orders', async (c) => {
-    const ip = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? 'local'
+    const ip = clientIp(c)
     if (!allowCheckout(ip)) throw new KovaError('rate_limited', 'Too many orders from here. Try again in a few minutes.')
     const parsed = orderBody.safeParse(await c.req.json().catch(() => ({})))
     if (!parsed.success) throw new KovaError('invalid_request', parsed.error.issues[0]?.message ?? 'Invalid order')
