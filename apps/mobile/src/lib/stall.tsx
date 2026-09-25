@@ -5,7 +5,9 @@ import {
   createOwnerKey,
   createPairing,
   createStall,
+  getOwnedShop,
   getStall,
+  linkShopOwner,
   listStalls,
   onOwnerKeyRevoked,
   openShop,
@@ -47,6 +49,10 @@ interface StallState {
   open: (input: { name: string; tagline?: string; phone: string; settleTo: string }, onStep?: (step: OpenStep) => void) => Promise<void>
   /** The owner key, after Face ID, to sign in to the Kova dashboard with. */
   revealKey: () => Promise<string | null>
+  /** Whether the wallet's passkey signs in to this shop on the web. Null until known. */
+  ownerLinked: boolean | null
+  /** Makes this wallet the shop's owner, for a shop opened before shops had owners. One Face ID. */
+  linkOwner: () => Promise<void>
 }
 
 const STORE = 'kova.owner.v1'
@@ -71,6 +77,7 @@ export function StallProvider({ children }: { children: ReactNode }) {
   const [owned, setOwned] = useState<Owned | null>(null)
   const [stall, setStall] = useState<StallDetail | null>(null)
   const saved = useRef<Saved | null>(null)
+  const [ownerLinked, setOwnerLinked] = useState<boolean | null>(null)
 
   useEffect(() => {
     void (async () => {
@@ -177,6 +184,27 @@ export function StallProvider({ children }: { children: ReactNode }) {
     [remember, refresh, terminal, wallet],
   )
 
+  // Whether this wallet already signs in to the shop on the web.
+  const me = wallet.profile?.address
+  useEffect(() => {
+    if (!owned || !me) return
+    let live = true
+    getOwnedShop()
+      .then((shop) => live && setOwnerLinked(shop.owner_address?.toLowerCase() === me.toLowerCase()))
+      .catch(() => {})
+    return () => {
+      live = false
+    }
+  }, [owned, me])
+
+  const linkOwner = useCallback(async () => {
+    if (!me) throw new Error('Open your wallet first.')
+    const challenge = await shopChallenge(me, 'own_shop')
+    const signature = await wallet.signMessage(challenge.message)
+    const shop = await linkShopOwner(challenge.message, signature)
+    setOwnerLinked(shop.owner_address?.toLowerCase() === me.toLowerCase())
+  }, [me, wallet])
+
   const revealKey = useCallback(async () => {
     if (!saved.current) return null
     if (!(await confirmWithFace('Copy your shop key'))) return null
@@ -184,5 +212,5 @@ export function StallProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const complete = Boolean(owned?.stallId) && terminal.paired?.merchantId === owned?.merchantId
-  return <Ctx.Provider value={{ ready, owned, complete, stall, refresh, patch: setStall, open, revealKey }}>{children}</Ctx.Provider>
+  return <Ctx.Provider value={{ ready, owned, complete, stall, refresh, patch: setStall, open, revealKey, ownerLinked, linkOwner }}>{children}</Ctx.Provider>
 }

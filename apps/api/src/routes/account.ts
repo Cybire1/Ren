@@ -77,7 +77,7 @@ const challengeBody = z.object({
   /** The site asking, as the wallet will see it: a host, with a port if it has one. */
   domain: z.string().trim().min(1).max(253),
   uri: z.string().url(),
-  purpose: z.enum(['sign_in', 'open_shop']).default('sign_in'),
+  purpose: z.enum(['sign_in', 'open_shop', 'own_shop']).default('sign_in'),
 })
 
 const signInBody = signedMessage.extend({
@@ -217,6 +217,28 @@ export const accountRoutes = new Hono()
   })
 
   .get('/account', requireApiKey, requireMerchantKey, (c) => c.json(serializeMerchant(c.get('merchant'))))
+
+  /**
+   * Makes a wallet this shop's owner, so its passkey signs in to the shop from now on, on the web
+   * and in the app: for a shop opened with a key, with email, or on a phone before shops had
+   * owners. The shop's own key asks, and the wallet proves itself by signing.
+   */
+  .post('/account/owner', requireApiKey, requireMerchantKey, async (c) => {
+    const parsed = signedMessage.safeParse(await c.req.json().catch(() => ({})))
+    if (!parsed.success) throw new KovaError('invalid_request', 'Expected { message, signature }.')
+    const { address: owner, nonce } = await verifyChallenge({ ...parsed.data, signature: parsed.data.signature as Hex, purpose: 'own_shop' })
+    await spendChallenge(nonce)
+    const before = c.get('merchant')
+    const [merchant] = await db
+      .update(schema.merchants)
+      .set({ ownerAddress: owner.toLowerCase(), updatedAt: new Date() })
+      .where(eq(schema.merchants.id, before.id))
+      .returning()
+    if (!merchant) throw notFound('merchant', encodeId('merchant', before.id))
+    // Who can sign in to a shop is as sensitive as where its money goes: keep a record.
+    await audit(before.id, c.get('apiKey').id, 'merchant.owner.updated', { from: before.ownerAddress, to: owner })
+    return c.json(serializeMerchant(merchant))
+  })
 
   .patch('/account', requireApiKey, requireMerchantKey, async (c) => {
     const parsed = updateBody.safeParse(await c.req.json().catch(() => ({})))

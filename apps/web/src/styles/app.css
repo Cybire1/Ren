@@ -2133,3 +2133,52 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
 .receipt-text strong {
   font-size: clamp(0.7rem, 3vw, 0.95rem);
 }
+
+/* Sign-in: the shop's passkey, one account with the wallet. */
+
+.owner-card {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.owner-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.owner-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+
+.owner-icon-on {
+  background: var(--positive);
+}
+
+.owner-actions {
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+}
+
+.owner-ok {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--positive);
+  font-size: 0.9375rem;
+  font-weight: 650;
+  line-height: 1.4;
+}
+
+.owner-ok svg {
+  flex: none;
+  margin-top: 0.2rem;
+}

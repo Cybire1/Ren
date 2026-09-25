@@ -28,7 +28,7 @@ async function call(path: string, init: { method?: string; body?: unknown; key?:
   return { status: response.status, body: (await response.json()) as Body }
 }
 
-async function signed(wallet: PrivateKeyAccount, purpose: 'sign_in' | 'open_shop', domain = site) {
+async function signed(wallet: PrivateKeyAccount, purpose: 'sign_in' | 'open_shop' | 'own_shop', domain = site) {
   const challenge = await call('/v1/sign_in/challenge', { method: 'POST', body: { address: wallet.address, purpose, ...domain } })
   expect(challenge.status).toBe(201)
   const message = challenge.body.message as string
@@ -168,5 +168,45 @@ describe('signing in with a wallet', () => {
     const { message } = await signed(owner, 'sign_in')
     const bad = await call('/v1/sign_in', { method: 'POST', body: { message, signature: 'nope' as Hex } })
     expect(bad.status).toBe(400)
+  })
+})
+
+describe('linking a shop to a wallet', () => {
+  async function keyShop() {
+    const opened = await call('/v1/merchants', {
+      method: 'POST',
+      body: { name: 'Opened with a key', settlement_address: privateKeyToAccount(generatePrivateKey()).address },
+    })
+    expect(opened.status).toBe(201)
+    return opened.body as { id: string; key: string }
+  }
+
+  it('makes a wallet the owner of a shop opened another way, so it signs in with the wallet', async () => {
+    const shop = await keyShop()
+    const wallet = privateKeyToAccount(generatePrivateKey())
+    const linked = await call('/v1/account/owner', { method: 'POST', key: shop.key, body: await signed(wallet, 'own_shop') })
+    expect(linked.status).toBe(200)
+    expect(linked.body.owner_address).toBe(wallet.address)
+
+    const session = await call('/v1/sign_in', { method: 'POST', body: await signed(wallet, 'sign_in') })
+    expect(session.status).toBe(201)
+    expect((session.body.merchant as { id: string }).id).toBe(shop.id)
+  })
+
+  it('needs the wallet’s own signature for its own purpose', async () => {
+    const shop = await keyShop()
+    const wallet = privateKeyToAccount(generatePrivateKey())
+    const other = privateKeyToAccount(generatePrivateKey())
+    const { message } = await signed(wallet, 'own_shop')
+    const forged = await call('/v1/account/owner', { method: 'POST', key: shop.key, body: { message, signature: await other.signMessage({ message }) } })
+    expect(forged.status).toBe(401)
+    const wrongPurpose = await call('/v1/account/owner', { method: 'POST', key: shop.key, body: await signed(wallet, 'sign_in') })
+    expect(wrongPurpose.status).toBe(400)
+  })
+
+  it('takes the shop’s own key, not a stranger’s', async () => {
+    const wallet = privateKeyToAccount(generatePrivateKey())
+    const anonymous = await call('/v1/account/owner', { method: 'POST', body: await signed(wallet, 'own_shop') })
+    expect(anonymous.status).toBe(401)
   })
 })

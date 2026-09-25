@@ -26,11 +26,12 @@ export default function ShopTab() {
   const insets = useSafeAreaInsets()
   const shop = useShop()
   const terminal = useTerminal()
-  const { owned, revealKey } = useStall()
+  const { owned, revealKey, ownerLinked, linkOwner } = useStall()
   const { status, profile } = useWallet()
   const { setMode } = usePrefs()
   const [confirmUnpair, setConfirmUnpair] = useState(false)
   const [keyCopied, setKeyCopied] = useState(false)
+  const [linking, setLinking] = useState<'idle' | 'working' | 'failed'>('idle')
 
   const copyKey = async () => {
     const key = await revealKey()
@@ -110,11 +111,29 @@ export default function ShopTab() {
 
       {owned ? (
         <Group title="On a computer">
+          {ownerLinked === false ? (
+            <Row
+              icon="face"
+              label={linking === 'working' ? 'Waiting for Face ID…' : linking === 'failed' ? 'That didn’t work. Try again' : 'Sign in on the web with Face ID'}
+              value={`Your passkey opens ${shop.name} at mykova.app`}
+              onPress={async () => {
+                if (linking === 'working') return
+                setLinking('working')
+                try {
+                  await linkOwner()
+                  void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+                  setLinking('idle')
+                } catch {
+                  setLinking('failed')
+                }
+              }}
+            />
+          ) : null}
           <Row
             icon="web"
-            label="Open the Kova dashboard"
-            value="Payments, stalls and terminals on a big screen"
-            onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/signin`)}
+            label="Open your shop on the web"
+            value={ownerLinked ? 'Your passkey signs you in at mykova.app' : 'Payments, stalls and terminals on a big screen'}
+            onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet`)}
           />
           <Row
             icon="lock"

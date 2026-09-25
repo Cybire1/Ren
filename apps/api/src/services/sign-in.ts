@@ -23,12 +23,13 @@ import { KovaError } from '../errors.js'
  * the wallets that sign here are ordinary accounts, so recovering the signer is enough.
  */
 
-export type SignInPurpose = 'sign_in' | 'open_shop'
+export type SignInPurpose = 'sign_in' | 'open_shop' | 'own_shop'
 
 /** What the wallet shows its owner. The purpose is in the words, so one can't stand in for the other. */
 const statements: Record<SignInPurpose, string> = {
   sign_in: 'Sign in to your shop on Kova.',
   open_shop: 'Open a shop on Kova that you sign in to with this wallet.',
+  own_shop: 'Sign in to this shop on Kova with this wallet from now on.',
 }
 
 const CHALLENGE_TTL_MS = 10 * 60_000

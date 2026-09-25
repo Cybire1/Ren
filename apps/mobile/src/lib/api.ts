@@ -271,7 +271,7 @@ export interface OpenedShop {
  * The message a wallet signs to prove it owns a shop (EIP-4361), for Kova's own site: the same
  * proof the web asks for, so the web signs this wallet in to the same shop.
  */
-export const shopChallenge = (address: string, purpose: 'sign_in' | 'open_shop') =>
+export const shopChallenge = (address: string, purpose: 'sign_in' | 'open_shop' | 'own_shop') =>
   request<{ message: string }>('/v1/sign_in/challenge', {
     method: 'POST',
     body: JSON.stringify({ address, purpose, domain: passkeyDomain, uri: webUrl }),
@@ -286,6 +286,13 @@ export const openShop = (name: string, settlementAddress: string, owner?: { mess
     method: 'POST',
     body: JSON.stringify({ name, settlement_address: settlementAddress, ...(owner ? { owner } : {}) }),
   })
+
+/** Who signs in to the shop this phone owns: its owner's wallet, or nobody's yet. */
+export const getOwnedShop = () => request<{ id: string; name: string; owner_address: string | null }>('/v1/account', { auth: 'owner' })
+
+/** Makes a wallet the shop's owner with its signed message, so its passkey signs in on the web. */
+export const linkShopOwner = (message: string, signature: string) =>
+  request<{ owner_address: string | null }>('/v1/account/owner', { method: 'POST', body: JSON.stringify({ message, signature }), auth: 'owner' })
 
 /** A lasting owner key for this phone: a shop opened with a wallet signs in with a key that lapses. */
 export const createOwnerKey = (name: string) =>
