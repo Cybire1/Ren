@@ -27,20 +27,14 @@ export default async function Landing() {
           <a href="#developers">Developers</a>
         </nav>
         <div className="lp-nav-actions">
-          {signedIn ? (
-            <Pill href="/dashboard" icon="arrow">
-              Dashboard
-            </Pill>
-          ) : (
-            <>
-              <Link href="/signin" className="lp-signin">
-                Sign in
-              </Link>
-              <Pill href="/signup" icon="arrow">
-                Open a shop
-              </Pill>
-            </>
+          {signedIn ? null : (
+            <Link href="/wallet" className="lp-signin">
+              Sign in
+            </Link>
           )}
+          <Pill href="/wallet" icon="arrow">
+            Open Kova
+          </Pill>
         </div>
       </header>
 
@@ -66,7 +60,7 @@ export default async function Landing() {
             wallet. No card machine, no card fees, no waiting days to get paid.
           </p>
           <div className="lp-ctas">
-            <Pill href="/signup" icon="arrow" tone="coral">
+            <Pill href="/wallet/shop?go=open" icon="arrow" tone="coral">
               Open a shop, free
             </Pill>
             <form action={signInDemo}>
@@ -154,7 +148,7 @@ export default async function Landing() {
             Take Kova payments on your own site or till software. Create a charge, show its code, and hear about it the moment it settles. Retries are safe with an
             Idempotency-Key, and every payment is matched on-chain, so there’s nothing to reconcile by hand.
           </p>
-          <Pill href="/signup" icon="code" tone="paper">
+          <Pill href="/wallet/shop?go=open" icon="code" tone="paper">
             Get API keys
           </Pill>
         </div>
@@ -215,7 +209,7 @@ export default async function Landing() {
         <h2>Your counter is ready when you are</h2>
         <p>Open a shop in a minute. Pair your phone. Take your first payment before your coffee goes cold.</p>
         <div className="lp-ctas lp-ctas-center">
-          <Pill href="/signup" icon="arrow">
+          <Pill href="/wallet/shop?go=open" icon="arrow">
             Open a shop
           </Pill>
           <form action={signInDemo}>
@@ -230,8 +224,9 @@ export default async function Landing() {
         <Brand />
         <p>Tap. Paid. Anywhere. Built on Monad. A test network preview: no real money moves.</p>
         <nav aria-label="Footer">
-          <Link href="/signin">Sign in</Link>
-          <Link href="/signup">Open a shop</Link>
+          <Link href="/wallet">Open Kova</Link>
+          <Link href="/wallet/shop?go=open">Open a shop</Link>
+          <Link href="/signin">Shop sign-in with email or a key</Link>
           <a href="#developers">Developers</a>
         </nav>
       </footer>

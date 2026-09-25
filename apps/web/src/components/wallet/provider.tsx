@@ -67,6 +67,11 @@ export interface Entry {
   at: number
 }
 
+export interface ShopToday {
+  name: string
+  today: { total: string; count: number } | null
+}
+
 export interface Contact {
   address: string
   name: string
@@ -88,6 +93,7 @@ interface Note {
 const PROFILE = 'kova.web.profile.v1'
 const HIDE = 'kova.web.hideBalance.v1'
 const notesKey = (address: string) => `kova.web.notes.v1.${address.toLowerCase()}`
+const shopKey = (address: string) => `kova.web.shop.v1.${address.toLowerCase()}`
 
 const read = <T,>(key: string): T | null => {
   try {
@@ -111,8 +117,11 @@ const ZERO = '0x0000000000000000000000000000000000000000'
 
 interface WalletValue {
   network: NetworkId
-  /** The shop this browser is signed in to, if any: Kova on the web is your wallet and your shop. */
-  shop: { name: string } | null
+  /** The shop this browser is signed in to, with today's takings: the shop is a part of the wallet. */
+  shop: ShopToday | null
+  /** The shop this wallet opened or signed in to here before, when it isn't signed in right now. */
+  knownShop: string | null
+  rememberShop: (name: string) => void
   status: 'loading' | 'none' | 'ready'
   profile: Profile | null
   balance: bigint | null
@@ -155,7 +164,7 @@ export function WalletProvider({
   children,
 }: {
   network: NetworkId
-  shop: { name: string } | null
+  shop: ShopToday | null
   initialRates: LiveRates | null
   children: React.ReactNode
 }) {
@@ -167,6 +176,7 @@ export function WalletProvider({
   const [saved, setSaved] = useState<Contact[]>([])
   const [hideBalance, setHide] = useState(false)
   const [liveRates, setLiveRates] = useState<LiveRates | null>(initialRates)
+  const [knownShop, setKnownShop] = useState<string | null>(null)
   const cursor = useRef('0')
   const vaultSecret = useRef<Uint8Array | null>(null)
   const vaultDirty = useRef(false)
@@ -177,6 +187,7 @@ export function WalletProvider({
     if (stored && isAddress(stored.address) && isDisplayCurrency(stored.currency)) {
       setProfile(stored)
       setNotes(read<Record<string, Note>>(notesKey(stored.address)) ?? {})
+      setKnownShop(read<string>(shopKey(stored.address)))
       setStatus('ready')
     } else setStatus('none')
     setHide(read<boolean>(HIDE) ?? false)
@@ -322,6 +333,7 @@ export function WalletProvider({
     keepProfile(next)
     setSaved(people)
     setNotes(read<Record<string, Note>>(notesKey(account.address)) ?? {})
+    setKnownShop(read<string>(shopKey(account.address)))
     setStatus('ready')
     return { named: Boolean(next.name) }
   }, [keepProfile])
@@ -484,6 +496,15 @@ export function WalletProvider({
     setStatus('none')
   }, [])
 
+  const rememberShop = useCallback(
+    (name: string) => {
+      if (!profile) return
+      setKnownShop(name)
+      write(shopKey(profile.address), name)
+    },
+    [profile],
+  )
+
   const setHideBalance = useCallback((hide: boolean) => {
     setHide(hide)
     write(HIDE, hide)
@@ -589,6 +610,8 @@ export function WalletProvider({
     () => ({
       network,
       shop,
+      knownShop,
+      rememberShop,
       status,
       profile,
       balance,
@@ -614,6 +637,8 @@ export function WalletProvider({
     [
       network,
       shop,
+      knownShop,
+      rememberShop,
       status,
       profile,
       balance,

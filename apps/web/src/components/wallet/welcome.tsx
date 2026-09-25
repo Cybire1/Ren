@@ -19,7 +19,7 @@ type Step = { at: 'start' } | { at: 'name' } | { at: 'waiting'; what: 'create' |
  * opens the same wallet here, with your name, currency and people, and a wallet made here opens
  * in the app ("I already have Kova"). Nothing to install, no seed phrase, nothing kept but who you are.
  */
-export function Welcome() {
+export function Welcome({ forShop = false }: { forShop?: boolean }) {
   const { create, open } = useWallet()
   const [step, setStep] = useState<Step>({ at: 'start' })
   const [name, setNameText] = useState('')
@@ -129,7 +129,9 @@ export function Welcome() {
       <Art name="scene-welcome" size={420} className="w-welcome-art" priority />
       <h1 className="w-hero-title">Tap. Paid. Anywhere.</h1>
       <p className="w-lead">
-        Your Kova wallet, in your browser. The same one as in the Kova app: one passkey, one wallet.
+        {forShop
+          ? 'Your shop lives in your Kova wallet: its sales land there, and your passkey opens both. Open your wallet, or make one, then your shop.'
+          : 'Your Kova wallet, in your browser. The same one as in the Kova app: one passkey, one wallet.'}
       </p>
 
       {!home ? (

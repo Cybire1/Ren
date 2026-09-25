@@ -3,26 +3,48 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { signOut } from '@/app/actions'
-import { Art, Icon, type IconName, LogoMark, Wordmark } from './brand'
+import { Art, Icon, type IconName } from './brand'
 
-const NAV: { href: string; label: string; icon: IconName }[] = [
-  { href: '/dashboard', label: 'Overview', icon: 'home' },
-  { href: '/dashboard/payments', label: 'Payments', icon: 'list' },
-  { href: '/dashboard/stalls', label: 'Stalls', icon: 'stall' },
-  { href: '/dashboard/catalogue', label: 'Catalogue', icon: 'tag' },
-  { href: '/dashboard/terminals', label: 'Terminals', icon: 'terminal' },
-  { href: '/dashboard/developers', label: 'Developers', icon: 'code' },
-  { href: '/dashboard/settings', label: 'Settings', icon: 'settings' },
+const TABS: { href: string; label: string; icon: IconName; also?: string[] }[] = [
+  { href: '/dashboard', label: 'Today', icon: 'home' },
+  { href: '/dashboard/payments', label: 'Sales', icon: 'list' },
+]
+const TABS_AFTER: { href: string; label: string; icon: IconName; also?: string[] }[] = [
+  { href: '/dashboard/stalls', label: 'Stall', icon: 'stall' },
+  {
+    href: '/dashboard/more',
+    label: 'More',
+    icon: 'menu',
+    also: [
+      '/dashboard/catalogue',
+      '/dashboard/terminals',
+      '/dashboard/developers',
+      '/dashboard/settings',
+    ],
+  },
 ]
 
-const active = (path: string, href: string) => (href === '/dashboard' ? path === href : path.startsWith(href))
+const current = (path: string, tab: { href: string; also?: string[] }) =>
+  tab.href === '/dashboard'
+    ? path === tab.href
+    : [tab.href, ...(tab.also ?? [])].some((href) => path.startsWith(href))
 
 /**
- * The dashboard frame. On a desk: a slim ink rail, the charge button in coral where the app's
- * dock keeps Pay. On a phone: a top bar and the same ink dock at the bottom.
+ * Shop mode: the shop is a part of the Kova app, entered from Home and left the same way, as the
+ * Kova app's Terminal mode is. The frame is the wallet's (the same top bar, the same floating dock),
+ * with the shop's own tabs in the dock and Charge in coral where the wallet keeps Pay.
  */
-export function Shell({ shop, demo, livemode, children }: { shop: string; demo: boolean; livemode: boolean; children: React.ReactNode }) {
+export function Shell({
+  shop,
+  demo,
+  livemode,
+  children,
+}: {
+  shop: string
+  demo: boolean
+  livemode: boolean
+  children: React.ReactNode
+}) {
   const path = usePathname()
   const router = useRouter()
 
@@ -30,101 +52,77 @@ export function Shell({ shop, demo, livemode, children }: { shop: string; demo: 
   useEffect(() => {
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
     if (!tz || document.cookie.split('; ').includes(`kova_tz=${tz}`)) return
+    // biome-ignore lint/suspicious/noDocumentCookie: a plain cookie the server reads for "today"; Safari has no Cookie Store API
     document.cookie = `kova_tz=${tz}; path=/; max-age=31536000; samesite=lax`
     router.refresh()
   }, [router])
 
+  const tab = (t: (typeof TABS)[number]) => {
+    const on = current(path, t)
+    return (
+      <Link
+        key={t.href}
+        href={t.href}
+        className={`w-dock-tab${on ? ' w-dock-on' : ''}`}
+        aria-current={on ? 'page' : undefined}
+      >
+        <Icon name={t.icon} size={22} />
+        <span>{t.label}</span>
+      </Link>
+    )
+  }
+
   return (
-    <div className="app">
-      <aside className="rail" aria-label="Dashboard">
-        <Link href="/dashboard" className="rail-mark" aria-label="Kova overview">
-          <LogoMark size={36} stem="#f1efea" />
+    <div className="w-app shop-mode">
+      <header className="w-top shop-top">
+        <Link href="/wallet" className="shop-back" aria-label="Back to your wallet">
+          <Icon name="back" size={18} />
+          <span>Wallet</span>
         </Link>
-
-        <Link href="/charge" className="rail-charge">
-          <span className="rail-charge-dot">
-            <Icon name="tap" size={22} />
+        <Link
+          href="/dashboard/more"
+          className="shop-id"
+          title={`${shop}${livemode ? '' : ', test mode'}`}
+        >
+          <span className="shop-id-name">{shop}</span>
+          <span className="shop-id-badge">
+            <Art name="badge-shop" size={34} />
+            {livemode ? null : <span className="shop-id-test" aria-hidden="true" />}
           </span>
-          <span>Charge</span>
         </Link>
-
-        <nav className="rail-nav" aria-label="Pages">
-          {NAV.map((item) => (
-            <Link key={item.href} href={item.href} className="rail-link" aria-current={active(path, item.href) ? 'page' : undefined}>
-              <Icon name={item.icon} size={21} />
-              <span>{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-
-        <div className="rail-foot">
-          {/* Kova is one app: your shop and your wallet, a tap apart. */}
-          <Link href="/wallet" className="rail-link rail-wallet">
-            <Icon name="card" size={21} />
-            <span>Wallet</span>
-          </Link>
-          <Link href="/dashboard/settings" className="rail-shop" title={`${shop}${livemode ? '' : ', test mode'}`} aria-label={`${shop} settings`}>
-            <Art name="badge-shop" size={42} />
-            {livemode ? null : <span className="rail-test" aria-hidden="true" />}
-          </Link>
-          <form action={signOut}>
-            <button type="submit" className="rail-link">
-              <Icon name="out" size={20} />
-              <span>Sign out</span>
-            </button>
-          </form>
-        </div>
-      </aside>
-
-      <header className="topnav">
-        <Link href="/dashboard" className="brand" aria-label="Kova overview">
-          <LogoMark size={30} />
-          <Wordmark height={18} />
-        </Link>
-        <span className="topnav-end">
-          <Link href="/wallet" className="topnav-wallet" aria-label="Your wallet">
-            <Icon name="card" size={16} /> Wallet
-          </Link>
-          <Link href="/dashboard/settings" className="topnav-shop">
-            <span>{shop}</span>
-            <Art name="badge-shop" size={32} />
-          </Link>
-        </span>
       </header>
 
       {demo ? (
         <div className="demo-bar" role="note">
-          You’re exploring a shared demo shop on Monad’s test network. <Link href="/signup">Open your own shop</Link>
+          You’re exploring a shared demo shop on Monad’s test network.{' '}
+          <Link href="/wallet/shop?go=open">Open your own shop</Link>
         </div>
       ) : null}
 
-      <main className="main">{children}</main>
+      <main className="shop-main">{children}</main>
 
-      <nav className="dock" aria-label="Dashboard">
-        {NAV.slice(0, 2).map((item) => (
-          <DockLink key={item.href} {...item} current={active(path, item.href)} />
-        ))}
-        <Link href="/charge" className="dock-charge" aria-label="New charge">
+      <nav className="w-dock" aria-label="Shop">
+        {TABS.map(tab)}
+        <Link href="/charge" className="w-dock-pay" aria-label="Charge. Take a payment">
           <Icon name="tap" size={22} />
+          <span>Charge</span>
         </Link>
-        {[NAV[2], NAV[4]].map((item) =>
-          item ? <DockLink key={item.href} {...item} current={active(path, item.href)} /> : null,
-        )}
+        {TABS_AFTER.map(tab)}
       </nav>
     </div>
   )
 }
 
-function DockLink({ href, label, icon, current }: { href: string; label: string; icon: IconName; current: boolean }) {
-  return (
-    <Link href={href} className="dock-link" aria-label={label} aria-current={current ? 'page' : undefined}>
-      <Icon name={icon} size={21} />
-    </Link>
-  )
-}
-
 /** Title, a line of context, and the page's own actions. */
-export function PageHead({ title, sub, children }: { title: string; sub?: React.ReactNode; children?: React.ReactNode }) {
+export function PageHead({
+  title,
+  sub,
+  children,
+}: {
+  title: string
+  sub?: React.ReactNode
+  children?: React.ReactNode
+}) {
   return (
     <header className="pagehead">
       <div>

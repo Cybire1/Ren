@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import { Art, Icon } from '@/components/brand'
+import { formatUsd, toBase } from '@/lib/wallet/money'
 import { isUnnamed, useWallet } from './provider'
 import { ActionTile, Avatar, BalanceCard, EntryRow } from './ui'
 
@@ -12,7 +13,7 @@ import { ActionTile, Avatar, BalanceCard, EntryRow } from './ui'
  * right beneath it with Send and Request beside it, and the people you pay are one tap away.
  */
 export function Home() {
-  const { profile, balance, activity, contacts, network, shop } = useWallet()
+  const { profile, balance, activity, contacts, network } = useWallet()
   if (!profile) return null
   const empty = balance === 0n
 
@@ -66,6 +67,8 @@ export function Home() {
           <ActionTile kind="request" />
         </div>
       </div>
+
+      <ShopCard />
 
       {empty ? (
         <Link href="/wallet/add" className="w-notice">
@@ -124,20 +127,40 @@ export function Home() {
           ))}
         </div>
       )}
-
-      <Link href={shop ? '/dashboard' : '/wallet/shop'} className="w-shopdoor">
-        <Art name="badge-shop" size={52} className="w-face" />
-        <span className="w-shopdoor-text">
-          <strong>{shop ? shop.name : 'Run a shop?'}</strong>
-          <span>
-            {shop ? 'Your shop: sales, stall and terminals' : 'Take payments into this same wallet'}
-          </span>
-        </span>
-        <span className="w-shopdoor-go">
-          <Icon name="arrow" size={18} />
-        </span>
-      </Link>
     </div>
+  )
+}
+
+/**
+ * Your shop, one of the wallet's features: the way into shop mode. Signed in, it shows today's
+ * takings; otherwise the passkey signs you in on the way; with no shop yet, it opens one.
+ */
+function ShopCard() {
+  const { shop, knownShop } = useWallet()
+  const name = shop?.name ?? knownShop
+  const today = shop?.today
+  const line = shop
+    ? today && today.count > 0
+      ? `${formatUsd(toBase(today.total))} today, ${today.count} ${today.count === 1 ? 'sale' : 'sales'}`
+      : 'No sales yet today'
+    : name
+      ? 'Your shop. Your passkey opens it.'
+      : 'Take payments into this wallet'
+  return (
+    <Link
+      href={shop ? '/dashboard' : name ? '/wallet/shop?go=signin' : '/wallet/shop?go=open'}
+      className="w-shopcard"
+    >
+      <Art name="badge-shop" size={56} className="w-face w-shopcard-art" />
+      <span className="w-shopcard-text">
+        <small>{name ? 'Your shop' : 'Run a shop?'}</small>
+        <strong>{name ?? 'Open a shop'}</strong>
+        <span>{line}</span>
+      </span>
+      <span className="w-shopcard-go">
+        <Icon name="arrow" size={18} />
+      </span>
+    </Link>
   )
 }
 

@@ -3,7 +3,7 @@
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useActionState, useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { useActionState, useCallback, useEffect, useRef, useState } from 'react'
 import { stringToHex } from 'viem'
 import {
   type FormState,
@@ -11,11 +11,10 @@ import {
   signIn,
   signInDemo,
   signInWithWallet,
-  signUp,
   walletChallenge,
 } from '@/app/actions'
 import { returningFromPrivy } from '@/lib/privy-return'
-import { Art, Icon, Pill } from './brand'
+import { Icon, Pill } from './brand'
 import type { EmbeddedWallet } from './privy-wallet'
 
 // Privy is only downloaded when someone chooses email or Google, or comes back from Google.
@@ -62,7 +61,9 @@ export function SignInForm({
           </span>
           <span>
             Use my Kova passkey
-            <small className="wallet-sub">The one from the Kova app, or your Kova wallet on the web</small>
+            <small className="wallet-sub">
+              The one from the Kova app, or your Kova wallet on the web
+            </small>
           </span>
           <Icon name="arrow" size={18} />
         </Link>
@@ -95,7 +96,7 @@ export function SignInForm({
         </Pill>
       </form>
       <p className="auth-switch">
-        New to Kova? <Link href="/signup">Open a shop</Link>
+        New to Kova? <Link href="/wallet">Open the app</Link>
       </p>
     </div>
   )
@@ -254,10 +255,11 @@ function EmailSignIn({ appId, chainId }: { appId: string; chainId: number }) {
         <div className="signin-panel" role="status">
           <p className="signin-panel-title">No shop uses {step.wallet.signedInAs} yet</p>
           <p className="signin-panel-body">
-            Open one now. The wallet is already made, so all it needs is a name.
+            New shops open in the Kova app: your wallet first, then your shop. It takes a passkey
+            and a name.
           </p>
-          <Pill href="/signup?wallet=email" icon="arrow" tone="coral" wide>
-            Open a shop with this email
+          <Pill href="/wallet/shop?go=open" icon="arrow" tone="coral" wide>
+            Open a shop in the Kova app
           </Pill>
           {differentEmail}
         </div>
@@ -317,280 +319,5 @@ function EmailSignIn({ appId, chainId }: { appId: string; chainId: number }) {
         </>
       )}
     </>
-  )
-}
-
-// --- Opening a shop ---------------------------------------------------------------------
-
-/** Google sends people away and back; the shop's name waits here for them. */
-const NAME_KEY = 'kova.signup.name'
-
-export function SignUpForm({
-  privyAppId,
-  chainId,
-  startWithEmail = false,
-}: {
-  privyAppId?: string | null
-  chainId: number
-  startWithEmail?: boolean
-}) {
-  const [state, action, pending] = useActionState<FormState, FormData>(signUp, {})
-  const [saved, setSaved] = useState(false)
-  const [copied, setCopied] = useState(false)
-  // With Privy, a shop's wallet is made from its owner's email or Google; pasting an address is the fallback.
-  const [manual, setManual] = useState(!privyAppId)
-  const [privy, setPrivy] = useState(false)
-  const [wallet, setWallet] = useState<EmbeddedWallet | null>(null)
-  const [name, setName] = useState('')
-  const [proving, setProving] = useState(false)
-  const [proofError, setProofError] = useState<string | null>(null)
-  const [, startTransition] = useTransition()
-  const onWallet = useCallback((made: EmbeddedWallet) => setWallet(made), [])
-  const onCancel = useCallback(() => setPrivy(false), [])
-
-  // Back from Google, or sent here from signing in to open a shop with that email: carry on with Privy.
-  useEffect(() => {
-    if (!privyAppId) return
-    const back = returningFromPrivy()
-    if (!back && !startWithEmail) return
-    setManual(false)
-    setPrivy(true)
-    if (back)
-      try {
-        setName(sessionStorage.getItem(NAME_KEY) ?? '')
-      } catch {}
-  }, [privyAppId, startWithEmail])
-
-  const makeWallet = () => {
-    try {
-      sessionStorage.setItem(NAME_KEY, name)
-    } catch {}
-    setPrivy(true)
-  }
-
-  // The shop is open and Kova's session is signed in to it. Privy's would only sign the next
-  // person here in as its owner, so it ends.
-  const opened = state.ok === true
-  useEffect(() => {
-    if (!opened || !wallet) return
-    void wallet.logout().catch(() => {})
-    try {
-      sessionStorage.removeItem(NAME_KEY)
-    } catch {}
-  }, [opened, wallet])
-
-  /** With an email wallet, the wallet first signs Kova's "open a shop" message, so the shop is its owner's. */
-  const openWithWallet = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
-    if (!wallet) return
-    const form = new FormData(event.currentTarget)
-    setProving(true)
-    setProofError(null)
-    try {
-      const challenge = await walletChallenge(wallet.address, 'open_shop')
-      if (!challenge.message) throw new Error(challenge.error ?? 'Kova didn’t answer. Try again.')
-      form.set('owner_message', challenge.message)
-      form.set('owner_signature', await signWith(wallet, challenge.message))
-      startTransition(() => action(form))
-    } catch (error) {
-      setProofError(explain(error, 'Your wallet didn’t sign. Try again.'))
-    } finally {
-      setProving(false)
-    }
-  }
-
-  // Stays mounted through the whole flow: the wallet lives inside it, and it signs out at the end.
-  const privyWallet =
-    privy && privyAppId ? (
-      <PrivyWallet appId={privyAppId} chainId={chainId} onWallet={onWallet} onCancel={onCancel} />
-    ) : null
-
-  if (state.ok && !state.secret)
-    return (
-      <div className="auth-card">
-        {privyWallet}
-        <Art name="kovi-cheer" size={130} className="auth-kovi" />
-        <h1>{state.name} is open</h1>
-        <p className="auth-lead">
-          Sign in any time with {wallet?.signedInAs ?? 'your email'}. There’s no password or key to
-          keep. Payments land in your shop’s own wallet, made with it, and Kova never holds them.
-        </p>
-        <Pill href="/dashboard" icon="arrow" tone="coral" wide>
-          Go to my dashboard
-        </Pill>
-        <p className="field-help signin-foot">
-          Connecting your own systems? Make a secret key in Developers.
-        </p>
-      </div>
-    )
-
-  if (state.ok && state.secret)
-    return (
-      <div className="auth-card">
-        {privyWallet}
-        <Art name="kovi-key" size={130} className="auth-kovi" />
-        <h1>{state.name} is open</h1>
-        <p className="auth-lead">
-          This is your shop’s secret key. It’s how you sign in and how your systems charge. Kova
-          keeps only a hash of it, so this is the only time you’ll see it.
-        </p>
-        <div className="secret secret-big">
-          <div className="secret-value">
-            <code>{state.secret}</code>
-          </div>
-          <button
-            type="button"
-            className="mini mini-ink"
-            onClick={async () => {
-              await navigator.clipboard.writeText(state.secret ?? '')
-              setCopied(true)
-              setSaved(true)
-            }}
-          >
-            <Icon name={copied ? 'check' : 'copy'} size={14} /> {copied ? 'Copied' : 'Copy key'}
-          </button>
-        </div>
-        <label className="checkline">
-          <input type="checkbox" checked={saved} onChange={(e) => setSaved(e.target.checked)} />
-          I’ve saved it in my password manager
-        </label>
-        <Pill href={saved ? '/dashboard' : undefined} icon="arrow" disabled={!saved} wide>
-          Go to my dashboard
-        </Pill>
-      </div>
-    )
-
-  const error = state.error ?? proofError
-  return (
-    <div className="auth-card">
-      {privyWallet}
-      <h1>Open your shop</h1>
-      <p className="auth-lead">Two things, and you can take payments today.</p>
-      <form
-        action={wallet ? undefined : action}
-        onSubmit={wallet ? openWithWallet : undefined}
-        className="stack-form"
-      >
-        <label className="field-label" htmlFor="name">
-          Shop name
-        </label>
-        <input
-          id="name"
-          name="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          placeholder="Ada’s Bakery"
-          minLength={2}
-          maxLength={60}
-          required
-          autoComplete="organization"
-        />
-
-        <label className="field-label" htmlFor="address">
-          Where should money land?
-        </label>
-        {manual ? (
-          <>
-            <input
-              id="address"
-              name="address"
-              placeholder="0x…"
-              className="mono-input"
-              spellCheck={false}
-              required
-              pattern="0x[0-9a-fA-F]{40}"
-            />
-            <p className="field-help">
-              Your Monad address. In the Kova app it’s on your Profile, under{' '}
-              <em>Your address on Monad</em>. Payments go straight there; Kova never holds them.
-              {privyAppId ? (
-                <>
-                  {' '}
-                  <button
-                    type="button"
-                    className="textlink inline-link"
-                    onClick={() => setManual(false)}
-                  >
-                    Make a wallet with email instead
-                  </button>
-                </>
-              ) : null}
-            </p>
-          </>
-        ) : wallet ? (
-          <>
-            <input type="hidden" name="address" value={wallet.address} />
-            <div className="shop-wallet">
-              <span className="wallet-glyph wallet-glyph-coral">
-                <Icon name="check" size={16} />
-              </span>
-              <span>
-                Your shop’s wallet, made with {wallet.signedInAs}
-                <code>
-                  {wallet.address.slice(0, 6)}…{wallet.address.slice(-4)}
-                </code>
-              </span>
-            </div>
-            <p className="field-help">
-              Payments go straight there, and you’ll sign in with {wallet.signedInAs}. Kova never
-              holds your money.
-            </p>
-          </>
-        ) : (
-          <>
-            {/* The Kova wallet: sales land where the Kova app and the web wallet both see them. */}
-            <Link href="/wallet/shop?go=open" className="shop-wallet shop-wallet-make">
-              <span className="wallet-glyph">
-                <Icon name="face" size={16} />
-              </span>
-              <span>
-                Use my Kova wallet
-                <small className="wallet-sub">Sales land in the wallet your passkey opens, in the app and on the web.</small>
-              </span>
-              <Icon name="arrow" size={18} />
-            </Link>
-            <button
-              type="button"
-              className="shop-wallet shop-wallet-make"
-              disabled={privy}
-              onClick={makeWallet}
-            >
-              <span className="wallet-glyph wallet-glyph-coral">
-                <Icon name="mail" size={16} />
-              </span>
-              <span>
-                {privy ? 'Opening sign-in…' : 'Make my shop’s wallet'}
-                <small className="wallet-sub">
-                  With your email or Google. Nothing to install, no seed phrase.
-                </small>
-              </span>
-              <Icon name="arrow" size={18} />
-            </button>
-            <p className="field-help">
-              <button
-                type="button"
-                className="textlink inline-link"
-                onClick={() => setManual(true)}
-              >
-                I already have a wallet address
-              </button>
-            </p>
-          </>
-        )}
-        {error ? <p className="form-error">{error}</p> : null}
-        <Pill
-          type="submit"
-          icon="arrow"
-          tone="coral"
-          disabled={pending || proving || (!manual && !wallet)}
-          wide
-        >
-          {pending || proving ? 'Opening your shop' : 'Open my shop'}
-        </Pill>
-      </form>
-      <p className="auth-switch">
-        Already have a shop? <Link href="/signin">Sign in</Link>
-      </p>
-    </div>
   )
 }

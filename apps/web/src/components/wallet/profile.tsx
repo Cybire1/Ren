@@ -22,18 +22,8 @@ const whole = (base: bigint) => formatUsd(base).replace(/\.00$/, '')
 
 /** You, as the app's Profile shows you: your pass, your money's currency, your keys, your shop. */
 export function Profile() {
-  const {
-    profile,
-    activity,
-    contacts,
-    network,
-    rates,
-    liveRates,
-    setCurrency,
-    lock,
-    signOut,
-    shop,
-  } = useWallet()
+  const { profile, activity, contacts, network, rates, liveRates, setCurrency, lock, signOut } =
+    useWallet()
   const session = useSessionState()
   const router = useRouter()
   const [origin, setOrigin] = useState('https://mykova.app')
@@ -156,19 +146,6 @@ export function Profile() {
           read them.
         </p>
       </section>
-
-      <Link href={shop ? '/dashboard' : '/wallet/shop'} className="w-shopdoor">
-        <span className="w-keys-icon">
-          <Icon name="stall" size={20} />
-        </span>
-        <span className="w-shopdoor-text">
-          <strong>{shop ? shop.name : 'Run a shop'}</strong>
-          <span>{shop ? 'Open your shop' : 'Take payments into this wallet'}</span>
-        </span>
-        <span className="w-shopdoor-go">
-          <Icon name="arrow" size={18} />
-        </span>
-      </Link>
 
       {forgetting ? (
         <div className="w-forget">

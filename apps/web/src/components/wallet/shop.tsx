@@ -26,7 +26,7 @@ type Stage =
 export function Shop() {
   const router = useRouter()
   const go = useSearchParams().get('go')
-  const { profile, signMessage } = useWallet()
+  const { profile, signMessage, shop, rememberShop } = useWallet()
   const [stage, setStage] = useState<Stage>(go === 'open' ? { at: 'open' } : { at: 'choose' })
   const started = useRef(false)
   const [name, setName] = useState('')
@@ -44,7 +44,10 @@ export function Shop() {
         signed = { message: challenge.message, signature: await signMessage(challenge.message) }
       }
       const result = await signInWithWallet({ ...signed, merchant })
-      if (result.ok) return router.push('/dashboard')
+      if (result.ok) {
+        if (result.name) rememberShop(result.name)
+        return router.push('/dashboard')
+      }
       if (result.noShop) return setStage({ at: 'no-shop' })
       if (result.shops) return setStage({ at: 'pick', ...signed, shops: result.shops })
       throw new Error(result.error ?? 'Kova couldn’t sign you in.')
@@ -70,12 +73,18 @@ export function Shop() {
         signature,
       })
       if (!opened.ok) throw new Error(opened.error ?? 'Kova couldn’t open your shop.')
+      rememberShop(opened.name ?? name.trim())
       router.push('/dashboard')
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Kova couldn’t open your shop.')
       setStage({ at: 'open' })
     }
   }
+
+  // Signed in to a shop on this browser already: this screen is only the way in.
+  useEffect(() => {
+    if (shop) router.replace('/dashboard')
+  }, [shop, router])
 
   // Sent here from Sign in with "Use my Kova passkey": the wallet is open, so sign in straight away.
   // biome-ignore lint/correctness/useExhaustiveDependencies: once, when the wallet is ready; signIn reads the latest profile when it runs
@@ -168,6 +177,14 @@ export function Shop() {
                 <Icon name="face" size={18} />
               </span>
             </button>
+            <button
+              type="button"
+              className="textlink w-back-link"
+              disabled={working}
+              onClick={() => void signIn()}
+            >
+              I already have a shop
+            </button>
             <p className="w-fine">
               Payments land in this wallet, {profile.address.slice(0, 6)}…
               {profile.address.slice(-4)}. Kova never holds them.
@@ -214,6 +231,10 @@ export function Shop() {
           </div>
         )}
         {error && stage.at === 'choose' ? <p className="form-error">{error}</p> : null}
+        <p className="w-fine">
+          Opened your shop with email, Google or a secret key?{' '}
+          <a href="/signin">Sign in to it here</a>.
+        </p>
       </div>
     </div>
   )

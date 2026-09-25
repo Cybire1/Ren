@@ -6,6 +6,6 @@ import { Charge } from './charge'
 export const metadata: Metadata = { title: 'New charge' }
 
 export default async function ChargePage() {
-  if (!(await getSession())) redirect('/signin')
+  if (!(await getSession())) redirect('/wallet/shop?go=signin')
   return <Charge />
 }

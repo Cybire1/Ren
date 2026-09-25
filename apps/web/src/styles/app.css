@@ -1,147 +1,94 @@
 /*
- * The dashboard: an ink sidebar on desks, an ink dock on phones, and paper pages between.
+ * Shop mode: the shop inside the Kova app. The wallet's frame (top bar, floating dock, paper), with
+ * room for the shop's wider pages on a desk.
  */
 
-.app {
-  min-height: 100dvh;
-  display: grid;
-  grid-template-columns: 5.75rem minmax(0, 1fr);
-  grid-template-rows: auto 1fr;
-  grid-template-areas:
-    "rail demo"
-    "rail main";
+/* Wider than the wallet's column: the shop's pages use the room on a desk. */
+.w-top.shop-top {
+  grid-template-columns: auto minmax(0, 1fr);
+  max-width: 76rem;
+  padding-inline: 2.25rem;
 }
 
-.main {
-  grid-area: main;
+@media (max-width: 900px) {
+  .w-top.shop-top {
+    padding-inline: 1.25rem;
+  }
+}
+
+.shop-back {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 2.4rem;
+  padding: 0 0.95rem 0 0.6rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 0.3s var(--spring), transform 0.4s var(--spring);
+}
+
+.shop-back:hover {
+  background: #fff;
+}
+
+.shop-back:active {
+  transform: scale(0.96);
+}
+
+.shop-id {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 750;
+  text-decoration: none;
+}
+
+.shop-id-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.shop-id-badge {
+  position: relative;
+  flex: none;
+  display: block;
+  width: 34px;
+  height: 34px;
+}
+
+.shop-id-test {
+  position: absolute;
+  right: -2px;
+  bottom: -1px;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  background: #e3b35b;
+  box-shadow: 0 0 0 2.5px var(--paper);
+}
+
+.shop-main {
   width: 100%;
   max-width: 76rem;
   margin: 0 auto;
-  padding: 2rem 2.25rem 4rem;
-}
-
-/* --- Rail ----------------------------------------------------------------------------- */
-
-.rail {
-  grid-area: rail;
-  position: sticky;
-  top: 0;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.1rem;
-  padding: 1.35rem 0 1.1rem;
-  background: var(--ink);
-  color: #c9d6d6;
-}
-
-.rail-mark {
-  display: grid;
-  place-items: center;
-  width: 3.25rem;
-  height: 3.25rem;
-  border-radius: 1rem;
-}
-
-.rail-charge {
-  display: grid;
-  justify-items: center;
-  gap: 0.3rem;
-  margin: 0.4rem 0 0.6rem;
-  color: #f1efea;
-  font-size: 0.6875rem;
-  font-weight: 800;
-  text-decoration: none;
-}
-
-.rail-charge-dot {
-  display: grid;
-  place-items: center;
-  width: 3.4rem;
-  height: 3.4rem;
-  border-radius: 50%;
-  background: var(--coral);
-  color: #fff;
-  transition: transform 0.4s var(--spring), background-color 0.2s;
-}
-
-.rail-charge:hover .rail-charge-dot {
-  background: #dc7063;
-  transform: scale(1.06);
-}
-
-.rail-charge:active .rail-charge-dot {
-  transform: scale(0.94);
-}
-
-.rail-nav {
-  display: grid;
-  gap: 0.25rem;
-}
-
-.rail-link {
-  display: grid;
-  justify-items: center;
-  gap: 0.25rem;
-  width: 4.6rem;
-  padding: 0.6rem 0 0.5rem;
-  border: 0;
-  border-radius: 1.1rem;
-  background: none;
-  color: #a7b8b9;
-  font: inherit;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-decoration: none;
-  cursor: pointer;
-  transition: background-color 0.2s, color 0.2s;
-}
-
-.rail-link:hover {
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
-}
-
-.rail-link[aria-current="page"] {
-  background: var(--surface);
-  color: var(--ink);
-}
-
-.rail-foot {
-  margin-top: auto;
-  display: grid;
-  justify-items: center;
-  gap: 0.5rem;
-}
-
-.rail-shop {
-  position: relative;
-  display: block;
-  border-radius: 50%;
-}
-
-.rail-test {
-  position: absolute;
-  right: -1px;
-  bottom: 1px;
-  width: 0.75rem;
-  height: 0.75rem;
-  border-radius: 50%;
-  background: #e3b35b;
-  box-shadow: 0 0 0 3px var(--ink);
-}
-
-/* --- Phone chrome ----------------------------------------------------------------------- */
-
-.topnav,
-.dock {
-  display: none;
+  padding: 0.75rem 2.25rem calc(7.5rem + env(safe-area-inset-bottom, 0px));
 }
 
 .demo-bar {
-  grid-area: demo;
-  padding: 0.6rem 2.25rem;
+  max-width: 76rem;
+  margin: 0 auto 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: 999px;
   background: var(--coral-soft);
   font-size: 0.875rem;
   font-weight: 600;
@@ -154,119 +101,114 @@
 }
 
 @media (max-width: 900px) {
-  .app {
-    grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      "top"
-      "demo"
-      "main";
-  }
-
-  .rail {
-    display: none;
-  }
-
-  .topnav {
-    grid-area: top;
-    position: sticky;
-    top: 0;
-    z-index: 5;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: calc(0.75rem + env(safe-area-inset-top, 0px)) 1.25rem 0.75rem;
-    background: rgba(231, 229, 224, 0.92);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-  }
-
-  .topnav-end {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    min-width: 0;
-  }
-
-  .topnav-wallet {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: 0.3rem;
-    height: 2.1rem;
-    padding: 0 0.8rem;
-    border: 2px solid var(--ink);
-    border-radius: 999px;
-    background: var(--surface);
-    color: var(--ink);
-    font-size: 0.8125rem;
-    font-weight: 700;
-    text-decoration: none;
-  }
-
-  .topnav-shop {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-weight: 700;
-    font-size: 0.875rem;
-    text-decoration: none;
-    min-width: 0;
-  }
-
-  .topnav-shop span {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  .shop-main {
+    padding: 0.5rem 1.25rem calc(7.5rem + env(safe-area-inset-bottom, 0px));
   }
 
   .demo-bar {
-    padding: 0.55rem 1.25rem;
+    margin: 0 1.25rem 0.5rem;
+    border-radius: 1rem;
     font-size: 0.8125rem;
   }
+}
 
-  .main {
-    padding: 1.25rem 1.25rem calc(7rem + env(safe-area-inset-bottom, 0px));
-  }
+/* More: the rest of the shop, as rows. */
 
-  .dock {
-    position: fixed;
-    z-index: 6;
-    left: 50%;
-    bottom: calc(0.9rem + env(safe-area-inset-bottom, 0px));
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.4rem;
-    border-radius: 999px;
-    background: var(--ink);
-  }
+.more {
+  display: grid;
+  gap: 1.25rem;
+  max-width: 34rem;
+  margin: 0 auto;
+  animation: rise 0.5s var(--spring);
+}
 
-  .dock-link {
-    display: grid;
-    place-items: center;
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
-    color: #c9d6d6;
-    transition: background-color 0.2s;
-  }
+.more-head {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
 
-  .dock-link[aria-current="page"] {
-    background: var(--surface);
-    color: var(--ink);
-  }
+.more-head h1 {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
 
-  .dock-charge {
-    display: grid;
-    place-items: center;
-    width: 4.25rem;
-    height: 3rem;
-    border-radius: 999px;
-    background: var(--coral);
-    color: #fff;
-  }
+.more-head p {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.more-list {
+  display: grid;
+  border: 2px solid var(--ink);
+  border-radius: 1.5rem;
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.more-list-quiet {
+  background: transparent;
+}
+
+.more-row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: 0.85rem 1rem;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color 0.25s;
+}
+
+.more-row:hover {
+  background: rgba(11, 26, 29, 0.04);
+}
+
+.more-list > * + * {
+  border-top: 1px dashed var(--hairline);
+}
+
+.more-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.6rem;
+  height: 2.6rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+
+.more-icon-teal {
+  background: var(--teal);
+}
+
+.more-icon-quiet {
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+.more-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.more-text strong {
+  font-weight: 700;
+}
+
+.more-text small {
+  color: var(--muted);
+  font-size: 0.8125rem;
 }
 
 /* --- Page scaffolding --------------------------------------------------------------------- */
