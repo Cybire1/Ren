@@ -652,62 +652,6 @@
   }
 }
 
-/* --- Facts ------------------------------------------------------------------------------- */
-
-.lp-facts {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  background: var(--ink);
-  color: #e6eeee;
-}
-
-.lp-facts > div {
-  display: grid;
-  gap: 0.4rem;
-  padding: 2.5rem 2rem;
-  border-left: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.lp-facts > div:first-child {
-  border-left: 0;
-}
-
-.lp-facts strong {
-  font-size: clamp(2.5rem, 5vw, 3.75rem);
-  font-weight: 800;
-  letter-spacing: -0.05em;
-  line-height: 1;
-  color: #fff;
-}
-
-.lp-facts > div:nth-child(2) strong {
-  color: var(--coral-soft);
-}
-
-.lp-facts span {
-  max-width: 15rem;
-  color: var(--on-ink);
-  font-weight: 500;
-}
-
-@media (max-width: 900px) {
-  .lp-facts {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  .lp-facts > div:nth-child(3) {
-    border-left: 0;
-  }
-  .lp-facts > div:nth-child(n + 3) {
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-  }
-}
-
-@media (max-width: 480px) {
-  .lp-facts > div {
-    padding: 1.75rem 1.25rem;
-  }
-}
-
 /* --- Sections ------------------------------------------------------------------------------ */
 
 .lp-section {
@@ -722,43 +666,132 @@
   line-height: 0.98;
 }
 
-.lp-steps {
-  list-style: none;
-  margin: 3rem 0 0;
-  padding: 0;
+/* --- Three moves: the payment at the speed it happens ------------------------------ */
+
+.lp-moves-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 3rem;
+}
+
+.lp-moves-lead {
+  max-width: 21rem;
+  color: var(--muted);
+  font-size: 1.125rem;
+  font-weight: 500;
+}
+
+.lp-track {
+  position: relative;
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 1.25rem;
-  counter-reset: step;
+  margin: 3.5rem 0 0;
+  padding: 0;
+  list-style: none;
 }
 
-.lp-steps li {
-  counter-increment: step;
+/* The rail from the first clock to the last: dotted ink, and the coral second that fills it. */
+.lp-track::before,
+.lp-track::after {
+  content: "";
+  position: absolute;
+  top: 1.05rem;
+  left: 1.6rem;
+  width: calc(66.667% + 0.833rem);
 }
 
-.lp-step-art {
+.lp-track::before {
+  border-top: 2px dashed rgba(11, 26, 29, 0.35);
+}
+
+.lp-track::after {
+  height: 4px;
+  margin-top: -1px;
+  border-radius: 2px;
+  background: var(--coral);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.lp-track[data-run]::after {
+  animation: lp-second 0.9s cubic-bezier(0.25, 0.6, 0.3, 1) 0.15s both;
+}
+
+@keyframes lp-second {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.lp-stop {
+  position: relative;
+  min-width: 0;
+}
+
+.lp-clock {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  height: 2.1rem;
+  padding: 0 0.85rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-track[data-run] .lp-clock {
+  animation: lp-tick 0.35s var(--spring) both;
+}
+
+.lp-track[data-run] .lp-stop:nth-child(1) .lp-clock {
+  animation-delay: 0.15s;
+}
+
+.lp-track[data-run] .lp-stop:nth-child(2) .lp-clock {
+  animation-delay: 0.55s;
+}
+
+.lp-track[data-run] .lp-stop:nth-child(3) .lp-clock {
+  animation-delay: 1.05s;
+}
+
+@keyframes lp-tick {
+  from {
+    background: var(--paper);
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.14);
+  }
+  to {
+    background: var(--coral);
+    transform: scale(1);
+  }
+}
+
+.lp-frame {
   position: relative;
   display: grid;
   place-items: center;
-  height: 15rem;
+  height: 14rem;
+  margin-top: 1.1rem;
+  overflow: hidden;
   border: 2px solid var(--ink);
   border-radius: 2rem;
-  overflow: hidden;
 }
 
-.lp-step-art::before {
-  content: counter(step);
-  position: absolute;
-  top: 1rem;
-  left: 1rem;
-  display: grid;
-  place-items: center;
-  width: 2.2rem;
-  height: 2.2rem;
-  border-radius: 50%;
-  background: var(--ink);
-  color: #fff;
-  font-weight: 800;
+.lp-frame img {
+  width: auto;
+  max-height: 82%;
 }
 
 .lp-tint-teal {
@@ -773,15 +806,10 @@
   background: var(--surface);
 }
 
-.lp-step-art img {
-  max-height: 82%;
-  width: auto;
-}
-
 .lp-price {
   position: absolute;
-  bottom: 1.25rem;
   right: 1.25rem;
+  bottom: 1.25rem;
   padding: 0.35rem 0.9rem;
   border-radius: 999px;
   background: var(--ink);
@@ -791,23 +819,163 @@
   letter-spacing: -0.03em;
 }
 
-.lp-steps h3 {
+/* Stamped paid, the moment the line arrives. */
+.lp-stamp {
+  position: absolute;
+  top: 1.1rem;
+  right: 1.1rem;
+  padding: 0.25rem 0.75rem;
+  border: 3px solid var(--coral-deep);
+  border-radius: 0.6rem;
+  color: var(--coral-deep);
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: rotate(-12deg) scale(1.8);
+}
+
+.lp-track[data-run] .lp-stamp {
+  animation: lp-stamp 0.45s var(--spring) 1.1s both;
+}
+
+@keyframes lp-stamp {
+  from {
+    opacity: 0;
+    transform: rotate(-12deg) scale(1.8);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(-12deg) scale(1);
+  }
+}
+
+.lp-stop h3 {
   margin-top: 1.25rem;
   font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
-.lp-steps p {
-  margin-top: 0.35rem;
+.lp-stop p {
   max-width: 22rem;
+  margin-top: 0.35rem;
   color: var(--muted);
   font-weight: 500;
 }
 
+/* The receipt of that second. */
+.lp-tally-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: flex-start;
+  gap: 1.25rem;
+  margin-top: 3.5rem;
+}
+
+.lp-tally {
+  flex: 1 1 24rem;
+  max-width: 34rem;
+  margin: 0;
+  padding: 0.9rem 1.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.25rem;
+  background: var(--surface);
+  font-variant-numeric: tabular-nums;
+}
+
+.lp-tally > div {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  padding: 0.6rem 0;
+  border-top: 1px dashed rgba(11, 26, 29, 0.22);
+}
+
+.lp-tally > div:first-child {
+  border-top: 0;
+}
+
+.lp-tally dt {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* Dotted leaders, as on a till roll. */
+.lp-tally dt::after {
+  content: "";
+  flex: 1;
+  min-width: 1rem;
+  border-bottom: 2px dotted rgba(11, 26, 29, 0.3);
+  transform: translateY(-0.25em);
+}
+
+.lp-tally dd {
+  margin: 0;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.lp-tally-zero {
+  color: var(--coral-deep);
+}
+
+.lp-again {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 2.75rem;
+  padding: 0 1.25rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.4s var(--spring), background-color 0.3s var(--spring);
+}
+
+.lp-again:hover {
+  background: var(--surface);
+}
+
+.lp-again:active {
+  transform: scale(0.97);
+}
+
 @media (max-width: 860px) {
-  .lp-steps {
+  .lp-track {
     grid-template-columns: minmax(0, 1fr);
+    gap: 2.5rem;
+  }
+  /* Stacked, the clocks and the stamp tell the time; the rail would only cross the pictures. */
+  .lp-track::before,
+  .lp-track::after {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-track::after {
+    animation: none !important;
+    transform: none;
+  }
+  .lp-clock {
+    animation: none !important;
+    background: var(--coral);
+  }
+  .lp-stamp {
+    animation: none !important;
+    opacity: 1;
+    transform: rotate(-12deg);
   }
 }
 

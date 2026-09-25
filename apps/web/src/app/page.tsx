@@ -4,6 +4,7 @@ import { Art, Brand, Icon, Pill } from '@/components/brand'
 import { PaidCoin, ReceiptHero } from '@/components/receipt-hero'
 import { getSession } from '@/lib/session'
 import { signInDemo } from './actions'
+import { PaidInASecond } from '@/components/paid-in-a-second'
 
 export const metadata: Metadata = {
   title: { absolute: 'Kova · Tap. Paid. Anywhere.' },
@@ -82,54 +83,8 @@ export default async function Landing() {
         </div>
       </section>
 
-      {/* Facts ----------------------------------------------------------------------------- */}
-      <section className="lp-facts" aria-label="Kova in numbers">
-        <div>
-          <strong>≈1s</strong>
-          <span>from tap to settled, final on Monad</span>
-        </div>
-        <div>
-          <strong>$0.00</strong>
-          <span>in fees for your customer. Kova pays the network</span>
-        </div>
-        <div>
-          <strong>0</strong>
-          <span>machines to buy. The phone in your pocket is the terminal</span>
-        </div>
-        <div>
-          <strong>24/7</strong>
-          <span>settlement, weekends too. It’s yours the second it lands</span>
-        </div>
-      </section>
-
-      {/* How it works ---------------------------------------------------------------------- */}
-      <section className="lp-section" id="how">
-        <h2 className="lp-h2">Three moves, and it’s paid</h2>
-        <ol className="lp-steps">
-          <li>
-            <div className="lp-step-art lp-tint-teal">
-              <Art name="badge-shop" size={120} />
-              <span className="lp-price">$12.50</span>
-            </div>
-            <h3>Type the price</h3>
-            <p>On Kova Terminal, on any phone. Add what it’s for if you like: “Two flat whites”.</p>
-          </li>
-          <li>
-            <div className="lp-step-art lp-tint-coral">
-              <Art name="scene-faceid" size={220} />
-            </div>
-            <h3>They tap or scan</h3>
-            <p>With Kova Pay it’s one tap and Face ID. Any other Monad wallet can scan the code and pay too, and Kova covers the network fee.</p>
-          </li>
-          <li>
-            <div className="lp-step-art lp-tint-paper">
-              <Art name="kovi-catch" size={210} />
-            </div>
-            <h3>It lands, in about a second</h3>
-            <p>Your till shows Paid, your dashboard updates, and the dollars are already in your wallet.</p>
-          </li>
-        </ol>
-      </section>
+      {/* How it works: the payment, at the speed it happens ------------------------------ */}
+      <PaidInASecond />
 
       {/* Two sides --------------------------------------------------------------------------- */}
       <section className="lp-duo">

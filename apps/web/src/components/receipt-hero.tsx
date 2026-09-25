@@ -209,7 +209,7 @@ export function ReceiptHero() {
               />
               <text fontSize="9.5" fontWeight="800" fill="#0b1a1d" letterSpacing="1.4">
                 <textPath href="#rh-ring" textLength="252" lengthAdjust="spacing">
-                  SETTLED ON TEMPO • SETTLED ON TEMPO •
+                  SETTLED ON MONAD • SETTLED ON MONAD •
                 </textPath>
               </text>
               <text
