@@ -104,7 +104,8 @@ export async function signUp(_: FormState, form: FormData): Promise<FormState> {
   if (!/^0x[0-9a-fA-F]{40}$/.test(address)) return { error: 'That isn’t a Monad address. It starts with 0x and has 40 more characters.' }
   // A shop whose wallet was made with email or Google proves it with a signature, and its owner
   // signs in with that wallet from then on.
-  const ownerMessage = String(form.get('owner_message') ?? '')
+  // A form sends line breaks as \r\n, and the wallet signed the message with \n, as EIP-4361 writes it.
+  const ownerMessage = String(form.get('owner_message') ?? '').replace(/\r\n/g, '\n')
   const ownerSignature = String(form.get('owner_signature') ?? '')
   const owner = ownerMessage && ownerSignature ? { message: ownerMessage, signature: ownerSignature } : undefined
   try {
