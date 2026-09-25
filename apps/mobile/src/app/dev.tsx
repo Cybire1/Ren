@@ -1,5 +1,5 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { View } from 'react-native'
 import { createItem, getCatalog, getCheckout, lookupBarcode, ringUp, uploadImage } from '@/lib/api'
 import { save } from '@/lib/storage'
@@ -24,7 +24,11 @@ import { Txt } from '@/ui/primitives'
  */
 /** A small Lagos kitchen menu for trying the stall screens. */
 const SEED = [
-  { name: 'Jollof rice and chicken', price: '6.50', description: 'Smoky party jollof with a grilled drumstick' },
+  {
+    name: 'Jollof rice and chicken',
+    price: '6.50',
+    description: 'Smoky party jollof with a grilled drumstick',
+  },
   { name: 'Suya, beef', price: '4.00', description: 'Spiced skewers with onions and yaji' },
   { name: 'Moi moi', price: '2.50', description: 'Steamed bean pudding with egg' },
   { name: 'Puff-puff, six', price: '2.00', description: null },
@@ -32,83 +36,165 @@ const SEED = [
 ]
 
 export default function Dev() {
-  const params = useLocalSearchParams<{ name?: string; cur?: string; fake?: string; fund?: string; mode?: string; to?: string; reset?: string; pay?: string; send?: string; amount?: string; pair?: string; unpair?: string; rename?: string; stall?: string; tagline?: string; seed?: string; till?: string; sell?: string }>()
+  const params = useLocalSearchParams<{
+    name?: string
+    cur?: string
+    fake?: string
+    fund?: string
+    mode?: string
+    to?: string
+    reset?: string
+    pay?: string
+    send?: string
+    amount?: string
+    pair?: string
+    unpair?: string
+    rename?: string
+    stall?: string
+    tagline?: string
+    seed?: string
+    till?: string
+    sell?: string
+  }>()
   const wallet = useWallet()
   const prefs = usePrefs()
   const terminal = useTerminal()
   const stall = useStall()
-  const [step, setStep] = useState('starting')
+  const [step, showStep] = useState('starting')
+  const setStep = (next: string) => {
+    console.log(`[dev] ${next}`)
+    showStep(next)
+  }
+  // The effect runs again whenever the wallet changes: reset and create each happen once, and
+  // the steps after them run once, in the run that has the new wallet.
+  const progress = useRef({ reset: false, created: false, finished: false })
 
   useEffect(() => {
-    if (!__DEV__ || wallet.status === 'loading' || !prefs.ready || !terminal.ready || !stall.ready) return
+    if (
+      !__DEV__ ||
+      wallet.status === 'loading' ||
+      !prefs.ready ||
+      !terminal.ready ||
+      !stall.ready ||
+      progress.current.finished
+    )
+      return
     void (async () => {
-      if (params.reset) await wallet.signOut()
-      if (params.mode) prefs.setMode(params.mode as Mode)
-      if (params.name && wallet.status === 'none') {
-        setStep('creating wallet')
-        // fake=1: no passkey sheet, for a simulator nobody is tapping.
-        if (params.fake && wallet.createForDev) await wallet.createForDev(params.name, (params.cur as DisplayCurrency) || 'USD')
-        else await wallet.create(params.name, (params.cur as DisplayCurrency) || 'USD')
+      try {
+        if (params.reset && !progress.current.reset) {
+          progress.current.reset = true
+          if (wallet.status !== 'none') {
+            setStep('signing out')
+            await wallet.signOut()
+            return
+          }
+        }
+        if (params.mode) prefs.setMode(params.mode as Mode)
+        if (params.name && wallet.status === 'none') {
+          if (progress.current.created) return
+          progress.current.created = true
+          setStep('creating wallet')
+          // fake=1: no passkey sheet, for a simulator nobody is tapping.
+          if (params.fake && wallet.createForDev)
+            await wallet.createForDev(params.name, (params.cur as DisplayCurrency) || 'USD')
+          else await wallet.create(params.name, (params.cur as DisplayCurrency) || 'USD')
+          return
+        }
+        progress.current.finished = true
+        if (params.fund) {
+          setStep('funding')
+          await wallet.addMoney().catch(() => {})
+        }
+        if (params.unpair) await terminal.unpair()
+        if (params.pair) {
+          setStep('pairing')
+          await terminal.pair(params.pair, 'Front counter')
+        }
+        if (params.stall) {
+          setStep('opening a stall')
+          const profile = wallet.profile
+          if (profile)
+            await stall.open(
+              {
+                name: params.stall,
+                tagline: params.tagline,
+                phone: `${profile.name.split(' ')[0]}’s phone`,
+                settleTo: profile.address,
+              },
+              setStep,
+            )
+        }
+        if (params.seed) {
+          setStep('filling the stall')
+          const detail = await stall.refresh()
+          for (const item of SEED)
+            await createItem({ ...item, stall_ids: detail ? [detail.id] : [] })
+          const coke = await lookupBarcode('5449000000996', 'owner').catch(() => null)
+          const photo = coke?.suggestion?.image_url
+            ? await uploadImage(coke.suggestion.image_url).catch(() => null)
+            : null
+          await createItem({
+            name: 'Coca-Cola 33cl',
+            price: '1.20',
+            barcode: '5449000000996',
+            image_id: photo?.id ?? null,
+          })
+          await stall.refresh()
+        }
+        if (params.till) await save('kova.till.mode', params.till)
+        if (params.sell) {
+          setStep('ringing up')
+          const catalog = await getCatalog()
+          const lines = params.sell.split(';').flatMap((part) => {
+            const [name, qty] = part.split('*')
+            const item = catalog.find((i) => i.name === name)
+            return item ? [{ id: item.id, quantity: Number(qty ?? 1) }] : []
+          })
+          const sale = await ringUp(lines)
+          const usd = sale.payment_intent.amount
+          console.log(`[dev] till sale ${sale.payment_intent.id} for $${usd}`)
+          return router.replace({
+            pathname: '/terminal/[id]',
+            params: { id: sale.payment_intent.id, price: `$${usd}`, usd },
+          })
+        }
+        if (params.rename) {
+          const [address, ...name] = params.rename.split(':')
+          await wallet.renameContact(address as `0x${string}`, name.join(':'))
+        }
+        if (params.pay) {
+          setStep('paying')
+          const entry = await wallet.payCheckout(await getCheckout(params.pay))
+          return router.replace({ pathname: '/receipt/[id]', params: { id: entry.id } })
+        }
+        if (params.send && params.amount) {
+          setStep('sending')
+          const entry = await wallet.send(
+            { address: params.send as `0x${string}`, name: 'Tunde' },
+            BigInt(params.amount),
+          )
+          return router.replace({ pathname: '/receipt/[id]', params: { id: entry.id } })
+        }
+        router.replace((params.to as never) || '/')
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error)
+        console.warn(`[dev] failed: ${message}`)
+        showStep(`failed: ${message}`)
       }
-      if (params.fund) {
-        setStep('funding')
-        await wallet.addMoney().catch(() => {})
-      }
-      if (params.unpair) await terminal.unpair()
-      if (params.pair) {
-        setStep('pairing')
-        await terminal.pair(params.pair, 'Front counter')
-      }
-      if (params.stall) {
-        setStep('opening a stall')
-        const profile = wallet.profile
-        if (profile) await stall.open({ name: params.stall, tagline: params.tagline, phone: `${profile.name.split(' ')[0]}’s phone`, settleTo: profile.address }, setStep)
-      }
-      if (params.seed) {
-        setStep('filling the stall')
-        const detail = await stall.refresh()
-        for (const item of SEED) await createItem({ ...item, stall_ids: detail ? [detail.id] : [] })
-        const coke = await lookupBarcode('5449000000996', 'owner').catch(() => null)
-        const photo = coke?.suggestion?.image_url ? await uploadImage(coke.suggestion.image_url).catch(() => null) : null
-        await createItem({ name: 'Coca-Cola 33cl', price: '1.20', barcode: '5449000000996', image_id: photo?.id ?? null })
-        await stall.refresh()
-      }
-      if (params.till) await save('kova.till.mode', params.till)
-      if (params.sell) {
-        setStep('ringing up')
-        const catalog = await getCatalog()
-        const lines = params.sell.split(';').flatMap((part) => {
-          const [name, qty] = part.split('*')
-          const item = catalog.find((i) => i.name === name)
-          return item ? [{ id: item.id, quantity: Number(qty ?? 1) }] : []
-        })
-        const sale = await ringUp(lines)
-        const usd = sale.payment_intent.amount
-        console.log(`[dev] till sale ${sale.payment_intent.id} for $${usd}`)
-        return router.replace({ pathname: '/terminal/[id]', params: { id: sale.payment_intent.id, price: `$${usd}`, usd } })
-      }
-      if (params.rename) {
-        const [address, ...name] = params.rename.split(':')
-        await wallet.renameContact(address as `0x${string}`, name.join(':'))
-      }
-      if (params.pay) {
-        setStep('paying')
-        const entry = await wallet.payCheckout(await getCheckout(params.pay))
-        return router.replace({ pathname: '/receipt/[id]', params: { id: entry.id } })
-      }
-      if (params.send && params.amount) {
-        setStep('sending')
-        const entry = await wallet.send({ address: params.send as `0x${string}`, name: 'Tunde' }, BigInt(params.amount))
-        return router.replace({ pathname: '/receipt/[id]', params: { id: entry.id } })
-      }
-      router.replace((params.to as never) || '/')
     })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [wallet.status, prefs.ready, terminal.ready, stall.ready])
 
   if (!__DEV__) return <Redirect href="/" />
   return (
-    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.paper }}>
+    <View
+      style={{
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: colors.paper,
+      }}
+    >
       <Txt>{step}</Txt>
     </View>
   )

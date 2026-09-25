@@ -5,10 +5,11 @@ import {
   Manrope_700Bold,
   useFonts,
 } from '@expo-google-fonts/manrope'
-import { router, Stack } from 'expo-router'
+import { router, Stack, useRootNavigationState } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
 import { useEffect } from 'react'
+import { Platform, Settings } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { PrefsProvider, usePrefs } from '@/lib/prefs'
@@ -20,6 +21,24 @@ import { colors } from '@/lib/theme'
 import { useWallet, WalletProvider } from '@/lib/wallet'
 
 void SplashScreen.preventAutoHideAsync()
+
+/**
+ * Development only: `xcrun simctl launch <device> xyz.kova.pay.monad -KovaDevLink "name=Maya&fake=1&to=/"`
+ * runs that dev link (app/dev.tsx) on launch. A kova:// link opened from outside asks "Open in
+ * Kova?", which a simulator nobody is tapping can't answer; launch arguments ask nothing. Replacing
+ * the root route remounts this layout, so "already ran" lives outside it.
+ */
+let devLaunched = false
+function DevLaunch() {
+  const navigation = useRootNavigationState()
+  useEffect(() => {
+    if (!__DEV__ || Platform.OS !== 'ios' || devLaunched || !navigation?.key) return
+    devLaunched = true
+    const link = Settings.get('KovaDevLink')
+    if (typeof link === 'string' && link) router.replace(`/dev?${link}` as never)
+  }, [navigation?.key])
+  return null
+}
 
 /** When money arrives while the app is open, celebrate it. Terminal mode has its own screens. */
 function ArrivalWatcher() {
@@ -57,6 +76,7 @@ export default function RootLayout() {
                 <TravelProvider>
                 <StatusBar style="dark" />
                 <ArrivalWatcher />
+                <DevLaunch />
                 <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
                   <Stack.Screen name="index" options={{ animation: 'none' }} />
                   <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
