@@ -450,7 +450,7 @@ export const signInChallenges = pgTable('sign_in_challenges', {
   nonce: text('nonce').primaryKey(),
   /** Lowercase. */
   address: address('address').notNull(),
-  purpose: text('purpose').notNull(), // sign_in | open_shop
+  purpose: text('purpose').notNull(), // sign_in | open_shop | own_shop
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   usedAt: timestamp('used_at', { withTimezone: true }),
   createdAt: createdAt(),
