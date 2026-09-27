@@ -13,7 +13,7 @@ type Stage =
   | { at: 'done'; balance: bigint }
   | { at: 'problem'; message: string }
 
-/** Money in. On the test network, Kova sends test dollars and pays the gas; on mainnet, AUSD to your address. */
+/** Money in. On the test network, Kova sends $5 of test dollars a day and pays the gas; on mainnet, AUSD to your address. */
 export function AddMoney() {
   const { network, addTestDollars } = useWallet()
   const [stage, setStage] = useState<Stage>({ at: 'ready' })
@@ -65,13 +65,17 @@ export function AddMoney() {
         <Art name="kovi-catch" size={150} className="w-add-art" />
         <h1 className="w-title">Free test dollars</h1>
         <p className="w-lead">
-          Kova is running on Monad’s test network. It sends you test dollars to try every payment
-          for real, and pays the gas.
+          Kova is running on Monad’s test network. It sends you $5 of test dollars a day to try
+          every payment for real, and pays the gas.
         </p>
         <dl className="w-review-card">
           <div className="w-review-row">
+            <dt>Amount</dt>
+            <dd>$5, once a day</dd>
+          </div>
+          <div className="w-review-row">
             <dt>From</dt>
-            <dd>Monad testnet faucet</dd>
+            <dd>Kova, on Monad testnet</dd>
           </div>
           <div className="w-review-row">
             <dt>Arrives</dt>

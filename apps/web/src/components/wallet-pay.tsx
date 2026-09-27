@@ -1,5 +1,6 @@
 'use client'
 
+import { TEST_DOLLARS_A_DAY } from '@kova/monad'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -289,13 +290,15 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
           <p>
             This wallet has {usd(Number(stage.balance) / 1e6)} {checkout.token_symbol ?? 'AUSD'} on Monad, and this costs {usd(checkout.amount)}.
           </p>
-          {testnet ? (
+          {testnet && stage.balance + TEST_DOLLARS_A_DAY >= BigInt(checkout.amount_base) ? (
             <button type="button" className="pill pill-block" data-tone="light" disabled={funding} onClick={() => void topUp(stage.wallet, stage.address)}>
               <span className="pill-label">{funding ? 'Getting test dollars…' : 'Get test dollars and pay'}</span>
               <span className="pill-cap">
                 <Icon name="plus" size={18} />
               </span>
             </button>
+          ) : testnet ? (
+            <p>Kova’s test dollars come $5 a day, which won’t cover this.</p>
           ) : null}
           <button type="button" className="textlink wallet-again" onClick={() => setStage({ name: 'choose' })}>
             Use another wallet

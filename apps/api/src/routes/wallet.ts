@@ -27,7 +27,7 @@ import { indexedThrough } from '../workers/watcher.js'
  *
  * - POST /transfers relays a transfer between people that the sender signed; Kova pays the gas.
  * - GET /wallets/:address/transfers lists what moved in or out, from Kova's index of the chain.
- * - POST /faucet sends test dollars, on testnet only.
+ * - POST /faucet sends test dollars, five a day for each wallet, on testnet only.
  * - GET and PUT /vaults/:id keep a wallet's encrypted backup (name, currency, contacts). Kova
  *   stores ciphertext it can't read; only the vault's own key, from the same passkey, replaces it.
  */
@@ -190,16 +190,17 @@ export const walletRoutes = new Hono()
     if (!parsed.success) throw new KovaError('invalid_request', 'Expected { address }.')
     if (!walletClient) throw new KovaError('chain_error', 'Test dollars are not switched on for this server yet.')
     const address = getAddress(parsed.data.address)
-    limit(`faucet:${address.toLowerCase()}`, 3, 3_600_000, 'That wallet has had its test dollars for now. Try again in an hour.')
-    limit(`faucet-ip:${ip(c)}`, 10, 3_600_000, 'Lots of test dollars from here. Try again in an hour.')
+    // Each wallet has five a day (kept in the database); this only slows one place making many wallets.
+    limit(`faucet-ip:${ip(c)}`, 20, 86_400_000, 'Lots of test dollars from here today. Try again tomorrow.')
 
     const drip = await giveTestDollars(address)
     return c.json({
       object: 'faucet',
       amount: drip.amount,
       currency: 'AUSD',
-      source: drip.from,
+      source: 'kova',
       tx_hash: drip.txHash,
       explorer_url: explorerTxUrl(network, drip.txHash),
+      next_at: drip.nextAt.toISOString(),
     })
   })

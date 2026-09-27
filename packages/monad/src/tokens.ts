@@ -50,6 +50,9 @@ export const tokens: Record<NetworkId, Partial<Record<Currency, Token>>> = {
 
 export const AUSD_TESTNET_FAUCET = getAddress('0xd236c18D274E54FAccC3dd9DDA4b27965a73ee6C')
 
+/** Kova's test dollars on testnet: five a day for each wallet, from Kova's own testnet treasury. */
+export const TEST_DOLLARS_A_DAY = 5_000_000n
+
 export function isCurrency(value: string): value is Currency {
   return (currencies as readonly string[]).includes(value)
 }

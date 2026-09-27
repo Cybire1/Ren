@@ -57,6 +57,13 @@
       "when": 1790365825114,
       "tag": "0007_sign_in_with_wallet",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1790502897700,
+      "tag": "0008_daily_test_dollars",
+      "breakpoints": true
     }
   ]
 }

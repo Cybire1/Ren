@@ -53,7 +53,7 @@ export async function getBalance(address: Address): Promise<bigint> {
   })
 }
 
-/** Testnet only: asks Kova for test dollars from Agora's faucet (Kova pays the gas), and waits until they land. */
+/** Testnet only: asks Kova for today's test dollars ($5 a day, gas paid by Kova), and waits until they land. */
 export async function fundFromFaucet(address: Address): Promise<void> {
   if (!isTestnet) throw new Error('Adding money needs a card or bank on mainnet.')
   const before = await getBalance(address).catch(() => 0n)

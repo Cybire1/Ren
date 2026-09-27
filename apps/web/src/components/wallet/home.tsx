@@ -82,7 +82,7 @@ export function Home() {
             </strong>
             <span>
               {network === 'testnet'
-                ? 'Free on Monad testnet. Arrives in about a second.'
+                ? '$5 a day, free on Monad testnet. Arrives in about a second.'
                 : 'Send AUSD on Monad to your address.'}
             </span>
           </span>

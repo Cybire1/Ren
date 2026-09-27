@@ -1,9 +1,7 @@
 import { schema, uuidv7 } from '@kova/db'
 import {
-  AUSD_TESTNET_FAUCET,
   eip3009Abi,
   encodeMemo,
-  faucetAbi,
   parseAmount,
   transferAuthorizationTypedData,
   transferWithAuthorizationArgs,
@@ -13,6 +11,7 @@ import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { network, publicClient, settlementToken, walletClient } from '../src/chain.js'
 import { db } from '../src/db.js'
+import { giveTestDollars } from '../src/services/faucet.js'
 import { catchUp, startWatcher, type WatcherHandle } from '../src/workers/watcher.js'
 
 /**
@@ -38,7 +37,8 @@ beforeAll(async () => {
     network: 'testnet',
     isTest: true,
   })
-  await walletClient.writeContractSync({ address: AUSD_TESTNET_FAUCET, abi: faucetAbi, functionName: 'requestFunds', args: [payer.address] })
+  // Today's test dollars from Kova's treasury, as any wallet gets them.
+  await giveTestDollars(payer.address)
 }, 120_000)
 
 afterAll(async () => {

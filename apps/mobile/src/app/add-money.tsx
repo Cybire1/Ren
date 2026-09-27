@@ -11,7 +11,7 @@ import { Stage } from '@/ui/Stage'
 import { Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /**
- * Adding money. On testnet, Kova sends free test AUSD (from Agora's faucet, or its own when that runs dry). On mainnet this is where
+ * Adding money. On testnet, Kova sends $5 of test AUSD a day from its own testnet treasury. On mainnet this is where
  * card and bank on-ramps go; Kova itself never holds or converts the money (D-012).
  */
 export default function AddMoney() {
@@ -27,7 +27,7 @@ export default function AddMoney() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setStage('done')
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'The faucet did not answer. Try again.')
+      setProblem(error instanceof Error ? error.message : 'Kova didn’t answer. Try again.')
       setStage('problem')
     }
   }
@@ -57,7 +57,7 @@ export default function AddMoney() {
               Free test dollars
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Kova is running on Monad’s test network. It sends you test dollars to try every payment for real, and pays the gas.
+              Kova is running on Monad’s test network. It sends you $5 of test dollars a day to try every payment for real, and pays the gas.
             </Txt>
           </>
         ) : (
@@ -81,10 +81,10 @@ export default function AddMoney() {
           <Sticker radius={24} style={{ height: 70 }}>
             <View style={styles.row}>
               <Txt size={15} color={colors.muted}>
-                From
+                Amount
               </Txt>
               <Txt weight="semi" size={15}>
-                Monad testnet faucet
+                $5, once a day
               </Txt>
             </View>
           </Sticker>

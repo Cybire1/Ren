@@ -456,6 +456,17 @@ export const signInChallenges = pgTable('sign_in_challenges', {
   createdAt: createdAt(),
 })
 
+/**
+ * Testnet only: when each wallet last had Kova's test dollars, which come once a day. One row per
+ * wallet, so claiming is a single conditional upsert and two taps at once can't both be paid.
+ */
+export const testDollarClaims = pgTable('test_dollar_claims', {
+  /** Lowercase. */
+  address: address('address').primaryKey(),
+  claimedAt: timestamp('claimed_at', { withTimezone: true }).notNull(),
+  txHash: text('tx_hash'),
+})
+
 export const auditLogs = pgTable(
   'audit_logs',
   {

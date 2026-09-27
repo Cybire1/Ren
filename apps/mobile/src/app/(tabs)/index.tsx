@@ -132,7 +132,7 @@ export default function Home() {
               {isTestnet ? 'Add test dollars to start' : 'Add money to start paying'}
             </Txt>
             <Txt size={13} color={colors.onTint}>
-              {isTestnet ? 'Free on Monad testnet. Arrives in about a second.' : 'From a card or a bank transfer.'}
+              {isTestnet ? '$5 a day, free on Monad testnet. Arrives in about a second.' : 'From a card or a bank transfer.'}
             </Txt>
           </View>
           <View style={styles.noticeCta}>
