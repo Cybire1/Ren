@@ -67,7 +67,7 @@ export default function Receipt() {
           <Row label="When" value={`${new Date(entry.at).toLocaleDateString([], { day: 'numeric', month: 'long' })}, ${when(entry.at)}`} />
           {['Sent', 'Arrived', 'Scan to pay', 'AUSD test faucet'].includes(entry.detail) ? null : <Row label="For" value={entry.detail} />}
           {entry.ms ? <Row label="Took" value={`${(entry.ms / 1000).toFixed(1)} seconds`} /> : null}
-          <Row label="Fee" value={entry.kind === 'paid' ? '$0.00, covered by Kova' : entry.kind === 'sent' ? 'Under $0.01' : '$0.00'} />
+          <Row label="Fee" value={entry.kind === 'paid' || entry.kind === 'sent' ? '$0.00, covered by Kova' : '$0.00'} />
           <Row label="Amount" value={formatUsd(BigInt(entry.amount))} />
           {entry.txHash ? (
             <View style={{ alignItems: 'center', marginTop: 14 }}>

@@ -227,7 +227,7 @@ export default function SendTo() {
         <View style={styles.feeRow}>
           <Txt size={15}>Fee</Txt>
           <Txt weight="semi" size={15}>
-            Under $0.01, network fee
+            $0.00, Kova covers it
           </Txt>
         </View>
         {short ? (
