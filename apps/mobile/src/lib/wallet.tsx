@@ -25,6 +25,8 @@ import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vaul
  */
 
 const PRF = 'kova.monad.prf.v1'
+/** Development only: a wallet made without the passkey sheet keeps its key here, so it still signs after a reload. */
+const DEV_PRF = 'kova.dev.prf'
 const PROFILE = 'kova.profile.v1'
 // History, balance and the block cursor belong to one chain, so the Monad build keeps its own.
 const ACTIVITY = 'kova.monad.activity.v1'
@@ -314,6 +316,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!profile) throw new Error('No wallet on this phone')
       const open = sessionAccount(amount)
       if (open) return open
+      if (__DEV__ && !profile.protected) {
+        const dev = await SecureStore.getItemAsync(DEV_PRF).catch(() => null)
+        if (dev) return begin(base64urlnopad.decode(dev), profile.address)
+      }
       const stored = await SecureStore.getItemAsync(PRF, {
         requireAuthentication: true,
         authenticationPrompt: amount > 0n ? `Approve ${formatUsd(amount)}` : 'Open your wallet',
@@ -506,6 +512,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     // The passkey itself stays in iCloud Keychain: it can bring this wallet back at any time.
     endSession()
     await SecureStore.deleteItemAsync(PRF)
+    await SecureStore.deleteItemAsync(DEV_PRF).catch(() => {})
     await forgetVaultSecret()
     await remove(PROFILE, ACTIVITY, CONTACTS, CURSOR, BALANCE)
     setProfile(null)
@@ -519,7 +526,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const createForDev = useCallback(async (name: string, currency: DisplayCurrency) => {
     if (!__DEV__) throw new Error('Development only')
-    const account = await begin(crypto.getRandomValues(new Uint8Array(32)))
+    const entropy = crypto.getRandomValues(new Uint8Array(32))
+    await SecureStore.setItemAsync(DEV_PRF, base64urlnopad.encode(entropy))
+    const account = await begin(entropy)
     const next: Profile = { name: name.trim(), address: account.address, currency, protected: false, createdAt: Date.now() }
     await save(PROFILE, next)
     setProfile(next)

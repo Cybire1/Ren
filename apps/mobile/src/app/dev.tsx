@@ -14,11 +14,11 @@ import { Txt } from '@/ui/primitives'
 /**
  * Development only: `kova://dev?name=Maya&cur=EUR&fund=1&mode=pay&to=/send` sets up a wallet
  * (`fake=1` makes it from a random key, without the passkey sheet)
- * and jumps to a screen; `pay=<charge>` or `send=<address>&amount=<base units>` runs the real
+ * and jumps to a screen; `pay=<charge>` or `send=<address>&amount=<base units>&payee=<name>` runs the real
  * payment code, so every screen can be reached on a simulator without tapping. `pair=<code>`
  * pairs this phone as a terminal, `unpair=1` forgets it, `rename=<address>:<name>` names a contact,
  * `stall=<name>&tagline=<line>` opens a stall from this wallet the way Profile does, `seed=1` fills
- * that stall with a small menu (and a barcoded drink for the till), `till=keypad|items|scan` picks
+ * that stall with a small menu (and a barcoded drink for the till), `seed=bakery` with a bakery's, `till=keypad|items|scan` picks
  * the till's mode, and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
  * Release builds redirect home.
  */
@@ -33,6 +33,15 @@ const SEED = [
   { name: 'Moi moi', price: '2.50', description: 'Steamed bean pudding with egg' },
   { name: 'Puff-puff, six', price: '2.00', description: null },
   { name: 'Zobo, 50cl', price: '1.50', description: 'Hibiscus, ginger and pineapple, cold' },
+]
+
+/** `seed=bakery`: a small bakery menu, for films and screens that shouldn't point at one country. */
+const BAKERY = [
+  { name: 'Sourdough loaf', price: '6.50', description: 'Slow-proved, with a crackly crust' },
+  { name: 'Croissant', price: '3.25', description: 'All butter, baked this morning' },
+  { name: 'Cinnamon bun', price: '3.75', description: 'Cardamom sugar on top' },
+  { name: 'Flat white', price: '4.50', description: 'Double shot, whole milk' },
+  { name: 'Carrot cake', price: '5.00', description: 'Cream cheese frosting' },
 ]
 
 export default function Dev() {
@@ -55,6 +64,7 @@ export default function Dev() {
     seed?: string
     till?: string
     sell?: string
+    payee?: string
   }>()
   const wallet = useWallet()
   const prefs = usePrefs()
@@ -101,6 +111,7 @@ export default function Dev() {
           return
         }
         progress.current.finished = true
+        console.log(`[dev] wallet ${wallet.profile?.address ?? 'none'}`)
         if (params.fund) {
           setStep('funding')
           await wallet.addMoney().catch(() => {})
@@ -127,18 +138,20 @@ export default function Dev() {
         if (params.seed) {
           setStep('filling the stall')
           const detail = await stall.refresh()
-          for (const item of SEED)
+          for (const item of params.seed === 'bakery' ? BAKERY : SEED)
             await createItem({ ...item, stall_ids: detail ? [detail.id] : [] })
-          const coke = await lookupBarcode('5449000000996', 'owner').catch(() => null)
-          const photo = coke?.suggestion?.image_url
-            ? await uploadImage(coke.suggestion.image_url).catch(() => null)
-            : null
-          await createItem({
-            name: 'Coca-Cola 33cl',
-            price: '1.20',
-            barcode: '5449000000996',
-            image_id: photo?.id ?? null,
-          })
+          if (params.seed !== 'bakery') {
+            const coke = await lookupBarcode('5449000000996', 'owner').catch(() => null)
+            const photo = coke?.suggestion?.image_url
+              ? await uploadImage(coke.suggestion.image_url).catch(() => null)
+              : null
+            await createItem({
+              name: 'Coca-Cola 33cl',
+              price: '1.20',
+              barcode: '5449000000996',
+              image_id: photo?.id ?? null,
+            })
+          }
           await stall.refresh()
         }
         if (params.till) await save('kova.till.mode', params.till)
@@ -170,7 +183,7 @@ export default function Dev() {
         if (params.send && params.amount) {
           setStep('sending')
           const entry = await wallet.send(
-            { address: params.send as `0x${string}`, name: 'Tunde' },
+            { address: params.send as `0x${string}`, name: params.payee || 'Tunde' },
             BigInt(params.amount),
           )
           return router.replace({ pathname: '/receipt/[id]', params: { id: entry.id } })
