@@ -19,6 +19,20 @@ This is the running log required by the brief (§17). Newest entries go at the t
 
 **Why it matters:** the card design, fee sponsorship, memo reconciliation and receipt verification are no longer theory. Remaining unknown: real JavaCard hardware.
 
+## 2026-09-28
+
+### D-016 · One codebase on Tempo and Monad, picked per deployment (Decided)
+**Decision:** Kova's API, app and site run on either chain, chosen by `KOVA_CHAIN` / `EXPO_PUBLIC_KOVA_CHAIN` / `NEXT_PUBLIC_KOVA_CHAIN` (Tempo by default on branch `tempo`, the Colosseum entry; Monad for the Metropolis build). Everything chain-specific sits behind a chain kit in the API and a chain facade in the app and site; charges, stalls, orders, travel, the ledger and every screen are shared.
+
+**Why:** the user built the Monad version for Metropolis and asked for the same product on Tempo for Colosseum. Two forks would mean every screen fixed twice for the rest of both events; one codebase lets the Monad branch's work merge straight in.
+
+**On Tempo:**
+- Payments and sends are `transferWithMemo`/`transfer` the payer signs, sent through Kova's fee-payer relay (tapimo `Handler.relay` at `/rpc/relay`). The sponsorship policy pays only for an open charge's exact amount, token, recipient and memo, or a send with no Kova memo (a daily number per wallet).
+- Email/Google (Privy) wallets are relayed too, signing through `secp256k1_sign` as Tempo's Accounts SDK does. Browser wallets send a plain transaction and pay Tempo's fee (under a cent) in the same dollars.
+- The watcher asks only for transfers to shops with an open charge (Tempo's test dollars are too busy to scan whole); wallets read their own history from the chain on demand.
+- Rates: Chainlink CRE doesn't reach Tempo, so the API reads CRE's two sources itself with the same cross-check.
+- The wallet keeps Mera's passkey derivation, so one passkey is one address on both chains. Next: signing sessions and the Kova Card as Tempo access keys with on-chain limits.
+
 ## 2026-09-23
 
 ### D-015 · Kova stays on Tempo (Decided)
