@@ -11,6 +11,9 @@ export const TIP20_DECIMALS = 6
 export const currencies = ['USDC', 'pathUSD', 'USDT0'] as const
 export type Currency = (typeof currencies)[number]
 
+/** What Kova settles in unless a charge asks for another dollar. */
+export const DEFAULT_CURRENCY: Currency = 'USDC'
+
 export interface Token {
   currency: Currency
   /** On-chain symbol of the TIP-20 that actually settles. */
@@ -44,12 +47,24 @@ export const tokens: Record<NetworkId, Record<Currency, Token>> = {
   },
 }
 
+/**
+ * Test dollars a wallet may take from Kova's testnet treasury each day. Tempo's faucet hands out
+ * a million of each test token at once, which makes a demo balance meaningless; the treasury takes
+ * one faucet drip and gives it out five dollars at a time.
+ */
+export const TEST_DOLLARS_A_DAY = 5_000_000n
+
 export function isCurrency(value: string): value is Currency {
   return (currencies as readonly string[]).includes(value)
 }
 
-export function getToken(network: NetworkId, currency: Currency): Token {
+export function getToken(network: NetworkId, currency: Currency = DEFAULT_CURRENCY): Token {
   return tokens[network][currency]
+}
+
+/** Every dollar Kova accepts on a network. A transfer in anything else is not a Kova payment. */
+export function supportedTokens(network: NetworkId): Token[] {
+  return Object.values(tokens[network])
 }
 
 export function tokenByAddress(network: NetworkId, address: Address): Token | undefined {

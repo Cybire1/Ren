@@ -3,7 +3,9 @@ import { Abis, type Transaction } from 'viem/tempo'
 import { describe, expect, it } from 'vitest'
 import { decodeMemo, encodeMemo, isKovaMemo } from '../src/memo.js'
 import {
+  decodeIndexedTransfers,
   FEE_MANAGER,
+  memosIn,
   RECEIVE_POLICY_GUARD,
   TRANSFER_WITH_MEMO_SELECTOR,
   transferWithMemoCall,
@@ -165,5 +167,53 @@ describe('verifyPayment', () => {
   it('does not require a memo when none is expected', () => {
     const rc = receipt([transferLog(PAYER, MERCHANT, amount, 0)])
     expect(verifyPayment(rc, { token: TOKEN, merchant: MERCHANT, amount }).status).toBe('paid')
+  })
+})
+
+describe('indexing transfers from logs', () => {
+  const memo = encodeMemo({ kind: 'payment', id: INTENT })
+
+  it('pairs a transferWithMemo with its Transfer and leaves fees out', () => {
+    const logs = [
+      transferLog(PAYER, MERCHANT, 5_000_000n, 1),
+      memoLog(PAYER, MERCHANT, 5_000_000n, memo, 2),
+      transferLog(PAYER, FEE_MANAGER as Address, 31n, 3),
+      transferLog(FEE_MANAGER as Address, PAYER, 7n, 4),
+    ]
+    expect(decodeIndexedTransfers(logs, TOKEN)).toEqual([
+      { from: PAYER, to: MERCHANT, value: 5_000_000n, logIndex: 1, memo },
+    ])
+  })
+
+  it('keeps a plain transfer with no memo', () => {
+    expect(decodeIndexedTransfers([transferLog(PAYER, MERCHANT, 1n, 0)], TOKEN)).toEqual([
+      { from: PAYER, to: MERCHANT, value: 1n, logIndex: 0, memo: null },
+    ])
+  })
+
+  it('gives each of two identical transfers its own memo, once', () => {
+    const other = encodeMemo({ kind: 'payment', id: '0192f3a4-5b6c-7d8e-9f01-23456789abce' })
+    const logs = [
+      transferLog(PAYER, MERCHANT, 1n, 0),
+      memoLog(PAYER, MERCHANT, 1n, memo, 1),
+      transferLog(PAYER, MERCHANT, 1n, 2),
+      memoLog(PAYER, MERCHANT, 1n, other, 3),
+    ]
+    expect(decodeIndexedTransfers(logs, TOKEN).map((t) => t.memo)).toEqual([memo, other])
+  })
+
+  it('ignores other tokens', () => {
+    const elsewhere = { ...transferLog(PAYER, MERCHANT, 1n, 0), address: MERCHANT }
+    expect(decodeIndexedTransfers([elsewhere], TOKEN)).toEqual([])
+  })
+
+  it('finds only Kova memos', () => {
+    const foreign = pad('0xef1ed712', { size: 32, dir: 'right' })
+    const logs = [
+      memoLog(PAYER, MERCHANT, 1n, memo, 0),
+      memoLog(PAYER, MERCHANT, 1n, foreign, 1),
+      transferLog(PAYER, MERCHANT, 1n, 2),
+    ]
+    expect(memosIn(logs)).toEqual([memo])
   })
 })

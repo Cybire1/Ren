@@ -1,5 +1,5 @@
 import { schema, uuidv7 } from '@kova/db'
-import { type Currency, encodeMemo, formatAmount, parseAmount } from '@kova/monad'
+import { encodeMemo, formatAmount, parseAmount } from '@kova/tempo'
 import { and, eq, lt } from 'drizzle-orm'
 import { tokenFor } from '../chain.js'
 import { config } from '../config.js'
@@ -8,6 +8,8 @@ import { KovaError, notFound } from '../errors.js'
 import { encodeId } from '../ids.js'
 
 type Merchant = typeof schema.merchants.$inferSelect
+/** A dollar Kova settles in on this deployment's chain (see chains/). */
+type Currency = NonNullable<typeof schema.paymentIntents.$inferInsert.currency>
 export type PaymentIntent = typeof schema.paymentIntents.$inferSelect
 
 export interface CreateIntentInput {

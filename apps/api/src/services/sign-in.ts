@@ -45,7 +45,7 @@ const domains = config.KOVA_SIGN_IN_DOMAINS
       'mykova.app',
       'www.mykova.app',
       'web-monad.up.railway.app',
-      ...(isProduction ? [] : ['localhost:3000', 'localhost:3002']),
+      ...(isProduction ? [] : ['localhost:3000', 'localhost:3002', 'localhost:3005']),
     ]
 
 const expired = () =>

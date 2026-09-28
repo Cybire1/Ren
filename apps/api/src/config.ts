@@ -4,14 +4,18 @@ const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
   DATABASE_URL: z.string().default('postgres://localhost:5432/kova_dev'),
-  /** Which Monad network this instance serves. One process serves one network. */
+  /** Which chain this instance runs on. Kova is one codebase on Tempo and on Monad. */
+  KOVA_CHAIN: z.enum(['tempo', 'monad']).default('tempo'),
+  /** Which network of that chain. One process serves one chain and one network. */
   KOVA_NETWORK: z.enum(['mainnet', 'testnet']).default('testnet'),
-  /** Overrides the default public RPC (use a provider endpoint in production). */
+  /** Override the default public RPC (use a provider endpoint in production). */
+  TEMPO_RPC_URL: z.string().url().optional(),
   MONAD_RPC_URL: z.string().url().optional(),
   /**
-   * The relayer key: it submits the payments people sign and pays their MON gas. It never holds
-   * anyone's money, but it spends MON on every payment: in production it belongs in a KMS, and
-   * this env var is for local development only.
+   * Kova's fee payer. On Tempo it co-signs the fee half of payments people sign (it never signs a
+   * payment); on Monad it submits the authorizations people sign and pays the MON gas. Either way
+   * it never holds anyone's money but spends on every payment: in production it belongs in a
+   * KMS, and this env var is for local development only.
    */
   KOVA_FEE_PAYER_PRIVATE_KEY: z
     .string()
@@ -23,7 +27,18 @@ const schema = z.object({
    * margin, and refuses anything that estimates above this.
    */
   KOVA_MAX_RELAY_GAS: z.coerce.bigint().default(200_000n),
-  /** KovaRates on Monad: the reference exchange rates a Chainlink CRE workflow publishes. */
+  /**
+   * Tempo: the most Kova will pay in fees for one sponsored transaction, in micro-dollars
+   * (1,000,000 = $1). A sponsor pays for reverted transactions too, so the cap bounds any abuse.
+   * Testnet fee estimates run far above mainnet's, so testnet needs a higher cap.
+   */
+  KOVA_MAX_SPONSORED_FEE: z.coerce.bigint().default(50_000n),
+  /** Tempo: sends between people Kova pays the fee for, per wallet per day. Charges are unlimited. */
+  KOVA_SPONSORED_SENDS_A_DAY: z.coerce.number().int().nonnegative().default(50),
+  /**
+   * Monad: KovaRates, the reference exchange rates a Chainlink CRE workflow publishes. CRE does not
+   * reach Tempo, so a Tempo deployment reads the same public rate sources directly.
+   */
   KOVA_RATES_ADDRESS: z
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/)

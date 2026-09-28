@@ -46,6 +46,14 @@ export interface MemoEvent extends TransferEvent {
   memo: Hex
 }
 
+/** The fields of a log this module reads, so receipts and `eth_getLogs` results both fit. */
+export interface LogLike {
+  address: Address
+  data: Hex
+  topics: readonly Hex[] | [Hex, ...Hex[]] | []
+  logIndex: number | null
+}
+
 export interface DecodedTransfers {
   transfers: TransferEvent[]
   memos: MemoEvent[]
@@ -56,13 +64,18 @@ export function decodeTransfers(
   receipt: Transaction.TransactionReceipt,
   token: Address,
 ): DecodedTransfers {
+  return decodeTransferLogs(receipt.logs, token)
+}
+
+/** The same, for logs from anywhere: a receipt, or an `eth_getLogs` scan. */
+export function decodeTransferLogs(logs: readonly LogLike[], token: Address): DecodedTransfers {
   const transfers: TransferEvent[] = []
   const memos: MemoEvent[] = []
-  for (const log of receipt.logs) {
+  for (const log of logs) {
     if (!isAddressEqual(log.address, token)) continue
     let event: ReturnType<typeof decodeEventLog>
     try {
-      event = decodeEventLog({ abi: Abis.tip20, data: log.data, topics: log.topics })
+      event = decodeEventLog({ abi: Abis.tip20, data: log.data, topics: log.topics as never })
     } catch {
       continue
     }
@@ -72,7 +85,7 @@ export function decodeTransfers(
         from: args.from as Address,
         to: args.to as Address,
         amount: args.amount as bigint,
-        logIndex: log.logIndex,
+        logIndex: log.logIndex ?? -1,
       })
     } else if (event.eventName === 'TransferWithMemo') {
       memos.push({
@@ -80,7 +93,7 @@ export function decodeTransfers(
         to: args.to as Address,
         amount: args.amount as bigint,
         memo: args.memo as Hex,
-        logIndex: log.logIndex,
+        logIndex: log.logIndex ?? -1,
       })
     }
   }
@@ -172,4 +185,52 @@ export function verifyPayment(
     payer: inbound.from,
     memo: expected.memo ? decodeMemo(expected.memo) : undefined,
   }
+}
+
+/** One movement of money for an index: who paid whom, and the Kova memo it carried, if any. */
+export interface IndexedTransfer {
+  from: Address
+  to: Address
+  value: bigint
+  logIndex: number
+  memo: Hex | null
+}
+
+/**
+ * Every transfer of one token in one transaction's logs, each paired with its memo.
+ *
+ * `transferWithMemo` emits a `Transfer` and a `TransferWithMemo` for the same movement; the
+ * memo is attached to the transfer with the same sender, recipient and amount. Fee movements to
+ * and from the FeeManager are not anyone's payment, so they are left out.
+ */
+export function decodeIndexedTransfers(
+  logs: readonly LogLike[],
+  token: Address,
+): IndexedTransfer[] {
+  const { transfers, memos } = decodeTransferLogs(logs, token)
+  const unclaimed = [...memos]
+  const out: IndexedTransfer[] = []
+  for (const t of transfers) {
+    if (isAddressEqual(t.from, FEE_MANAGER) || isAddressEqual(t.to, FEE_MANAGER)) continue
+    const index = unclaimed.findIndex(
+      (m) => isAddressEqual(m.from, t.from) && isAddressEqual(m.to, t.to) && m.amount === t.amount,
+    )
+    const memo = index >= 0 ? (unclaimed.splice(index, 1)[0]?.memo ?? null) : null
+    out.push({ from: t.from, to: t.to, value: t.amount, logIndex: t.logIndex, memo })
+  }
+  return out
+}
+
+/** The Kova memos carried by a transaction's logs, in any accepted token. */
+export function memosIn(logs: readonly LogLike[]): Hex[] {
+  const found: Hex[] = []
+  for (const log of logs) {
+    try {
+      const event = decodeEventLog({ abi: Abis.tip20, data: log.data, topics: log.topics as never })
+      if (event.eventName !== 'TransferWithMemo') continue
+      const memo = (event.args as { memo: Hex }).memo
+      if (decodeMemo(memo)) found.push(memo)
+    } catch {}
+  }
+  return found
 }

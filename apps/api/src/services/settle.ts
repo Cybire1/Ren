@@ -1,8 +1,8 @@
 import { schema, uuidv7 } from '@kova/db'
-import { decodeMemo, eip3009Abi, verifyPayment } from '@kova/monad'
+import { decodeMemo } from '@kova/tempo'
 import { and, eq, isNull } from 'drizzle-orm'
-import { type Address, decodeEventLog, type Hash, type TransactionReceipt } from 'viem'
-import { publicClient } from '../chain.js'
+import type { Address, Hash, Hex, TransactionReceipt } from 'viem'
+import { kit, publicClient } from '../chain.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { encodeId } from '../ids.js'
@@ -35,7 +35,7 @@ export async function settleFromReceipt(
   const intent = await findIntentForReceipt(receipt)
   if (!intent) return { status: 'ignored', reason: 'no matching payment intent' }
 
-  const verdict = verifyPayment(receipt, {
+  const verdict = kit.verifyPayment(receipt, {
     token: intent.tokenAddress as Address,
     payTo: intent.payTo as Address,
     amount: intent.amount,
@@ -46,7 +46,9 @@ export async function settleFromReceipt(
   if (verdict.status === 'unmatched' || verdict.status === 'memo_mismatch')
     return { status: 'ignored', reason: verdict.status }
 
-  const status: 'paid' | 'failed' = verdict.status === 'paid' ? 'paid' : 'failed'
+  // Held: it succeeded on-chain but the shop's own receive policy parked the money (Tempo).
+  const status: 'paid' | 'held' | 'failed' =
+    verdict.status === 'paid' ? 'paid' : verdict.status === 'held' ? 'held' : 'failed'
   const paymentId = uuidv7()
   const now = new Date()
 
@@ -62,8 +64,9 @@ export async function settleFromReceipt(
       tokenAddress: intent.tokenAddress,
       status,
       gasUsed: receipt.gasUsed,
-      // Whoever submitted the authorization paid the gas: Kova's relayer, or the payer's own wallet.
-      feePayerAddress: receipt.from,
+      // Whoever paid the fee: Kova's fee payer (Tempo's sponsored transactions name it), Kova's
+      // relayer (Monad), or the payer's own wallet.
+      feePayerAddress: (receipt as { feePayer?: Address }).feePayer ?? receipt.from,
       confirmedAt: status === 'paid' ? now : null,
     })
 
@@ -103,7 +106,13 @@ export async function settleFromReceipt(
       await tx
         .update(schema.orders)
         .set({ collectedAt: now })
-        .where(and(eq(schema.orders.intentId, intent.id), eq(schema.orders.source, 'till'), isNull(schema.orders.collectedAt)))
+        .where(
+          and(
+            eq(schema.orders.intentId, intent.id),
+            eq(schema.orders.source, 'till'),
+            isNull(schema.orders.collectedAt),
+          ),
+        )
     }
 
     await tx.insert(schema.events).values({
@@ -121,25 +130,22 @@ export async function settleFromReceipt(
   })
 
   // The last share of a Kova Travel trip books it. Outside the transaction: booking calls Duffel.
-  if (status === 'paid') void onIntentPaid(intent.id).catch((error) => console.error('[travel] after payment', error))
+  if (status === 'paid')
+    void onIntentPaid(intent.id).catch((error) => console.error('[travel] after payment', error))
 
   return { status, paymentId }
 }
 
-/** The intent a receipt claims to pay: the authorization whose nonce is a Kova payment memo. */
-async function findIntentForReceipt(receipt: TransactionReceipt): Promise<PaymentIntent | undefined> {
-  for (const log of receipt.logs) {
-    let nonce: `0x${string}`
-    try {
-      // decodeEventLog decodes whatever event the log is; it doesn't enforce the name asked for.
-      const event = decodeEventLog({ abi: eip3009Abi, data: log.data, topics: log.topics })
-      if (event.eventName !== 'AuthorizationUsed') continue
-      nonce = event.args.nonce
-    } catch {
-      continue
-    }
-    if (decodeMemo(nonce)?.kind !== 'payment') continue
-    const intent = await findIntentByMemo(nonce)
+/**
+ * The intent a receipt claims to pay: the Kova payment memo it carries (a `transferWithMemo` on
+ * Tempo, an authorization's nonce on Monad).
+ */
+async function findIntentForReceipt(
+  receipt: TransactionReceipt,
+): Promise<PaymentIntent | undefined> {
+  for (const memo of kit.memos(receipt.logs)) {
+    if (decodeMemo(memo as Hex)?.kind !== 'payment') continue
+    const intent = await findIntentByMemo(memo)
     if (intent) return intent
   }
   return undefined

@@ -1,26 +1,39 @@
-import { type Currency, DEFAULT_CURRENCY, getNetwork, getToken, supportedTokens } from '@kova/monad'
-import { type Address, createPublicClient, createWalletClient, fallback, http, nonceManager } from 'viem'
+import {
+  type Address,
+  createPublicClient,
+  createWalletClient,
+  fallback,
+  type Hash,
+  type Hex,
+  http,
+  nonceManager,
+} from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
+import { createClient as createTempoClient, http as tempoHttp } from 'viem/tempo'
+import { type KitToken, kit, onTempo } from './chains/index.js'
 import { config } from './config.js'
 
-export const network = getNetwork(config.KOVA_NETWORK)
-export const rpcUrl = config.MONAD_RPC_URL ?? network.rpcUrl
+export { kit, onTempo }
 
-/** The dollar Kova settles in on Monad: AUSD, Agora's dollar. */
-export const settlementCurrency: Currency = DEFAULT_CURRENCY
-export const settlementToken = getToken(config.KOVA_NETWORK, settlementCurrency)
+export const network = kit.network
+export const rpcUrl = (onTempo ? config.TEMPO_RPC_URL : config.MONAD_RPC_URL) ?? network.rpcUrl
+
+/** The dollar Kova settles in: USDC (USDC.e) on Tempo, AUSD on Monad. */
+export const settlementCurrency = kit.defaultCurrency
+export const settlementToken: KitToken = kit.getToken()
 
 /** Every token Kova accepts on this network. A transfer in anything else is not a Kova payment. */
-export const acceptedTokens = supportedTokens(config.KOVA_NETWORK)
+export const acceptedTokens = kit.tokens
 
-export function tokenFor(currency: Currency) {
-  return getToken(config.KOVA_NETWORK, currency)
+export function tokenFor(currency: string): KitToken {
+  return kit.getToken(currency)
 }
 
 /**
- * Kova's relayer. Payers sign EIP-3009 authorizations and never hold MON; this account submits
- * them and pays the gas. It can only move money someone signed over, so a compromise costs gas
- * and nothing else. The nonce manager lets concurrent payments go out without colliding.
+ * Kova's fee payer. On Tempo it signs only the fee half of a transaction the payer signed, never
+ * a payment; on Monad it submits the EIP-3009 authorizations payers sign and pays the MON gas.
+ * Either way it can only move money someone signed over, so a compromise costs fees and nothing
+ * else. Fee payers must be secp256k1 keys. The nonce manager lets concurrent sends not collide.
  */
 export const feePayerAccount = config.KOVA_FEE_PAYER_PRIVATE_KEY
   ? privateKeyToAccount(config.KOVA_FEE_PAYER_PRIVATE_KEY as `0x${string}`, { nonceManager })
@@ -49,24 +62,119 @@ const trace = process.env.KOVA_TRACE_RPC
 
 /**
  * Public Monad RPCs allow about 25 requests a second per address, and Railway's outbound
- * addresses are shared, so the limit is sometimes someone else's traffic. Requests retry with
- * patience, and fail over to a second provider. Set MONAD_RPC_URL to a dedicated endpoint in
- * production.
+ * addresses are shared, so on Monad requests retry with patience and fail over to a second
+ * provider. Tempo's public RPCs have no such limit worth planning around.
  */
-const backups: Record<typeof network.id, string[]> = {
-  testnet: ['https://rpc.ankr.com/monad_testnet'],
-  mainnet: ['https://rpc.ankr.com/monad'],
+const backups: Record<'tempo' | 'monad', Record<typeof network.id, string[]>> = {
+  tempo: { testnet: [], mainnet: [] },
+  monad: {
+    testnet: ['https://rpc.ankr.com/monad_testnet'],
+    mainnet: ['https://rpc.ankr.com/monad'],
+  },
 }
-const endpoint = (url: string) => http(url, { ...trace, timeout: 10_000, retryCount: 3, retryDelay: 400 })
-const transport = fallback([endpoint(rpcUrl), ...backups[network.id].filter((url) => url !== rpcUrl).map(endpoint)], {
-  rank: false,
-  retryCount: 2,
-})
+const endpoint = (url: string) =>
+  http(url, { ...trace, timeout: 10_000, retryCount: 3, retryDelay: 400 })
+const transport = fallback(
+  [endpoint(rpcUrl), ...backups[kit.id][network.id].filter((url) => url !== rpcUrl).map(endpoint)],
+  { rank: false, retryCount: 2 },
+)
 
-/** Monad makes a block every ~0.3s, so receipts are polled far faster than viem's default. */
-export const publicClient = createPublicClient({ chain: network.chain, transport, pollingInterval: 200 })
+/**
+ * Reads the chain. On Tempo it is a Tempo client (with Tempo's token and fee actions, and the
+ * relay's simulations run against it); on Monad, a plain public client polled fast, since Monad
+ * makes a block every ~0.3s.
+ */
+export const publicClient = onTempo
+  ? (createTempoClient({
+      testnet: network.id === 'testnet',
+      feeToken: settlementToken.address,
+      transport: tempoHttp(rpcUrl, trace),
+    }) as unknown as ReturnType<typeof createPublicClient>)
+  : createPublicClient({ chain: network.chain, transport, pollingInterval: 200 })
 
-/** Signs and submits as the relayer. Undefined when this deployment has no relayer key. */
+/** Signs and submits as the fee payer (Monad's relayer). Undefined when this deployment has no key. */
 export const walletClient = feePayerAccount
-  ? createWalletClient({ account: feePayerAccount, chain: network.chain, transport, pollingInterval: 200 })
+  ? createWalletClient({
+      account: feePayerAccount,
+      chain: network.chain,
+      transport,
+      pollingInterval: 200,
+    })
   : undefined
+
+/**
+ * The fee payer as a Tempo client that sends its own transactions (testnet treasury top-ups and
+ * refunds). It pays its own fee in the settlement dollar.
+ */
+export const treasuryClient =
+  onTempo && feePayerAccount
+    ? createTempoClient({
+        account: feePayerAccount,
+        testnet: network.id === 'testnet',
+        feeToken: settlementToken.address,
+        transport: tempoHttp(rpcUrl, trace),
+      })
+    : undefined
+
+/** The two token calls every chain's dollars share. */
+export const erc20Abi = [
+  {
+    type: 'function',
+    name: 'transfer',
+    stateMutability: 'nonpayable',
+    inputs: [
+      { name: 'to', type: 'address' },
+      { name: 'amount', type: 'uint256' },
+    ],
+    outputs: [{ type: 'bool' }],
+  },
+  {
+    type: 'function',
+    name: 'balanceOf',
+    stateMutability: 'view',
+    inputs: [{ name: 'account', type: 'address' }],
+    outputs: [{ type: 'uint256' }],
+  },
+] as const
+
+/** A token balance, on either chain. (Tempo has no native balance; `eth_getBalance` is a placeholder.) */
+export async function balanceOf(token: Address, owner: Address): Promise<bigint> {
+  return publicClient.readContract({
+    address: token,
+    abi: erc20Abi,
+    functionName: 'balanceOf',
+    args: [owner],
+  })
+}
+
+/**
+ * Sends dollars from Kova's treasury (the fee payer's own balance) on either chain: test-dollar
+ * top-ups on testnet, and, on Tempo, travel refunds carrying their refund memo.
+ */
+export async function sendFromTreasury(params: {
+  token: Address
+  to: Address
+  amount: bigint
+  memo?: Hex
+}): Promise<Hash> {
+  if (treasuryClient) {
+    const { receipt } = await treasuryClient.token.transferSync({
+      token: params.token,
+      to: params.to,
+      amount: params.amount,
+      ...(params.memo ? { memo: params.memo } : {}),
+    })
+    if (receipt.status !== 'success') throw new Error('treasury transfer reverted')
+    return receipt.transactionHash
+  }
+  if (!walletClient) throw new Error('no treasury key on this server')
+  const receipt = await walletClient.writeContractSync({
+    address: params.token,
+    abi: erc20Abi,
+    functionName: 'transfer',
+    args: [params.to, params.amount],
+    timeout: 10_000,
+  })
+  if (receipt.status !== 'success') throw new Error('treasury transfer reverted')
+  return receipt.transactionHash
+}

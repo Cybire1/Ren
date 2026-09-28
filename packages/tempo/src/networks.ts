@@ -5,6 +5,8 @@ export type NetworkId = 'mainnet' | 'testnet'
 
 export interface Network {
   id: NetworkId
+  /** What people see: "Tempo", or "Tempo testnet". */
+  name: string
   chain: Chain
   chainId: number
   rpcUrl: string
@@ -18,6 +20,7 @@ export interface Network {
 export const networks: Record<NetworkId, Network> = {
   mainnet: {
     id: 'mainnet',
+    name: 'Tempo',
     chain: tempo,
     chainId: 4217,
     rpcUrl: 'https://rpc.tempo.xyz',
@@ -27,6 +30,7 @@ export const networks: Record<NetworkId, Network> = {
   },
   testnet: {
     id: 'testnet',
+    name: 'Tempo testnet',
     chain: tempoModerato,
     chainId: 42431,
     rpcUrl: 'https://rpc.moderato.tempo.xyz',
@@ -35,6 +39,12 @@ export const networks: Record<NetworkId, Network> = {
     publicSponsorUrl: 'https://sponsor.moderato.tempo.xyz',
   },
 }
+
+/**
+ * Blocks per `eth_getLogs` call. Tempo's RPCs refuse ranges over 100,000 blocks; a busy testnet
+ * token fills a response long before that, so scans step through smaller windows.
+ */
+export const LOG_RANGE = 5_000n
 
 export function getNetwork(id: NetworkId): Network {
   return networks[id]

@@ -1,18 +1,19 @@
 import { schema } from '@kova/db'
-import { eip3009Abi, formatAmount, TEST_DOLLARS_A_DAY } from '@kova/monad'
+import { formatAmount } from '@kova/tempo'
 import { eq, lt } from 'drizzle-orm'
 import type { Address, Hash } from 'viem'
-import { feePayerAccount, publicClient, settlementToken, walletClient } from '../chain.js'
+import { balanceOf, feePayerAccount, kit, sendFromTreasury, settlementToken } from '../chain.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 
 /**
  * Test dollars, on testnet only: five a day for each wallet, from Kova's own testnet treasury (the
- * relayer, which pays the gas too). Agora's faucet gives 10,000 at once and has run dry; a small
- * daily amount from Kova's own stock keeps trying Kova working for everyone, and the treasury is
- * topped up by hand.
+ * fee payer). Public faucets give far more at once (Tempo's a million, Agora's ten thousand when
+ * it isn't dry), which makes a demo balance meaningless; a small daily amount from Kova's own
+ * stock keeps trying Kova honest, and the treasury is topped up from the faucet by hand.
  */
 const DAY_MS = 24 * 60 * 60 * 1000
+const TEST_DOLLARS_A_DAY = kit.testDollarsADay
 
 export interface Drip {
   amount: string
@@ -48,7 +49,9 @@ export async function claimTestDollars(to: Address, now = new Date()): Promise<C
 
 /** Gives today's claim back when nothing was sent. A claim only wins when the last is a day old, so removing it restores exactly that. */
 export async function releaseTestDollars(to: Address) {
-  await db.delete(schema.testDollarClaims).where(eq(schema.testDollarClaims.address, to.toLowerCase()))
+  await db
+    .delete(schema.testDollarClaims)
+    .where(eq(schema.testDollarClaims.address, to.toLowerCase()))
 }
 
 /** "in 7 hours", "in 40 minutes": when a wallet can have more, without guessing its time zone. */
@@ -60,35 +63,52 @@ export function inAbout(nextAt: Date, now = new Date()): string {
 }
 
 export async function giveTestDollars(to: Address): Promise<Drip> {
-  if (!walletClient || !feePayerAccount) throw new KovaError('chain_error', 'Test dollars are not switched on for this server yet.')
+  if (!feePayerAccount)
+    throw new KovaError('chain_error', 'Test dollars are not switched on for this server yet.')
   const now = new Date()
   const claim = await claimTestDollars(to, now)
   if (!claim.ok)
-    throw new KovaError('rate_limited', `That wallet has had today’s test dollars. More ${inAbout(claim.nextAt, now)}.`, {
-      next_at: claim.nextAt.toISOString(),
-    })
+    throw new KovaError(
+      'rate_limited',
+      `That wallet has had today’s test dollars. More ${inAbout(claim.nextAt, now)}.`,
+      {
+        next_at: claim.nextAt.toISOString(),
+      },
+    )
 
   try {
-    const stock = await publicClient.readContract({ address: settlementToken.address, abi: eip3009Abi, functionName: 'balanceOf', args: [feePayerAccount.address] })
+    const stock = await balanceOf(settlementToken.address, feePayerAccount.address)
     if (stock < TEST_DOLLARS_A_DAY) {
-      console.error(`[faucet] the treasury holds ${formatAmount(stock)} AUSD: top up ${feePayerAccount.address}`)
-      throw new KovaError('chain_error', 'Test dollars have run out for the moment. Kova is topping up; try again later.')
+      console.error(
+        `[faucet] the treasury holds ${formatAmount(stock)} ${settlementToken.symbol}: top up ${feePayerAccount.address}`,
+      )
+      throw new KovaError(
+        'chain_error',
+        'Test dollars have run out for the moment. Kova is topping up; try again later.',
+      )
     }
-    const receipt = await walletClient.writeContractSync({
-      address: settlementToken.address,
-      abi: eip3009Abi,
-      functionName: 'transfer',
-      args: [to, TEST_DOLLARS_A_DAY],
-      timeout: 10_000,
+    const txHash = await sendFromTreasury({
+      token: settlementToken.address,
+      to,
+      amount: TEST_DOLLARS_A_DAY,
     })
-    if (receipt.status !== 'success') throw new KovaError('chain_error', 'The test-dollar top-up failed. Try again in a moment.')
-    await db.update(schema.testDollarClaims).set({ txHash: receipt.transactionHash }).where(eq(schema.testDollarClaims.address, to.toLowerCase()))
-    return { amount: formatAmount(TEST_DOLLARS_A_DAY), txHash: receipt.transactionHash, nextAt: new Date(now.getTime() + DAY_MS) }
+    await db
+      .update(schema.testDollarClaims)
+      .set({ txHash })
+      .where(eq(schema.testDollarClaims.address, to.toLowerCase()))
+    return {
+      amount: formatAmount(TEST_DOLLARS_A_DAY),
+      txHash,
+      nextAt: new Date(now.getTime() + DAY_MS),
+    }
   } catch (error) {
     // A failed top-up doesn't use up the day. (On testnet, a rare timeout that did land costs five test dollars at most.)
     await releaseTestDollars(to)
     if (error instanceof KovaError) throw error
     console.error('[faucet]', error instanceof Error ? error.message.split('\n')[0] : error)
-    throw new KovaError('chain_error', 'The test-dollar top-up didn’t go through. Try again in a moment.')
+    throw new KovaError(
+      'chain_error',
+      'The test-dollar top-up didn’t go through. Try again in a moment.',
+    )
   }
 }

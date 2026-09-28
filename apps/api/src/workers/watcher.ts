@@ -1,38 +1,45 @@
 import { schema, uuidv7 } from '@kova/db'
-import { decodeAuthorizedTransfers, decodeMemo, decodeTokenTransfers, eip3009Abi, LOG_RANGE } from '@kova/monad'
-import { eq } from 'drizzle-orm'
-import { type Address, getAbiItem, type Hash, isAddressEqual, type Log } from 'viem'
-import { acceptedTokens, network, publicClient } from '../chain.js'
+import { decodeMemo } from '@kova/tempo'
+import { and, eq, gt, inArray } from 'drizzle-orm'
+import { type Address, type Hash, type Hex, isAddressEqual, type Log } from 'viem'
+import { acceptedTokens, kit, network, onTempo, publicClient } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { settleFromReceipt } from '../services/settle.js'
+import { tokenLogs } from '../tempo/logs.js'
 
 /**
- * Watches Monad for money moving in the tokens Kova accepts. One scan does two jobs:
+ * Watches the chain for money moving in the tokens Kova accepts. One scan does two jobs:
  *
- * - It settles charges paid by any route. An authorization whose nonce is a Kova memo pays its
- *   charge whoever submits it (Kova's relayer, a browser wallet paying its own gas, anyone), and
- *   the watcher is the backstop if the relayer stops between submitting a payment and recording
- *   it. Settlement is idempotent, so seeing a payment the relayer already recorded is a no-op.
- * - It indexes every transfer, so wallets can ask Kova what arrived. Monad's RPCs answer log
- *   queries 100 blocks (about 30 seconds) at a time, too little for a phone to catch up itself.
+ * - It settles charges paid by any route. A transfer carrying a charge's Kova memo pays it
+ *   whoever sent it (Kova Pay through the relay, a browser wallet paying its own fee, anyone),
+ *   and the watcher is the backstop if a client never reports its payment. Settlement is
+ *   idempotent, so seeing a payment already recorded is a no-op.
+ * - It indexes every transfer, so wallets can ask Kova what arrived instead of each phone
+ *   scanning the chain itself.
  *
- * It reads only finalized blocks (two behind the tip, about 0.6s), so nothing it records can be
- * reorganized away.
+ * The memo travels differently per chain (a `TransferWithMemo` event on Tempo, an EIP-3009
+ * authorization's nonce on Monad); the chain kit decodes it. It reads only finalized blocks, so
+ * nothing it records can be reorganized away.
+ *
+ * On Tempo the test dollars are too busy to scan whole (every faucet drip on the network is a
+ * transfer), so the watcher asks only for transfers to shops with an open charge, and wallets
+ * read their own history from the chain through the same topic filter (tempo/logs.ts).
  */
 
-const events = [getAbiItem({ abi: eip3009Abi, name: 'AuthorizationUsed' }), getAbiItem({ abi: eip3009Abi, name: 'Transfer' })]
+const events = kit.watchEvents
 const tokens: Address[] = acceptedTokens.map((t) => t.address)
+const LOG_RANGE = kit.logRange
 
 /** About 15 minutes of blocks: a fresh deployment still sees every charge that could be open. */
-const COLD_START_LOOKBACK = 3_000n
+const COLD_START_LOOKBACK = kit.id === 'tempo' ? 1_800n : 3_000n
 /** About six hours. A longer outage skips ahead rather than crawling for minutes at startup. */
-const MAX_CATCH_UP = 70_000n
+const MAX_CATCH_UP = kit.id === 'tempo' ? 40_000n : 70_000n
 /** Log windows fetched at once while catching up: two stays well inside public RPC limits. */
 const CATCH_UP_CONCURRENCY = 2
 /** Windows per poll, so catching up after downtime is steady progress rather than a burst. */
-const WINDOWS_PER_TICK = 20n
-/** Blocks are ~0.31s, so a poll a second keeps the watcher a few blocks behind at worst. */
+const WINDOWS_PER_TICK = kit.id === 'tempo' ? 2n : 20n
+/** Blocks are ~0.3s (Monad) to ~0.5s (Tempo), so a poll a second keeps the watcher a block or two behind. */
 const POLL_INTERVAL = 1_000
 /** After a failed poll, wait this long, doubling to a minute, before trying again. */
 const FIRST_BACKOFF = 2_000
@@ -49,7 +56,8 @@ async function loadCursor(head: bigint): Promise<bigint> {
   })
   if (row && head - row.lastBlock <= MAX_CATCH_UP) return row.lastBlock
   const from = head > COLD_START_LOOKBACK ? head - COLD_START_LOOKBACK : 0n
-  if (row) console.warn(`[watcher] ${head - row.lastBlock} blocks behind; skipping ahead to ${from}`)
+  if (row)
+    console.warn(`[watcher] ${head - row.lastBlock} blocks behind; skipping ahead to ${from}`)
   await saveCursor(from)
   return from
 }
@@ -89,9 +97,9 @@ export async function handleLogs(logs: Log[]): Promise<number> {
     for (const token of tokens) {
       const tokenLogs = txLogs.filter((log) => isAddressEqual(log.address, token))
       if (tokenLogs.length === 0) continue
-      const authorized = decodeAuthorizedTransfers(tokenLogs, token)
-      if (authorized.some((a) => decodeMemo(a.nonce)?.kind === 'payment')) paysACharge = true
-      for (const transfer of decodeTokenTransfers(tokenLogs, token)) {
+      if (kit.memos(tokenLogs).some((memo) => decodeMemo(memo as Hex)?.kind === 'payment'))
+        paysACharge = true
+      for (const transfer of kit.indexTransfers(tokenLogs, token)) {
         const log = tokenLogs.find((l) => l.logIndex === transfer.logIndex)
         if (!log || log.blockNumber === null) continue
         rows.push({
@@ -104,7 +112,8 @@ export async function handleLogs(logs: Log[]): Promise<number> {
           txHash: hash,
           logIndex: transfer.logIndex,
           blockNumber: log.blockNumber,
-          nonce: transfer.nonce,
+          // The Kova memo the transfer carried, if any (the column is named for Monad's nonce).
+          nonce: transfer.memo,
         })
       }
     }
@@ -125,6 +134,24 @@ async function settleTransaction(hash: Hash): Promise<void> {
   if (result.status !== 'ignored') console.log(`[watcher] ${hash} -> ${result.status}`)
 }
 
+/**
+ * Where an open charge can be paid: the addresses Kova must watch on Tempo. A charge that lapsed
+ * in the last hour still counts, so a payment made just before expiry is not missed.
+ */
+async function shopsAwaitingPayment(): Promise<Address[]> {
+  const rows = await db
+    .selectDistinct({ payTo: schema.paymentIntents.payTo })
+    .from(schema.paymentIntents)
+    .where(
+      and(
+        inArray(schema.paymentIntents.status, ['requires_payment', 'expired']),
+        gt(schema.paymentIntents.expiresAt, new Date(Date.now() - 3_600_000)),
+      ),
+    )
+    .limit(500)
+  return rows.map((r) => r.payTo as Address)
+}
+
 /** Replays a block range in 100-block windows, a few at a time, recording them in order. */
 export async function catchUp(fromBlock: bigint, toBlock: bigint): Promise<number> {
   let recorded = 0
@@ -136,8 +163,15 @@ export async function catchUp(fromBlock: bigint, toBlock: bigint): Promise<numbe
       windows.push([start, end])
       start = end + 1n
     }
+    const shops = onTempo ? await shopsAwaitingPayment() : []
     const batches = await Promise.all(
-      windows.map(([from, to]) => publicClient.getLogs({ address: tokens, events, fromBlock: from, toBlock: to })),
+      windows.map(([from, to]) =>
+        onTempo
+          ? shops.length
+            ? tokenLogs({ to: shops, fromBlock: from, toBlock: to })
+            : Promise.resolve([] as Log[])
+          : publicClient.getLogs({ address: tokens, events, fromBlock: from, toBlock: to }),
+      ),
     )
     for (const logs of batches) recorded += await handleLogs(logs as Log[])
   }
@@ -164,7 +198,10 @@ export async function startWatcher(): Promise<WatcherHandle> {
       const head = await finalizedBlock()
       if (cursor === null) cursor = await loadCursor(head)
       if (head > cursor) {
-        const until = cursor + LOG_RANGE * WINDOWS_PER_TICK < head ? cursor + LOG_RANGE * WINDOWS_PER_TICK : head
+        const until =
+          cursor + LOG_RANGE * WINDOWS_PER_TICK < head
+            ? cursor + LOG_RANGE * WINDOWS_PER_TICK
+            : head
         await catchUp(cursor + 1n, until)
         cursor = until
         await saveCursor(cursor)
@@ -177,7 +214,12 @@ export async function startWatcher(): Promise<WatcherHandle> {
     } catch (error) {
       backoff = backoff ? Math.min(backoff * 2, 60_000) : FIRST_BACKOFF
       resumeAt = Date.now() + backoff
-      console.error(`[watcher] poll failed; retrying in ${backoff / 1000}s:`, error instanceof Error ? (error as { details?: string }).details ?? error.message.split('\n')[0] : error)
+      console.error(
+        `[watcher] poll failed; retrying in ${backoff / 1000}s:`,
+        error instanceof Error
+          ? ((error as { details?: string }).details ?? error.message.split('\n')[0])
+          : error,
+      )
     } finally {
       inFlight = false
     }

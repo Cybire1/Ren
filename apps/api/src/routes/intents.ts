@@ -4,9 +4,9 @@ import { requireApiKey } from '../auth.js'
 import { idempotent } from '../idempotency.js'
 import { KovaError, notFound } from '../errors.js'
 import { schema } from '@kova/db'
-import { currencies, explorerTxUrl } from '@kova/monad'
+
 import { eq } from 'drizzle-orm'
-import { network, settlementCurrency } from '../chain.js'
+import { kit, settlementCurrency } from '../chain.js'
 import { db } from '../db.js'
 import { decodeId, encodeId } from '../ids.js'
 import { cancelIntent, createIntent, getIntent, serializeIntent } from '../services/intents.js'
@@ -14,7 +14,7 @@ import { confirmTransaction } from '../services/settle.js'
 
 const createBody = z.object({
   amount: z.string(),
-  currency: z.enum(currencies).default(settlementCurrency),
+  currency: z.enum(kit.currencies).default(settlementCurrency),
   reference: z.string().max(200).optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   terminal_id: z.string().optional(),
@@ -61,7 +61,9 @@ export const intentRoutes = new Hono()
     const intent = await getIntent(c.get('merchant').id, intentUuid(c.req.param('id')))
     const [payment, terminal] = await Promise.all([
       db.query.payments.findFirst({ where: eq(schema.payments.intentId, intent.id) }),
-      intent.terminalId ? db.query.terminals.findFirst({ where: eq(schema.terminals.id, intent.terminalId) }) : undefined,
+      intent.terminalId
+        ? db.query.terminals.findFirst({ where: eq(schema.terminals.id, intent.terminalId) })
+        : undefined,
     ])
     return c.json({
       ...serializeIntent(intent),
@@ -75,7 +77,7 @@ export const intentRoutes = new Hono()
             block_number: payment.blockNumber?.toString() ?? null,
             fee_payer: payment.feePayerAddress,
             confirmed_at: payment.confirmedAt?.toISOString() ?? null,
-            explorer_url: explorerTxUrl(network, payment.txHash as `0x${string}`),
+            explorer_url: kit.explorerTxUrl(payment.txHash as `0x${string}`),
           }
         : null,
     })

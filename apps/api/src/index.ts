@@ -2,7 +2,7 @@ import { serve } from '@hono/node-server'
 import { runMigrations } from '@kova/db'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
-import { feePayerAddress, network } from './chain.js'
+import { feePayerAddress, kit, network, onTempo } from './chain.js'
 import { config } from './config.js'
 import { errorHandler } from './errors.js'
 import { accountRoutes } from './routes/account.js'
@@ -22,6 +22,7 @@ import { rateBook } from './services/rates.js'
 import { expireTrips } from './services/travel.js'
 import { walletRoutes } from './routes/wallet.js'
 import { webhookRoutes } from './routes/webhooks.js'
+import { relayHandler, relayPath } from './tempo/relay.js'
 import { startWatcher } from './workers/watcher.js'
 import { startWebhookWorker } from './workers/webhooks.js'
 
@@ -47,6 +48,21 @@ app.route('/v1', rateRoutes)
 app.route('/v1', webhookRoutes)
 app.route('/v1', reportRoutes)
 
+// Tempo: the RPC endpoint with Kova's fee payer. Apps, the web wallet and terminals point their
+// wallet transport here (viem's withRelay), so nobody needs a gas token.
+const relay = onTempo ? relayHandler : undefined
+if (relay)
+  app.all(relayPath, async (c) => {
+    const started = performance.now()
+    const raw = c.req.raw.clone()
+    const response = await relay.fetch(c.req.raw)
+    if (process.env.KOVA_TRACE_RELAY) {
+      const body = (await raw.json().catch(() => ({}))) as { method?: string }
+      console.log(`[relay] ${body.method} ${(performance.now() - started).toFixed(0)}ms`)
+    }
+    return response
+  })
+
 if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js')) {
   await runMigrations(config.DATABASE_URL)
 
@@ -66,8 +82,8 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
 
   serve({ fetch: app.fetch, port: config.PORT }, (info) => {
     console.log(
-      `kova api on :${info.port} (${network.name}, chain ${network.chainId})` +
-        (feePayerAddress ? ` relaying from ${feePayerAddress}` : ' WITHOUT a relayer'),
+      `kova api on :${info.port} (${network.name}, chain ${network.chainId}, ${kit.id})` +
+        (feePayerAddress ? ` fee payer ${feePayerAddress}` : ' WITHOUT a fee payer'),
     )
   })
 }
