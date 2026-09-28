@@ -2081,3 +2081,47 @@ button.w-person {
 .pay-kova-web {
   margin-top: 0.6rem;
 }
+
+/* Opened inside X or Instagram: the way out to a browser that holds passkeys. */
+.w-inapp {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 0.25rem;
+  padding: 1rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--coral-soft);
+  color: var(--ink);
+  text-align: left;
+}
+
+.w-inapp strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.w-inapp span {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.w-inapp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.w-inapp .textlink {
+  padding: 0.25rem 0.1rem;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

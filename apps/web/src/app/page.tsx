@@ -8,7 +8,7 @@ import { PaidInASecond } from '@/components/paid-in-a-second'
 
 export const metadata: Metadata = {
   title: { absolute: 'Kova · Tap. Paid. Anywhere.' },
-  description: 'Turn any phone into a till for digital dollars. Customers tap or scan, and it settles on Monad in about a second, straight to your own wallet.',
+  description: 'Your dollars, anywhere, in seconds. A wallet that opens with a passkey, with your shop inside it. On Monad.',
 }
 
 /** A full stop drawn as the brand's coin, the same as the o in the wordmark. */

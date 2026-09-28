@@ -6,9 +6,15 @@ import '../styles/landing.css'
 import '../styles/stalls.css'
 import '../styles/wallet.css'
 
+const DESCRIPTION = 'Your dollars, anywhere, in seconds. A wallet that opens with a passkey, with your shop inside it. On Monad.'
+
+/** The preview card (app/opengraph-image.png) is drawn from the Kovi film: film/src/OgCard.tsx. */
 export const metadata: Metadata = {
+  metadataBase: new URL('https://mykova.app'),
   title: { default: 'Kova', template: '%s · Kova' },
-  description: 'Tap. Paid. Anywhere. Stablecoin payments for real shops.',
+  description: DESCRIPTION,
+  openGraph: { siteName: 'Kova', type: 'website', title: 'Kova · Tap. Paid. Anywhere.', description: DESCRIPTION },
+  twitter: { card: 'summary_large_image', site: '@kovafinance', title: 'Kova · Tap. Paid. Anywhere.', description: DESCRIPTION },
 }
 
 export const viewport: Viewport = {

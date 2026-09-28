@@ -11,6 +11,7 @@ import {
 } from '@/lib/wallet/money'
 import { useWallet } from './provider'
 import { Avatar } from './ui'
+import { InAppNote } from './in-app'
 
 type Step = { at: 'start' } | { at: 'name' } | { at: 'waiting'; what: 'create' | 'open' }
 
@@ -133,6 +134,8 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
           ? 'Your shop lives in your Kova wallet: its sales land there, and your passkey opens both. Open your wallet, or make one, then your shop.'
           : 'Your Kova wallet, in your browser. The same one as in the Kova app: one passkey, one wallet.'}
       </p>
+
+      <InAppNote />
 
       {!home ? (
         <p className="form-note">
