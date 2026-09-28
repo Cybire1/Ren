@@ -4,6 +4,7 @@ import { getAddress, isAddress } from 'viem'
 import { Brand, Icon } from '@/components/brand'
 import { Avatar } from '@/components/wallet/ui'
 import { parseScanned } from '@/lib/wallet/links'
+import { chainName } from '@/lib/chain'
 
 type Props = {
   params: Promise<{ address: string }>
@@ -83,7 +84,7 @@ export default async function PayPersonPage(props: Props) {
           </a>
         </div>
         <p className="w-fine">
-          Pays from your Kova wallet, in dollars on Monad. {firstName} gets it in about a second,
+          Pays from your Kova wallet, in dollars on {chainName}. {firstName} gets it in about a second,
           and Kova covers the fee. New to Kova? Your wallet takes a passkey and a moment.
         </p>
       </div>

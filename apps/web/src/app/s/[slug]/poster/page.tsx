@@ -6,6 +6,7 @@ import { Notice } from '@/components/notice'
 import { PrintButton } from '@/components/print-button'
 import { kovaPublic, type PublicStall } from '@/lib/api'
 import { publicUrl } from '@/lib/url'
+import { chainName } from '@/lib/chain'
 
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Table poster' }
@@ -46,7 +47,7 @@ export default async function PosterPage(props: { params: Promise<{ slug: string
               <LogoMark size={46} />
             </span>
           </div>
-          <p className="poster-small">No app needed. Pay in dollars with Kova Pay or any Monad wallet. No card fees.</p>
+          <p className="poster-small">No app needed. Pay in dollars with Kova Pay or any {chainName} wallet. No card fees.</p>
           <div className="poster-foot">
             <Art name="kovi-wave" size={104} />
             <div>

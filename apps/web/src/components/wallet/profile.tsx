@@ -16,6 +16,7 @@ import { SESSION_LIMIT, TAP_LIMIT, useSessionState } from '@/lib/wallet/session'
 import { ScreenHead } from './activity'
 import { short, useWallet } from './provider'
 import { CopyButton, QR } from './ui'
+import { chainName } from '@/lib/chain'
 
 /** "$50", for limits that are always whole dollars. */
 const whole = (base: bigint) => formatUsd(base).replace(/\.00$/, '')
@@ -53,7 +54,7 @@ export function Profile() {
             })}
           </span>
           <small className="w-pass-label">
-            Your address on Monad <em>{network === 'testnet' ? 'Testnet' : 'Mainnet'}</em>
+            Your address on {chainName} <em>{network === 'testnet' ? 'Testnet' : 'Mainnet'}</em>
           </small>
           <code>{short(profile.address)}</code>
           <CopyButton text={profile.address} className="w-copy w-copy-ink" />
@@ -150,7 +151,7 @@ export function Profile() {
       {forgetting ? (
         <div className="w-forget">
           <p>
-            This browser forgets your wallet. Your money stays on Monad, and your passkey opens it
+            This browser forgets your wallet. Your money stays on {chainName}, and your passkey opens it
             again here or in the Kova app: choose <em>Open my Kova wallet</em>.
           </p>
           <div className="w-forget-actions">

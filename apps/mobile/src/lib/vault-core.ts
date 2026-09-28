@@ -1,4 +1,4 @@
-import { vaultMessage } from '@kova/monad'
+import { vaultMessage } from '@kova/tempo'
 import { xchacha20poly1305 } from '@noble/ciphers/chacha.js'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'

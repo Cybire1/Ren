@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { SignInForm } from '@/components/auth-forms'
+import { chainIdOf } from '@/lib/chain'
 import { getSession } from '@/lib/session'
 
 export const metadata: Metadata = { title: 'Sign in' }
@@ -20,7 +21,7 @@ export default async function SignInPage(props: {
     <SignInForm
       notice={notice}
       privyAppId={process.env.PRIVY_APP_ID ?? null}
-      chainId={process.env.KOVA_NETWORK === 'mainnet' ? 143 : 10143}
+      chainId={chainIdOf(process.env.KOVA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet')}
     />
   )
 }

@@ -7,6 +7,7 @@ import { Burst, CoinRain, PopIn } from '@/ui/motion'
 import { when } from '@/ui/EntryRow'
 import { Stage } from '@/ui/Stage'
 import { Chip, Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
+import { chainName } from '@/lib/config'
 
 /** Money arrived: coins rain, Kovi catches them, and the amount is the headline. */
 export default function Received() {
@@ -68,7 +69,7 @@ export default function Received() {
               Arrived
             </Txt>
             <Txt weight="semi" size={15}>
-              On Monad, final in under a second
+              On {chainName}, final in under a second
             </Txt>
           </View>
         </Sticker>

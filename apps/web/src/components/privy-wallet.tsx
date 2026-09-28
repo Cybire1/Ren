@@ -2,14 +2,14 @@
 
 import { PrivyProvider, useLogin, usePrivy, useWallets } from '@privy-io/react-auth'
 import { useEffect, useRef, useState } from 'react'
-import { monad, monadTestnet } from 'viem/chains'
+import { monad, monadTestnet, tempo, tempoModerato } from 'viem/chains'
 import { returningFromPrivy } from '@/lib/privy-return'
 
 /**
  * A wallet for people who don't have one: log in with email or Google, and Privy makes an
  * embedded wallet on the spot, with nothing to install. It hands back a standard EIP-1193
- * provider, so paying with it is the same signed authorization as any other wallet, and Kova's
- * relayer pays the gas. A shop's owner signs in to Kova with the same wallet.
+ * provider (and, on Tempo, raw hash signing), so it pays exactly as Kova Pay does and Kova pays
+ * the fee. A shop's owner signs in to Kova with the same wallet.
  *
  * Loaded only when someone asks for it (next/dynamic), so the pay page stays light on a phone
  * that just scanned a code. The provider must stay mounted while the wallet is in use: the
@@ -45,7 +45,7 @@ export default function PrivyWallet({
   title = 'Your Kova wallet',
   fresh = false,
 }: Props) {
-  const chain = chainId === monad.id ? monad : monadTestnet
+  const chain = [tempo, tempoModerato, monad, monadTestnet].find((c) => c.id === chainId) ?? tempoModerato
   return (
     <PrivyProvider
       appId={appId}

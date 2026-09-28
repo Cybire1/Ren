@@ -1,5 +1,6 @@
 import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
+import { chainKey } from './config'
 import { load, save } from './storage'
 import { openVault, sealAndUpload, type VaultContents } from './vault-core'
 
@@ -10,7 +11,7 @@ import { openVault, sealAndUpload, type VaultContents } from './vault-core'
  * passkey brings back the wallet, and the vault brings back who you are. Saving needs no Face ID,
  * because the vault key can't move money, so it waits in the Keychain without a biometric lock.
  */
-const SECRET = 'kova.monad.vault.v1'
+const SECRET = chainKey('vault.v1')
 
 export { openVault, type VaultContents }
 
@@ -24,7 +25,7 @@ export async function forgetVaultSecret() {
   await SecureStore.deleteItemAsync(SECRET)
 }
 
-const SAVED_AT = 'kova.monad.vault.saved.v1'
+const SAVED_AT = chainKey('vault.saved.v1')
 
 /** Backs up the vault. Quietly does nothing before the passkey has given a vault key. */
 export async function saveVault(contents: VaultContents): Promise<void> {

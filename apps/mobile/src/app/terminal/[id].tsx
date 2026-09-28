@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
-import { settlementToken } from '@/lib/config'
+import { chainName, settlementToken } from '@/lib/config'
 import { cancelCharge, getCharge, type PaymentIntent, payLinkFor } from '@/lib/api'
 import { useShop } from '@/lib/shop'
 import { colors } from '@/lib/theme'
@@ -158,7 +158,7 @@ export default function CustomerDisplay() {
             <Icon name="scan" size={18} color={colors.white} />
           </View>
           <Txt weight="medium" size={15}>
-            Scan with Kova Pay or any Monad wallet
+            Scan with Kova Pay or any {chainName} wallet
           </Txt>
         </View>
       </View>

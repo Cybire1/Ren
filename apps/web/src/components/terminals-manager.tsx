@@ -6,6 +6,7 @@ import { ago } from '@/lib/format'
 import { Art, Icon, Pill } from './brand'
 import { PairSheet } from './pair-sheet'
 import { PageHead } from './shell'
+import { chainName } from '@/lib/chain'
 
 /** Every phone paired to the shop, as cards. Add one with a code; remove one and its key dies. */
 export function TerminalsManager({ initial }: { initial: Terminal[] }) {
@@ -101,7 +102,7 @@ export function TerminalsManager({ initial }: { initial: Terminal[] }) {
         <div>
           <Icon name="shield" size={20} />
           <h3>Money never stops there</h3>
-          <p>Payments settle straight to your shop’s address on Monad. The phone only shows the code.</p>
+          <p>Payments settle straight to your shop’s address on {chainName}. The phone only shows the code.</p>
         </div>
       </section>
 

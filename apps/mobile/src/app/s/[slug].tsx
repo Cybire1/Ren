@@ -28,6 +28,7 @@ import { Icon } from '@/ui/Icon'
 import { Stage as KoviStage } from '@/ui/Stage'
 import { PillButton, RoundButton, Screen, Txt } from '@/ui/primitives'
 import { about, dollars, ItemFace, Stepper } from '@/ui/StallParts'
+import { chainName } from '@/lib/config'
 
 type Basket = Record<string, number>
 
@@ -420,7 +421,7 @@ function AskedToPay({ stall, placed, onDone }: { stall: PublicStall; placed: Pla
         Send it to whoever’s paying
       </Txt>
       <Txt size={15} color={colors.muted} style={{ textAlign: 'center', marginTop: 6, lineHeight: 21 }}>
-        They can pay from anywhere with Kova or any Monad wallet. The link stays open for a day, and this updates when it’s paid.
+        They can pay from anywhere with Kova or any {chainName} wallet. The link stays open for a day, and this updates when it’s paid.
       </Txt>
       <Pressable
         accessibilityRole="button"

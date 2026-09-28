@@ -4,7 +4,7 @@ import { Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions,
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Circle } from 'react-native-svg'
 import { getSummary } from '@/lib/api'
-import { isTestnet } from '@/lib/config'
+import { chainName, isTestnet } from '@/lib/config'
 import { usePrefs } from '@/lib/prefs'
 import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
@@ -132,7 +132,7 @@ export default function Home() {
               {isTestnet ? 'Add test dollars to start' : 'Add money to start paying'}
             </Txt>
             <Txt size={13} color={colors.onTint}>
-              {isTestnet ? '$5 a day, free on Monad testnet. Arrives in about a second.' : 'From a card or a bank transfer.'}
+              {isTestnet ? `$5 a day, free on ${chainName} testnet. Arrives in about a second.` : 'From a card or a bank transfer.'}
             </Txt>
           </View>
           <View style={styles.noticeCta}>

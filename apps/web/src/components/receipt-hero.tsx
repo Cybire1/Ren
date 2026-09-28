@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Art, type ArtName, Icon, LogoMark } from './brand'
+import { chainName } from '@/lib/chain'
 
 type Currency = 'gbp' | 'eur' | 'ngn'
 
@@ -184,7 +185,7 @@ export function ReceiptHero() {
               </div>
               <div>
                 <dt>Settled</dt>
-                <dd>On Monad, about a second</dd>
+                <dd>On {chainName}, about a second</dd>
               </div>
               <div>
                 <dt>Card fees</dt>

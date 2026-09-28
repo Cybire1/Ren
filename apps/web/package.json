@@ -14,6 +14,7 @@
   "dependencies": {
     "@category-labs/mera": "0.2.0",
     "@kova/monad": "workspace:*",
+    "@kova/tempo": "workspace:*",
     "@noble/ciphers": "^1.3.0",
     "@noble/hashes": "^2.4.0",
     "@privy-io/react-auth": "3.45.0",
@@ -21,6 +22,7 @@
     "@scure/bip32": "^2.4.0",
     "@scure/bip39": "^2.4.0",
     "next": "16.3.5",
+    "ox": "0.14.45",
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",

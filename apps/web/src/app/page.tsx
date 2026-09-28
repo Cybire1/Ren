@@ -5,10 +5,11 @@ import { PaidCoin, ReceiptHero } from '@/components/receipt-hero'
 import { getSession } from '@/lib/session'
 import { signInDemo } from './actions'
 import { PaidInASecond } from '@/components/paid-in-a-second'
+import { chainName, onTempo } from '@/lib/chain'
 
 export const metadata: Metadata = {
   title: { absolute: 'Kova · Tap. Paid. Anywhere.' },
-  description: 'Turn any phone into a till for digital dollars. Customers tap or scan, and it settles on Monad in about a second, straight to your own wallet.',
+  description: `Turn any phone into a till for digital dollars. Customers tap or scan, and it settles on ${chainName} in about a second, straight to your own wallet.`,
 }
 
 /** A full stop drawn as the brand's coin, the same as the o in the wordmark. */
@@ -56,7 +57,7 @@ export default async function Landing() {
             </span>
           </h1>
           <p className="lp-lead">
-            Kova turns any phone into a till for digital dollars. Your customer taps or scans, and the money settles on Monad in about a second, straight to your own
+            Kova turns any phone into a till for digital dollars. Your customer taps or scans, and the money settles on {chainName} in about a second, straight to your own
             wallet. No card machine, no card fees, no waiting days to get paid.
           </p>
           <div className="lp-ctas">
@@ -69,7 +70,7 @@ export default async function Landing() {
               </Pill>
             </form>
           </div>
-          <p className="lp-fine">Live on Monad’s test network. Test dollars, real speed.</p>
+          <p className="lp-fine">Live on {chainName}’s test network. Test dollars, real speed.</p>
         </div>
 
         <div className="lp-hero-stage">
@@ -136,7 +137,7 @@ export default async function Landing() {
             <Art name="coin-ngn" size={44} /> ₦17,188
           </span>
         </div>
-        <small>At Kova’s published reference rates. Payments always settle in dollars (AUSD, Agora’s dollar).</small>
+        <small>At Kova’s published reference rates. Payments always settle in dollars ({onTempo ? 'USDC' : 'AUSD, Agora’s dollar'}).</small>
       </section>
 
       {/* Developers -------------------------------------------------------------------------- */}
@@ -198,7 +199,7 @@ export default async function Landing() {
           <div>
             <Icon name="check" size={24} />
             <h3>Checked on-chain</h3>
-            <p>Every payment carries a memo tying it to its charge, and Kova verifies it on Monad before anything says Paid.</p>
+            <p>Every payment carries a memo tying it to its charge, and Kova verifies it on {chainName} before anything says Paid.</p>
           </div>
         </div>
       </section>
@@ -222,7 +223,7 @@ export default async function Landing() {
 
       <footer className="lp-foot">
         <Brand />
-        <p>Tap. Paid. Anywhere. Built on Monad. A test network preview: no real money moves.</p>
+        <p>Tap. Paid. Anywhere. Built on {chainName}. A test network preview: no real money moves.</p>
         <nav aria-label="Footer">
           <Link href="/wallet">Open Kova</Link>
           <Link href="/wallet/shop?go=open">Open a shop</Link>

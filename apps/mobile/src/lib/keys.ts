@@ -6,7 +6,7 @@ import { wordlist } from '@scure/bip39/wordlists/english.js'
 import type { LocalAccount } from 'viem'
 
 /**
- * Mera's derivation, exactly as its docs give it, so the same passkey opens the same Monad account
+ * Mera's derivation, exactly as its docs give it, so the same passkey opens the same account (the same address on Tempo and Monad)
  * in any Mera app: the 32-byte PRF output is BIP-39 entropy, and the wallet is the first Ethereum
  * account of that seed (m/44'/60'/0'/0/0). Nothing here is ever stored: the key lives in a
  * signing session, in memory, and is zeroed when the session ends.

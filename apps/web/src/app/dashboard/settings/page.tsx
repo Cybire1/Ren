@@ -6,6 +6,7 @@ import { PasskeyOwner } from '@/components/passkey-owner'
 import { PageHead } from '@/components/shell'
 import { kova, type Merchant } from '@/lib/api'
 import { getSession } from '@/lib/session'
+import { chainName, onTempo } from '@/lib/chain'
 
 export const metadata: Metadata = { title: 'Settings' }
 
@@ -36,7 +37,7 @@ export default async function SettingsPage() {
           <dl className="facts facts-flat">
             <div>
               <dt>Chain</dt>
-              <dd>Monad {merchant.network === 'testnet' ? 'testnet' : 'mainnet'}</dd>
+              <dd>{chainName} {merchant.network === 'testnet' ? 'testnet' : 'mainnet'}</dd>
             </div>
             <div>
               <dt>Mode</dt>
@@ -44,7 +45,7 @@ export default async function SettingsPage() {
             </div>
             <div>
               <dt>Settles in</dt>
-              <dd>AUSD, final in about a second</dd>
+              <dd>{onTempo ? 'USDC' : 'AUSD'}, final in about a second</dd>
             </div>
             <div>
               <dt>Fees</dt>

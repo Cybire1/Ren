@@ -8,8 +8,8 @@ type TransferRow = typeof schema.transfers.$inferSelect
 
 /** Blocks read per request: about 40 minutes of Tempo. A wallet further behind catches up over a few calls. */
 const MAX_SPAN = 5_000n
-/** A wallet with no cursor yet sees about the last two hours. */
-const FIRST_LOOK = 14_000n
+/** A wallet with no cursor yet (a fresh install, a restored passkey) sees the last span, in one call. */
+const FIRST_LOOK = MAX_SPAN - 1n
 
 /**
  * One wallet's transfers on Tempo, read from the chain, in the shape of Kova's transfer index

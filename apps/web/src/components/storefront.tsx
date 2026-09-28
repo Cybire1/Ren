@@ -7,6 +7,7 @@ import { usd } from '@/lib/format'
 import { type Currency, inCurrency, type LiveRates, RATES } from '@/lib/rates'
 import { Awning } from './awning'
 import { Art, Icon, LogoMark, Pill } from './brand'
+import { chainName } from '@/lib/chain'
 
 type Placed = { id: string; checkout: { id: string; amount: string; expires_at: string } }
 
@@ -424,7 +425,7 @@ function AskedToPay({ stall, placed }: { stall: PublicStall; placed: Placed }) {
     <div className="asked">
       <Art name="kovi-ride" size={130} />
       <h2>Send it to whoever’s paying</h2>
-      <p className="sheet-lead">They can pay from anywhere, with Kova Pay or any Monad wallet. The link stays open for 24 hours, and this page updates when it’s paid.</p>
+      <p className="sheet-lead">They can pay from anywhere, with Kova Pay or any {chainName} wallet. The link stays open for 24 hours, and this page updates when it’s paid.</p>
       <div className="field-value">
         <code>{link}</code>
         <button

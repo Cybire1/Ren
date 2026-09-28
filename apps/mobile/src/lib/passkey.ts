@@ -9,7 +9,7 @@ import { stringToBytes } from 'viem'
  * Google Password Manager on Android).
  *
  * One passkey, two keys, one Face ID: every ceremony evaluates two PRF salts. Mera asks for the
- * first (its fixed wallet salt), which becomes the Monad account. The second is Kova's own salt,
+ * first (its fixed wallet salt), which becomes the wallet's account. The second is Kova's own salt,
  * a separate key for the things only you should read (your contacts, the names you give people),
  * so they can be backed up encrypted and come back with the wallet on a new phone.
  */

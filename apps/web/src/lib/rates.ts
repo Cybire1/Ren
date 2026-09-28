@@ -1,7 +1,7 @@
 /**
  * Reference rates for showing a dollar price in someone's own money (DECISIONS D-012): always
  * labelled approximate, and nothing is ever converted; everything is paid in dollars. Pages pass
- * the live rates Kova's API reads from Chainlink (KovaRates on Monad); this table is the fallback.
+ * the live rates Kova's API publishes (Chainlink's KovaRates on Monad, two checked sources on Tempo); this table is the fallback.
  */
 export const RATES = {
   USD: { symbol: '$', perUsd: 1, decimals: 2, name: 'US dollars' },

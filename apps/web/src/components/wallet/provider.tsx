@@ -555,7 +555,7 @@ export function WalletProvider({
             : t.kind === 'refund'
               ? 'Refund'
               : (nameFor(t.from) ?? short(t.from)),
-          detail: t.faucet ? 'AUSD test faucet' : t.kind === 'refund' ? 'Money back' : 'Arrived',
+          detail: t.faucet ? 'Kova test dollars' : t.kind === 'refund' ? 'Money back' : 'Arrived',
           address: t.from,
           txHash: t.tx_hash,
           explorer: t.explorer_url,

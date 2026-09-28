@@ -1,169 +1,19 @@
 /**
- * Everything the phone does on Monad, with no React Native in it, so it can be exercised
- * from Node against testnet exactly as the app runs it.
- *
- * The phone never holds MON and never sends a transaction itself. It signs EIP-3009 transfer
- * authorizations, and Kova's relayer submits them and pays the gas, so a payer spends exactly
- * the price. Balances are read straight from the chain. What arrived comes from Kova's index,
- * because Monad's RPCs answer log queries only 100 blocks (about 30 seconds) at a time.
+ * The chain this build of Kova Pay runs on (EXPO_PUBLIC_KOVA_CHAIN): Tempo by default, or Monad.
+ * Both sides offer the same calls, so the wallet and every screen are the same on either chain.
  */
-import {
-  eip3009Abi,
-  randomNonce,
-  toSignedAuthorization,
-  tokenByAddress,
-  transferAuthorizationTypedData,
-} from '@kova/monad'
-import { type Address, createPublicClient, fallback, type Hash, type Hex, http, isAddressEqual, type LocalAccount } from 'viem'
-import { monad, monadTestnet } from 'viem/chains'
-import { apiUrl, isTestnet, network, networkId, settlementToken } from './config'
+import * as monad from './chain-monad'
+import * as tempo from './chain-tempo'
+import { onTempo } from './config'
 
-/** Monad's own RPC first, Ankr's public one if it stumbles. */
-const rpcs = isTestnet
-  ? ['https://testnet-rpc.monad.xyz', 'https://rpc.ankr.com/monad_testnet']
-  : ['https://rpc.monad.xyz', 'https://rpc.ankr.com/monad']
+export type { Charge, Incoming, Sent } from './chain-tempo'
 
-// The app's own viem chain object: @kova/monad's copy is the same chain from another install.
-export const publicClient = createPublicClient({
-  chain: isTestnet ? monadTestnet : monad,
-  transport: fallback(rpcs.map((url) => http(url, { timeout: 8_000 }))),
-})
+const side = onTempo ? tempo : monad
 
-async function kova<T>(path: string, body?: unknown): Promise<T> {
-  const response = await fetch(
-    `${apiUrl}${path}`,
-    body === undefined
-      ? undefined
-      : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) },
-  )
-  const json = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
-  if (!response.ok) throw new Error(json.error?.message ?? `Kova is unreachable (${response.status})`)
-  return json as T
-}
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
-const seconds = (ms: number) => BigInt(Math.floor(ms / 1000))
-
-export async function getBalance(address: Address): Promise<bigint> {
-  return publicClient.readContract({
-    address: settlementToken.address,
-    abi: eip3009Abi,
-    functionName: 'balanceOf',
-    args: [address],
-  })
-}
-
-/** Testnet only: asks Kova for today's test dollars ($5 a day, gas paid by Kova), and waits until they land. */
-export async function fundFromFaucet(address: Address): Promise<void> {
-  if (!isTestnet) throw new Error('Adding money needs a card or bank on mainnet.')
-  const before = await getBalance(address).catch(() => 0n)
-  await kova('/v1/faucet', { address })
-  for (let i = 0; i < 40; i++) {
-    if ((await getBalance(address).catch(() => before)) > before) return
-    await sleep(250)
-  }
-}
-
-export interface Sent {
-  hash: Hash
-  ms: number
-}
-
-/** The parts of a Kova charge a payment is signed against. */
-export interface Charge {
-  id: string
-  token: Address
-  pay_to: Address
-  amount_base: string
-  memo: Hex
-  expires_at: string
-}
-
-/**
- * Pays a Kova charge. The phone signs an authorization for exactly this charge (its memo as the
- * nonce, its amount and recipient, valid until the charge expires) and Kova's relayer submits
- * it. The token is checked against the app's own list, so a charge can never get the phone to
- * sign away anything but the dollars it shows.
- */
-export async function payCharge(account: LocalAccount, charge: Charge): Promise<Sent> {
-  const started = Date.now()
-  const token = tokenByAddress(networkId, charge.token)
-  if (!token) throw new Error('This charge asks for a token Kova doesn’t use. Nothing was paid.')
-  const authorization = {
-    from: account.address,
-    to: charge.pay_to,
-    value: BigInt(charge.amount_base),
-    validAfter: 0n,
-    validBefore: seconds(Date.parse(charge.expires_at)),
-    nonce: charge.memo,
-  }
-  const signature = await account.signTypedData(transferAuthorizationTypedData(token, network.chainId, authorization))
-  const paid = await kova<{ status: string; payment?: { tx_hash: Hash } }>(
-    `/v1/checkout/${charge.id}/authorize`,
-    toSignedAuthorization(token.address, authorization, signature),
-  )
-  if (paid.status !== 'paid' || !paid.payment) throw new Error('The payment didn’t go through. No money moved.')
-  return { hash: paid.payment.tx_hash, ms: Date.now() - started }
-}
-
-/** Sends dollars to a person. Kova submits it and pays the gas, so they get every cent sent. */
-export async function sendMoney(account: LocalAccount, to: Address, amount: bigint): Promise<Sent> {
-  const started = Date.now()
-  const authorization = {
-    from: account.address,
-    to,
-    value: amount,
-    validAfter: 0n,
-    validBefore: seconds(Date.now() + 10 * 60_000),
-    nonce: randomNonce(),
-  }
-  const signature = await account.signTypedData(transferAuthorizationTypedData(settlementToken, network.chainId, authorization))
-  const sent = await kova<{ tx_hash: Hash }>('/v1/transfers', toSignedAuthorization(settlementToken.address, authorization, signature))
-  return { hash: sent.tx_hash, ms: Date.now() - started }
-}
-
-export interface Incoming {
-  from: Address
-  amount: bigint
-  hash: Hash
-  block: bigint
-  /** What a Kova memo says the money was: a refund, say. */
-  kind: 'payment' | 'refund' | 'payout' | null
-  /** Test dollars from the testnet faucet, not from a person. */
-  faucet: boolean
-}
-
-interface IndexedTransfer {
-  token: Address
-  from: Address
-  amount_base: string
-  tx_hash: Hash
-  block: string
-  kind: Incoming['kind']
-  faucet: boolean
-}
-
-/** Dollars that arrived at `address` in blocks after `fromBlock`, from Kova's index of the chain. */
-export async function incomingSince(
-  address: Address,
-  fromBlock: bigint,
-): Promise<{ transfers: Incoming[]; head: bigint }> {
-  const page = await kova<{ data: IndexedTransfer[]; indexed_through: string }>(
-    `/v1/wallets/${address}/transfers?direction=in&after_block=${fromBlock}`,
-  )
-  return {
-    head: BigInt(page.indexed_through),
-    transfers: page.data
-      .filter((t) => isAddressEqual(t.token, settlementToken.address))
-      .map((t) => ({
-        from: t.from,
-        amount: BigInt(t.amount_base),
-        hash: t.tx_hash,
-        block: BigInt(t.block),
-        kind: t.kind,
-        faucet: t.faucet,
-      })),
-  }
-}
-
-export const explorerTx = (hash: string) => `${network.explorerUrl}/tx/${hash}`
+export const publicClient = side.publicClient as typeof monad.publicClient
+export const getBalance = side.getBalance
+export const fundFromFaucet = side.fundFromFaucet
+export const payCharge = side.payCharge
+export const sendMoney = side.sendMoney
+export const incomingSince = side.incomingSince
+export const explorerTx = side.explorerTx

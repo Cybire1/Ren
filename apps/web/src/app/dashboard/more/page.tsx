@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { signOut } from '@/app/actions'
 import { Art, Icon, type IconName } from '@/components/brand'
 import { kova, type Merchant } from '@/lib/api'
+import { chainName } from '@/lib/chain'
 
 export const metadata: Metadata = { title: 'More' }
 
@@ -44,8 +45,8 @@ export default async function MorePage() {
           <h1>{shop.name}</h1>
           <p>
             {shop.livemode
-              ? 'Taking payments on Monad'
-              : 'On Monad’s test network: test dollars, real speed'}
+              ? `Taking payments on ${chainName}`
+              : `On ${chainName}’s test network: test dollars, real speed`}
           </p>
         </div>
       </div>

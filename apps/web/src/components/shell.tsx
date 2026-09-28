@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Art, Icon, type IconName } from './brand'
+import { chainName } from '@/lib/chain'
 
 const TABS: { href: string; label: string; icon: IconName; also?: string[] }[] = [
   { href: '/dashboard', label: 'Today', icon: 'home' },
@@ -94,7 +95,7 @@ export function Shell({
 
       {demo ? (
         <div className="demo-bar" role="note">
-          You’re exploring a shared demo shop on Monad’s test network.{' '}
+          You’re exploring a shared demo shop on {chainName}’s test network.{' '}
           <Link href="/wallet/shop?go=open">Open your own shop</Link>
         </div>
       ) : null}

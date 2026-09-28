@@ -4,15 +4,16 @@ import { currencyInfo, type DisplayCurrency, displayCurrencies } from './money'
 import { load, save } from './storage'
 
 /**
- * Live reference rates. Kova's API reads them from KovaRates on Monad, where a Chainlink CRE
- * workflow publishes them: two independent sources, cross-checked on every node, and the DON's
- * median. They replace the table in money.ts in place, so every local price on screen uses
- * them, and the last ones are kept so the next launch starts with them.
+ * Live reference rates from Kova's API. On Monad it reads them from KovaRates, where a Chainlink
+ * CRE workflow publishes them (two independent sources, cross-checked on every node, the DON's
+ * median); on Tempo, which CRE doesn't reach, the API reads the same two sources and applies the
+ * same cross-check. They replace the table in money.ts in place, so every local price on screen
+ * uses them, and the last ones are kept so the next launch starts with them.
  */
 const KEY = 'kova.rates.v1'
 
 interface Published {
-  source: 'chainlink' | 'table'
+  source: 'chainlink' | 'sources' | 'table'
   rates: Partial<Record<string, { per_usd: number; as_of: string | null }>>
 }
 
@@ -65,15 +66,19 @@ export function useLiveRates(): boolean {
   return ready
 }
 
-/** Whether the rates on screen are Chainlink's, rather than the fixed table. */
-export const ratesLive = () => current.source === 'chainlink'
+/** Whether the rates on screen are live (Chainlink's on Monad, the checked sources on Tempo), rather than the fixed table. */
+export const ratesLive = () => current.source !== 'table'
 
-/** Where a rate on screen comes from: "Chainlink rate from 4 min ago", or "reference rate". */
+/** Whether the live rates were published on-chain by Chainlink. */
+export const ratesOnChain = () => current.source === 'chainlink'
+
+/** Where a rate on screen comes from: "Chainlink rate from 4 min ago", "live rate, just now", or "reference rate". */
 export function rateLabel(now = Date.now()): string {
-  if (current.source !== 'chainlink') return 'reference rate'
-  if (!current.asOf) return 'Chainlink rate'
+  if (current.source === 'table') return 'reference rate'
+  const name = current.source === 'chainlink' ? 'Chainlink rate' : 'live rate'
+  if (!current.asOf) return name
   const minutes = Math.max(0, Math.round((now - Date.parse(current.asOf)) / 60_000))
-  if (minutes < 1) return 'Chainlink rate, just now'
-  if (minutes < 90) return `Chainlink rate from ${minutes} min ago`
-  return `Chainlink rate from ${Math.round(minutes / 60)} h ago`
+  if (minutes < 1) return `${name}, just now`
+  if (minutes < 90) return `${name} from ${minutes} min ago`
+  return `${name} from ${Math.round(minutes / 60)} h ago`
 }

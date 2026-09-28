@@ -23,6 +23,7 @@ import { sessionCovers } from '@/lib/wallet/session'
 import { ScreenHead } from './activity'
 import { type Contact, isUnnamed, short, useWallet } from './provider'
 import { Avatar, Keypad } from './ui'
+import { chainName } from '@/lib/chain'
 
 const first = (name: string) => (isUnnamed(name) ? short(name) : (name.split(' ')[0] ?? name))
 
@@ -130,7 +131,7 @@ export function SendPicker() {
             <small>
               {scanned.amount
                 ? `They asked for $${scanned.amount}${scanned.note ? `, for ${scanned.note}` : ''}`
-                : 'Monad address, ready to pay'}
+                : `${chainName} address, ready to pay`}
             </small>
           </span>
           <Icon name="arrow" size={20} />
@@ -142,7 +143,7 @@ export function SendPicker() {
           <Art name="scene-send" size={220} />
           <strong>Send your first payment</strong>
           <span>
-            Paste a friend’s Kova link or their Monad address. It lands in about a second, and Kova
+            Paste a friend’s Kova link or their {chainName} address. It lands in about a second, and Kova
             covers the fee.
           </span>
         </div>
@@ -394,7 +395,7 @@ export function SendFlow({ to }: { to: string }) {
         <Avatar name={name} id={address} size={56} />
         <span>
           <strong>To {first(name)}</strong>
-          <small>{isUnnamed(name) ? 'A Monad address' : short(address)}</small>
+          <small>{isUnnamed(name) ? `A ${chainName} address` : short(address)}</small>
         </span>
       </div>
       <p className="w-typed" aria-live="polite">

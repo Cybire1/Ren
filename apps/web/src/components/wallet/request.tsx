@@ -15,6 +15,7 @@ import {
 import { ScreenHead } from './activity'
 import { short, useWallet } from './provider'
 import { CopyButton, Keypad, QR, ShareButton } from './ui'
+import { chainName, onTempo } from '@/lib/chain'
 
 function useOrigin() {
   const [origin, setOrigin] = useState('https://mykova.app')
@@ -131,12 +132,12 @@ export function Receive() {
         </div>
         <div className="w-address">
           <span>
-            <small>Your address on Monad</small>
+            <small>Your address on {chainName}</small>
             <code>{short(profile.address)}</code>
           </span>
           <CopyButton text={profile.address} />
         </div>
-        <p className="w-fine w-center">Monad address. Send only AUSD on Monad to it.</p>
+        <p className="w-fine w-center">{chainName} address. Send only {onTempo ? 'USDC' : 'AUSD'} on {chainName} to it.</p>
         <ShareButton
           title={`Pay ${profile.name}`}
           text="Pay me on Kova:"

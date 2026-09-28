@@ -13,6 +13,7 @@ import {
   signInWithWallet,
   walletChallenge,
 } from '@/app/actions'
+import { isMainnetChain } from '@/lib/chain'
 import { returningFromPrivy } from '@/lib/privy-return'
 import { Icon, Pill } from './brand'
 import type { EmbeddedWallet } from './privy-wallet'
@@ -44,7 +45,7 @@ export function SignInForm({
 }) {
   // Without Privy the secret key is the only way in, so it starts open.
   const [withKey, setWithKey] = useState(!privyAppId)
-  const keyStart = chainId === 143 ? 'kova_live_sk_' : 'kova_test_sk_'
+  const keyStart = isMainnetChain(chainId) ? 'kova_live_sk_' : 'kova_test_sk_'
   return (
     <div className="auth-card">
       <h1>Welcome back</h1>

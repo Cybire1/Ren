@@ -1,7 +1,7 @@
 import { formatAmount, parseAmount } from '@kova/monad'
 
 /**
- * Money in Kova is dollars on-chain (AUSD), shown in the currency a person thinks in: the app's
+ * Money in Kova is dollars on-chain (USDC on Tempo, AUSD on Monad), shown in the currency a person thinks in: the app's
  * rules (apps/mobile src/lib/money.ts). Kova never converts money; local amounts are shown at a
  * published reference rate and always labelled as approximate.
  */

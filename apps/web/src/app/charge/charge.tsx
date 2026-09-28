@@ -6,6 +6,7 @@ import { Art, Brand, Icon, Pill } from '@/components/brand'
 import type { PaymentIntent } from '@/lib/api'
 import { cancelCharge } from '../actions'
 import { usd } from '@/lib/format'
+import { chainName, onTempo } from '@/lib/chain'
 
 type Stage = 'amount' | 'waiting' | 'paid' | 'problem'
 
@@ -138,7 +139,7 @@ export function Charge() {
             <h1>Paid</h1>
             <p>
               {usd(intent.amount)}
-              {intent.reference ? ` for ${intent.reference}` : ''}, settled on Monad
+              {intent.reference ? ` for ${intent.reference}` : ''}, settled on {chainName}
             </p>
             <div className="paid-actions">
               <Pill icon="tap" onClick={reset}>
@@ -161,7 +162,7 @@ export function Charge() {
           <section className="await">
             <div className="await-card">
               <p className="await-amount">{usd(intent.amount)}</p>
-              <p className="await-label">{intent.reference ?? 'Scan with Kova Pay or any Monad wallet'}</p>
+              <p className="await-label">{intent.reference ?? `Scan with Kova Pay or any ${chainName} wallet`}</p>
               {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
               {qr ? <div className="qr qr-big" aria-label="Payment QR code" dangerouslySetInnerHTML={{ __html: qr }} /> : null}
               <p className="waiting">
@@ -215,7 +216,7 @@ export function Charge() {
           <p className="amount-value" data-empty={amount === '' ? 'true' : undefined} aria-live="polite">
             {typedDollars(amount)}
           </p>
-          <p className="amount-sub">Customer pays {usd(amount || '0')} in AUSD</p>
+          <p className="amount-sub">Customer pays {usd(amount || '0')} in {onTempo ? 'USDC' : 'AUSD'}</p>
           <input
             className="amount-ref"
             value={reference}

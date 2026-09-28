@@ -6,7 +6,7 @@ import { AppState } from 'react-native'
 import { type Address, getAddress, isAddress, isAddressEqual, type LocalAccount } from 'viem'
 import type { Checkout } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
-import { passkeyDomain } from './config'
+import { chainKey, passkeyDomain } from './config'
 import { openSigningSession } from './keys'
 import { type DisplayCurrency, formatUsd } from './money'
 import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
@@ -15,22 +15,26 @@ import { load, remove, save } from './storage'
 import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vault'
 
 /**
- * The wallet is a passkey (Mera). Creating it takes one Face ID: the passkey, which iCloud
- * Keychain keeps and carries to your next phone, gives Kova a 32-byte secret, and the Monad
- * account is derived from it. No seed phrase, and nothing for Kova's servers to hold.
+ * The wallet is a passkey. Creating it takes one Face ID: the passkey, which iCloud Keychain
+ * keeps and carries to your next phone, gives Kova a 32-byte secret, and the account is derived
+ * from it (Mera's derivation, keys.ts), the same address on Tempo and on Monad. No seed phrase,
+ * and nothing for Kova's servers to hold.
  *
  * On this phone the secret waits in the Keychain behind Face ID. Approving a payment opens a
  * short signing session (see session.ts), so a few small payments in a row need one Face ID.
  * On a new phone, the same passkey brings the same wallet back.
  */
 
-const PRF = 'kova.monad.prf.v1'
+const PRF = chainKey('prf.v1')
 const PROFILE = 'kova.profile.v1'
-// History, balance and the block cursor belong to one chain, so the Monad build keeps its own.
-const ACTIVITY = 'kova.monad.activity.v1'
+// History, balance and the block cursor belong to one chain, so each chain's build keeps its own.
+const ACTIVITY = chainKey('activity.v1')
 const CONTACTS = 'kova.contacts.v1'
-const CURSOR = 'kova.monad.cursor.v1'
-const BALANCE = 'kova.monad.balance.v1'
+const CURSOR = chainKey('cursor.v1')
+const BALANCE = chainKey('balance.v1')
+
+/** How test dollars read in Activity and on receipts. */
+export const TEST_DOLLARS_DETAIL = 'Kova test dollars'
 
 export interface Profile {
   name: string
@@ -271,7 +275,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             kind: t.faucet ? 'added' : 'received',
             amount: t.amount.toString(),
             name,
-            detail: t.faucet ? 'AUSD test faucet' : refund ? 'Money back from a booking' : 'Arrived',
+            detail: t.faucet ? TEST_DOLLARS_DETAIL : refund ? 'Money back from a booking' : 'Arrived',
             address: t.from,
             txHash: t.hash,
             at: Date.now(),

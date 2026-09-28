@@ -2,7 +2,8 @@ import * as Haptics from 'expo-haptics'
 import { useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
 import { baseToNumber, currencyInfo, type DisplayCurrency, displayCurrencies, formatUsd } from '@/lib/money'
-import { rateLabel, ratesLive } from '@/lib/rates'
+import { rateLabel, ratesLive, ratesOnChain } from '@/lib/rates'
+import { chainName } from '@/lib/config'
 import { colors, fonts } from '@/lib/theme'
 import { Coin } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
@@ -212,7 +213,11 @@ export function CurrencySheet({
       <View style={styles.provenance}>
         <Icon name={ratesLive() ? 'check' : 'info'} size={14} color={colors.muted} />
         <Txt size={12} color={colors.muted}>
-          {ratesLive() ? `${rateLabel()}, published on Monad` : 'Reference rates, updated by Kova'}
+          {ratesLive()
+            ? ratesOnChain()
+              ? `${rateLabel()}, published on ${chainName}`
+              : `${rateLabel()}, two sources checked against each other`
+            : 'Reference rates, updated by Kova'}
         </Txt>
       </View>
     </Sheet>

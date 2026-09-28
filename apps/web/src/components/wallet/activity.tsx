@@ -6,6 +6,7 @@ import { Icon } from '@/components/brand'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/wallet/money'
 import { type Entry, isUnnamed, useWallet } from './provider'
 import { Avatar, EntryBadge, EntryRow, incoming, signed } from './ui'
+import { chainName, explorerName, onTempo } from '@/lib/chain'
 
 /** A screen's title, with the way back. */
 export function ScreenHead({
@@ -39,7 +40,7 @@ const dayLabel = (at: number) => {
 
 /**
  * Everything that moved, the app's Activity: this month at a glance (what came in, what went out,
- * the last seven days), then every payment by day. It's Kova's index of Monad, so it's the same
+ * the last seven days), then every payment by day. It's Kova's record of the chain, so it's the same
  * history on every device.
  */
 export function Activity() {
@@ -206,7 +207,7 @@ export function Activity() {
 const verb = { paid: 'Paid', sent: 'Sent', received: 'Received', added: 'Added' } as const
 const direction = { paid: 'to', sent: 'to', received: 'from', added: 'from' } as const
 
-/** One payment, as a receipt: who, what for, when, how long it took, what it cost, and proof on Monadscan. */
+/** One payment, as a receipt: who, what for, when, how long it took, what it cost, and proof on the chain's explorer. */
 export function Receipt({ id }: { id: string }) {
   const { activity, renameContact } = useWallet()
   const entry = activity.find((e) => e.id === id || e.txHash.toLowerCase() === id.toLowerCase())
@@ -220,7 +221,7 @@ export function Receipt({ id }: { id: string }) {
         <div className="w-empty">
           <strong>Looking for this payment</strong>
           <span>
-            It shows here as soon as Kova’s record of Monad has it, usually within a second or two.
+            It shows here as soon as Kova’s record of {chainName} has it, usually within a second or two.
           </span>
         </div>
       </div>
@@ -316,12 +317,12 @@ export function Receipt({ id }: { id: string }) {
           </div>
           <div>
             <dt>Amount</dt>
-            <dd>{formatUsd(BigInt(entry.amount))} AUSD</dd>
+            <dd>{formatUsd(BigInt(entry.amount))} {onTempo ? 'USDC' : 'AUSD'}</dd>
           </div>
         </dl>
         {entry.explorer ? (
           <a className="w-receipt-proof" href={entry.explorer} target="_blank" rel="noreferrer">
-            View on Monadscan <Icon name="external" size={16} />
+            View on {explorerName} <Icon name="external" size={16} />
           </a>
         ) : null}
       </article>

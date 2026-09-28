@@ -13,6 +13,7 @@ import { Icon, type IconName } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
 import { NameSheet } from '@/ui/NameSheet'
 import { Header, Screen, Txt } from '@/ui/primitives'
+import { chainName } from '@/lib/config'
 
 const short = (a: string) => `${a.slice(0, 6)}…${a.slice(-4)}`
 const DAY = 86_400_000
@@ -133,7 +134,7 @@ export default function PickPerson() {
                   Send to {direct.name || short(direct.address)}
                 </Txt>
                 <Txt size={13} color={colors.onInk}>
-                  {direct.amount ? `They asked for $${direct.amount}` : 'Monad address, ready to pay'}
+                  {direct.amount ? `They asked for $${direct.amount}` : `${chainName} address, ready to pay`}
                 </Txt>
               </View>
               <View style={styles.directGo}>

@@ -79,6 +79,11 @@ export async function kovaForRoute<T>(path: string, init: RequestInit = {}): Pro
   return call<T>(path, init, session.key)
 }
 
+/** The API's own URL for a path, for the few routes that pass a call straight through (the relay). */
+export function kovaUrl(path: string): string {
+  return `${baseUrl}${path}`
+}
+
 export function kovaPublic<T>(path: string, init: RequestInit = {}, key?: string): Promise<T> {
   return call<T>(path, init, key)
 }
@@ -161,6 +166,8 @@ export interface IntentList {
 }
 
 export interface Checkout {
+  /** Which chain to pay on: "tempo" (through Kova's relay) or "monad" (a signed authorization). */
+  chain?: 'tempo' | 'monad'
   id: string
   merchant_name: string
   amount: string

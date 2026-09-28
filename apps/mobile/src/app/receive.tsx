@@ -8,8 +8,9 @@ import { useWallet } from '@/lib/wallet'
 import { CodeCard } from '@/ui/CodeCard'
 import { Icon } from '@/ui/Icon'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
+import { chainName, settlementToken } from '@/lib/config'
 
-/** Your code: anyone with Kova scans it to pay you. Any Monad wallet can use the address. */
+/** Your code: anyone with Kova scans it to pay you. Any wallet on the same chain can use the address. */
 export default function Receive() {
   const { profile } = useWallet()
   const [copied, setCopied] = useState(false)
@@ -47,7 +48,7 @@ export default function Receive() {
           </Txt>
         </Pressable>
         <Txt size={13} color={colors.onTint} style={{ textAlign: 'center', marginTop: 8 }}>
-          Monad address. Send only AUSD on Monad.
+          {chainName} address. Send only {settlementToken.symbol} on {chainName}.
         </Txt>
       </View>
       <View style={styles.footer}>

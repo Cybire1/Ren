@@ -6,6 +6,7 @@ import { Art, Icon } from '@/components/brand'
 import { formatUsd } from '@/lib/wallet/money'
 import { ScreenHead } from './activity'
 import { useWallet } from './provider'
+import { chainName, onTempo } from '@/lib/chain'
 
 type Stage =
   | { at: 'ready' }
@@ -13,7 +14,7 @@ type Stage =
   | { at: 'done'; balance: bigint }
   | { at: 'problem'; message: string }
 
-/** Money in. On the test network, Kova sends $5 of test dollars a day and pays the gas; on mainnet, AUSD to your address. */
+/** Money in. On the test network, Kova sends $5 of test dollars a day and pays every fee; on mainnet, dollars to your address. */
 export function AddMoney() {
   const { network, addTestDollars } = useWallet()
   const [stage, setStage] = useState<Stage>({ at: 'ready' })
@@ -24,9 +25,9 @@ export function AddMoney() {
         <ScreenHead title="Add money" />
         <div className="w-empty w-empty-art">
           <Art name="kovi-catch" size={160} />
-          <strong>Send AUSD on Monad to your address</strong>
+          <strong>Send {onTempo ? 'USDC' : 'AUSD'} on {chainName} to your address</strong>
           <span>
-            Card and bank top-ups are coming to Kova. For now, send AUSD from an exchange or another
+            Card and bank top-ups are coming to Kova. For now, send {onTempo ? 'USDC' : 'AUSD'} from an exchange or another
             wallet.
           </span>
         </div>
@@ -65,7 +66,7 @@ export function AddMoney() {
         <Art name="kovi-catch" size={150} className="w-add-art" />
         <h1 className="w-title">Free test dollars</h1>
         <p className="w-lead">
-          Kova is running on Monad’s test network. It sends you $5 of test dollars a day to try
+          Kova is running on {chainName}’s test network. It sends you $5 of test dollars a day to try
           every payment for real, and pays the gas.
         </p>
         <dl className="w-review-card">
@@ -75,7 +76,7 @@ export function AddMoney() {
           </div>
           <div className="w-review-row">
             <dt>From</dt>
-            <dd>Kova, on Monad testnet</dd>
+            <dd>Kova, on {chainName} testnet</dd>
           </div>
           <div className="w-review-row">
             <dt>Arrives</dt>

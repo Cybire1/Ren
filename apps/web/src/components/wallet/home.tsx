@@ -7,6 +7,7 @@ import { Art, Icon } from '@/components/brand'
 import { formatUsd, toBase } from '@/lib/wallet/money'
 import { isUnnamed, useWallet } from './provider'
 import { ActionTile, Avatar, BalanceCard, EntryRow } from './ui'
+import { chainName, onTempo } from '@/lib/chain'
 
 /**
  * Home is for paying, and you should never have to look for your money: the app's Home. The
@@ -82,8 +83,8 @@ export function Home() {
             </strong>
             <span>
               {network === 'testnet'
-                ? '$5 a day, free on Monad testnet. Arrives in about a second.'
-                : 'Send AUSD on Monad to your address.'}
+                ? `$5 a day, free on ${chainName} testnet. Arrives in about a second.`
+                : `Send ${onTempo ? 'USDC' : 'AUSD'} on ${chainName} to your address.`}
             </span>
           </span>
           <span className="w-notice-cta">Add</span>

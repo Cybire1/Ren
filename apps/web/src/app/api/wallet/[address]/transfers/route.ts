@@ -1,6 +1,6 @@
 import { failure, kovaPublic } from '@/lib/api'
 
-/** What moved in and out of a wallet, from Kova's index of Monad. */
+/** What moved in and out of a wallet, as Kova reads them from the chain. */
 export async function GET(request: Request, context: { params: Promise<{ address: string }> }) {
   const { address } = await context.params
   const url = new URL(request.url)

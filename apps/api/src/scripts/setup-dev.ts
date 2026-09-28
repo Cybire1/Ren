@@ -130,7 +130,7 @@ async function main() {
   const keyFile = join(process.cwd(), '..', 'mobile', envFile)
   writeFileSync(
     keyFile,
-    `KOVA_API_KEY=${generated.secret}\nEXPO_PUBLIC_KOVA_API_URL=http://localhost:${config.PORT}\n`,
+    `KOVA_API_KEY=${generated.secret}\nEXPO_PUBLIC_KOVA_${kit.id.toUpperCase()}_API_URL=http://localhost:${config.PORT}\n`,
     { mode: 0o600 },
   )
   console.log(`\nAPI key ${generated.prefix}… saved to apps/mobile/${envFile} (KOVA_API_KEY)`)

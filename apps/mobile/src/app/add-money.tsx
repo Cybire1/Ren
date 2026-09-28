@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
-import { isTestnet } from '@/lib/config'
+import { chainName, isTestnet, settlementToken } from '@/lib/config'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
@@ -11,7 +11,7 @@ import { Stage } from '@/ui/Stage'
 import { Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /**
- * Adding money. On testnet, Kova sends $5 of test AUSD a day from its own testnet treasury. On mainnet this is where
+ * Adding money. On testnet, Kova sends $5 of test dollars a day from its own testnet treasury. On mainnet this is where
  * card and bank on-ramps go; Kova itself never holds or converts the money (D-012).
  */
 export default function AddMoney() {
@@ -57,7 +57,7 @@ export default function AddMoney() {
               Free test dollars
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Kova is running on Monad’s test network. It sends you $5 of test dollars a day to try every payment for real, and pays the gas.
+              Kova is running on {chainName}’s test network. It sends you $5 of test dollars a day to try every payment for real, and pays every fee.
             </Txt>
           </>
         ) : (
@@ -66,7 +66,7 @@ export default function AddMoney() {
               Add money
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Card and bank top-ups are coming to Kova. For now, send AUSD on Monad to your address.
+              Card and bank top-ups are coming to Kova. For now, send {settlementToken.symbol} on {chainName} to your address.
             </Txt>
           </>
         )}

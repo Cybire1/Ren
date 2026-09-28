@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Art, Icon } from './brand'
+import { chainName } from '@/lib/chain'
 
 /**
  * How a Kova payment goes, shown at the speed it goes. The three moves sit on one track; when the
@@ -52,7 +53,7 @@ export function PaidInASecond() {
             <Art name="scene-faceid" size={200} />
           </div>
           <h3>They tap or scan</h3>
-          <p>With Kova Pay it’s one tap and Face ID. Any Monad wallet can scan the code and pay, and Kova covers the network fee.</p>
+          <p>With Kova Pay it’s one tap and Face ID. Any {chainName} wallet can scan the code and pay, and Kova covers the network fee.</p>
         </li>
         <li className="lp-stop">
           <span className="lp-clock">0.9s</span>

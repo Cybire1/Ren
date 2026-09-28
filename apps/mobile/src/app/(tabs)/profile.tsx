@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { network } from '@/lib/config'
+import { chainName, network } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
 import { rateLabel, ratesLive } from '@/lib/rates'
@@ -94,7 +94,7 @@ export default function Profile() {
             <View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                 <Txt size={12} color={colors.onInk}>
-                  Your address on Monad
+                  Your address on {chainName}
                 </Txt>
                 <View style={styles.network}>
                   <View style={[styles.dot, { backgroundColor: network.id === 'testnet' ? colors.yellow : colors.tealLight }]} />

@@ -1,10 +1,13 @@
 'use client'
 
-import { TEST_DOLLARS_A_DAY } from '@kova/monad'
+import { TEST_DOLLARS_A_DAY } from '@kova/tempo'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import type { Checkout } from '@/lib/api'
+import { chainName, onTempo, walletChains } from '@/lib/chain'
+import { payCharge as payOnTempo } from '@/lib/wallet/chain-tempo'
+import { chargeCall, rawSigningAccount } from '@/lib/wallet/pay-any'
 import { usd } from '@/lib/format'
 import { returningFromPrivy } from '@/lib/privy-return'
 import { Icon } from './brand'
@@ -15,10 +18,14 @@ const PrivyWallet = dynamic(() => import('./privy-wallet'), { ssr: false })
 
 /**
  * Paying a Kova charge without the Kova app: with email or Google (Privy makes a wallet on the
- * spot), or from any Monad wallet in the browser (MetaMask, Rabby, Phantom, whatever announces
- * itself through EIP-6963). Every one signs the same EIP-3009 authorization Kova Pay signs, for
- * exactly this charge, and Kova's relayer submits it and pays the gas: the payer needs AUSD and
- * nothing else, not even MON.
+ * spot), or from any browser wallet (MetaMask, Rabby, Phantom, whatever announces itself through
+ * EIP-6963).
+ *
+ * - On Tempo, the email/Google wallet signs the same relayed `transferWithMemo` Kova Pay does, and
+ *   Kova pays the fee. A browser wallet sends it as an ordinary transaction and Tempo takes its
+ *   fee (under a cent) in the same dollars; Kova's watcher settles it (see lib/wallet/pay-any.ts).
+ * - On Monad, every one signs the same EIP-3009 authorization Kova Pay signs, for exactly this
+ *   charge, and Kova's relayer submits it and pays the gas: the payer needs AUSD, not even MON.
  */
 
 interface Eip1193 {
@@ -44,11 +51,8 @@ type Stage =
   | { name: 'paid' }
   | { name: 'problem'; message: string }
 
-/** What a wallet needs to add Monad if it has never seen it. */
-const chains: Record<number, { chainName: string; rpcUrls: string[]; blockExplorerUrls: string[] }> = {
-  10143: { chainName: 'Monad Testnet', rpcUrls: ['https://testnet-rpc.monad.xyz'], blockExplorerUrls: ['https://testnet.monadscan.com'] },
-  143: { chainName: 'Monad', rpcUrls: ['https://rpc.monad.xyz'], blockExplorerUrls: ['https://monadscan.com'] },
-}
+/** A browser wallet paying on Tempo pays its own fee in the same dollars: keep a cent spare for it. */
+const FEE_ROOM = onTempo ? 10_000n : 0n
 
 const hex = (n: number) => `0x${n.toString(16)}`
 
@@ -79,18 +83,15 @@ function useWallets(): Wallet[] | null {
   return wallets
 }
 
-async function switchToMonad(provider: Eip1193, chainId: number) {
+async function switchChain(provider: Eip1193, chainId: number) {
   try {
     await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hex(chainId) }] })
   } catch (error) {
     // 4902: the wallet has never heard of this chain.
     if ((error as { code?: number }).code !== 4902 && !String((error as Error).message).includes('Unrecognized')) throw error
-    const chain = chains[chainId]
+    const chain = walletChains[chainId]
     if (!chain) throw error
-    await provider.request({
-      method: 'wallet_addEthereumChain',
-      params: [{ chainId: hex(chainId), nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 }, ...chain }],
-    })
+    await provider.request({ method: 'wallet_addEthereumChain', params: [{ chainId: hex(chainId), ...chain }] })
   }
 }
 
@@ -153,8 +154,43 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
   const [embedded, setEmbedded] = useState<EmbeddedWallet | null>(null)
   useEffect(() => setMobile(/iphone|ipad|android/i.test(navigator.userAgent)), [])
 
+  /** Tempo: pays exactly this charge, relayed (email/Google) or as a plain transaction (browser wallet). */
+  const payTempo = async (wallet: Wallet, address: string) => {
+    const name = wallet.info.name
+    try {
+      setStage({ name: 'working', wallet: name, step: 'sign' })
+      if (wallet.info.rdns === 'privy') {
+        await payOnTempo(testnet ? 'testnet' : 'mainnet', rawSigningAccount(address as `0x${string}`, wallet.provider), checkout)
+      } else {
+        const hash = (await wallet.provider.request({
+          method: 'eth_sendTransaction',
+          params: [{ from: address, ...chargeCall(checkout) }],
+        })) as string
+        setStage({ name: 'working', wallet: name, step: 'pay' })
+        // Kova reads it from the chain; it lands in about a second.
+        let paid = false
+        for (let i = 0; i < 40 && !paid; i++) {
+          const response = await fetch(`/api/checkout/${checkout.id}/confirm`, {
+            method: 'POST',
+            headers: { 'content-type': 'application/json' },
+            body: JSON.stringify({ tx_hash: hash }),
+          })
+          const body = (await response.json().catch(() => ({}))) as { status?: string }
+          paid = response.ok && body.status === 'paid'
+          if (!paid) await new Promise((r) => setTimeout(r, 500))
+        }
+        if (!paid) throw new Error('Your wallet sent it, but Kova hasn’t seen it land yet. This page updates when it does.')
+      }
+      setStage({ name: 'paid' })
+      router.refresh()
+    } catch (error) {
+      setStage({ name: 'problem', message: explain(error) })
+    }
+  }
+
   /** Signs the authorization for exactly this charge and hands it to Kova. */
   const sign = async (wallet: Wallet, address: string) => {
+    if (onTempo) return payTempo(wallet, address)
     const name = wallet.info.name
     try {
       setStage({ name: 'working', wallet: name, step: 'sign' })
@@ -180,7 +216,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
   }
 
   /**
-   * Connects, moves the wallet to Monad and checks it can pay. A browser wallet then signs at once
+   * Connects, moves the wallet to the right chain and checks it can pay. A browser wallet then signs at once
    * (it asks its owner itself); an email or Google wallet waits for the owner's tap here first.
    */
   const prepare = async (wallet: Wallet, confirm?: { who: string }) => {
@@ -191,9 +227,11 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
       if (!address) throw new Error('Your wallet shared no account.')
 
       setStage({ name: 'working', wallet: name, step: 'network' })
-      await switchToMonad(wallet.provider, checkout.chain_id)
+      await switchChain(wallet.provider, checkout.chain_id)
       const balance = await balanceOf(wallet.provider, checkout.token, address)
-      if (balance < BigInt(checkout.amount_base)) return setStage({ name: 'short', wallet, address, balance })
+      // An email/Google wallet on Tempo is relayed (Kova pays the fee); a browser wallet pays its own.
+      const room = wallet.info.rdns === 'privy' ? 0n : FEE_ROOM
+      if (balance < BigInt(checkout.amount_base) + room) return setStage({ name: 'short', wallet, address, balance })
       if (confirm) return setStage({ name: 'confirm', wallet, address, balance, who: confirm.who })
       await sign(wallet, address)
     } catch (error) {
@@ -245,8 +283,10 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
     <section className="manual wallet-pay" aria-live="polite">
       <h2>Or pay here, without the app</h2>
       <p>
-        {privyAppId ? 'Use your email or Google, or any Monad wallet.' : 'Use any Monad wallet.'} Kova covers the network fee, so you only need{' '}
-        {checkout.token_symbol ?? 'AUSD'}.
+        {privyAppId ? `Use your email or Google, or any ${chainName} wallet.` : `Use any ${chainName} wallet.`}{' '}
+        {onTempo
+          ? `With email or Google, Kova covers the fee. A browser wallet pays ${chainName}’s fee, under a cent, in the same ${checkout.token_symbol ?? 'dollars'}.`
+          : `Kova covers the network fee, so you only need ${checkout.token_symbol ?? 'AUSD'}.`}
       </p>
       {privyAppId && privy !== 'off' ? (
         <PrivyWallet appId={privyAppId} chainId={checkout.chain_id} onWallet={onPrivyWallet} onCancel={onPrivyCancel} />
@@ -259,7 +299,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
             {stage.step === 'connect'
               ? `Open ${stage.wallet} and connect`
               : stage.step === 'network'
-                ? `Switching ${stage.wallet} to Monad`
+                ? `Switching ${stage.wallet} to ${chainName}`
                 : stage.step === 'sign'
                   ? `Approve ${usd(checkout.amount)} to ${checkout.merchant_name} in ${stage.wallet}`
                   : 'Paying…'}
@@ -288,9 +328,9 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
       ) : stage.name === 'short' ? (
         <div className="wallet-short">
           <p>
-            This wallet has {usd(Number(stage.balance) / 1e6)} {checkout.token_symbol ?? 'AUSD'} on Monad, and this costs {usd(checkout.amount)}.
+            This wallet has {usd(Number(stage.balance) / 1e6)} {checkout.token_symbol ?? 'dollars'} on {chainName}, and this costs {usd(checkout.amount)}.
           </p>
-          {testnet && stage.balance + TEST_DOLLARS_A_DAY >= BigInt(checkout.amount_base) ? (
+          {testnet && stage.balance + TEST_DOLLARS_A_DAY >= BigInt(checkout.amount_base) + FEE_ROOM ? (
             <button type="button" className="pill pill-block" data-tone="light" disabled={funding} onClick={() => void topUp(stage.wallet, stage.address)}>
               <span className="pill-label">{funding ? 'Getting test dollars…' : 'Get test dollars and pay'}</span>
               <span className="pill-cap">
