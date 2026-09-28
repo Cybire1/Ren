@@ -1,0 +1,22 @@
+{
+  "name": "kova-film",
+  "private": true,
+  "description": "Kova launch films, rendered with Remotion",
+  "scripts": {
+    "studio": "remotion studio",
+    "still": "remotion still",
+    "render": "remotion render KovisDay out/kovis-day-silent.mp4"
+  },
+  "dependencies": {
+    "@remotion/cli": "4.0.520",
+    "@remotion/fonts": "4.0.520",
+    "@remotion/renderer": "4.0.520",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "remotion": "4.0.520"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.18",
+    "typescript": "5.9.3"
+  }
+}
