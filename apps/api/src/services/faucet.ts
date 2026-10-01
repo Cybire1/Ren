@@ -1,9 +1,10 @@
 import { schema } from '@kova/db'
 import { eip3009Abi, formatAmount, TEST_DOLLARS_A_DAY } from '@kova/monad'
 import { eq, lt } from 'drizzle-orm'
-import type { Address, Hash } from 'viem'
+import { type Address, encodeFunctionData, type Hash } from 'viem'
 import { feePayerAccount, publicClient, settlementToken, walletClient } from '../chain.js'
 import { db } from '../db.js'
+import { sendFromRelayer } from '../relay.js'
 import { KovaError } from '../errors.js'
 
 /**
@@ -74,13 +75,8 @@ export async function giveTestDollars(to: Address): Promise<Drip> {
       console.error(`[faucet] the treasury holds ${formatAmount(stock)} AUSD: top up ${feePayerAccount.address}`)
       throw new KovaError('chain_error', 'Test dollars have run out for the moment. Kova is topping up; try again later.')
     }
-    const receipt = await walletClient.writeContractSync({
-      address: settlementToken.address,
-      abi: eip3009Abi,
-      functionName: 'transfer',
-      args: [to, TEST_DOLLARS_A_DAY],
-      timeout: 10_000,
-    })
+    // Through the relayer's one send path, so payments and test dollars never race for a nonce.
+    const receipt = await sendFromRelayer(settlementToken.address, encodeFunctionData({ abi: eip3009Abi, functionName: 'transfer', args: [to, TEST_DOLLARS_A_DAY] }))
     if (receipt.status !== 'success') throw new KovaError('chain_error', 'The test-dollar top-up failed. Try again in a moment.')
     await db.update(schema.testDollarClaims).set({ txHash: receipt.transactionHash }).where(eq(schema.testDollarClaims.address, to.toLowerCase()))
     return { amount: formatAmount(TEST_DOLLARS_A_DAY), txHash: receipt.transactionHash, nextAt: new Date(now.getTime() + DAY_MS) }

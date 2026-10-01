@@ -10,7 +10,6 @@ import {
   type Hex,
   isAddressEqual,
   keccak256,
-  nonceManager,
   recoverTypedDataAddress,
   type TransactionReceipt,
 } from 'viem'
@@ -30,7 +29,8 @@ import { KovaError } from './errors.js'
  * Every check that can be made for free is made before any gas is spent: the signature is
  * recovered here, and the call is estimated (which runs the token's own checks) before sending.
  * Latency matters, because this sits between a tap and a PAID screen: the happy path is one
- * estimate and one eth_sendRawTransactionSync.
+ * round-trip to check (the estimate, with fees and the nonce already in hand) and one
+ * eth_sendRawTransactionSync. The transaction is signed locally, with no network call.
  */
 
 export interface Relayed {
@@ -72,50 +72,74 @@ async function submit(token: Token, authorization: TransferAuthorization, signat
   const args = transferWithAuthorizationArgs(authorization, signature)
   const data = encodeFunctionData({ abi: eip3009Abi, functionName: 'transferWithAuthorization', args })
 
+  let receipt: TransactionReceipt
+  try {
+    receipt = await sendFromRelayer(token.address, data)
+  } catch (error) {
+    if (error instanceof RefusedEstimate) throw await explainRefusal(token, authorization, error.cause)
+    throw error
+  }
+  if (receipt.status !== 'success')
+    throw new KovaError('chain_error', 'Monad refused the payment. No money moved.', { tx_hash: receipt.transactionHash })
+  return { receipt, ms: performance.now() - started }
+}
+
+/** The estimate refused the call: nothing was sent and no gas was spent. */
+class RefusedEstimate extends Error {
+  constructor(readonly cause: unknown) {
+    super('estimate refused')
+  }
+}
+
+/**
+ * Sends one call from the relayer, the only path that spends its MON, so its nonce has one owner.
+ * One round-trip to check (estimate, with fees and nonce alongside), a local signature, then one
+ * eth_sendRawTransactionSync that returns the receipt.
+ */
+export async function sendFromRelayer(to: Hex, data: Hex): Promise<TransactionReceipt> {
+  if (!walletClient || !feePayerAccount) throw new KovaError('chain_error', 'Payments are not switched on for this server yet.')
   let gas: bigint
   let fees: Fees
+  let nonce: number
   try {
     // The estimate runs the token's own checks: an authorization that is used, expired, or
-    // short of funds fails here, before Kova pays anything.
-    ;[gas, fees] = await Promise.all([
-      publicClient.estimateGas({ account: feePayerAccount, to: token.address, data }),
+    // short of funds fails here, before Kova pays anything. Fees and the nonce come alongside it.
+    ;[gas, fees, nonce] = await Promise.all([
+      publicClient.estimateGas({ account: feePayerAccount, to, data }),
       currentFees(),
+      nextNonce(),
     ])
   } catch (error) {
-    throw await explainRefusal(token, authorization, error)
+    resetNonce()
+    throw new RefusedEstimate(error)
   }
-  if (gas > config.KOVA_MAX_RELAY_GAS) throw new KovaError('policy_declined', 'This payment would cost more gas than Kova relays.')
+  if (gas > config.KOVA_MAX_RELAY_GAS) {
+    resetNonce()
+    throw new KovaError('policy_declined', 'This payment would cost more gas than Kova relays.')
+  }
 
   // Monad charges for the gas limit, not the gas used, so ask for the estimate plus a sliver.
-  const request = await walletClient.prepareTransactionRequest({
-    account: feePayerAccount,
-    chain: network.chain,
-    to: token.address,
-    data,
+  const serializedTransaction = await feePayerAccount.signTransaction({
+    chainId: network.chainId,
     type: 'eip1559',
+    to,
+    data,
+    nonce,
     gas: gas + gas / 20n,
     maxFeePerGas: fees.maxFeePerGas,
     maxPriorityFeePerGas: fees.maxPriorityFeePerGas,
   })
-  const serializedTransaction = await walletClient.signTransaction(request)
   const hash = keccak256(serializedTransaction)
-
-  let receipt: TransactionReceipt | null
   try {
-    receipt = await sendRawTransactionSync(publicClient, { serializedTransaction, timeout: 6_000 })
+    return await sendRawTransactionSync(publicClient, { serializedTransaction, timeout: 6_000 })
   } catch (error) {
     // The node may have taken it and only been slow to answer: look for the receipt before giving up.
-    receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 8_000 }).catch(() => null)
-    if (!receipt) {
-      nonceManager.reset({ address: feePayerAccount.address, chainId: network.chainId })
-      console.error('[relay] send failed', hash, shortMessage(error))
-      throw new KovaError('chain_error', 'Monad did not confirm the payment in time. If it went through, it will show as paid in a moment.', { tx_hash: hash })
-    }
+    const receipt = await publicClient.waitForTransactionReceipt({ hash, timeout: 8_000 }).catch(() => null)
+    if (receipt) return receipt
+    resetNonce()
+    console.error('[relay] send failed', hash, shortMessage(error))
+    throw new KovaError('chain_error', 'Monad did not confirm the payment in time. If it went through, it will show as paid in a moment.', { tx_hash: hash })
   }
-
-  if (receipt.status !== 'success')
-    throw new KovaError('chain_error', 'Monad refused the payment. No money moved.', { tx_hash: receipt.transactionHash })
-  return { receipt, ms: performance.now() - started }
 }
 
 /** Why the token refused an authorization, in words a payer can act on. */
@@ -138,6 +162,29 @@ async function explainRefusal(token: Token, authorization: TransferAuthorization
 interface Fees {
   maxFeePerGas: bigint
   maxPriorityFeePerGas: bigint
+}
+
+/**
+ * The relayer's nonce, counted here rather than asked for on every payment. JavaScript runs one
+ * payment's synchronous code at a time, so handing out `next++` is safe across concurrent payments.
+ * Anything unexpected (a failed estimate, a send that never confirmed) re-reads it from the chain.
+ */
+let pending: { next: number } | Promise<{ next: number }> | undefined
+
+async function nextNonce(): Promise<number> {
+  if (!feePayerAccount) throw new KovaError('chain_error', 'Payments are not switched on for this server yet.')
+  const account = feePayerAccount.address
+  pending ??= publicClient.getTransactionCount({ address: account, blockTag: 'pending' }).then((next) => {
+    const state = { next }
+    pending = state
+    return state
+  })
+  const state = await pending
+  return state.next++
+}
+
+function resetNonce() {
+  pending = undefined
 }
 
 /** Fee quotes change slowly on Monad; reusing one for a few seconds saves two calls per payment. */

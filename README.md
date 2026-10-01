@@ -1,112 +1,197 @@
 # Kova
 
-Stablecoin payments for real shops. One network behind a card, a terminal, an app and an API —
-settling on [Tempo](https://tempo.xyz) in about a second, for a fee of roughly $0.00003.
+**Tap. Paid. Anywhere.** A dollar wallet you open with a passkey, with your shop inside it.
+Every payment settles in AUSD on [Monad](https://monad.xyz) in about a second and a half, and Kova
+pays the gas, so nobody needs a crypto token, a seed phrase or an exchange to pay or get paid.
 
-Kova is non-custodial: money moves from the customer's account to the merchant's, and Kova
-never holds it. What Kova provides is the authorization layer — who may spend, how much, where,
-and on whose behalf — plus the gas, so nobody needs a gas token to pay for lunch.
+- **Try it:** [mykova.app](https://mykova.app), with $5 of test dollars a day on Monad testnet
+- **Built for:** Monad Metropolis, Track 02: Consumer Products & Payments
+- **Demo video:** _link added at submission_
+- **Licence:** [MIT](LICENSE)
 
-> Built for Colosseum's Crypto World's Fair (Tempo track). Pilot market: Nigeria.
+## The problem, and who it's for
 
-## Why it exists
+Moving dollars across a border, or taking a payment at a small shop, is still slow, expensive or
+both. Stablecoins fix the money, but not the experience: people are asked to buy a gas token,
+guard a seed phrase and copy long addresses. Most never get past that.
 
-Nigerian bank transfers are instant and free, so Kova is not pitched as cheaper or faster money.
-It is for the things naira rails cannot do:
+Kova is for people who don't think of themselves as crypto users: someone paying for coffee,
+sending $20 to a friend abroad, or running a bakery that wants to take payments on a phone. They
+see dollars, their own currency beside them, and Face ID. Nothing else.
 
-- **Holding dollars.** 25.9m Nigerians already hold stablecoins; a bank transfer cannot.
-- **Money arriving from abroad**, where Nigeria is around 60% of sub-Saharan stablecoin inflows.
-- **No merchant fee**, against 1.5% + ₦100 on card rails.
-- **Payments by software.** An AI agent gets the same kind of spending credential as a person:
-  a limited key with a budget, a merchant allowlist, and approval above a threshold.
+## What it does
 
-## How a payment works
+- **Wallet.** Create it with Face ID. The passkey is the wallet: its key is derived from the
+  passkey (WebAuthn PRF), so there's no seed phrase, and the same passkey opens the same wallet in
+  the iOS app and at mykova.app.
+- **Pay.** Scan a code or open a pay link, approve with Face ID, and it's paid. Real receipts show
+  1.3 to 1.6 seconds from tap to paid, with a fee of $0.00.
+- **Send.** To anyone, anywhere. The receiver sees their own currency: $20 arrives as ≈ €18.40.
+- **Your shop, inside the wallet.** Open a shop from your wallet; its sales land in the same wallet.
+  A stall page to share, a catalogue, a till (the phone becomes a terminal: keypad, items or
+  barcode scanner, then a QR code for the customer), orders, and the day's takings, live.
+- **One account.** Shop owners sign in on the web with the same wallet (Sign-In with Ethereum,
+  EIP-4361): no passwords, no API keys. Customers without Kova can pay a checkout with email or
+  Google (Privy).
+- **Test dollars.** On testnet, every wallet gets $5 of test AUSD a day.
+- **Also in the app:** Kova Travel (flights and hotels, paid in dollars, with refunds), "Snap your
+  menu" (a photo of a menu becomes catalogue items), and spending insights.
 
+## How Kova uses Monad
+
+- **Payments are signatures.** The payer signs an EIP-3009 `transferWithAuthorization` for AUSD;
+  Kova's relayer submits it on Monad and pays the gas. Payers never hold MON.
+- **Why Monad.** Blocks and finality fast enough for a checkout line (about 1.5 s from tap to paid
+  on real receipts), and gas cheap enough for Kova to pay it for every user, which is what makes a
+  consumer product with no gas token possible. Monad charges for the gas limit a transaction asks
+  for, so the relayer estimates each payment and caps it (`KOVA_MAX_RELAY_GAS`).
+- **Charges carry their reference on-chain.** A checkout's reference rides in the authorization's
+  nonce, so Kova's chain watcher settles a payment no matter who submits it (another relayer, or
+  the payer's own wallet), and indexes transfers for wallets.
+- **Exchange rates from Chainlink.** A Chainlink CRE workflow ([apps/rates](apps/rates)) publishes
+  reference FX rates to the `KovaRates` contract on Monad for local-currency prices. Until it's
+  deployed, the API serves a fixed reference table and the app labels it "reference rate".
+
+### On-chain (Monad testnet, chain 10143)
+
+| What | Address or transaction |
+|---|---|
+| AUSD (Agora), the token every payment moves | [`0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC`](https://testnet.monadscan.com/address/0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC) |
+| Kova's relayer, which pays everyone's gas | [`0x5868C3C3D1316AF8a78D2e47ee9F385272771940`](https://testnet.monadscan.com/address/0x5868C3C3D1316AF8a78D2e47ee9F385272771940) |
+| A coffee, $4.50, paid in 1.6 s with a $0.00 fee | [`0x6a52a3cf…eda34e005`](https://testnet.monadscan.com/tx/0x6a52a3cfc7ecdf6400d7d09888e6ef2cf06bd38c2121619a5007d62eda34e005) |
+| $20 to a friend, arriving as ≈ €18.40 | [`0xa92a1733…6b61e0437`](https://testnet.monadscan.com/tx/0xa92a17331a4804556b08779949819220b56aef075c7ada8b5e4c3136b61e0437) |
+| A bakery sale, $6.50, at a Kova till | [`0x152be347…f1e151265`](https://testnet.monadscan.com/tx/0x152be347b25c3b89a1e70607d7e8d3cb3cd1721adcc3931ac31e784e1f151265) |
+
+## Architecture
+
+```mermaid
+flowchart LR
+  subgraph People
+    app["Kova app (iOS, Expo)"]
+    web["mykova.app (Next.js)"]
+  end
+  subgraph Kova
+    api["Kova API (Hono)"]
+    db[("Postgres")]
+    watcher["Chain watcher"]
+    relayer["Relayer (pays gas)"]
+  end
+  subgraph Monad
+    ausd["AUSD (EIP-3009)"]
+    rates["KovaRates"]
+  end
+  cre["Chainlink CRE workflow"]
+
+  app -- "signed authorization" --> api
+  web -- "server-side calls" --> api
+  api --- db
+  api --> relayer -- "transferWithAuthorization" --> ausd
+  watcher -- "reads transfers" --> ausd
+  watcher --- db
+  cre -- "signed report" --> rates
+  api -- "reads" --> rates
 ```
-customer taps card / scans QR / an agent calls the API
-        │
-        ▼
-Kova checks its policy, builds the transfer, sponsors the fee
-        │
-        ▼
-Tempo settles it (TIP-20 transferWithMemo, ~0.56s blocks, deterministic finality)
-        │
-        ▼
-Kova verifies the receipt, marks the charge paid, the merchant's screen flips to PAID
-```
-
-Every payment carries a 32-byte memo holding the charge's id, which is how an on-chain
-transfer is matched to an order without Kova sitting in the middle of the money.
-
-**A card, a phone and an agent are the same thing here:** a P-256 key registered as a Tempo
-access key on the user's account, with an expiry, a spending limit and a scope.
-
-## What is in the repo
 
 | Path | What it is |
 |---|---|
-| `packages/tempo` | Tempo primitives: networks, tokens, the Kova memo, receipt verification, card signatures |
-| `packages/db` | Postgres schema, migrations, client |
-| `apps/api` | Payment intents, the sponsored relay, settlement, the chain watcher |
-| `apps/web` | Merchant dashboard, charge screen, customer pay page |
-| `apps/mobile` | Kova Pay and Kova Terminal (Expo) |
-| `docs/tempo` | Research the build rests on, measured against live Tempo |
-| `docs/card` | The card applet protocol |
-| `docs/market` | Nigeria: regulation, naira, competition |
-| `DECISIONS.md` | Why things are the way they are |
+| [`apps/mobile`](apps/mobile) | The Kova app (Expo, React Native): the wallet, and shop mode with the till. Installs with npm, outside the pnpm workspace. |
+| [`apps/web`](apps/web) | mykova.app (Next.js): landing, the web wallet (`/wallet`), shop mode (`/dashboard`), pay pages (`/pay/:id`), stall pages (`/s/:slug`) and request links (`/to/:address`). Every API call is made server-side. |
+| [`apps/api`](apps/api) | The Kova API (Hono on Node): payment intents and checkout, relaying signed payments, the chain watcher, wallets (transfers, encrypted vaults, test dollars), wallet sign-in, shops, stalls, catalogue, tills, travel. |
+| [`apps/rates`](apps/rates) | The Chainlink CRE workflow and the `KovaRates` contract (Foundry). |
+| [`packages/monad`](packages/monad) | Networks, tokens (AUSD, USDC), EIP-3009 helpers and the on-chain memo. |
+| [`packages/db`](packages/db) | Postgres schema and migrations (Drizzle). |
+| [`packages/tempo`](packages/tempo) | From the earlier Tempo build (see below); the Monad build doesn't use it. |
+| [`film`](film) | The launch teaser and link preview, rendered with Remotion. |
+| [`docs`](docs) | Design notes, research, and [the Metropolis checklist](docs/metropolis.md). |
 
-## Running it
+## Tech stack
 
-Needs Node 22+, pnpm and a local Postgres.
+TypeScript throughout · Monad testnet · [viem](https://viem.sh) · AUSD by
+[Agora](https://agora.finance) · passkey wallets with [Mera](https://www.npmjs.com/package/@category-labs/mera)
+(WebAuthn PRF) · [Hono](https://hono.dev) on Node 22 · PostgreSQL with
+[Drizzle](https://orm.drizzle.team) · [Next.js](https://nextjs.org) 16 and React 19 ·
+[Expo](https://expo.dev) SDK 54 (React Native) · [Privy](https://privy.io) · Chainlink CRE ·
+[Foundry](https://getfoundry.sh) · [Railway](https://railway.com) · Vitest · Biome ·
+[Remotion](https://www.remotion.dev) and [ElevenLabs](https://elevenlabs.io) for the film.
+
+## Run it
+
+You need Node 22.12+, pnpm 10, PostgreSQL 16, and Xcode for the iOS app.
 
 ```bash
+git clone https://github.com/Cybire1/kova && cd kova
+git checkout monad
 pnpm install
+```
+
+**API** (http://localhost:4000; migrations run on start):
+
+```bash
+cp apps/api/.env.example apps/api/.env
 createdb kova_dev
-pnpm --filter @kova/db migrate
-
-# a testnet fee payer, funded from the faucet, plus a demo merchant and an API key
-pnpm --filter @kova/api setup:dev
-
-pnpm --filter @kova/api dev     # :4000
-pnpm --filter @kova/web dev     # :3000
+pnpm --filter @kova/api setup:dev   # 1st run: generates a relayer key into apps/api/.env.monad
+# fund that relayer with testnet MON at https://faucet.monad.xyz, then:
+pnpm --filter @kova/api setup:dev   # 2nd run: creates a demo shop and prints its API key
+pnpm --filter @kova/api dev
 ```
 
-Then open the dashboard, start a charge, and pay it:
+Test dollars and payments need test AUSD in the relayer. Agora's testnet faucet
+(`0xd236c18D274E54FAccC3dd9DDA4b27965a73ee6C`) gives 10,000 per address when it has funds; when
+it's empty, send test AUSD to the relayer's address.
+
+**Web** (http://localhost:3000):
 
 ```bash
-pnpm --filter @kova/api pay:open
+cp apps/web/.env.example apps/web/.env.local   # KOVA_API_URL=http://localhost:4000, a SESSION_SECRET
+pnpm --filter @kova/web dev
 ```
 
-The charge screen flips to PAID on its own.
-
-## Tests
+**iOS app:**
 
 ```bash
-pnpm test
+cd apps/mobile
+npm install
+cp .env.example .env   # EXPO_PUBLIC_KOVA_MONAD_API_URL=http://<your Mac's LAN IP>:4000 on a phone
+npx expo run:ios
 ```
 
-Unit tests cover the memo format, amount parsing, receipt verification and card signature
-handling. The end-to-end tests run against Tempo's Moderato testnet using its public faucet and
-sponsor, and prove the real path: a sponsored payment settles and verifies, a card access key
-with a daily limit pays, freezing it blocks the next tap, and a payment Kova never submitted is
-still picked up by the watcher.
+**Tests:** `pnpm --filter @kova/api test` runs the API suite against your local Postgres; the
+end-to-end payment tests also need a relayer with MON and test AUSD.
 
-```bash
-pnpm --filter @kova/tempo test:e2e
-pnpm --filter @kova/api test
-```
+**Deploy:** the API and web app ship as Docker images ([Dockerfile](Dockerfile),
+[Dockerfile.web](Dockerfile.web)) on Railway, with the same variables as the `.env.example` files.
+In production the relayer key belongs in a KMS.
 
-## Measured, not estimated
+## Built during Metropolis, on an earlier Tempo foundation
 
-On Moderato, 2026-09-22:
+All of Kova was written during the Metropolis build window (1 September to 13 October 2026). It
+began on 19 September as a Tempo build for Colosseum's Crypto World's Fair (branch `main`, until
+23 September): the API's foundation, the database schema, payment intents, the merchant dashboard
+and the first app screens. The Monad build (branch `monad`) moved Kova to Monad and added, among
+other things: payments by signature with sponsored gas on Monad, the chain watcher, passkey wallets
+with Mera and encrypted vaults, the web wallet, the shop inside the wallet, wallet sign-in
+(EIP-4361), email and Google with Privy, the Chainlink CRE rates workflow, stalls, tills and
+catalogue, Kova Travel, test dollars, and the launch film.
 
-| | |
-|---|---|
-| Payment, end to end through Kova's relay | 1.07–1.18s |
-| Gas for a payment | 51,495 (≈ $0.00003 on mainnet) |
-| Gas for a merchant's first ever payment | 300,795 (≈ $0.0002) |
-| Card-signed payment | 83,782 gas |
+## AI disclosure
 
-## License
+Kova was built with AI coding tools. Most of the code, tests and documentation, and the film's
+code, were written with [Claude Code](https://claude.com/claude-code) (Anthropic's Claude models)
+under the team's direction and review. The film's voiceover was generated with ElevenLabs. At
+runtime, two optional features call AI models: "Snap your menu" (Claude or DeepSeek) and spending
+insights (TypeSafe's Jev).
 
-Apache-2.0.
+## Attribution
+
+Kova builds on open-source software, each under its own licence, including:
+[viem](https://github.com/wevm/viem), [Mera](https://www.npmjs.com/package/@category-labs/mera),
+[@noble](https://github.com/paulmillr/noble-hashes) and [@scure](https://github.com/paulmillr/scure-bip39)
+cryptography, [Hono](https://github.com/honojs/hono), [Drizzle ORM](https://github.com/drizzle-team/drizzle-orm),
+[Zod](https://github.com/colinhacks/zod), [Next.js](https://github.com/vercel/next.js),
+[React](https://github.com/facebook/react), [Expo](https://github.com/expo/expo) and
+[React Native](https://github.com/facebook/react-native), the [Privy](https://www.npmjs.com/package/@privy-io/react-auth)
+SDK, the [Chainlink CRE](https://docs.chain.link/cre) SDK, [Foundry](https://github.com/foundry-rs/foundry),
+[Remotion](https://github.com/remotion-dev/remotion) (Remotion licence), [Vitest](https://github.com/vitest-dev/vitest)
+and [Biome](https://github.com/biomejs/biome). The [Manrope](https://fonts.google.com/specimen/Manrope)
+typeface is under the SIL Open Font License. AUSD is Agora's; exchange-rate sources are
+[open.er-api.com](https://open.er-api.com) and the [fawazahmed0 currency API](https://github.com/fawazahmed0/exchange-api).

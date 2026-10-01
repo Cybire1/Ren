@@ -1,8 +1,8 @@
 {
   "name": "kova",
   "private": true,
-  "description": "Kova: a stablecoin-native payment network on Tempo",
-  "license": "Apache-2.0",
+  "description": "Kova: a dollar wallet with your shop inside it, on Monad",
+  "license": "MIT",
   "packageManager": "pnpm@10.18.0",
   "engines": {
     "node": ">=22.12"

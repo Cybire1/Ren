@@ -1,0 +1,72 @@
+# Kova features and integrations
+
+What Kova does, what it will do next, and the problem each piece solves. Every feature ships the same
+way: a real problem first, a finished flow on the phone and the web, real on-chain proof, and screenshots
+checked before it is called done. Status as of 1 October 2026.
+
+## Built and live
+
+| Feature | Integration | The problem it solves |
+|---|---|---|
+| Passkey wallet: Face ID, no seed phrase | Mera (WebAuthn PRF) | People lose seed phrases, and crypto wallets scare them |
+| The same wallet on iPhone and at mykova.app | Mera + iCloud Keychain | One account everywhere, with nothing to log in to |
+| Encrypted backup of name, contacts, settings | Mera's second, passkey-derived key | A lost phone means lost details |
+| Gas-free payments and sends | Kova's relayer on Monad (EIP-3009) | Nobody should have to buy MON before paying for coffee |
+| Paid in about 1.5 s | Monad | A checkout line can't wait |
+| Prices in your own currency | Reference rates (fixed table today) | People think in naira and euros, not dollars |
+| Your shop inside your wallet: stall page, catalogue, till, orders, takings | Kova API | A small shop needs a till without buying hardware |
+| Shop sign-in on the web with the same passkey | Sign-In with Ethereum (EIP-4361) | Shop owners juggle passwords and API keys |
+| Guest checkout with email or Google | Privy embedded wallets | A customer without Kova can't pay at the counter |
+| $5 of test dollars a day | Kova's testnet treasury | Agora's testnet faucet is empty |
+| Kova Travel: flights and hotels in dollars | Duffel | Paying abroad in dollars is hard |
+| Snap your menu | Claude / DeepSeek | Typing a whole menu into a till is slow |
+| Spending insights | TypeSafe's Jev | Knowing where the money went |
+| Link previews, a way out of in-app browsers | mykova.app | Shared links looked bare; passkeys fail inside X |
+
+## Next, in build order
+
+Each one: the problem, what done means, how it is proven.
+
+### 1. Paid in under a second · done
+- **Result (1 Oct):** server relay 384–520 ms (was 514–704); tap to paid measured from Lagos 0.91–1.05 s (was 1.3–1.6 s). One round-trip to check (estimate with fees and a locally counted nonce alongside), a local signature, one `eth_sendRawTransactionSync`. Test dollars share the same send path, so the nonce has one owner.
+- **Problem:** Monad finalises in about 0.6 s, but Kova's receipts show 1.3 to 1.6 s. The rest is our own round-trips.
+- **Done:** measure every step of a payment (sign, request, simulate, submit, receipt), remove what isn't needed, and show "Paid" as soon as the chain has the transaction. The receipt shows the real time.
+- **Proof:** five payments on testnet, timed end to end, before and after.
+
+### 2. Send in one sheet
+- **Problem:** sending money takes several full screens; it feels slow before it is slow.
+- **Done:** on iOS, one sheet over Home: person, amount (with their currency), review (you, Kovi's arc, them, $0.00 fee), slide to send, and the same sheet turns into "Sent" with the measured time, while the balance behind it drops live. Then the same on the web.
+- **Proof:** screenshots of every step on the simulator and the web, and a real send on testnet.
+
+### 3. Private payment notes
+- **Problem:** "for dinner" on a payment is stored readable by Kova's server.
+- **Done:** notes are encrypted with a key derived from the sender's passkey (Mera PRF) and shared with the receiver, so only the two of them can read them. Kova stores ciphertext only.
+- **Proof:** the database row shows ciphertext; both wallets show the note; a third wallet can't.
+
+### 4. From guest to Kova
+- **Problem:** someone who paid once as a guest (Privy, email) has a leftover balance they'll forget.
+- **Done:** after a guest payment, "Keep your dollars in Kova": create a passkey wallet in one step and move the guest balance into it, gas paid by Kova.
+- **Proof:** a guest wallet's balance arrives in a new Kova wallet on testnet.
+
+### 5. Live exchange rates
+- **Problem:** local prices come from a fixed table, labelled "reference rate".
+- **Done:** deploy `KovaRates` on Monad testnet; the Chainlink CRE workflow (`apps/rates`) publishes rates from two sources with consensus; the API reads the contract; the app says "Chainlink rate from 4 min ago".
+- **Proof:** the contract address, a report transaction, and the app showing a live rate.
+- **Needs from you:** `cre login` once.
+
+### 6. Bring dollars from another chain
+- **Problem:** crypto users already hold dollars on Base, Ethereum or Solana, and moving them to Monad is a chore.
+- **Done:** "Add money → From another chain" with Aurora Intents (NEAR Intents): pick a chain and token, send, and AUSD arrives in the Kova wallet on Monad.
+- **Proof:** a real cross-chain deposit, with both transactions linked.
+
+### 7. Card top-up
+- **Problem:** there is no way to put money into Kova with a card or bank.
+- **Done:** "Add money → Card or bank" with Ramp Network, buying AUSD on Monad straight into the Kova wallet.
+- **Proof:** a sandbox purchase landing in a Kova wallet.
+- **Needs from you:** a Ramp Network partner key.
+
+### 8. Cash out
+- **Problem:** there is no way to take money out of Kova.
+- **Done:** "Cash out" with Ramp's off-ramp, from AUSD on Monad to a bank or card.
+- **Proof:** a sandbox off-ramp from a Kova wallet.
+- **Needs from you:** the same Ramp key.
