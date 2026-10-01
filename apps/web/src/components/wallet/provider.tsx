@@ -159,6 +159,45 @@ interface WalletValue {
   refresh: () => Promise<void>
 }
 
+/**
+ * A new passkey and the wallet it holds, remembered on this browser with its session open. Used
+ * by "Create my wallet", and by a guest keeping their dollars after paying with email or Google
+ * (components/keep-in-kova.tsx), where no WalletProvider is mounted: /wallet picks it up after.
+ */
+export async function makeWallet(name: string, currency: DisplayCurrency) {
+  const clean = name.trim()
+  const made = await createKovaPasskey(clean).catch((error) => {
+    throw new Error(passkeyProblem(error))
+  })
+  const { session, account } = await openSigningSession(made.prfOutput)
+  startSession(session, account)
+  const profile: Profile = {
+    address: account.address,
+    name: clean,
+    currency,
+    passkey: made.credential,
+    createdAt: Date.now(),
+  }
+  write(PROFILE, profile)
+  return { profile, account, vaultSecret: made.vaultSecret }
+}
+
+/** The wallet's first backup and its note key, for a wallet made outside the WalletProvider. */
+export function settleNewWallet(
+  profile: Profile,
+  account: LocalAccount,
+  vaultSecret: Uint8Array | null,
+) {
+  if (!vaultSecret) return
+  void sealAndUpload(vaultSecret, {
+    v: 1,
+    name: profile.name,
+    currency: profile.currency,
+    contacts: [],
+  }).catch(() => {})
+  void publishNoteKey(account, vaultSecret).catch(() => {})
+}
+
 const WalletContext = createContext<WalletValue | null>(null)
 
 export function useWallet(): WalletValue {
@@ -304,21 +343,8 @@ export function WalletProvider({
 
   const create = useCallback(
     async (name: string, currency: DisplayCurrency) => {
-      const clean = name.trim()
-      const made = await createKovaPasskey(clean).catch((error) => {
-        throw new Error(passkeyProblem(error))
-      })
-      const { session, account } = await openSigningSession(made.prfOutput)
-      startSession(session, account)
-      vaultSecret.current = made.vaultSecret
-      if (made.vaultSecret) takeVault(made.vaultSecret, account)
-      const next: Profile = {
-        address: account.address,
-        name: clean,
-        currency,
-        passkey: made.credential,
-        createdAt: Date.now(),
-      }
+      const { profile: next, account, vaultSecret: secret } = await makeWallet(name, currency)
+      if (secret) takeVault(secret, account)
       keepProfile(next)
       setSaved([])
       setNotes({})

@@ -1218,3 +1218,168 @@ p {
   background: var(--danger);
   color: #fff;
 }
+
+/* After paying as a guest: keep the change in a Kova wallet. */
+
+.keep {
+  position: relative;
+  margin: 1.5rem 0 0;
+  padding: 1.35rem 1.25rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.75rem;
+  background: var(--surface);
+  animation: rise 0.5s var(--spring) 0.35s both;
+}
+
+.keep-quiet {
+  display: grid;
+  place-items: center;
+  min-height: 6rem;
+  border-style: dashed;
+  background: none;
+}
+
+.keep-head {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 1rem;
+  border-radius: 1.2rem;
+  background: var(--teal);
+  color: #fff;
+}
+
+.keep-head small {
+  display: block;
+  color: #dcebea;
+  font-size: 0.8125rem;
+}
+
+.keep-head strong {
+  font-size: 1.9rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+.keep-coins {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 68px;
+  height: 52px;
+}
+
+.keep-coins > :first-child {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  transform: rotate(-12deg);
+}
+
+.keep-coin-back {
+  position: absolute;
+  right: 0;
+  top: 0;
+  transform: rotate(14deg);
+}
+
+.keep h2 {
+  margin: 1.1rem 0 0.35rem;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.keep p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.keep-name {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 0.9rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.keep-name input {
+  height: 3rem;
+  padding: 0 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.keep-name input:focus {
+  box-shadow: 0 0 0 4px rgba(212, 101, 88, 0.25);
+}
+
+.keep .pill .spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: currentColor;
+}
+
+.keep p.keep-fine {
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  text-align: center;
+}
+
+.keep-skip {
+  display: block;
+  margin: 0.6rem auto 0;
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.keep-done {
+  text-align: center;
+}
+
+.keep-done .keep-kovi {
+  display: block;
+  margin: -0.5rem auto 0;
+  animation: keep-catch 0.8s cubic-bezier(0.34, 1.6, 0.5, 1) 0.1s both;
+}
+
+.keep-done h2 {
+  margin-top: 0.4rem;
+  font-size: 1.85rem;
+}
+
+.keep-done .pill {
+  margin-top: 1.1rem;
+}
+
+@keyframes keep-catch {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.7);
+  }
+}
+
+.keep-close {
+  margin: 1.25rem 0 0;
+  color: var(--muted);
+  text-align: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keep,
+  .keep-done .keep-kovi {
+    animation: none;
+  }
+}

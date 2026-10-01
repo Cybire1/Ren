@@ -21,7 +21,7 @@ const PrivyWallet = dynamic(() => import('./privy-wallet'), { ssr: false })
  * nothing else, not even MON.
  */
 
-interface Eip1193 {
+export interface Eip1193 {
   request(args: { method: string; params?: unknown }): Promise<unknown>
 }
 interface WalletInfo {
@@ -45,9 +45,20 @@ type Stage =
   | { name: 'problem'; message: string }
 
 /** What a wallet needs to add Monad if it has never seen it. */
-const chains: Record<number, { chainName: string; rpcUrls: string[]; blockExplorerUrls: string[] }> = {
-  10143: { chainName: 'Monad Testnet', rpcUrls: ['https://testnet-rpc.monad.xyz'], blockExplorerUrls: ['https://testnet.monadscan.com'] },
-  143: { chainName: 'Monad', rpcUrls: ['https://rpc.monad.xyz'], blockExplorerUrls: ['https://monadscan.com'] },
+const chains: Record<
+  number,
+  { chainName: string; rpcUrls: string[]; blockExplorerUrls: string[] }
+> = {
+  10143: {
+    chainName: 'Monad Testnet',
+    rpcUrls: ['https://testnet-rpc.monad.xyz'],
+    blockExplorerUrls: ['https://testnet.monadscan.com'],
+  },
+  143: {
+    chainName: 'Monad',
+    rpcUrls: ['https://rpc.monad.xyz'],
+    blockExplorerUrls: ['https://monadscan.com'],
+  },
 }
 
 const hex = (n: number) => `0x${n.toString(16)}`
@@ -68,7 +79,10 @@ function useWallets(): Wallet[] | null {
     const settle = setTimeout(() => {
       const legacy = (window as unknown as { ethereum?: Eip1193 }).ethereum
       if (found.size === 0 && legacy)
-        found.set('legacy', { info: { uuid: 'legacy', name: 'Browser wallet', icon: '', rdns: 'legacy' }, provider: legacy })
+        found.set('legacy', {
+          info: { uuid: 'legacy', name: 'Browser wallet', icon: '', rdns: 'legacy' },
+          provider: legacy,
+        })
       setWallets([...found.values()])
     }, 400)
     return () => {
@@ -81,22 +95,38 @@ function useWallets(): Wallet[] | null {
 
 async function switchToMonad(provider: Eip1193, chainId: number) {
   try {
-    await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: hex(chainId) }] })
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: hex(chainId) }],
+    })
   } catch (error) {
     // 4902: the wallet has never heard of this chain.
-    if ((error as { code?: number }).code !== 4902 && !String((error as Error).message).includes('Unrecognized')) throw error
+    if (
+      (error as { code?: number }).code !== 4902 &&
+      !String((error as Error).message).includes('Unrecognized')
+    )
+      throw error
     const chain = chains[chainId]
     if (!chain) throw error
     await provider.request({
       method: 'wallet_addEthereumChain',
-      params: [{ chainId: hex(chainId), nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 }, ...chain }],
+      params: [
+        {
+          chainId: hex(chainId),
+          nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
+          ...chain,
+        },
+      ],
     })
   }
 }
 
-async function balanceOf(provider: Eip1193, token: string, owner: string): Promise<bigint> {
+export async function balanceOf(provider: Eip1193, token: string, owner: string): Promise<bigint> {
   const data = `0x70a08231${owner.slice(2).toLowerCase().padStart(64, '0')}`
-  const result = (await provider.request({ method: 'eth_call', params: [{ to: token, data }, 'latest'] })) as string
+  const result = (await provider.request({
+    method: 'eth_call',
+    params: [{ to: token, data }, 'latest'],
+  })) as string
   return BigInt(result && result !== '0x' ? result : '0x0')
 }
 
@@ -135,11 +165,37 @@ function typedData(c: Checkout, from: string) {
 
 function explain(error: unknown): string {
   const e = error as { code?: number; message?: string }
-  if (e.code === 4001 || /reject|denied|cancel/i.test(e.message ?? '')) return 'You cancelled in your wallet. Nothing was paid.'
-  return e.message && e.message.length < 160 ? e.message : 'Something went wrong. Nothing was paid; try again.'
+  if (e.code === 4001 || /reject|denied|cancel/i.test(e.message ?? ''))
+    return 'You cancelled in your wallet. Nothing was paid.'
+  return e.message && e.message.length < 160
+    ? e.message
+    : 'Something went wrong. Nothing was paid; try again.'
 }
 
-export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkout; testnet: boolean; privyAppId?: string | null }) {
+/** A guest who just paid with an email or Google wallet: the page offers to keep what's left in Kova. */
+export interface PaidGuest {
+  provider: Eip1193
+  address: string
+  /** How they signed in: an email address, or "Google". */
+  who: string
+  logout: () => Promise<void>
+}
+
+export function WalletPay({
+  checkout,
+  testnet,
+  privyAppId,
+  onGuestPaid,
+  onGuestPaying,
+}: {
+  checkout: Checkout
+  testnet: boolean
+  privyAppId?: string | null
+  /** Called instead of refreshing to the receipt when an email or Google wallet paid. */
+  onGuestPaid?: (guest: PaidGuest) => void
+  /** Called as an email or Google wallet starts paying, so the page doesn't swap itself for the receipt mid-payment. */
+  onGuestPaying?: (paying: boolean) => void
+}) {
   const router = useRouter()
   const wallets = useWallets()
   const [stage, setStage] = useState<Stage>({ name: 'choose' })
@@ -153,6 +209,18 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
   const [embedded, setEmbedded] = useState<EmbeddedWallet | null>(null)
   useEffect(() => setMobile(/iphone|ipad|android/i.test(navigator.userAgent)), [])
 
+  // Development only, on localhost with ?guest=dev: a stand-in for Privy's embedded wallet (a
+  // throwaway key in this tab), so the guest flow can be tested without a real email sign-in.
+  const [devGuest, setDevGuest] = useState<EmbeddedWallet | null>(null)
+  const [devGuestOffered, setDevGuestOffered] = useState(false)
+  useEffect(() => {
+    if (
+      window.location.hostname === 'localhost' &&
+      new URLSearchParams(window.location.search).get('guest') === 'dev'
+    )
+      setDevGuestOffered(true)
+  }, [])
+
   /** Signs the authorization for exactly this charge and hands it to Kova. */
   const sign = async (wallet: Wallet, address: string) => {
     const name = wallet.info.name
@@ -164,6 +232,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
       })) as string
 
       setStage({ name: 'working', wallet: name, step: 'pay' })
+      if (wallet.info.rdns === 'privy') onGuestPaying?.(true)
       const message = typedData(checkout, address).message
       const response = await fetch(`/api/checkout/${checkout.id}/authorize`, {
         method: 'POST',
@@ -171,10 +240,20 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
         body: JSON.stringify({ token: checkout.token, ...message, signature }),
       })
       const body = (await response.json().catch(() => ({}))) as { error?: string }
-      if (!response.ok) throw new Error(body.error ?? 'Kova couldn’t take that payment. Nothing was paid.')
+      if (!response.ok)
+        throw new Error(body.error ?? 'Kova couldn’t take that payment. Nothing was paid.')
       setStage({ name: 'paid' })
-      router.refresh()
+      const guest = wallet.info.rdns === 'privy' ? (embedded ?? devGuest) : null
+      if (guest && onGuestPaid)
+        onGuestPaid({
+          provider: wallet.provider,
+          address,
+          who: guest.signedInAs,
+          logout: guest.logout,
+        })
+      else router.refresh()
     } catch (error) {
+      onGuestPaying?.(false)
       setStage({ name: 'problem', message: explain(error) })
     }
   }
@@ -187,13 +266,16 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
     const name = wallet.info.name
     try {
       setStage({ name: 'working', wallet: name, step: 'connect' })
-      const [address] = (await wallet.provider.request({ method: 'eth_requestAccounts' })) as string[]
+      const [address] = (await wallet.provider.request({
+        method: 'eth_requestAccounts',
+      })) as string[]
       if (!address) throw new Error('Your wallet shared no account.')
 
       setStage({ name: 'working', wallet: name, step: 'network' })
       await switchToMonad(wallet.provider, checkout.chain_id)
       const balance = await balanceOf(wallet.provider, checkout.token, address)
-      if (balance < BigInt(checkout.amount_base)) return setStage({ name: 'short', wallet, address, balance })
+      if (balance < BigInt(checkout.amount_base))
+        return setStage({ name: 'short', wallet, address, balance })
       if (confirm) return setStage({ name: 'confirm', wallet, address, balance, who: confirm.who })
       await sign(wallet, address)
     } catch (error) {
@@ -221,7 +303,13 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
   }
 
   const payWithEmbedded = (wallet: EmbeddedWallet) =>
-    prepare({ info: { uuid: 'privy', name: 'your Kova wallet', icon: '', rdns: 'privy' }, provider: wallet.provider }, { who: wallet.signedInAs })
+    prepare(
+      {
+        info: { uuid: 'privy', name: 'your Kova wallet', icon: '', rdns: 'privy' },
+        provider: wallet.provider,
+      },
+      { who: wallet.signedInAs },
+    )
 
   const onPrivyWallet = useCallback(
     (wallet: EmbeddedWallet) => {
@@ -245,11 +333,16 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
     <section className="manual wallet-pay" aria-live="polite">
       <h2>Or pay here, without the app</h2>
       <p>
-        {privyAppId ? 'Use your email or Google, or any Monad wallet.' : 'Use any Monad wallet.'} Kova covers the network fee, so you only need{' '}
-        {checkout.token_symbol ?? 'AUSD'}.
+        {privyAppId ? 'Use your email or Google, or any Monad wallet.' : 'Use any Monad wallet.'}{' '}
+        Kova covers the network fee, so you only need {checkout.token_symbol ?? 'AUSD'}.
       </p>
       {privyAppId && privy !== 'off' ? (
-        <PrivyWallet appId={privyAppId} chainId={checkout.chain_id} onWallet={onPrivyWallet} onCancel={onPrivyCancel} />
+        <PrivyWallet
+          appId={privyAppId}
+          chainId={checkout.chain_id}
+          onWallet={onPrivyWallet}
+          onCancel={onPrivyCancel}
+        />
       ) : null}
 
       {stage.name === 'working' ? (
@@ -268,15 +361,25 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
       ) : stage.name === 'confirm' ? (
         <div className="wallet-short">
           <p>
-            Your wallet ({stage.who}) has {usd(Number(stage.balance) / 1e6)}. Pay {usd(checkout.amount)} to {checkout.merchant_name}?
+            Your wallet ({stage.who}) has {usd(Number(stage.balance) / 1e6)}. Pay{' '}
+            {usd(checkout.amount)} to {checkout.merchant_name}?
           </p>
-          <button type="button" className="pill pill-block" data-tone="coral" onClick={() => void sign(stage.wallet, stage.address)}>
+          <button
+            type="button"
+            className="pill pill-block"
+            data-tone="coral"
+            onClick={() => void sign(stage.wallet, stage.address)}
+          >
             <span className="pill-label">Pay {usd(checkout.amount)}</span>
             <span className="pill-cap">
               <Icon name="arrow" size={18} />
             </span>
           </button>
-          <button type="button" className="textlink wallet-again" onClick={() => setStage({ name: 'choose' })}>
+          <button
+            type="button"
+            className="textlink wallet-again"
+            onClick={() => setStage({ name: 'choose' })}
+          >
             Not now
           </button>
         </div>
@@ -288,11 +391,20 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
       ) : stage.name === 'short' ? (
         <div className="wallet-short">
           <p>
-            This wallet has {usd(Number(stage.balance) / 1e6)} {checkout.token_symbol ?? 'AUSD'} on Monad, and this costs {usd(checkout.amount)}.
+            This wallet has {usd(Number(stage.balance) / 1e6)} {checkout.token_symbol ?? 'AUSD'} on
+            Monad, and this costs {usd(checkout.amount)}.
           </p>
           {testnet && stage.balance + TEST_DOLLARS_A_DAY >= BigInt(checkout.amount_base) ? (
-            <button type="button" className="pill pill-block" data-tone="light" disabled={funding} onClick={() => void topUp(stage.wallet, stage.address)}>
-              <span className="pill-label">{funding ? 'Getting test dollars…' : 'Get test dollars and pay'}</span>
+            <button
+              type="button"
+              className="pill pill-block"
+              data-tone="light"
+              disabled={funding}
+              onClick={() => void topUp(stage.wallet, stage.address)}
+            >
+              <span className="pill-label">
+                {funding ? 'Getting test dollars…' : 'Get test dollars and pay'}
+              </span>
               <span className="pill-cap">
                 <Icon name="plus" size={18} />
               </span>
@@ -300,7 +412,11 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
           ) : testnet ? (
             <p>Kova’s test dollars come $5 a day, which won’t cover this.</p>
           ) : null}
-          <button type="button" className="textlink wallet-again" onClick={() => setStage({ name: 'choose' })}>
+          <button
+            type="button"
+            className="textlink wallet-again"
+            onClick={() => setStage({ name: 'choose' })}
+          >
             Use another wallet
           </button>
         </div>
@@ -324,7 +440,35 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
                   </span>
                   <span>
                     {privy === 'opening' ? 'Opening sign-in…' : 'Email or Google'}
-                    <small className="wallet-sub">A wallet is made for you. Nothing to install.</small>
+                    <small className="wallet-sub">
+                      A wallet is made for you. Nothing to install.
+                    </small>
+                  </span>
+                  <Icon name="arrow" size={18} />
+                </button>
+              </li>
+            </ul>
+          ) : null}
+          {devGuestOffered ? (
+            <ul className="wallet-list">
+              <li>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { devGuestWallet } = await import('./dev-guest')
+                    const wallet = devGuestWallet(checkout.chain_id)
+                    setDevGuest(wallet)
+                    void payWithEmbedded(wallet)
+                  }}
+                >
+                  <span className="wallet-glyph wallet-glyph-coral">
+                    <Icon name="code" size={16} />
+                  </span>
+                  <span>
+                    Dev guest wallet
+                    <small className="wallet-sub">
+                      localhost only: stands in for an email wallet
+                    </small>
                   </span>
                   <Icon name="arrow" size={18} />
                 </button>
@@ -341,7 +485,13 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
               {wallets.map((wallet) => (
                 <li key={wallet.info.uuid}>
                   <button type="button" onClick={() => void prepare(wallet)}>
-                    {wallet.info.icon ? <img src={wallet.info.icon} alt="" width={32} height={32} /> : <span className="wallet-glyph"><Icon name="key" size={16} /></span>}
+                    {wallet.info.icon ? (
+                      <img src={wallet.info.icon} alt="" width={32} height={32} />
+                    ) : (
+                      <span className="wallet-glyph">
+                        <Icon name="key" size={16} />
+                      </span>
+                    )}
                     <span>{wallet.info.name}</span>
                     <Icon name="arrow" size={18} />
                   </button>
@@ -352,21 +502,30 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
             <ul className="wallet-list">
               <li>
                 <a href={`https://metamask.app.link/dapp/${here.replace(/^https?:\/\//, '')}`}>
-                  <span className="wallet-glyph"><Icon name="external" size={16} /></span>
+                  <span className="wallet-glyph">
+                    <Icon name="external" size={16} />
+                  </span>
                   <span>Open in MetaMask</span>
                   <Icon name="arrow" size={18} />
                 </a>
               </li>
               <li>
-                <a href={`https://phantom.app/ul/browse/${encodeURIComponent(here)}?ref=${encodeURIComponent(here)}`}>
-                  <span className="wallet-glyph"><Icon name="external" size={16} /></span>
+                <a
+                  href={`https://phantom.app/ul/browse/${encodeURIComponent(here)}?ref=${encodeURIComponent(here)}`}
+                >
+                  <span className="wallet-glyph">
+                    <Icon name="external" size={16} />
+                  </span>
                   <span>Open in Phantom</span>
                   <Icon name="arrow" size={18} />
                 </a>
               </li>
             </ul>
           ) : (
-            <p className="wallet-none">No wallet in this browser. Pay with Kova on your phone, or open this page where MetaMask, Rabby or Phantom is installed.</p>
+            <p className="wallet-none">
+              No wallet in this browser. Pay with Kova on your phone, or open this page where
+              MetaMask, Rabby or Phantom is installed.
+            </p>
           )}
         </>
       )}

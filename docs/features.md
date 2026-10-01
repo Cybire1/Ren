@@ -45,7 +45,8 @@ Each one: the problem, what done means, how it is proven.
 - **Done:** notes are encrypted with a key derived from the sender's passkey (Mera PRF) and shared with the receiver, so only the two of them can read them. Kova stores ciphertext only.
 - **Proof:** the database row shows ciphertext; both wallets show the note; a third wallet can't.
 
-### 4. From guest to Kova
+### 4. From guest to Kova · done
+- **Result (1 Oct):** after paying a charge with email or Google (Privy), the pay page stays put and offers "Keep your $0.50 in Kova": one passkey makes a Kova wallet, the email wallet signs one EIP-3009 transfer of everything left into it (Kova's relayer pays the gas), the email wallet is signed out, and "Open my Kova wallet" lands on Home with the dollars there. Proven on testnet with a localhost stand-in for Privy's embedded wallet (`/pay/<id>?guest=dev`, localhost only): paid $4.50 of $5, moved the $0.50 in 1.29 s, Home showed $0.50. Not yet run with a real Privy email sign-in.
 - **Problem:** someone who paid once as a guest (Privy, email) has a leftover balance they'll forget.
 - **Done:** after a guest payment, "Keep your dollars in Kova": create a passkey wallet in one step and move the guest balance into it, gas paid by Kova.
 - **Proof:** a guest wallet's balance arrives in a new Kova wallet on testnet.
