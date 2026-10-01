@@ -57,7 +57,9 @@ Each one: the problem, what done means, how it is proven.
 - **Proof:** the contract address, a report transaction, and the app showing a live rate.
 - **Needs from you:** `cre login` once.
 
-### 6. Bring dollars from another chain
+### 6. Bring dollars from another chain · built, waiting on mainnet
+- **Built (1 Oct):** Aurora Intents Persistent Addresses: each wallet gets one permanent deposit address per kind of chain (all EVM chains share one; Solana, Tron, Bitcoin), and what lands there (USDC, USDT, ETH, SOL, TRX, BTC) arrives on Monad as AUSD. App: Add money → From another chain (chain picker, QR, copy, share, live "coming in" list). Web: /wallet/add/chain. API: `GET /v1/wallets/:address/deposit-sources`, `POST …/deposit-address`, `GET …/deposits`, with Aurora's key on the server; on testnet they answer "mainnet only" and the screens say so. Unit-tested against Aurora's documented responses.
+- **To prove it:** Kova on Monad mainnet, an Aurora Studio key (`AURORA_INTENTS_KEY`), Aurora's approval for persistent addresses, and a real deposit of a few dollars. Check that AUSD on Monad is a supported destination once NEAR's token list is back up (it was down, 1 Oct); otherwise set `AURORA_DESTINATION_ASSET`.
 - **Problem:** crypto users already hold dollars on Base, Ethereum or Solana, and moving them to Monad is a chore.
 - **Done:** "Add money → From another chain" with Aurora Intents (NEAR Intents): pick a chain and token, send, and AUSD arrives in the Kova wallet on Monad.
 - **Proof:** a real cross-chain deposit, with both transactions linked.
