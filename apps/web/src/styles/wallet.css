@@ -2824,3 +2824,145 @@ button.w-person {
   font-weight: 700;
   cursor: pointer;
 }
+
+/* From another chain (Aurora Intents). */
+
+.w-add-chain {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.3s var(--spring);
+}
+
+.w-add-chain:active {
+  transform: scale(0.98);
+}
+
+.w-add-chain > span {
+  display: grid;
+  flex: 1;
+}
+
+.w-add-chain small {
+  color: var(--muted);
+}
+
+.w-chains {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin: 1.1rem 0 0.75rem;
+}
+
+.w-chain {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 0.8rem 0.25rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.3rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.25s,
+    transform 0.3s var(--spring);
+}
+
+.w-chain:active {
+  transform: scale(0.96);
+}
+
+.w-chain[aria-selected="true"] {
+  background: var(--ink);
+  color: #fff;
+}
+
+.w-chain-disc {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #8fa2e8;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.w-chain-sol .w-chain-disc {
+  background: #b7a3ee;
+}
+
+.w-chain-tron .w-chain-disc {
+  background: #e89a8f;
+}
+
+.w-chain-btc .w-chain-disc {
+  background: #f2c26b;
+}
+
+.w-chain-soon {
+  margin-top: 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.75rem;
+  background: var(--surface);
+}
+
+.w-chain-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.75rem;
+  background: var(--surface);
+  animation: w-fade 0.3s ease both;
+}
+
+.w-chain-card small {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.w-chain-card code {
+  max-width: 100%;
+  font: 600 0.95rem var(--font);
+  letter-spacing: 0.02em;
+  text-align: center;
+  word-break: break-all;
+}
+
+.w-chain-card .pill {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.w-chain-dot {
+  flex: none;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.w-chain-dot-arrived {
+  background: var(--positive);
+}
+
+.w-chain-dot-failed {
+  background: var(--danger);
+}

@@ -26,7 +26,7 @@ async function call(path: string, init: { method?: string; body?: unknown } = {}
 
 const publicKey = (fill: string) => fill.repeat(43).slice(0, 43)
 const sealed = {
-  v: 1,
+  v: 1 as const,
   e: 'E'.repeat(43),
   n: 'N'.repeat(32),
   to: 'T'.repeat(40),

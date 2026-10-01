@@ -26,10 +26,17 @@ export function AddMoney() {
           <Art name="kovi-catch" size={160} />
           <strong>Send AUSD on Monad to your address</strong>
           <span>
-            Card and bank top-ups are coming to Kova. For now, send AUSD from an exchange or another
-            wallet.
+            Bring dollars from any chain, or send AUSD from an exchange or another wallet. Card and
+            bank top-ups are coming.
           </span>
         </div>
+        <Link href="/wallet/add/chain" className="w-add-chain">
+          <span>
+            <strong>From another chain</strong>
+            <small>USDC, USDT, ETH, SOL or BTC, from 30+ chains</small>
+          </span>
+          <Icon name="arrow" size={18} />
+        </Link>
         <Link href="/wallet/receive" className="pill pill-block" data-tone="ink">
           <span className="pill-label">Show my address</span>
           <span className="pill-cap">
@@ -110,6 +117,13 @@ export function AddMoney() {
             <Icon name="plus" size={18} />
           </span>
         </button>
+        <Link href="/wallet/add/chain" className="w-add-chain">
+          <span>
+            <strong>From another chain</strong>
+            <small>USDC, USDT, ETH, SOL or BTC, from 30+ chains</small>
+          </span>
+          <Icon name="arrow" size={18} />
+        </Link>
       </div>
     </div>
   )

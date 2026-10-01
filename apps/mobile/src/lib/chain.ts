@@ -184,3 +184,29 @@ export async function incomingSince(
 }
 
 export const explorerTx = (hash: string) => `${network.explorerUrl}/tx/${hash}`
+
+/** Deposits from other chains (Aurora Intents, on Monad mainnet): where they can come from. */
+export interface DepositSources {
+  live: boolean
+  network: 'mainnet' | 'testnet'
+  arrives_as: string
+  sources: { id: string; name: string; chains: string[]; send: string[] }[]
+}
+
+export interface ChainDeposit {
+  tx_hash: string
+  status: 'seen' | 'arrived' | 'failed'
+  chain: string | null
+  amount: string
+  asset: string | null
+  at: string
+}
+
+export const depositSources = (address: Address) => kova<DepositSources>(`/v1/wallets/${address}/deposit-sources`)
+
+/** This wallet's permanent deposit address for one kind of chain. */
+export const depositAddressFor = (address: Address, source: string) =>
+  kova<{ address: string; memo: string | null }>(`/v1/wallets/${address}/deposit-address`, { source })
+
+export const depositsTo = (address: Address, depositAddress: string) =>
+  kova<{ data: ChainDeposit[] }>(`/v1/wallets/${address}/deposits?address=${encodeURIComponent(depositAddress)}`).then((r) => r.data)

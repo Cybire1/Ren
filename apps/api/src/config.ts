@@ -60,6 +60,10 @@ const schema = z.object({
   KOVA_TRAVEL_SETTLEMENT_ADDRESS: z.string().optional(),
   /** Jev, TypeSafe's decision model: spending categories, order-note flags, duplicate items, offer matching. */
   TYPESAFE_API_KEY: z.string().optional(),
+  /** Aurora Intents (NEAR Intents): deposits from other chains, landing on Monad. Key from studio.aurora.dev. */
+  AURORA_INTENTS_KEY: z.string().optional(),
+  /** What deposits arrive as on Monad: a symbol Aurora resolves, or an asset id when the symbol is ambiguous. */
+  AURORA_DESTINATION_ASSET: z.string().default('AUSD'),
   JEV_MODEL: z.string().optional(),
 })
 

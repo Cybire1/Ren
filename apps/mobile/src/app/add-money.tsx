@@ -6,6 +6,7 @@ import { isTestnet } from '@/lib/config'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
+import { Icon } from '@/ui/Icon'
 import { CoinRain } from '@/ui/motion'
 import { Stage } from '@/ui/Stage'
 import { Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
@@ -66,7 +67,7 @@ export default function AddMoney() {
               Add money
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Card and bank top-ups are coming to Kova. For now, send AUSD on Monad to your address.
+              Bring dollars from any chain, or send AUSD on Monad to your address. Card and bank top-ups are coming.
             </Txt>
           </>
         )}
@@ -86,6 +87,23 @@ export default function AddMoney() {
               <Txt weight="semi" size={15}>
                 $5, once a day
               </Txt>
+            </View>
+          </Sticker>
+        </View>
+      ) : null}
+      {stage !== 'done' ? (
+        <View style={{ paddingHorizontal: 20, marginTop: 12 }}>
+          <Sticker radius={24} onPress={() => router.push('/from-chain')} accessibilityLabel="From another chain" style={{ height: 76 }}>
+            <View style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <Txt weight="semi" size={16}>
+                  From another chain
+                </Txt>
+                <Txt size={13} color={colors.muted}>
+                  USDC, USDT, ETH, SOL or BTC, from 30+ chains
+                </Txt>
+              </View>
+              <Icon name="arrow" size={20} />
             </View>
           </Sticker>
         </View>
