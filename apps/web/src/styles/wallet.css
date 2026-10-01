@@ -2717,3 +2717,108 @@ button.w-person {
     transition: none;
   }
 }
+
+/* Private notes: sealed for the two people in a payment. */
+
+.w-note-private {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  cursor: text;
+}
+
+.w-note-private:focus-within {
+  box-shadow: 0 0 0 4px rgba(212, 101, 88, 0.25);
+}
+
+.w-note-private input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
+.w-entry-sub svg {
+  display: inline-block;
+  margin-right: 0.25rem;
+  vertical-align: -1px;
+}
+
+.w-fact dd .w-fact-lock svg {
+  display: block;
+  color: var(--ink);
+}
+
+.w-receipt-note {
+  align-items: flex-start;
+}
+
+.w-receipt-note dt {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.w-receipt-note dd {
+  display: grid;
+  justify-items: end;
+  gap: 0.15rem;
+  max-width: 65%;
+  font-size: 1.05rem;
+}
+
+.w-receipt-note small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.w-notes-locked {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.75rem 0.75rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: #f6e7c8;
+}
+
+.w-notes-locked-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+
+.w-notes-locked-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.w-notes-locked-text small {
+  color: var(--on-tint);
+}
+
+.w-notes-locked-btn {
+  flex: none;
+  height: 2.5rem;
+  padding: 0 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}

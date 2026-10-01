@@ -76,7 +76,10 @@ export const merchants = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [uniqueIndex('merchants_slug_idx').on(t.slug), index('merchants_owner_idx').on(t.ownerAddress)],
+  (t) => [
+    uniqueIndex('merchants_slug_idx').on(t.slug),
+    index('merchants_owner_idx').on(t.ownerAddress),
+  ],
 )
 
 export const terminals = pgTable(
@@ -467,6 +470,37 @@ export const testDollarClaims = pgTable('test_dollar_claims', {
   txHash: text('tx_hash'),
 })
 
+/**
+ * Each wallet's note key: the public half of an X25519 key its passkey derives, signed by the
+ * wallet so a sender can check it came from the wallet and not from Kova.
+ */
+export const noteKeys = pgTable('note_keys', {
+  /** Lowercase. */
+  address: address('address').primaryKey(),
+  /** base64url, 32 bytes. */
+  publicKey: text('public_key').notNull(),
+  signature: text('signature').notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+})
+
+/**
+ * Private notes on sends ("for dinner"), sealed on the sender's device for the receiver and the
+ * sender. Kova stores ciphertext only, keyed by the transaction that carried the money.
+ */
+export const paymentNotes = pgTable('payment_notes', {
+  txHash: text('tx_hash').primaryKey(),
+  /** Lowercase. */
+  fromAddress: address('from_address').notNull(),
+  toAddress: address('to_address').notNull(),
+  /** The EIP-3009 nonce of the transfer, part of what the note is bound to. */
+  authNonce: text('auth_nonce').notNull(),
+  sealed: jsonb('sealed')
+    .$type<{ v: 1; e: string; n: string; to: string; from: string }>()
+    .notNull(),
+  createdAt: createdAt(),
+})
+
 export const auditLogs = pgTable(
   'audit_logs',
   {
@@ -617,7 +651,14 @@ export const orders = pgTable(
 // --- Kova Travel ---------------------------------------------------------------------------
 
 export const tripKind = pgEnum('trip_kind', ['flight', 'stay'])
-export const tripStatus = pgEnum('trip_status', ['awaiting_payment', 'booking', 'booked', 'failed', 'expired', 'canceled'])
+export const tripStatus = pgEnum('trip_status', [
+  'awaiting_payment',
+  'booking',
+  'booked',
+  'failed',
+  'expired',
+  'canceled',
+])
 
 /** What the traveller and anyone paying for the trip see: never the supplier's raw payload. */
 export interface TripSummary {
@@ -628,7 +669,16 @@ export interface TripSummary {
   /** Airline or hotel chain, and its logo or photo. */
   provider: { name: string; image: string | null }
   /** Flights: one entry per slice. Stays: check-in and check-out. */
-  legs: { from: string; to: string; departs: string; arrives: string; carrier: string | null; flight: string | null; stops: number; duration: string | null }[]
+  legs: {
+    from: string
+    to: string
+    departs: string
+    arrives: string
+    carrier: string | null
+    flight: string | null
+    stops: number
+    duration: string | null
+  }[]
   /** Stays: room and board, and the cancellation terms in words. */
   room?: { name: string; board: string; cancellation: string }
   /** Extras added to a flight, in words ("1 checked bag", "Seat 14A"). */
@@ -708,5 +758,8 @@ export const tripShares = pgTable(
     label: text('label').notNull(),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex('trip_shares_intent_idx').on(t.intentId), index('trip_shares_trip_idx').on(t.tripId)],
+  (t) => [
+    uniqueIndex('trip_shares_intent_idx').on(t.intentId),
+    index('trip_shares_trip_idx').on(t.tripId),
+  ],
 )

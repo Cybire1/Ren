@@ -13,10 +13,12 @@ import {
   toSignedAuthorization,
   tokenByAddress,
   transferAuthorizationTypedData,
+  type SealedNote,
 } from '@kova/monad'
 import { type Address, createPublicClient, fallback, type Hash, type Hex, http, isAddressEqual, type LocalAccount } from 'viem'
 import { monad, monadTestnet } from 'viem/chains'
 import { apiUrl, isTestnet, network, networkId, settlementToken } from './config'
+import { sealNote } from './notes-core'
 
 /** Monad's own RPC first, Ankr's public one if it stumbles. */
 const rpcs = isTestnet
@@ -107,7 +109,14 @@ export async function payCharge(account: LocalAccount, charge: Charge): Promise<
 }
 
 /** Sends dollars to a person. Kova submits it and pays the gas, so they get every cent sent. */
-export async function sendMoney(account: LocalAccount, to: Address, amount: bigint): Promise<Sent> {
+/** A note to seal with a send: its text, and the note keys of the two people it's for. */
+export interface NoteToSeal {
+  text: string
+  mine: string
+  theirs: string | null
+}
+
+export async function sendMoney(account: LocalAccount, to: Address, amount: bigint, note?: NoteToSeal): Promise<Sent> {
   const started = Date.now()
   const authorization = {
     from: account.address,
@@ -118,7 +127,11 @@ export async function sendMoney(account: LocalAccount, to: Address, amount: bigi
     nonce: randomNonce(),
   }
   const signature = await account.signTypedData(transferAuthorizationTypedData(settlementToken, network.chainId, authorization))
-  const sent = await kova<{ tx_hash: Hash }>('/v1/transfers', toSignedAuthorization(settlementToken.address, authorization, signature))
+  const sealed = note ? sealNote(note.text, authorization, { mine: note.mine, theirs: note.theirs }) : undefined
+  const sent = await kova<{ tx_hash: Hash }>('/v1/transfers', {
+    ...toSignedAuthorization(settlementToken.address, authorization, signature),
+    ...(sealed ? { note: sealed } : {}),
+  })
   return { hash: sent.tx_hash, ms: Date.now() - started }
 }
 
@@ -131,6 +144,8 @@ export interface Incoming {
   kind: 'payment' | 'refund' | 'payout' | null
   /** Test dollars from the testnet faucet, not from a person. */
   faucet: boolean
+  /** The sender's private note, still sealed, and the authorization nonce it is bound to. */
+  note: { sealed: SealedNote; auth_nonce: Hex } | null
 }
 
 interface IndexedTransfer {
@@ -141,6 +156,7 @@ interface IndexedTransfer {
   block: string
   kind: Incoming['kind']
   faucet: boolean
+  note?: Incoming['note']
 }
 
 /** Dollars that arrived at `address` in blocks after `fromBlock`, from Kova's index of the chain. */
@@ -162,6 +178,7 @@ export async function incomingSince(
         block: BigInt(t.block),
         kind: t.kind,
         faucet: t.faucet,
+        note: t.note ?? null,
       })),
   }
 }

@@ -4,12 +4,21 @@ import {
   getToken,
   type NetworkId,
   randomNonce,
+  type SealedNote,
   type TransferAuthorization,
   tokenByAddress,
   toSignedAuthorization,
   transferAuthorizationTypedData,
 } from '@kova/monad'
 import { type Address, createPublicClient, fallback, type Hex, http, type LocalAccount } from 'viem'
+import { sealNote } from './notes'
+
+/** A note to seal with a send: its text, and the note keys of the two people it's for. */
+export interface NoteToSeal {
+  text: string
+  mine: string
+  theirs: string | null
+}
 
 /**
  * Money on Monad, from the browser, as the app moves it (apps/mobile src/lib/chain.ts). Balances
@@ -73,6 +82,7 @@ export async function sendMoney(
   account: LocalAccount,
   to: Address,
   amount: bigint,
+  note?: NoteToSeal,
 ): Promise<Moved> {
   const token = getToken(network, 'AUSD')
   const authorization: TransferAuthorization = {
@@ -87,10 +97,11 @@ export async function sendMoney(
   const signature = await account.signTypedData(
     transferAuthorizationTypedData(token, getNetwork(network).chainId, authorization),
   )
-  const sent = await post<{ tx_hash: Hex; explorer_url: string }>(
-    '/api/wallet/send',
-    toSignedAuthorization(token.address, authorization, signature),
-  )
+  const sealed = note ? sealNote(note.text, authorization, note) : undefined
+  const sent = await post<{ tx_hash: Hex; explorer_url: string }>('/api/wallet/send', {
+    ...toSignedAuthorization(token.address, authorization, signature),
+    ...(sealed ? { note: sealed } : {}),
+  })
   return {
     hash: sent.tx_hash,
     ms: Math.round(performance.now() - started),
@@ -175,6 +186,8 @@ export interface IndexedTransfer {
   faucet: boolean
   explorer_url: string
   created_at: string
+  /** The sender's private note, sealed for the two of them, and the authorization nonce it's bound to. */
+  note?: { sealed: SealedNote; auth_nonce: Hex } | null
 }
 
 /** Everything that moved in or out of a wallet after `afterBlock`, a page at a time. */

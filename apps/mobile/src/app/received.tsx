@@ -5,18 +5,20 @@ import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Burst, CoinRain, PopIn } from '@/ui/motion'
 import { when } from '@/ui/EntryRow'
+import { PrivateNote } from '@/ui/PrivateNote'
 import { Stage } from '@/ui/Stage'
 import { Chip, Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /** Money arrived: coins rain, Kovi catches them, and the amount is the headline. */
 export default function Received() {
-  const params = useLocalSearchParams<{ amount: string; name: string; hash?: string }>()
+  const params = useLocalSearchParams<{ amount: string; name: string; hash?: string; note?: string }>()
   const { profile, contacts, activity } = useWallet()
   const { width } = useWindowDimensions()
   // Opened without an arrival (a stale link, a relaunch): show the latest money in instead.
   const latest = params.amount ? null : activity.find((e) => e.kind === 'received')
   const amount = params.amount ?? latest?.amount
   const name = params.name || latest?.name || 'Someone'
+  const note = params.note || (latest?.private ? latest.detail : undefined)
   const base = BigInt(amount ?? '0')
   const known = contacts.find((c) => c.name === name)
   if (!amount || base === 0n) return <Redirect href="/" />
@@ -61,6 +63,11 @@ export default function Received() {
           </Txt>
         )}
       </Rise>
+      {note ? (
+        <View style={{ marginTop: 22 }}>
+          <PrivateNote text={note} caption={`From ${name.split(' ')[0]}. Sealed on their phone; only you two can read it.`} />
+        </View>
+      ) : (
       <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
         <Sticker radius={24} style={{ height: 76 }}>
           <View style={styles.row}>
@@ -73,6 +80,7 @@ export default function Received() {
           </View>
         </Sticker>
       </View>
+      )}
       <View style={styles.footer}>
         {known ? (
           <PillButton

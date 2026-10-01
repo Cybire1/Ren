@@ -48,7 +48,7 @@ function ArrivalWatcher() {
     if (!arrival || mode !== 'pay') return
     router.push({
       pathname: '/received',
-      params: { amount: arrival.amount.toString(), name: arrival.name, hash: arrival.hash },
+      params: { amount: arrival.amount.toString(), name: arrival.name, hash: arrival.hash, ...(arrival.note ? { note: arrival.note } : {}) },
     })
     clearArrival()
   }, [arrival, clearArrival, mode])

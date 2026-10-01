@@ -2,6 +2,7 @@ import { router } from 'expo-router'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
+import { Icon } from './Icon'
 import type { Entry } from '@/lib/wallet'
 import { AddBadge, Avatar, ShopBadge } from './art'
 import { Txt } from './primitives'
@@ -39,9 +40,12 @@ export function EntryRow({ entry }: { entry: Entry }) {
         <Txt weight="semi" size={16} numberOfLines={1}>
           {entry.name}
         </Txt>
-        <Txt size={13} color={colors.muted} numberOfLines={1}>
-          {entry.detail}, {when(entry.at)}
-        </Txt>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          {entry.private ? <Icon name="lock" size={12} color={colors.muted} /> : null}
+          <Txt size={13} color={colors.muted} numberOfLines={1} style={{ flexShrink: 1 }}>
+            {entry.detail}, {when(entry.at)}
+          </Txt>
+        </View>
       </View>
       <Txt weight="semi" size={16} color={incoming ? colors.positive : colors.ink}>
         {signed(entry)}

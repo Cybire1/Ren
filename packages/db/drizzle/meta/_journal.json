@@ -64,6 +64,13 @@
       "when": 1790502897700,
       "tag": "0008_daily_test_dollars",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790845156798,
+      "tag": "0009_private_notes",
+      "breakpoints": true
     }
   ]
 }

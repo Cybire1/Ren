@@ -44,7 +44,7 @@ const SIDE = 20
  * settles low once the money has landed, showing your balance behind it as it drops.
  */
 export function SendSheet({ payee }: { payee?: Payee }) {
-  const { profile, balance, send, contacts } = useWallet()
+  const { profile, balance, send, contacts, noteReaches } = useWallet()
   const { width } = useWindowDimensions()
   const inner = width - SIDE * 2
 
@@ -58,6 +58,8 @@ export function SendSheet({ payee }: { payee?: Payee }) {
   const [problem, setProblem] = useState<string | null>(null)
   const [entry, setEntry] = useState<Entry | null>(null)
   const [naming, setNaming] = useState(!!payee?.rename)
+  /** Whether they can read a private note: null while asking Kova for their note key. */
+  const [reaches, setReaches] = useState<boolean | null>(null)
 
   const moveTo = (next: Step) => {
     setBack(order.indexOf(next) < order.indexOf(step))
@@ -109,6 +111,18 @@ export function SendSheet({ payee }: { payee?: Payee }) {
       }
     }
   }
+
+  const address = to?.address
+  useEffect(() => {
+    if (!address) return
+    let live = true
+    setReaches(null)
+    void noteReaches(address).then((yes) => live && setReaches(yes))
+    return () => {
+      live = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [address])
 
   useEffect(() => {
     if (!__DEV__ || !payee?.autoSend || step !== 'review') return
@@ -175,7 +189,18 @@ export function SendSheet({ payee }: { payee?: Payee }) {
                 </View>
               ) : null}
             </View>
-            <TextInput value={note} onChangeText={setNote} placeholder="What's it for?" placeholderTextColor="#8C9799" maxLength={60} style={styles.note} />
+            <View style={styles.note}>
+              <Icon name="lock" size={15} color={colors.muted} />
+              <TextInput
+                value={note}
+                onChangeText={setNote}
+                placeholder="Private note"
+                placeholderTextColor="#8C9799"
+                maxLength={60}
+                accessibilityLabel="Private note, only you and them can read it"
+                style={styles.noteInput}
+              />
+            </View>
           </View>
           <Keypad onKey={(key) => setTyped((v) => applyKey(v, key))} size={64} />
           <View style={{ marginTop: 14 }}>
@@ -217,7 +242,14 @@ export function SendSheet({ payee }: { payee?: Payee }) {
                 hint={rateLabel()}
               />
             ) : null}
-            {note.trim() ? <Fact label="For" value={note.trim()} /> : null}
+            {note.trim() ? (
+              <Fact
+                label="Note"
+                value={note.trim()}
+                icon="lock"
+                hint={reaches === null ? 'Sealing…' : reaches ? `Sealed: only you and ${first} can read it` : `Sealed for you; ${first} can’t get private notes yet`}
+              />
+            ) : null}
           </View>
 
           {problem ? (
@@ -469,7 +501,7 @@ function Fact({ label, value, hint, icon }: { label: string; value: string; hint
       </Txt>
       <View style={{ flexShrink: 1, alignItems: 'flex-end' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          {icon ? <Icon name={icon} size={15} color={colors.coral} /> : null}
+          {icon ? <Icon name={icon} size={15} color={icon === 'bolt' ? colors.coral : colors.ink} /> : null}
           <Txt weight="semi" size={15} numberOfLines={1}>
             {value}
           </Txt>
@@ -540,18 +572,19 @@ const styles = StyleSheet.create({
   pill: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.sunken, justifyContent: 'center' },
   note: {
     marginTop: 14,
-    minWidth: 200,
-    height: 40,
-    borderRadius: 20,
-    paddingHorizontal: 16,
+    width: 240,
+    height: 42,
+    borderRadius: 21,
+    paddingLeft: 14,
+    paddingRight: 16,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,
-    fontFamily: fonts.medium,
-    fontSize: 15,
-    color: colors.ink,
-    textAlign: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
+  noteInput: { flex: 1, height: '100%', fontFamily: fonts.medium, fontSize: 15, color: colors.ink },
   sums: { alignItems: 'center', marginTop: 4 },
   facts: { marginTop: 18, marginBottom: 16, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 6 },
   fact: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingVertical: 9 },

@@ -82,6 +82,7 @@ export function EntryRow({ entry }: { entry: Entry }) {
       <span className="w-entry-text">
         <span className="w-entry-name">{entry.name}</span>
         <span className="w-entry-sub">
+          {entry.private || entry.locked ? <Icon name="lock" size={12} /> : null}
           {entry.detail}, {when(entry.at)}
         </span>
       </span>

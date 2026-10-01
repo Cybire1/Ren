@@ -4,6 +4,8 @@ import {
   decodeMemo,
   explorerTxUrl,
   formatAmount,
+  noteKeyMessage,
+  parseSealedNote,
   parseSignedAuthorization,
   tokenByAddress,
   vaultMessage,
@@ -28,6 +30,7 @@ import { indexedThrough } from '../workers/watcher.js'
  * - POST /transfers relays a transfer between people that the sender signed; Kova pays the gas.
  * - GET /wallets/:address/transfers lists what moved in or out, from Kova's index of the chain.
  * - POST /faucet sends test dollars, five a day for each wallet, on testnet only.
+ * - GET and PUT /wallets/:address/note-key publish the key a wallet's private notes are sealed to.
  * - GET and PUT /vaults/:id keep a wallet's encrypted backup (name, currency, contacts). Kova
  *   stores ciphertext it can't read; only the vault's own key, from the same passkey, replaces it.
  */
@@ -51,7 +54,16 @@ async function shopsPaid(rows: TransferRow[]): Promise<Shops> {
   return new Map(intents.map((i) => [i.id, { name: i.name, reference: i.reference }]))
 }
 
-function serializeTransfer(row: TransferRow, shops: Shops = new Map()) {
+type Notes = Map<string, { sealed: (typeof schema.paymentNotes.$inferSelect)['sealed']; auth_nonce: string }>
+
+async function notesFor(rows: TransferRow[]): Promise<Notes> {
+  const hashes = [...new Set(rows.map((r) => r.txHash))]
+  if (hashes.length === 0) return new Map()
+  const found = await db.select().from(schema.paymentNotes).where(inArray(schema.paymentNotes.txHash, hashes))
+  return new Map(found.map((n) => [n.txHash, { sealed: n.sealed, auth_nonce: n.authNonce }]))
+}
+
+function serializeTransfer(row: TransferRow, shops: Shops = new Map(), notes: Notes = new Map()) {
   const memo = row.nonce ? decodeMemo(row.nonce as Hex) : null
   const token = tokenByAddress(config.KOVA_NETWORK, row.tokenAddress as Address)
   return {
@@ -77,10 +89,23 @@ function serializeTransfer(row: TransferRow, shops: Shops = new Map()) {
       !row.nonce &&
       (row.fromAddress === AUSD_TESTNET_FAUCET.toLowerCase() || row.fromAddress === feePayerAddress?.toLowerCase()),
     explorer_url: explorerTxUrl(network, row.txHash as Hex),
+    /** The sender's private note, sealed for the two of them: Kova can't read it. */
+    note: notes.get(row.txHash) ?? null,
   }
 }
 
 const faucetBody = z.object({ address: z.string().refine((v) => isAddress(v), 'Not a Monad address') })
+
+const noteKeyBody = z.object({
+  public_key: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+  signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
+})
+
+function walletAddress(c: { req: { param: (name: string) => string } }): Address {
+  const address = c.req.param('address')
+  if (!isAddress(address)) throw new KovaError('invalid_request', 'Not a Monad address.')
+  return getAddress(address)
+}
 
 const vaultBody = z.object({
   ciphertext: z.string().regex(/^[A-Za-z0-9_-]+$/).max(96_000),
@@ -97,8 +122,11 @@ function vaultId(c: { req: { param: (name: string) => string } }): Address {
 
 export const walletRoutes = new Hono()
   .post('/transfers', async (c) => {
-    const signed = parseSignedAuthorization(await c.req.json().catch(() => null))
+    const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
+    const signed = parseSignedAuthorization(body)
     if (!signed) throw new KovaError('invalid_request', 'Expected a signed transfer authorization.')
+    const note = body?.note === undefined || body.note === null ? null : parseSealedNote(body.note)
+    if (body?.note && !note) throw new KovaError('invalid_request', 'That note isn’t sealed the way Kova expects.')
     const { authorization, signature } = signed
     const token = tokenByAddress(config.KOVA_NETWORK, signed.token)
     if (!token) throw new KovaError('invalid_request', 'Kova only sends the dollars it settles in.')
@@ -113,6 +141,20 @@ export const walletRoutes = new Hono()
     limit(`send-ip:${ip(c)}`, 60, 600_000, 'That’s a lot of sends from here. Try again shortly.')
 
     const { receipt, ms } = await relayAuthorization(token, authorization, signature)
+    if (note) {
+      // The money has moved whatever happens here; a note that fails to save is only a note.
+      await db
+        .insert(schema.paymentNotes)
+        .values({
+          txHash: receipt.transactionHash,
+          fromAddress: authorization.from.toLowerCase(),
+          toAddress: authorization.to.toLowerCase(),
+          authNonce: authorization.nonce,
+          sealed: note,
+        })
+        .onConflictDoNothing()
+        .catch((error) => console.error('[notes] not saved', error instanceof Error ? error.message : error))
+    }
     return c.json({
       object: 'transfer',
       tx_hash: receipt.transactionHash,
@@ -150,8 +192,28 @@ export const walletRoutes = new Hono()
     // wallet drop the few it has already seen.
     const last = rows.at(-1)
     const cursor = rows.length === page && last ? last.blockNumber - 1n : (through ?? BigInt(afterText))
-    const shops = await shopsPaid(rows)
-    return c.json({ object: 'list', data: rows.map((row) => serializeTransfer(row, shops)), indexed_through: cursor.toString(), has_more: rows.length === page })
+    const [shops, notes] = await Promise.all([shopsPaid(rows), notesFor(rows)])
+    return c.json({ object: 'list', data: rows.map((row) => serializeTransfer(row, shops, notes)), indexed_through: cursor.toString(), has_more: rows.length === page })
+  })
+  .get('/wallets/:address/note-key', async (c) => {
+    const address = walletAddress(c)
+    const key = await db.query.noteKeys.findFirst({ where: eq(schema.noteKeys.address, address.toLowerCase()) })
+    if (!key) throw notFound('note key', address)
+    return c.json({ object: 'note_key', address, public_key: key.publicKey, signature: key.signature })
+  })
+  .put('/wallets/:address/note-key', async (c) => {
+    const address = walletAddress(c)
+    const parsed = noteKeyBody.safeParse(await c.req.json().catch(() => ({})))
+    if (!parsed.success) throw new KovaError('invalid_request', 'Expected { public_key, signature }.')
+    const { public_key, signature } = parsed.data
+    const signer = await recoverMessageAddress({ message: noteKeyMessage(address, public_key), signature: signature as Hex }).catch(() => null)
+    if (!signer || !isAddressEqual(signer, address)) throw new KovaError('forbidden', 'Only the wallet itself can publish its note key.')
+    limit(`note-key:${address.toLowerCase()}`, 20, 3_600_000, 'That’s a lot of new keys in an hour. Try again later.')
+    await db
+      .insert(schema.noteKeys)
+      .values({ address: address.toLowerCase(), publicKey: public_key, signature })
+      .onConflictDoUpdate({ target: schema.noteKeys.address, set: { publicKey: public_key, signature, updatedAt: new Date() } })
+    return c.json({ object: 'note_key', address, public_key })
   })
   .get('/vaults/:id', async (c) => {
     const id = vaultId(c)

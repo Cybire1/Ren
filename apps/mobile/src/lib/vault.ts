@@ -20,6 +20,12 @@ export async function keepVaultSecret(secret: Uint8Array) {
   })
 }
 
+/** The vault secret, if the passkey has handed one over on this phone. No Face ID: it can't move money. */
+export async function readVaultSecret(): Promise<Uint8Array | null> {
+  const stored = await SecureStore.getItemAsync(SECRET).catch(() => null)
+  return stored ? base64urlnopad.decode(stored) : null
+}
+
 export async function forgetVaultSecret() {
   await SecureStore.deleteItemAsync(SECRET)
 }

@@ -6,6 +6,7 @@ import Svg, { Path } from 'react-native-svg'
 import { explorerTx } from '@/lib/chain'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
+import { Icon, type IconName } from '@/ui/Icon'
 import { isUnnamed, useWallet } from '@/lib/wallet'
 import { Avatar, ShopBadge } from '@/ui/art'
 import { signed, when } from '@/ui/EntryRow'
@@ -65,7 +66,16 @@ export default function Receipt() {
           </View>
           <View style={styles.rule} />
           <Row label="When" value={`${new Date(entry.at).toLocaleDateString([], { day: 'numeric', month: 'long' })}, ${when(entry.at)}`} />
-          {['Sent', 'Arrived', 'Scan to pay', 'AUSD test faucet'].includes(entry.detail) ? null : <Row label="For" value={entry.detail} />}
+          {entry.private ? (
+            <Row label="Private note" icon="lock" value={entry.detail} />
+          ) : ['Sent', 'Arrived', 'Scan to pay', 'AUSD test faucet'].includes(entry.detail) ? null : (
+            <Row label="For" value={entry.detail} />
+          )}
+          {entry.private ? (
+            <Txt size={12} color={colors.muted} style={{ textAlign: 'right', marginTop: -2 }}>
+              {entry.private === 'both' ? 'Sealed: only the two of you can read it' : 'Sealed: only you can read it'}
+            </Txt>
+          ) : null}
           {entry.ms ? <Row label="Took" value={`${(entry.ms / 1000).toFixed(1)} seconds`} /> : null}
           <Row label="Fee" value={entry.kind === 'paid' || entry.kind === 'sent' ? '$0.00, covered by Kova' : '$0.00'} />
           <Row label="Amount" value={formatUsd(BigInt(entry.amount))} />
@@ -95,12 +105,15 @@ export default function Receipt() {
   )
 }
 
-function Row({ label, value }: { label: string; value: string }) {
+function Row({ label, value, icon }: { label: string; value: string; icon?: IconName }) {
   return (
     <View style={styles.row}>
-      <Txt size={15} color={colors.muted}>
-        {label}
-      </Txt>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+        {icon ? <Icon name={icon} size={14} color={colors.muted} /> : null}
+        <Txt size={15} color={colors.muted}>
+          {label}
+        </Txt>
+      </View>
       <Txt weight="semi" size={15} style={{ flexShrink: 1, textAlign: 'right' }} numberOfLines={2}>
         {value}
       </Txt>

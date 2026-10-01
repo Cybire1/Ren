@@ -44,6 +44,7 @@ const dayLabel = (at: number) => {
  */
 export function Activity() {
   const { activity, profile, rates } = useWallet()
+  const locked = activity.some((e) => e.locked)
   const [filter, setFilter] = useState<Filter>('all')
 
   const month = useMemo(() => {
@@ -151,6 +152,8 @@ export function Activity() {
         </div>
         <span className="w-week-caption">Last 7 days</span>
       </section>
+
+      {locked ? <ReadNotes /> : null}
 
       <div className="w-filters" role="tablist" aria-label="Show">
         {(
@@ -300,10 +303,28 @@ export function Receipt({ id }: { id: string }) {
               })}
             </dd>
           </div>
-          <div>
-            <dt>For</dt>
-            <dd>{entry.detail}</dd>
-          </div>
+          {entry.private || entry.locked ? (
+            <div className="w-receipt-note">
+              <dt>
+                <Icon name="lock" size={14} /> Private note
+              </dt>
+              <dd>
+                {entry.locked ? <ReadNotes inline /> : entry.detail}
+                <small>
+                  {entry.locked
+                    ? 'Sealed for the two of you. Your passkey opens it.'
+                    : entry.private === 'both'
+                      ? 'Sealed: only the two of you can read it'
+                      : 'Sealed: only you can read it'}
+                </small>
+              </dd>
+            </div>
+          ) : (
+            <div>
+              <dt>For</dt>
+              <dd>{entry.detail}</dd>
+            </div>
+          )}
           {entry.ms ? (
             <div>
               <dt>Took</dt>
@@ -341,6 +362,52 @@ export function Receipt({ id }: { id: string }) {
           </span>
         </Link>
       ) : null}
+    </div>
+  )
+}
+
+/** Private notes stay sealed after a reload (their key lives in memory); the passkey opens them. */
+function ReadNotes({ inline }: { inline?: boolean }) {
+  const { readNotes } = useWallet()
+  const [busy, setBusy] = useState(false)
+  const [problem, setProblem] = useState<string | null>(null)
+  const read = async () => {
+    setBusy(true)
+    setProblem(null)
+    try {
+      await readNotes()
+    } catch (error) {
+      setProblem(error instanceof Error ? error.message : 'Your passkey didn’t open them.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (inline)
+    return (
+      <button type="button" className="textlink" onClick={() => void read()} disabled={busy}>
+        {busy ? 'Opening…' : 'Read it'}
+      </button>
+    )
+  return (
+    <div className="w-notes-locked">
+      <span className="w-notes-locked-icon">
+        <Icon name="lock" size={18} />
+      </span>
+      <span className="w-notes-locked-text">
+        <strong>Private notes are sealed</strong>
+        <small>
+          {problem ??
+            'Only you and the people you pay can read them. Your passkey opens them here.'}
+        </small>
+      </span>
+      <button
+        type="button"
+        className="w-notes-locked-btn"
+        onClick={() => void read()}
+        disabled={busy}
+      >
+        {busy ? 'Opening…' : 'Read'}
+      </button>
     </div>
   )
 }

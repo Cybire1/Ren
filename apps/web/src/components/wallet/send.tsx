@@ -53,7 +53,7 @@ type Leg = 'waiting' | 'flying' | 'landed'
 export function SendSheet({ to }: { to?: string }) {
   const router = useRouter()
   const params = useSearchParams()
-  const { contacts, balance, send, rates, liveRates, profile } = useWallet()
+  const { contacts, balance, send, rates, liveRates, profile, noteReaches } = useWallet()
 
   const asked = params.get('amount')
   const start: Payee | null =
@@ -78,6 +78,18 @@ export function SendSheet({ to }: { to?: string }) {
   const [problem, setProblem] = useState<string | null>(null)
   const [sent, setSent] = useState<{ ms: number; hash: string } | null>(null)
   const [closing, setClosing] = useState(false)
+  /** Whether they can read a private note: null while asking Kova for their note key. */
+  const [reaches, setReaches] = useState<boolean | null>(null)
+  const address = payee?.address
+  useEffect(() => {
+    if (!address) return
+    let live = true
+    setReaches(null)
+    void noteReaches(address).then((yes) => live && setReaches(yes))
+    return () => {
+      live = false
+    }
+  }, [address, noteReaches])
 
   const moveTo = (next: Step) => {
     setBack(order.indexOf(next) < order.indexOf(step))
@@ -220,14 +232,16 @@ export function SendSheet({ to }: { to?: string }) {
                     </span>
                   ) : null}
                 </div>
-                <input
-                  className="w-note"
-                  value={note}
-                  onChange={(e) => setNote(e.target.value)}
-                  placeholder="What’s it for?"
-                  maxLength={60}
-                  aria-label="What’s it for?"
-                />
+                <label className="w-note w-note-private">
+                  <Icon name="lock" size={15} />
+                  <input
+                    value={note}
+                    onChange={(e) => setNote(e.target.value)}
+                    placeholder="Private note"
+                    maxLength={60}
+                    aria-label="Private note, only you and them can read it"
+                  />
+                </label>
                 <Keypad onKey={onKey} />
                 <button
                   type="button"
@@ -285,7 +299,20 @@ export function SendSheet({ to }: { to?: string }) {
                       hint={rateLabel(liveRates)}
                     />
                   ) : null}
-                  {note.trim() ? <Fact label="For" value={note.trim()} /> : null}
+                  {note.trim() ? (
+                    <Fact
+                      label="Note"
+                      value={note.trim()}
+                      icon="lock"
+                      hint={
+                        reaches === null
+                          ? 'Sealing…'
+                          : reaches
+                            ? `Sealed: only you and ${first(name)} can read it`
+                            : `Sealed for you; ${first(name)} can’t get private notes yet`
+                      }
+                    />
+                  ) : null}
                 </dl>
                 {problem ? (
                   <p className="w-sheet-problem" role="alert">
@@ -544,7 +571,11 @@ function Fact({
       <dt>{label}</dt>
       <dd>
         <span>
-          {icon ? <Icon name={icon} size={15} /> : null}
+          {icon ? (
+            <span className={icon === 'lock' ? 'w-fact-lock' : undefined}>
+              <Icon name={icon} size={15} />
+            </span>
+          ) : null}
           {value}
         </span>
         {hint ? <small>{hint}</small> : null}

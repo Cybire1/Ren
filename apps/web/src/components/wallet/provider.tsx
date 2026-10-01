@@ -29,6 +29,7 @@ import {
   type Rates,
   ratesFrom,
 } from '@/lib/wallet/money'
+import { fetchNoteKey, noteKeys, openNote, publishNoteKey } from '@/lib/wallet/notes'
 import { endSession, sessionAccount, spend, startSession } from '@/lib/wallet/session'
 
 /**
@@ -65,6 +66,10 @@ export interface Entry {
   /** How long a payment made here took, when this browser made it. */
   ms?: number
   at: number
+  /** `detail` is a private note: readable by both of you, or (they had no note key) by you alone. */
+  private?: 'both' | 'you'
+  /** A private note this browser can't open until the passkey is used (the key lives in memory). */
+  locked?: boolean
 }
 
 export interface ShopToday {
@@ -88,6 +93,7 @@ interface Note {
   amount: string
   at: number
   explorer: string
+  private?: 'both' | 'you'
 }
 
 const PROFILE = 'kova.web.profile.v1'
@@ -136,6 +142,10 @@ interface WalletValue {
   /** The wallet an existing passkey holds: the app's, or one made here before. */
   open: () => Promise<{ named: boolean }>
   send: (to: Contact, amount: bigint, note?: string) => Promise<Moved>
+  /** Whether a private note to them can be read by them (they've published a note key). */
+  noteReaches: (address: string) => Promise<boolean>
+  /** Opens private notes after a reload: the note key lives in memory, so it takes the passkey. */
+  readNotes: () => Promise<void>
   payCheckout: (charge: ChargeToPay) => Promise<Moved>
   addTestDollars: () => Promise<bigint>
   /** Signs a message with this wallet, such as Kova's shop sign-in (EIP-4361). Moves no money. */
@@ -180,6 +190,14 @@ export function WalletProvider({
   const cursor = useRef('0')
   const vaultSecret = useRef<Uint8Array | null>(null)
   const vaultDirty = useRef(false)
+  const [noteSecret, setNoteSecret] = useState<Uint8Array | null>(null)
+
+  /** The passkey handed over the vault secret: keep it (in memory), open notes, publish the note key. */
+  const takeVault = useCallback((secret: Uint8Array, account: LocalAccount) => {
+    vaultSecret.current = secret
+    setNoteSecret(noteKeys(secret).secretKey)
+    void publishNoteKey(account, secret).catch(() => {})
+  }, [])
 
   // Who you are on this browser, if you've opened your wallet here before.
   useEffect(() => {
@@ -293,6 +311,7 @@ export function WalletProvider({
       const { session, account } = await openSigningSession(made.prfOutput)
       startSession(session, account)
       vaultSecret.current = made.vaultSecret
+      if (made.vaultSecret) takeVault(made.vaultSecret, account)
       const next: Profile = {
         address: account.address,
         name: clean,
@@ -306,7 +325,7 @@ export function WalletProvider({
       setStatus('ready')
       backUp(vaultContents(next, []))
     },
-    [backUp, keepProfile, vaultContents],
+    [backUp, keepProfile, takeVault, vaultContents],
   )
 
   const open = useCallback(async () => {
@@ -316,6 +335,7 @@ export function WalletProvider({
     const { session, account } = await openSigningSession(asserted.prfOutput)
     startSession(session, account)
     vaultSecret.current = asserted.vaultSecret
+    if (asserted.vaultSecret) takeVault(asserted.vaultSecret, account)
     // Who you are comes back from the vault this passkey sealed, in the app or here.
     const backup = asserted.vaultSecret
       ? await openVault(asserted.vaultSecret).catch(() => null)
@@ -336,7 +356,7 @@ export function WalletProvider({
     setKnownShop(read<string>(shopKey(account.address)))
     setStatus('ready')
     return { named: Boolean(next.name) }
-  }, [keepProfile])
+  }, [keepProfile, takeVault])
 
   /**
    * The account to approve `amount` with: the open session if it covers it, else the passkey
@@ -359,13 +379,34 @@ export function WalletProvider({
       }
       startSession(session, account)
       if (asserted.vaultSecret) {
-        vaultSecret.current = asserted.vaultSecret
+        takeVault(asserted.vaultSecret, account)
         if (vaultDirty.current) backUp(vaultContents(profile, saved))
       }
       return account
     },
-    [backUp, profile, saved, vaultContents],
+    [backUp, profile, saved, takeVault, vaultContents],
   )
+
+  const noteReaches = useCallback(
+    async (address: string) => (await fetchNoteKey(getAddress(address))) !== null,
+    [],
+  )
+
+  const readNotes = useCallback(async () => {
+    if (!profile) throw new Error('Open your wallet first.')
+    const asserted = await openKovaPasskey(profile.passkey).catch((error) => {
+      throw new Error(passkeyProblem(error))
+    })
+    const { session, account } = await openSigningSession(asserted.prfOutput)
+    if (account.address !== profile.address) {
+      session.end()
+      throw new Error('That passkey opens a different Kova wallet. Choose the one for this wallet.')
+    }
+    startSession(session, account)
+    if (!asserted.vaultSecret)
+      throw new Error('This passkey can’t open private notes in this browser.')
+    takeVault(asserted.vaultSecret, account)
+  }, [profile, takeVault])
 
   const remember = useCallback(
     (hash: string, note: Note) => {
@@ -399,12 +440,21 @@ export function WalletProvider({
   const send = useCallback(
     async (to: Contact, amount: bigint, note?: string) => {
       if (!profile) throw new Error('Open your wallet first.')
-      const account = await unlock(amount)
-      const moved = await sendMoney(network, account, getAddress(to.address), amount)
+      const text = note?.trim()
+      // Sealed for them and for you; if they have no note key yet, for you alone.
+      const [account, theirs] = await Promise.all([
+        unlock(amount),
+        text ? fetchNoteKey(getAddress(to.address)) : null,
+      ])
+      const secret = vaultSecret.current
+      const sealing =
+        text && secret ? { text, mine: noteKeys(secret).publicKey, theirs } : undefined
+      const moved = await sendMoney(network, account, getAddress(to.address), amount, sealing)
       spend(amount)
       remember(moved.hash, {
+        ...(sealing ? { private: sealing.theirs ? ('both' as const) : ('you' as const) } : {}),
         name: to.name,
-        detail: note?.trim() || 'Sent',
+        detail: text || 'Sent',
         ms: moved.ms,
         kind: 'sent',
         to: to.address,
@@ -519,6 +569,38 @@ export function WalletProvider({
     [saved],
   )
 
+  // Notes opened once per transfer, not on every render.
+  const opened = useRef(new Map<string, string | null>())
+  // biome-ignore lint/correctness/useExhaustiveDependencies: a new key means notes that failed may open now
+  useEffect(() => {
+    opened.current = new Map()
+  }, [noteSecret])
+  const openFor = useCallback(
+    (t: IndexedTransfer): string | null => {
+      if (!t.note || !noteSecret) return null
+      const hit = opened.current.get(t.tx_hash)
+      if (hit !== undefined) return hit
+      let text: string | null = null
+      try {
+        text = openNote(
+          t.note.sealed,
+          {
+            from: getAddress(t.from),
+            to: getAddress(t.to),
+            value: BigInt(t.amount_base),
+            nonce: t.note.auth_nonce,
+          },
+          noteSecret,
+        )
+      } catch {
+        text = null
+      }
+      opened.current.set(t.tx_hash, text)
+      return text
+    },
+    [noteSecret],
+  )
+
   const activity = useMemo<Entry[]>(() => {
     if (!profile) return []
     const me = profile.address.toLowerCase()
@@ -531,6 +613,15 @@ export function WalletProvider({
       indexed.add(t.tx_hash.toLowerCase())
       const note = notes[t.tx_hash.toLowerCase()]
       const at = note?.at ?? Date.parse(t.created_at)
+      const sealed = note ? null : openFor(t)
+      const locked = !note && !!t.note && !noteSecret
+      const secret: Partial<Entry> = note?.private
+        ? { private: note.private }
+        : sealed !== null
+          ? { private: t.note?.sealed.to ? 'both' : 'you' }
+          : locked
+            ? { locked: true }
+            : {}
       if (out) {
         const paid = t.kind === 'payment'
         entries.push({
@@ -538,7 +629,11 @@ export function WalletProvider({
           kind: paid ? 'paid' : 'sent',
           amount: t.amount_base,
           name: note?.name ?? t.shop?.name ?? nameFor(t.to) ?? short(t.to),
-          detail: note?.detail ?? t.shop?.reference ?? (paid ? 'Scan to pay' : 'Sent'),
+          detail:
+            note?.detail ??
+            sealed ??
+            (locked ? 'Private note' : (t.shop?.reference ?? (paid ? 'Scan to pay' : 'Sent'))),
+          ...secret,
           address: t.to,
           txHash: t.tx_hash,
           explorer: t.explorer_url,
@@ -555,7 +650,16 @@ export function WalletProvider({
             : t.kind === 'refund'
               ? 'Refund'
               : (nameFor(t.from) ?? short(t.from)),
-          detail: t.faucet ? 'AUSD test faucet' : t.kind === 'refund' ? 'Money back' : 'Arrived',
+          detail:
+            sealed ??
+            (locked
+              ? 'Private note'
+              : t.faucet
+                ? 'AUSD test faucet'
+                : t.kind === 'refund'
+                  ? 'Money back'
+                  : 'Arrived'),
+          ...(sealed !== null ? { private: 'both' as const } : locked ? { locked: true } : {}),
           address: t.from,
           txHash: t.tx_hash,
           explorer: t.explorer_url,
@@ -577,10 +681,11 @@ export function WalletProvider({
         explorer: note.explorer,
         ms: note.ms,
         at: note.at,
+        ...(note.private ? { private: note.private } : {}),
       })
     }
     return entries.sort((a, b) => b.at - a.at)
-  }, [nameFor, notes, profile, transfers])
+  }, [nameFor, noteSecret, notes, openFor, profile, transfers])
 
   /** Everyone you've paid or been paid by, plus the people you've named, most recent first. */
   const contacts = useMemo<Contact[]>(() => {
@@ -624,6 +729,8 @@ export function WalletProvider({
       create,
       open,
       send,
+      noteReaches,
+      readNotes,
       payCheckout,
       addTestDollars,
       signMessage,
@@ -651,6 +758,8 @@ export function WalletProvider({
       create,
       open,
       send,
+      noteReaches,
+      readNotes,
       payCheckout,
       addTestDollars,
       signMessage,

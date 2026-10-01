@@ -13,6 +13,7 @@ import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
 import { endSession, sessionAccount, spend, startSession } from './session'
 import { load, remove, save } from './storage'
 import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vault'
+import { ensureNoteKey, myNoteKeys, readNote, theirNoteKey } from './notes'
 
 /**
  * The wallet is a passkey (Mera). Creating it takes one Face ID: the passkey, which iCloud
@@ -59,6 +60,8 @@ export interface Entry {
   txHash?: string
   ms?: number
   at: number
+  /** `detail` is a private note: readable by both of you, or (when they had no note key) by you alone. */
+  private?: 'both' | 'you'
 }
 
 export interface Contact {
@@ -75,6 +78,8 @@ export interface Arrival {
   name: string
   address: Address
   hash: string
+  /** Their private note, opened on this phone. */
+  note?: string
 }
 
 type Status = 'loading' | 'none' | 'ready'
@@ -103,6 +108,8 @@ interface Wallet {
   addMoney: () => Promise<void>
   payCheckout: (checkout: Checkout) => Promise<Entry>
   send: (to: Contact, amount: bigint, note?: string) => Promise<Entry>
+  /** Whether a private note to them can be read by them (they've published a note key). */
+  noteReaches: (address: Address) => Promise<boolean>
   rememberContact: (contact: Contact) => Promise<void>
   /** Your own name for someone. It replaces their address everywhere, past payments included. */
   renameContact: (address: Address, name: string) => Promise<void>
@@ -150,6 +157,10 @@ async function begin(prf: Uint8Array, expected?: Address): Promise<LocalAccount>
     throw new Error('That passkey belongs to a different Kova wallet.')
   }
   startSession(session, account)
+  // So people can send this wallet private notes. Quiet: a note key is a nicety, not a payment.
+  void ensureNoteKey(account).catch((error) => {
+    if (__DEV__) console.log('[notes] key not published', error instanceof Error ? error.message : error)
+  })
   return account
 }
 
@@ -266,6 +277,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (stopped) return
         await save(CURSOR, head.toString())
         for (const t of transfers) {
+          const note = t.note ? await readNote(t.note, { from: t.from, to: profile.address, value: t.amount }) : null
           const refund = t.kind === 'refund'
           const name = t.faucet ? 'Test dollars' : refund ? 'Refund' : (nameFor(t.from) ?? `${t.from.slice(0, 6)}…${t.from.slice(-4)}`)
           await record({
@@ -273,12 +285,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             kind: t.faucet ? 'added' : 'received',
             amount: t.amount.toString(),
             name,
-            detail: t.faucet ? 'AUSD test faucet' : refund ? 'Money back from a booking' : 'Arrived',
+            detail: note ?? (t.faucet ? 'AUSD test faucet' : refund ? 'Money back from a booking' : 'Arrived'),
             address: t.from,
             txHash: t.hash,
             at: Date.now(),
+            ...(note ? { private: 'both' as const } : {}),
           })
-          if (!t.faucet) setArrival({ amount: t.amount, name, address: t.from, hash: t.hash })
+          if (!t.faucet) setArrival({ amount: t.amount, name, address: t.from, hash: t.hash, ...(note ? { note } : {}) })
         }
         if (transfers.length) void refresh()
       } catch (error) {
@@ -486,19 +499,23 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const send = useCallback(
     async (to: Contact, amount: bigint, note?: string) => {
-      const account = await unlock(amount)
-      const { hash, ms } = await sendMoney(account, to.address, amount)
+      const text = note?.trim()
+      // Sealed for them and for you; if they have no note key yet, for you alone.
+      const [account, mine, theirs] = await Promise.all([unlock(amount), text ? myNoteKeys() : null, text ? theirNoteKey(to.address) : null])
+      const sealing = text && mine ? { text, mine: mine.publicKey, theirs } : undefined
+      const { hash, ms } = await sendMoney(account, to.address, amount, sealing)
       spend(amount)
       const entry: Entry = {
         id: newId(),
         kind: 'sent',
         amount: amount.toString(),
         name: to.name,
-        detail: note || 'Sent',
+        detail: text || 'Sent',
         address: to.address,
         txHash: hash,
         ms,
         at: Date.now(),
+        ...(sealing ? { private: sealing.theirs ? ('both' as const) : ('you' as const) } : {}),
       }
       await record(entry)
       await rememberContact(to)
@@ -528,6 +545,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (!__DEV__) throw new Error('Development only')
     const entropy = crypto.getRandomValues(new Uint8Array(32))
     await SecureStore.setItemAsync(DEV_PRF, base64urlnopad.encode(entropy))
+    // A stand-in for the passkey's second secret, so private notes work on a simulator too.
+    await keepVaultSecret(crypto.getRandomValues(new Uint8Array(32)))
     const account = await begin(entropy)
     const next: Profile = { name: name.trim(), address: account.address, currency, protected: false, createdAt: Date.now() }
     await save(PROFILE, next)
@@ -553,6 +572,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     addMoney,
     payCheckout,
     send,
+    noteReaches: async (address: Address) => (await theirNoteKey(address)) !== null,
     rememberContact,
     renameContact,
     signMessage,
