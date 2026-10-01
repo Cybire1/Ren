@@ -20,6 +20,9 @@ import { Stage as KoviStage } from '../Stage'
 import { ArcRoute, type Leg } from './ArcRoute'
 import { SlideToSend } from './SlideToSend'
 
+/** Development only: dev-link sends already made this run. */
+const autoSent = new Set<string>()
+
 type Step = 'who' | 'amount' | 'review' | 'sent'
 const order: Step[] = ['who', 'amount', 'review', 'sent']
 
@@ -126,7 +129,14 @@ export function SendSheet({ payee }: { payee?: Payee }) {
 
   useEffect(() => {
     if (!__DEV__ || !payee?.autoSend || step !== 'review') return
-    const timer = setTimeout(() => void go(), 2500)
+    // Once per app run, however many times the dev link mounts this sheet.
+    const once = `${payee.address}:${payee.amount ?? ''}:${payee.note ?? ''}`
+    if (autoSent.has(once)) return
+    const timer = setTimeout(() => {
+      if (autoSent.has(once)) return
+      autoSent.add(once)
+      void go()
+    }, 2500)
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

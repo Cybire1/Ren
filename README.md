@@ -24,9 +24,19 @@ see dollars, their own currency beside them, and Face ID. Nothing else.
 - **Wallet.** Create it with Face ID. The passkey is the wallet: its key is derived from the
   passkey (WebAuthn PRF), so there's no seed phrase, and the same passkey opens the same wallet in
   the iOS app and at mykova.app.
-- **Pay.** Scan a code or open a pay link, approve with Face ID, and it's paid. Real receipts show
-  1.3 to 1.6 seconds from tap to paid, with a fee of $0.00.
-- **Send.** To anyone, anywhere. The receiver sees their own currency: $20 arrives as ≈ €18.40.
+- **Pay.** Scan a code or open a pay link, approve with Face ID, and it's paid. Measured from
+  Lagos: about a second from tap to paid (0.91 to 1.05 s), with a fee of $0.00.
+- **Send, in one sheet.** Who, how much (with what they'll see in their own currency), a look at
+  the route, slide to send, and the same sheet becomes the receipt with the measured time, while
+  the balance behind it counts down. The same on the web. $20 arrives as ≈ €18.40.
+- **Private notes.** "For dinner" travels with the payment, sealed on the sender's device for the
+  receiver and the sender (X25519, XChaCha20-Poly1305, keys derived from each passkey and signed
+  by each wallet). Kova stores ciphertext it can't read.
+- **From guest to Kova.** Someone who paid a shop with email or Google can keep their change: one
+  passkey makes a Kova wallet, and the email wallet moves what's left into it, gas-free.
+- **From another chain.** Each wallet gets permanent deposit addresses (EVM chains, Solana, Tron,
+  Bitcoin) through Aurora Intents (NEAR Intents); USDC, USDT, ETH, SOL or BTC sent there arrives as
+  dollars on Monad. Built; it opens with Kova's move to mainnet, where Intents has its liquidity.
 - **Your shop, inside the wallet.** Open a shop from your wallet; its sales land in the same wallet.
   A stall page to share, a catalogue, a till (the phone becomes a terminal: keypad, items or
   barcode scanner, then a QR code for the customer), orders, and the day's takings, live.
@@ -41,6 +51,9 @@ see dollars, their own currency beside them, and Face ID. Nothing else.
 
 - **Payments are signatures.** The payer signs an EIP-3009 `transferWithAuthorization` for AUSD;
   Kova's relayer submits it on Monad and pays the gas. Payers never hold MON.
+- **One round-trip to paid.** The relayer estimates gas alongside fees and a locally counted
+  nonce, signs locally and sends with `eth_sendRawTransactionSync`, so the receipt comes back with
+  the send: about 0.4 to 0.5 s on the server, about a second from a phone in Lagos.
 - **Why Monad.** Blocks and finality fast enough for a checkout line (about 1.5 s from tap to paid
   on real receipts), and gas cheap enough for Kova to pay it for every user, which is what makes a
   consumer product with no gas token possible. Monad charges for the gas limit a transaction asks
@@ -61,6 +74,9 @@ see dollars, their own currency beside them, and Face ID. Nothing else.
 | A coffee, $4.50, paid in 1.6 s with a $0.00 fee | [`0x6a52a3cf…eda34e005`](https://testnet.monadscan.com/tx/0x6a52a3cfc7ecdf6400d7d09888e6ef2cf06bd38c2121619a5007d62eda34e005) |
 | $20 to a friend, arriving as ≈ €18.40 | [`0xa92a1733…6b61e0437`](https://testnet.monadscan.com/tx/0xa92a17331a4804556b08779949819220b56aef075c7ada8b5e4c3136b61e0437) |
 | A bakery sale, $6.50, at a Kova till | [`0x152be347…f1e151265`](https://testnet.monadscan.com/tx/0x152be347b25c3b89a1e70607d7e8d3cb3cd1721adcc3931ac31e784e1f151265) |
+| A send from the one-sheet flow at mykova.app, $2.50 | [`0x3306403e…e6a28ad792`](https://testnet.monadscan.com/tx/0x3306403ec1917c92f39300ab65e85f820101751fc581cc716f04e1e6a28ad792) |
+| $1.00 with a private note ("Puff-puff for the road"), web to phone | [`0xc3645812…e4fd0e05810`](https://testnet.monadscan.com/tx/0xc3645812e47ed594be7ae0d5a8f9f2913688ce3940890ed638045e4fd0e05810) |
+| $0.50 with a private note back ("Thanks Ada!"), phone to web | [`0x3d43cd4d…b33f5c11`](https://testnet.monadscan.com/tx/0x3d43cd4d445795446a3ab3468cdef0d63711478b95f3afc06146283ab33f5c11) |
 
 ## Architecture
 
