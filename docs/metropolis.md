@@ -65,7 +65,7 @@ Status as of 28 Sep 2026.
 | 9 | **Demo video, 3 minutes max**, public (YouTube, Loom, Vimeo), the product in actual operation (not mockups or slides), showing Monad interactions | The 40 s teaser is animated from screenshots: fine for X, not the demo | Record a real-device demo, under 3:00, with the explorer showing the transactions |
 | 10 | Monad integration explained, **contract addresses or tx hashes**, deployed to Monad testnet or mainnet, why Monad | Live on testnet; addresses and hashes known (below) | Write it up in the README |
 | 11 | Documentation: project description, architecture overview, tech stack, setup/deployment instructions | Partial | Write it |
-| 12 | Code a third party can run by following the README | Untested | Fresh-clone test before submitting |
+| 12 | Code a third party can run by following the README | Fresh clone from GitHub tested 1 Oct: install, API (setup, start, 31 tests), web (pages load), iOS (install, typecheck); fixed the missing package build | Re-run before submitting |
 | 13 | Problem statement and intended user | Not written for Monad | Write it |
 | 14 | Submit through the hackathon website; pick the track and bounties | Dashboard: 3 of 5 steps done; "Select tracks & bounties" is next | Select Track 02 and the bounties below; submit when submissions open (2 Oct) |
 
