@@ -8,7 +8,7 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "postinstall": "pnpm --filter './packages/*' build",
+    "postinstall": "node -e \"require('fs').existsSync('packages/monad/src') || process.exit(0); require('child_process').execSync(\\\"pnpm --filter './packages/*' build\\\", { stdio: 'inherit' })\"",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "test": "turbo run test",
