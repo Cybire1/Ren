@@ -29,7 +29,7 @@ import { clientIp as ip, limit } from '../limits.js'
 import { relayAuthorization } from '../relay.js'
 import { depositAddress, depositsTo, isSource, SOURCES } from '../services/deposits.js'
 import { giveTestDollars } from '../services/faucet.js'
-import { topUpFor } from '../services/ramp.js'
+import { cashOutFor, topUpFor } from '../services/ramp.js'
 import { indexedThrough } from '../workers/watcher.js'
 
 /**
@@ -42,6 +42,7 @@ import { indexedThrough } from '../workers/watcher.js'
  * - GET and PUT /wallets/:address/note-key publish the key a wallet's private notes are sealed to.
  * - GET /wallets/:address/deposit-sources, POST /wallets/:address/deposit-address and GET
  *   /wallets/:address/deposits bring dollars in from other chains (Aurora Intents, mainnet only).
+ * - GET /wallets/:address/cash-out gives the off-ramp settings for the web's cash-out page.
  * - GET /wallets/:address/top-up gives a card or bank top-up link (Ramp Network, mainnet only).
  * - GET and PUT /vaults/:id keep a wallet's encrypted backup (name, currency, contacts). Kova
  *   stores ciphertext it can't read; only the vault's own key, from the same passkey, replaces it.
@@ -302,6 +303,11 @@ export const walletRoutes = new Hono()
       object: 'top_up',
       ...topUpFor(wallet, currency, Number.isFinite(dollars) ? dollars : undefined, safeReturn),
     })
+  })
+  .get('/wallets/:address/cash-out', (c) => {
+    const wallet = walletAddress(c)
+    const currency = (c.req.query('currency') ?? 'USD').toUpperCase()
+    return c.json({ object: 'cash_out', ...cashOutFor(wallet, currency) })
   })
   .get('/wallets/:address/deposit-sources', (c) => {
     walletAddress(c)

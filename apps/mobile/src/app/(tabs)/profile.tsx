@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { network } from '@/lib/config'
+import * as WebBrowser from 'expo-web-browser'
+import { network, webUrl } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
 import { rateLabel, ratesLive } from '@/lib/rates'
@@ -19,7 +20,7 @@ import { dockClearance } from '@/ui/Dock'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
 import { CurrencySheet } from '@/ui/ProfileForm'
-import { Txt } from '@/ui/primitives'
+import { Sticker, Txt } from '@/ui/primitives'
 
 /**
  * You, as a Kova pass: an identity card with your face, your address and your code, torn
@@ -126,6 +127,26 @@ export default function Profile() {
         <Stat value={String(stats.people)} label="People" />
         <Stat value={formatUsd(stats.moved).replace(/\.\d+$/, '')} label="Moved" />
       </View>
+
+      {/* Ramp's off-ramp runs on the web, where the same passkey opens this wallet. */}
+      <Sticker
+        radius={24}
+        accessibilityLabel="Cash out to your bank or card"
+        onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet/cash-out`)}
+        style={{ height: 72, marginTop: 16 }}
+      >
+        <View style={styles.cashOut}>
+          <View style={{ flex: 1 }}>
+            <Txt weight="semi" size={16}>
+              Cash out
+            </Txt>
+            <Txt size={13} color={colors.muted}>
+              To your bank or card, with Ramp Network
+            </Txt>
+          </View>
+          <Icon name="arrow" size={20} />
+        </View>
+      </Sticker>
 
       <MoneyCard
         currency={profile.currency}
@@ -335,6 +356,7 @@ function KeysCard() {
 }
 
 const styles = StyleSheet.create({
+  cashOut: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18 },
   pass: { marginTop: 16, borderRadius: 28, backgroundColor: colors.ink },
   passTop: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, paddingBottom: 16 },
   ring: { borderRadius: 36, borderWidth: 3, borderColor: colors.yellow, padding: 2 },

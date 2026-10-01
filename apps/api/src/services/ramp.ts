@@ -46,3 +46,47 @@ export function topUpFor(
   })
   return { live: true, provider: 'Ramp Network', url: `${RAMP}?${params}`, min_eur: 6.25 }
 }
+
+/** What the web's cash-out page hands Ramp's SDK for an off-ramp from AUSD on Monad. */
+export interface CashOut {
+  live: boolean
+  provider: 'Ramp Network'
+  config: {
+    hostApiKey: string
+    hostAppName: string
+    hostLogoUrl: string
+    defaultFlow: 'OFFRAMP'
+    enabledFlows: ['OFFRAMP']
+    offrampAsset: string
+    defaultAsset: string
+    fiatCurrency: string
+    userAddress: string
+  } | null
+}
+
+/**
+ * Cashing out: Ramp's off-ramp sells AUSD on Monad for money in a bank or on a card. Ramp asks the
+ * wallet to send the AUSD to it, and Kova's gasless send does that, approved with the passkey.
+ * Needs a Ramp key with off-ramp switched on, on mainnet.
+ */
+export function cashOutFor(wallet: string, currency: string): CashOut {
+  const live = config.KOVA_NETWORK === 'mainnet' && Boolean(config.RAMP_HOST_API_KEY)
+  if (!live || !config.RAMP_HOST_API_KEY)
+    return { live: false, provider: 'Ramp Network', config: null }
+  return {
+    live: true,
+    provider: 'Ramp Network',
+    config: {
+      hostApiKey: config.RAMP_HOST_API_KEY,
+      hostAppName: 'Kova',
+      hostLogoUrl: 'https://mykova.app/icon.png',
+      defaultFlow: 'OFFRAMP',
+      enabledFlows: ['OFFRAMP'],
+      // The SDK's own names for these (the widget maps them to enabledCryptoAssets, inAsset, outAsset).
+      offrampAsset: 'MONAD_AUSD',
+      defaultAsset: 'MONAD_AUSD',
+      fiatCurrency: FIAT.has(currency) ? currency : 'USD',
+      userAddress: wallet,
+    },
+  }
+}

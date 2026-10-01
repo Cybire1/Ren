@@ -88,6 +88,9 @@ importers:
       '@privy-io/react-auth':
         specifier: 3.45.0
         version: 3.45.0(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10))(@solana/sysvars@5.5.1(typescript@6.0.3))(@stripe/stripe-js@1.54.2)(@tanstack/query-core@5.103.2)(@tanstack/react-query@5.103.2(react@19.3.0))(@types/react@19.2.18)(bufferutil@4.1.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(typescript@6.0.3)(use-sync-external-store@1.4.0(react@19.3.0))(utf-8-validate@5.0.10)(zod@3.25.76)
+      '@ramp-network/ramp-instant-sdk':
+        specifier: ^6.2.0
+        version: 6.2.0
       '@scure/base':
         specifier: ^2.4.0
         version: 2.4.0
@@ -1363,6 +1366,10 @@ packages:
 
   '@privy-io/urls@0.0.5':
     resolution: {integrity: sha512-cy4SQY60I9aGm+Er/gL4P+Rrsw2B7RoD6GKw5ZlwEN3jCm3tfclWeZI+xlJSKIwIu71YV9fWpO0bjLTs0tMLgQ==}
+
+  '@ramp-network/ramp-instant-sdk@6.2.0':
+    resolution: {integrity: sha512-87SEowi8/cPQnGL5YlPPxEqD7U9LRgj1XN5s0uXn73xUX1aFY2/Cw8jSg36Yo5x/mKzOPS6SftONJtfUrd4/3A==}
+    engines: {node: '>=6.0.0'}
 
   '@react-aria/focus@3.22.1':
     resolution: {integrity: sha512-CPxtkyrBi/HYY5P3lE/57sQ6qfa0lN8E55TOm89H0kNGv0lKt+/0zP7lWERzBjRr5IxBVrQX4gFEowBN52LPaA==}
@@ -5221,6 +5228,8 @@ snapshots:
   '@privy-io/std@0.0.1': {}
 
   '@privy-io/urls@0.0.5': {}
+
+  '@ramp-network/ramp-instant-sdk@6.2.0': {}
 
   '@react-aria/focus@3.22.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:

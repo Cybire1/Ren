@@ -71,7 +71,8 @@ Each one: the problem, what done means, how it is proven.
 - **Proof:** a sandbox purchase landing in a Kova wallet.
 - **Needs from you:** a Ramp Network partner key.
 
-### 8. Cash out · waiting on a Ramp key with off-ramp enabled
+### 8. Cash out · built, waiting on a Ramp key with off-ramp enabled
+- **Built (1 Oct):** Profile → Cash out (iOS opens mykova.app/wallet/cash-out in the in-app browser, where the same passkey opens the same wallet; the web has it on Profile). The page opens Ramp's off-ramp for AUSD on Monad, paid out in the person's currency, and answers Ramp's send-crypto callback with an ordinary Kova send to Ramp's address: gas-free, approved with the passkey. API: `GET /v1/wallets/:address/cash-out` serves the settings with the key server-side; "mainnet" until then.
 - **Checked (1 Oct):** Ramp's off-ramp lists AUSD on Monad. Ramp requires a production key with off-ramp switched on for it, and its native flow for mobile wallets (the wallet sends AUSD to Ramp when the widget asks), which Kova's gasless send fits.
 - **Problem:** there is no way to take money out of Kova.
 - **Done:** "Cash out" with Ramp's off-ramp, from AUSD on Monad to a bank or card.

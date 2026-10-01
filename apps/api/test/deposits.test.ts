@@ -166,3 +166,21 @@ describe('card and bank top-ups (Ramp Network)', () => {
     config.RAMP_HOST_API_KEY = savedKey
   })
 })
+
+describe('cash out (Ramp Network off-ramp)', () => {
+  it('sells AUSD on Monad from this wallet, paid out in their currency, only when live', async () => {
+    const { cashOutFor } = await import('../src/services/ramp.js')
+    config.KOVA_NETWORK = 'testnet'
+    expect(cashOutFor(wallet, 'GBP')).toMatchObject({ live: false, config: null })
+    const savedKey = config.RAMP_HOST_API_KEY
+    config.KOVA_NETWORK = 'mainnet'
+    config.RAMP_HOST_API_KEY = 'ramp-key'
+    expect(cashOutFor(wallet, 'GBP').config).toMatchObject({
+      defaultFlow: 'OFFRAMP',
+      offrampAsset: 'MONAD_AUSD',
+      fiatCurrency: 'GBP',
+      userAddress: wallet,
+    })
+    config.RAMP_HOST_API_KEY = savedKey
+  })
+})

@@ -83,6 +83,14 @@ export function Profile() {
         </span>
       </div>
 
+      <Link href="/wallet/cash-out" className="w-add-chain">
+        <span>
+          <strong>Cash out</strong>
+          <small>To your bank or card, with Ramp Network</small>
+        </span>
+        <Icon name="out" size={18} />
+      </Link>
+
       <section className="w-money">
         <div>
           <small>Your money shows in</small>
