@@ -54,7 +54,7 @@ Status as of 28 Sep 2026.
 
 | # | Requirement (rules §4, §9) | Kova today | To do |
 |---|---|---|---|
-| 1 | **Public GitHub repository**, and public "throughout and after the Hackathon" | `github.com/Cybire1/kova` is **private**; the `monad` branch isn't pushed | Scan the history for secrets, push `monad`, make the repo public |
+| 1 | **Public GitHub repository**, and public "throughout and after the Hackathon" | `github.com/Cybire1/kova`, `monad` pushed; history scanned for secrets (clean, 1 Oct). **Kept private until submission day by choice** | On submission day: `gh repo edit cybire1/kova --visibility public --accept-visibility-change-consequences` |
 | 2 | Complete source code | In the repo | Commit everything (work is uncommitted right now) |
 | 3 | README with setup instructions | Root README describes the **Tempo** build | Rewrite for Monad (see §Documentation) |
 | 4 | Open source licence (MIT, Apache 2.0, GPL, BSD) | **None** | Add a `LICENSE` (MIT suggested) |
