@@ -55,6 +55,15 @@ function ArrivalWatcher() {
   return null
 }
 
+/** Send is one sheet over Home, sized to each step, so the balance stays in view behind it. */
+const sendSheet = {
+  presentation: 'formSheet',
+  sheetAllowedDetents: 'fitToContents',
+  sheetGrabberVisible: true,
+  sheetCornerRadius: 34,
+  contentStyle: { backgroundColor: colors.paper },
+} as const
+
 export default function RootLayout() {
   const [loaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold })
   // Local prices on the first screen should already use today's rates.
@@ -86,6 +95,8 @@ export default function RootLayout() {
                   <Stack.Screen name="open-stall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="send/index" options={sendSheet} />
+                  <Stack.Screen name="send/[to]" options={sendSheet} />
                 </Stack>
                 </TravelProvider>
               </StallProvider>

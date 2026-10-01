@@ -52,6 +52,7 @@ export default function Dev() {
     fund?: string
     mode?: string
     to?: string
+    then?: string
     reset?: string
     pay?: string
     send?: string
@@ -189,6 +190,8 @@ export default function Dev() {
           return router.replace({ pathname: '/receipt/[id]', params: { id: entry.id } })
         }
         router.replace((params.to as never) || '/')
+        // A screen to open over that one, e.g. `then=/send` for the send sheet over Home.
+        if (params.then) setTimeout(() => router.push(params.then as never), 600)
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         console.warn(`[dev] failed: ${message}`)

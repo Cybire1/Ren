@@ -33,7 +33,8 @@ Each one: the problem, what done means, how it is proven.
 - **Done:** measure every step of a payment (sign, request, simulate, submit, receipt), remove what isn't needed, and show "Paid" as soon as the chain has the transaction. The receipt shows the real time.
 - **Proof:** five payments on testnet, timed end to end, before and after.
 
-### 2. Send in one sheet
+### 2. Send in one sheet · done
+- **Result (1 Oct):** on iOS, one form sheet over Home sized to each step (who, amount with their currency, review with Kovi flying the arc from your face to theirs, slide to send, Sent with the measured time); it settles low at the end so Home's balance shows behind it, counting down. The web has the same sheet over the web wallet's Home (keyboard: Enter on the knob sends). Real testnet sends: iPhone simulator $2.50 in 1.27 s and $1.00 in 1.29 s (the wallet's chain balance went 5.00 → 1.50); web, headless Chrome with a passkey, $2.50 in 1.03 s.
 - **Problem:** sending money takes several full screens; it feels slow before it is slow.
 - **Done:** on iOS, one sheet over Home: person, amount (with their currency), review (you, Kovi's arc, them, $0.00 fee), slide to send, and the same sheet turns into "Sent" with the measured time, while the balance behind it drops live. Then the same on the web.
 - **Proof:** screenshots of every step on the simulator and the web, and a real send on testnet.

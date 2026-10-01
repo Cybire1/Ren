@@ -1,6 +1,7 @@
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { useEffect, useRef, useState } from 'react'
+import { AccessibilityInfo, Pressable, StyleSheet, View } from 'react-native'
 import Svg, { Circle } from 'react-native-svg'
 import { baseToNumber, type DisplayCurrency, formatLocal, formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
@@ -25,7 +26,8 @@ export function BalanceCard({
   currency: DisplayCurrency
 }) {
   const { hideBalance, setHideBalance } = usePrefs()
-  const usd = balance === null ? null : formatUsd(balance)
+  const shown = useCounted(balance)
+  const usd = shown === null ? null : formatUsd(shown)
   const [whole, cents] = usd === null ? ['—', ''] : [usd.slice(1, usd.lastIndexOf('.')), usd.slice(usd.lastIndexOf('.'))]
 
   return (
@@ -105,6 +107,40 @@ export function BalanceCard({
       </View>
     </View>
   )
+}
+
+/**
+ * The balance as it is shown: when it changes, it counts to the new amount (about 0.7 s, easing
+ * out) instead of jumping, so money leaving or arriving is something you see happen, even from
+ * behind the send sheet. The first value, and any change with Reduce Motion on, is shown at once.
+ */
+function useCounted(balance: bigint | null) {
+  const [shown, setShown] = useState(balance)
+  const from = useRef(balance)
+  useEffect(() => {
+    const start = from.current
+    from.current = balance
+    if (balance === null || start === null || start === balance) return setShown(balance)
+    let frame = 0
+    let cancelled = false
+    void AccessibilityInfo.isReduceMotionEnabled().then((reduced) => {
+      if (cancelled) return
+      if (reduced) return setShown(balance)
+      const began = Date.now()
+      const step = () => {
+        const p = Math.min(1, (Date.now() - began) / 700)
+        const eased = 1 - (1 - p) ** 3
+        setShown(start + ((balance - start) * BigInt(Math.round(eased * 1000))) / 1000n)
+        if (p < 1) frame = requestAnimationFrame(step)
+      }
+      frame = requestAnimationFrame(step)
+    })
+    return () => {
+      cancelled = true
+      cancelAnimationFrame(frame)
+    }
+  }, [balance])
+  return shown
 }
 
 const styles = StyleSheet.create({

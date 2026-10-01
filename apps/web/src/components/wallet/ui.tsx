@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import QRCode from 'qrcode'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Art, type ArtName, Icon } from '@/components/brand'
 import {
   baseToNumber,
@@ -95,7 +95,8 @@ export function EntryRow({ entry }: { entry: Entry }) {
  * raised like a price tag, the local amount as a chip, and one tap to hide it all.
  */
 export function BalanceCard() {
-  const { balance, profile, rates, hideBalance, setHideBalance } = useWallet()
+  const { balance: actual, profile, rates, hideBalance, setHideBalance } = useWallet()
+  const balance = useCounted(actual)
   const usd = balance === null ? null : formatUsd(balance)
   const [whole, cents] =
     usd === null ? ['—', ''] : [usd.slice(1, usd.lastIndexOf('.')), usd.slice(usd.lastIndexOf('.'))]
@@ -153,6 +154,38 @@ export function BalanceCard() {
       </div>
     </section>
   )
+}
+
+/**
+ * The balance as it is shown: when it changes it counts to the new amount (about 0.7 s, easing
+ * out) instead of jumping, so money leaving or arriving is something you see happen, even from
+ * behind the send sheet. The first value, and any change with reduced motion, shows at once.
+ */
+function useCounted(balance: bigint | null) {
+  const [shown, setShown] = useState(balance)
+  const from = useRef(balance)
+  useEffect(() => {
+    const start = from.current
+    from.current = balance
+    if (
+      balance === null ||
+      start === null ||
+      start === balance ||
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    )
+      return setShown(balance)
+    let frame = 0
+    const began = performance.now()
+    const step = (now: number) => {
+      const p = Math.min(1, (now - began) / 700)
+      const eased = 1 - (1 - p) ** 3
+      setShown(start + ((balance - start) * BigInt(Math.round(eased * 1000))) / 1000n)
+      if (p < 1) frame = requestAnimationFrame(step)
+    }
+    frame = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frame)
+  }, [balance])
+  return shown
 }
 
 /** Send and Request: an icon in a solid disc, a dotted path, and something travelling along it. */
