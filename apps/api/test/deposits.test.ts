@@ -135,3 +135,34 @@ describe('deposits', () => {
     expect(units('5', null)).toBe('5')
   })
 })
+
+describe('card and bank top-ups (Ramp Network)', () => {
+  it('gives no link on testnet or without a key', async () => {
+    const { topUpFor } = await import('../src/services/ramp.js')
+    config.KOVA_NETWORK = 'testnet'
+    expect(topUpFor(wallet, 'EUR')).toMatchObject({ live: false, url: null })
+  })
+
+  it('opens Ramp for AUSD on Monad, to this wallet, in their currency', async () => {
+    const { topUpFor } = await import('../src/services/ramp.js')
+    const savedKey = config.RAMP_HOST_API_KEY
+    config.KOVA_NETWORK = 'mainnet'
+    config.RAMP_HOST_API_KEY = 'ramp-key'
+    const url = new URL(topUpFor(wallet, 'EUR', 25, 'kova://add-money').url as string)
+    config.RAMP_HOST_API_KEY = savedKey
+    expect(url.origin).toBe('https://app.rampnetwork.com')
+    expect(Object.fromEntries(url.searchParams)).toMatchObject({
+      hostApiKey: 'ramp-key',
+      enabledCryptoAssets: 'MONAD_AUSD',
+      outAsset: 'MONAD_AUSD',
+      inAsset: 'EUR',
+      inAssetValue: '2500',
+      userAddress: wallet,
+      finalUrl: 'kova://add-money',
+    })
+    // Naira isn't a Ramp card currency: they pay in dollars.
+    config.RAMP_HOST_API_KEY = 'ramp-key'
+    expect(new URL(topUpFor(wallet, 'NGN').url as string).searchParams.get('inAsset')).toBe('USD')
+    config.RAMP_HOST_API_KEY = savedKey
+  })
+})

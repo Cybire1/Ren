@@ -2966,3 +2966,10 @@ button.w-person {
 .w-chain-dot-failed {
   background: var(--danger);
 }
+
+button.w-add-chain {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}

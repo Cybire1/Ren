@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Art, Icon } from '@/components/brand'
 import { formatUsd } from '@/lib/wallet/money'
 import { ScreenHead } from './activity'
@@ -30,6 +30,7 @@ export function AddMoney() {
             bank top-ups are coming.
           </span>
         </div>
+        <CardOrBank />
         <Link href="/wallet/add/chain" className="w-add-chain">
           <span>
             <strong>From another chain</strong>
@@ -117,6 +118,7 @@ export function AddMoney() {
             <Icon name="plus" size={18} />
           </span>
         </button>
+        <CardOrBank />
         <Link href="/wallet/add/chain" className="w-add-chain">
           <span>
             <strong>From another chain</strong>
@@ -126,5 +128,40 @@ export function AddMoney() {
         </Link>
       </div>
     </div>
+  )
+}
+
+/** Ramp Network's checkout in a new tab; it sends AUSD on Monad to this wallet. */
+function CardOrBank() {
+  const { profile } = useWallet()
+  const [top, setTop] = useState<{ live: boolean; url: string | null } | null>(null)
+  const [note, setNote] = useState<string | null>(null)
+  const address = profile?.address
+  const currency = profile?.currency
+  // Fetched ahead, so the tap opens Ramp at once (a tab opened after a wait counts as a pop-up).
+  useEffect(() => {
+    if (!address) return
+    void fetch(
+      `/api/wallet/${address}/top-up?currency=${currency}&return_to=${encodeURIComponent('https://mykova.app/wallet')}`,
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setTop)
+      .catch(() => setTop(null))
+  }, [address, currency])
+  return (
+    <button
+      type="button"
+      className="w-add-chain"
+      onClick={() => {
+        if (top?.live && top.url) window.open(top.url, '_blank', 'noopener')
+        else setNote('Opens on Monad mainnet: buys AUSD straight into this wallet.')
+      }}
+    >
+      <span>
+        <strong>Card or bank</strong>
+        <small>{note ?? 'Card, Apple Pay or bank, with Ramp Network'}</small>
+      </span>
+      <Icon name="card" size={18} />
+    </button>
   )
 }

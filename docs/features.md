@@ -64,13 +64,15 @@ Each one: the problem, what done means, how it is proven.
 - **Done:** "Add money → From another chain" with Aurora Intents (NEAR Intents): pick a chain and token, send, and AUSD arrives in the Kova wallet on Monad.
 - **Proof:** a real cross-chain deposit, with both transactions linked.
 
-### 7. Card top-up
+### 7. Card top-up · built, waiting on a Ramp key and mainnet
+- **Built (1 Oct):** Ramp Network lists AUSD on Monad itself (`MONAD_AUSD`, `0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a`, €6.25 to €15,000), for buying and for selling, so a top-up lands as the same dollars every Kova payment moves, with no swap. Add money → Card or bank opens Ramp's hosted checkout (in-app browser on iOS, a new tab on the web) set to AUSD on Monad, this wallet's address and the person's currency (USD, EUR, GBP or MXN; others pay in USD). API: `GET /v1/wallets/:address/top-up` builds the link server-side; on testnet, or without `RAMP_HOST_API_KEY`, it says "mainnet". Tested: the link's parameters (API tests); without a key Ramp's widget shows "integration issue", so a key is required even to try it.
 - **Problem:** there is no way to put money into Kova with a card or bank.
 - **Done:** "Add money → Card or bank" with Ramp Network, buying AUSD on Monad straight into the Kova wallet.
 - **Proof:** a sandbox purchase landing in a Kova wallet.
 - **Needs from you:** a Ramp Network partner key.
 
-### 8. Cash out
+### 8. Cash out · waiting on a Ramp key with off-ramp enabled
+- **Checked (1 Oct):** Ramp's off-ramp lists AUSD on Monad. Ramp requires a production key with off-ramp switched on for it, and its native flow for mobile wallets (the wallet sends AUSD to Ramp when the widget asks), which Kova's gasless send fits.
 - **Problem:** there is no way to take money out of Kova.
 - **Done:** "Cash out" with Ramp's off-ramp, from AUSD on Monad to a bank or card.
 - **Proof:** a sandbox off-ramp from a Kova wallet.

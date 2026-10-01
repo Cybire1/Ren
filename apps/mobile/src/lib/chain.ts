@@ -210,3 +210,9 @@ export const depositAddressFor = (address: Address, source: string) =>
 
 export const depositsTo = (address: Address, depositAddress: string) =>
   kova<{ data: ChainDeposit[] }>(`/v1/wallets/${address}/deposits?address=${encodeURIComponent(depositAddress)}`).then((r) => r.data)
+
+/** A card or bank top-up (Ramp Network, buying AUSD on Monad), or why it isn't open yet. */
+export const topUpLink = (address: Address, currency: string, returnTo: string) =>
+  kova<{ live: boolean; url: string | null; min_eur: number }>(
+    `/v1/wallets/${address}/top-up?currency=${currency}&return_to=${encodeURIComponent(returnTo)}`,
+  )

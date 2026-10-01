@@ -64,6 +64,8 @@ const schema = z.object({
   AURORA_INTENTS_KEY: z.string().optional(),
   /** What deposits arrive as on Monad: a symbol Aurora resolves, or an asset id when the symbol is ambiguous. */
   AURORA_DESTINATION_ASSET: z.string().default('AUSD'),
+  /** Ramp Network: card and bank top-ups (and cash-out), buying AUSD on Monad. Key from partner@ramp.network. */
+  RAMP_HOST_API_KEY: z.string().optional(),
   JEV_MODEL: z.string().optional(),
 })
 
