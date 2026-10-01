@@ -2,6 +2,8 @@
 # Railway builds it with RAILWAY_DOCKERFILE_PATH=Dockerfile.web; the API uses ./Dockerfile.
 FROM node:22-slim AS build
 RUN corepack enable
+# The image builds the shared packages it needs in its own step, not on install.
+ENV KOVA_SKIP_PACKAGE_BUILD=1
 WORKDIR /repo
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./

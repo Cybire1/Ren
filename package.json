@@ -8,7 +8,7 @@
     "node": ">=22.12"
   },
   "scripts": {
-    "postinstall": "node -e \"require('fs').existsSync('packages/monad/src') || process.exit(0); require('child_process').execSync(\\\"pnpm --filter './packages/*' build\\\", { stdio: 'inherit' })\"",
+    "postinstall": "node -e \"if (process.env.KOVA_SKIP_PACKAGE_BUILD || !require('fs').existsSync('packages/monad/src')) process.exit(0); require('child_process').execSync(\\\"pnpm --filter './packages/*' build\\\", { stdio: 'inherit' })\"",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "test": "turbo run test",
