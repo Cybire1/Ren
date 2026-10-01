@@ -1,6 +1,6 @@
 {
   "schedule": "0 */15 * * * *",
-  "receiver": "0x0000000000000000000000000000000000000000",
+  "receiver": "0x004D499A661756E0eFB972b38d9BAb6C2a538f93",
   "chainSelectorName": "monad-testnet",
   "gasLimit": "400000",
   "maxSpread": 0.02

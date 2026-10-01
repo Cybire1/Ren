@@ -51,11 +51,11 @@ Each one: the problem, what done means, how it is proven.
 - **Done:** after a guest payment, "Keep your dollars in Kova": create a passkey wallet in one step and move the guest balance into it, gas paid by Kova.
 - **Proof:** a guest wallet's balance arrives in a new Kova wallet on testnet.
 
-### 5. Live exchange rates
+### 5. Live exchange rates · done
+- **Result (1 Oct):** `KovaRates` deployed to Monad testnet at `0x004D499A661756E0eFB972b38d9BAb6C2a538f93` (tx `0x67875eb9…`); the CRE workflow fetched both sources, agreed on NGN 1,328.41, KES 129.72, EUR 0.8821, GBP 0.7549, MXN 18.075, and wrote them on-chain (report tx `0xe0ebff46d1e1517554ab956769ddd4a0a108b85c866831d7663f63029598c51c`). The API reads the contract (`source: chainlink`), and the app shows "1 USD ≈ 1,328 NGN, Chainlink rate from 3 min ago". Reports are published with `cre workflow simulate --broadcast` until Chainlink enables DON deploy access for the account (`cre account access`), after which it runs every 15 minutes on its own.
 - **Problem:** local prices come from a fixed table, labelled "reference rate".
 - **Done:** deploy `KovaRates` on Monad testnet; the Chainlink CRE workflow (`apps/rates`) publishes rates from two sources with consensus; the API reads the contract; the app says "Chainlink rate from 4 min ago".
 - **Proof:** the contract address, a report transaction, and the app showing a live rate.
-- **Needs from you:** `cre login` once.
 
 ### 6. Bring dollars from another chain · built, waiting on mainnet
 - **Built (1 Oct):** Aurora Intents Persistent Addresses: each wallet gets one permanent deposit address per kind of chain (all EVM chains share one; Solana, Tron, Bitcoin), and what lands there (USDC, USDT, ETH, SOL, TRX, BTC) arrives on Monad as AUSD. App: Add money → From another chain (chain picker, QR, copy, share, live "coming in" list). Web: /wallet/add/chain. API: `GET /v1/wallets/:address/deposit-sources`, `POST …/deposit-address`, `GET …/deposits`, with Aurora's key on the server; on testnet they answer "mainnet only" and the screens say so. Unit-tested against Aurora's documented responses.
