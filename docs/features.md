@@ -39,8 +39,9 @@ Each one: the problem, what done means, how it is proven.
 - **Done:** on iOS, one sheet over Home: person, amount (with their currency), review (you, Kovi's arc, them, $0.00 fee), slide to send, and the same sheet turns into "Sent" with the measured time, while the balance behind it drops live. Then the same on the web.
 - **Proof:** screenshots of every step on the simulator and the web, and a real send on testnet.
 
-### 3. Private payment notes
-- **Problem:** "for dinner" on a payment is stored readable by Kova's server.
+### 3. Private payment notes · done
+- **Result (1 Oct):** each wallet publishes an X25519 note key derived from its passkey's vault secret and signed by the wallet (senders check the signature, so Kova can't swap keys). A note is sealed on the sender's device twice, for the receiver and for the sender, bound to the transfer (from, to, amount, EIP-3009 nonce), and stored by Kova as ciphertext only. The app opens notes without Face ID (the key can't move money); the web keeps the key in memory, so after a reload notes are sealed until the passkey opens them. Proven on testnet: web → phone ("Puff-puff for the road") and phone → web ("Thanks Ada!") both open on the other side; the ciphertext Kova returns opens for neither a third wallet nor a different transfer. `pnpm --filter @kova/web check:notes` checks app/web interop; API tests cover the key and note routes.
+- **Problem (was):** a note on a send stayed on the sender's phone, so the receiver never saw it; sending it through Kova in the clear would have let Kova read it.
 - **Done:** notes are encrypted with a key derived from the sender's passkey (Mera PRF) and shared with the receiver, so only the two of them can read them. Kova stores ciphertext only.
 - **Proof:** the database row shows ciphertext; both wallets show the note; a third wallet can't.
 

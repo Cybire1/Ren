@@ -2760,8 +2760,10 @@ button.w-person {
 
 .w-receipt-note dt {
   display: flex;
+  flex: none;
   align-items: center;
   gap: 0.3rem;
+  white-space: nowrap;
 }
 
 .w-receipt-note dd {

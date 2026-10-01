@@ -65,7 +65,7 @@ export default function Received() {
       </Rise>
       {note ? (
         <View style={{ marginTop: 22 }}>
-          <PrivateNote text={note} caption={`From ${name.split(' ')[0]}. Sealed on their phone; only you two can read it.`} />
+          <PrivateNote text={note} caption={`From ${name.split(' ')[0]}. Sealed by them; only you two can read it.`} />
         </View>
       ) : (
       <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
