@@ -8,6 +8,7 @@
     "node": ">=22.12"
   },
   "scripts": {
+    "postinstall": "pnpm --filter './packages/*' build",
     "build": "turbo run build",
     "dev": "turbo run dev",
     "test": "turbo run test",

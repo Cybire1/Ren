@@ -26,8 +26,11 @@ const merchant = privateKeyToAccount(generatePrivateKey())
 let watcher: WatcherHandle | undefined
 let merchantId: string
 
+// On-chain: it needs a relayer with testnet MON and AUSD (pnpm setup:dev). Without one, it skips.
+const relayer = Boolean(walletClient)
+
 beforeAll(async () => {
-  if (!walletClient) throw new Error('no relayer configured: run `pnpm setup:dev` first')
+  if (!relayer) return
   merchantId = uuidv7()
   await db.insert(schema.merchants).values({
     id: merchantId,
@@ -45,7 +48,7 @@ afterAll(async () => {
   await watcher?.stop()
 })
 
-describe('chain watcher', () => {
+describe.skipIf(!relayer)('chain watcher (on Monad testnet; needs a funded relayer)', () => {
   it('settles a payment Kova never submitted, and indexes it for wallets', async () => {
     const intentId = uuidv7()
     const memo = encodeMemo({ kind: 'payment', id: intentId })
@@ -70,7 +73,9 @@ describe('chain watcher', () => {
       validBefore: BigInt(Math.floor(Date.now() / 1000) + 900),
       nonce: memo,
     }
-    const signature = await payer.signTypedData(transferAuthorizationTypedData(settlementToken, network.chainId, authorization))
+    const signature = await payer.signTypedData(
+      transferAuthorizationTypedData(settlementToken, network.chainId, authorization),
+    )
     // Straight to the chain: Kova's checkout never hears about it.
     const receipt = await walletClient!.writeContractSync({
       address: settlementToken.address,
@@ -80,7 +85,9 @@ describe('chain watcher', () => {
     })
     expect(receipt.status).toBe('success')
 
-    const before = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
+    const before = await db.query.paymentIntents.findFirst({
+      where: eq(schema.paymentIntents.id, intentId),
+    })
     expect(before?.status).toBe('requires_payment')
 
     // Wait for the block to finalize (two blocks, well under a second), then start the watcher:
@@ -91,19 +98,28 @@ describe('chain watcher', () => {
       await new Promise((r) => setTimeout(r, 250))
     }
     watcher = await startWatcher()
-    let after = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
+    let after = await db.query.paymentIntents.findFirst({
+      where: eq(schema.paymentIntents.id, intentId),
+    })
     for (let i = 0; i < 60 && after?.status !== 'paid'; i++) {
       await new Promise((r) => setTimeout(r, 500))
-      after = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, intentId) })
+      after = await db.query.paymentIntents.findFirst({
+        where: eq(schema.paymentIntents.id, intentId),
+      })
     }
     expect(after?.status).toBe('paid')
 
-    const payments = await db.query.payments.findMany({ where: eq(schema.payments.intentId, intentId) })
+    const payments = await db.query.payments.findMany({
+      where: eq(schema.payments.intentId, intentId),
+    })
     expect(payments).toHaveLength(1)
     expect(payments[0]?.payerAddress.toLowerCase()).toBe(payer.address.toLowerCase())
 
     const indexed = await db.query.transfers.findMany({
-      where: and(eq(schema.transfers.txHash, receipt.transactionHash), eq(schema.transfers.toAddress, merchant.address.toLowerCase())),
+      where: and(
+        eq(schema.transfers.txHash, receipt.transactionHash),
+        eq(schema.transfers.toAddress, merchant.address.toLowerCase()),
+      ),
     })
     expect(indexed).toHaveLength(1)
     expect(indexed[0]?.nonce).toBe(memo)
@@ -111,7 +127,13 @@ describe('chain watcher', () => {
 
     // Replaying the same range must not double-record anything.
     await catchUp(receipt.blockNumber, receipt.blockNumber)
-    expect(await db.query.payments.findMany({ where: eq(schema.payments.intentId, intentId) })).toHaveLength(1)
-    expect(await db.query.transfers.findMany({ where: eq(schema.transfers.txHash, receipt.transactionHash) })).toHaveLength(1)
+    expect(
+      await db.query.payments.findMany({ where: eq(schema.payments.intentId, intentId) }),
+    ).toHaveLength(1)
+    expect(
+      await db.query.transfers.findMany({
+        where: eq(schema.transfers.txHash, receipt.transactionHash),
+      }),
+    ).toHaveLength(1)
   }, 180_000)
 })
