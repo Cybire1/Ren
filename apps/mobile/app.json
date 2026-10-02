@@ -28,7 +28,10 @@
       "package": "xyz.kova.pay.monad",
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.NFC"
+        "android.permission.NFC",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/icon-foreground.png",
@@ -83,6 +86,15 @@
     "experiments": {
       "typedRoutes": true
     },
-    "icon": "./assets/brand/icon.png"
+    "icon": "./assets/brand/icon.png",
+    "extra": {
+      "router": {
+        "root": "./src/app"
+      },
+      "eas": {
+        "projectId": "5ba42917-2a21-4f53-ac1f-cc3ab2c1f0e1"
+      }
+    },
+    "owner": "shaibuafeez"
   }
 }
