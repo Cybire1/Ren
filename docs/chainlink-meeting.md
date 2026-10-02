@@ -52,7 +52,13 @@ can trust. Those rates come from Chainlink CRE, on Monad.
 4. **Next:** we'd like to use CRE for more than rates: settling payouts and confirming card or
    bank top-ups. Is that a good fit, and who should we talk to?
 
-## After the call
+## Outcome (2 Oct 2026)
+
+The CRE team confirmed that a workflow published by simulation (`cre workflow simulate
+--broadcast`) is fine for the bounty: no DON deployment needed. Kova keeps publishing reports
+that way, fresh before the demo recording and before submitting.
+
+## After the call (if deploy access is ever granted)
 
 - If deploy access is granted: `cre workflow deploy`, then `setForwarder(0xF834…4482)` on
   KovaRates, and the rates refresh every 15 minutes on their own.

@@ -93,7 +93,7 @@ the bounty score.
 |---|---|---|---|
 | Agora: Best Cross-Border Payments App | $10,000 | Strong: everything settles in AUSD; a $20 send arrives as €18.40 | Show cross-border in the demo; testnet AUSD asked of Drake Evans |
 | Privy | $5,000 | Email and Google sign-in and payment on the web | Show it in the demo |
-| Chainlink: Best workflow with CRE | $3,000 | `apps/rates` CRE workflow writes FX rates to `KovaRates` on Monad testnet; the live API reads them and the app labels them | Request DON deploy access (`cre account access`) so it runs every 15 minutes |
+| Chainlink: Best workflow with CRE | $3,000 | `apps/rates` CRE workflow writes FX rates to `KovaRates` on Monad testnet; the live API reads them and the app labels them | Done: the CRE team confirmed simulation with `--broadcast` qualifies (2 Oct). Publish a fresh report before recording and before submitting |
 | Mercuryo | not published | Only MON on Monad; no AUSD or USDC there yet | Question sent to Arthur (CBO); decide on the ramp after his answer |
 
 ## Keep out of the submission (rules §5.3)

@@ -23,5 +23,12 @@ export const passkeyDomain = process.env.EXPO_PUBLIC_KOVA_PASSKEY_DOMAIN ?? 'myk
 /** The chain, as people see it named. */
 export const chainName = 'Monad'
 
+/**
+ * Deposits from other chains (Aurora Intents, app/from-chain.tsx). Off until it can work end to
+ * end: it needs mainnet, a working Monad route and AUSD as a destination, which NEAR Intents
+ * doesn't offer yet. EXPO_PUBLIC_KOVA_CHAIN_DEPOSITS=1 shows it.
+ */
+export const chainDeposits = process.env.EXPO_PUBLIC_KOVA_CHAIN_DEPOSITS === '1'
+
 /** The dollar Kova settles in on Monad: AUSD, Agora's dollar, on mainnet and testnet alike. */
 export const settlementToken = getToken(networkId, 'AUSD')

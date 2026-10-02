@@ -57,21 +57,22 @@ Each one: the problem, what done means, how it is proven.
 - **Done:** deploy `KovaRates` on Monad testnet; the Chainlink CRE workflow (`apps/rates`) publishes rates from two sources with consensus; the API reads the contract; the app says "Chainlink rate from 4 min ago".
 - **Proof:** the contract address, a report transaction, and the app showing a live rate.
 
-### 6. Bring dollars from another chain · built, waiting on mainnet
+### 6. Bring dollars from another chain · built, hidden for the submission
+- **Decision (2 Oct):** hidden in the app and on the web (`EXPO_PUBLIC_KOVA_CHAIN_DEPOSITS` / `NEXT_PUBLIC_KOVA_CHAIN_DEPOSITS` turn it on), and the Aurora bounty skipped. NEAR Intents delivers USDC, USDT0 or MON on Monad but not AUSD, Monad routes were down (Aurora incident, 1 Oct), and persistent addresses need Aurora's approval. The code, API routes and tests stay; the Aurora key is set on the API.
 - **Built (1 Oct):** Aurora Intents Persistent Addresses: each wallet gets one permanent deposit address per kind of chain (all EVM chains share one; Solana, Tron, Bitcoin), and what lands there (USDC, USDT, ETH, SOL, TRX, BTC) arrives on Monad as AUSD. App: Add money → From another chain (chain picker, QR, copy, share, live "coming in" list). Web: /wallet/add/chain. API: `GET /v1/wallets/:address/deposit-sources`, `POST …/deposit-address`, `GET …/deposits`, with Aurora's key on the server; on testnet they answer "mainnet only" and the screens say so. Unit-tested against Aurora's documented responses.
 - **To prove it:** Kova on Monad mainnet, an Aurora Studio key (`AURORA_INTENTS_KEY`), Aurora's approval for persistent addresses, and a real deposit of a few dollars. Check that AUSD on Monad is a supported destination once NEAR's token list is back up (it was down, 1 Oct); otherwise set `AURORA_DESTINATION_ASSET`.
 - **Problem:** crypto users already hold dollars on Base, Ethereum or Solana, and moving them to Monad is a chore.
 - **Done:** "Add money → From another chain" with Aurora Intents (NEAR Intents): pick a chain and token, send, and AUSD arrives in the Kova wallet on Monad.
 - **Proof:** a real cross-chain deposit, with both transactions linked.
 
-### 7. Card top-up · built, waiting on a Ramp key and mainnet
+### 7. Card top-up · built, waiting on a Ramp key and mainnet (shown on mainnet only)
 - **Built (1 Oct):** Ramp Network lists AUSD on Monad itself (`MONAD_AUSD`, `0x00000000eFE302BEAA2b3e6e1b18d08D69a9012a`, €6.25 to €15,000), for buying and for selling, so a top-up lands as the same dollars every Kova payment moves, with no swap. Add money → Card or bank opens Ramp's hosted checkout (in-app browser on iOS, a new tab on the web) set to AUSD on Monad, this wallet's address and the person's currency (USD, EUR, GBP or MXN; others pay in USD). API: `GET /v1/wallets/:address/top-up` builds the link server-side; on testnet, or without `RAMP_HOST_API_KEY`, it says "mainnet". Tested: the link's parameters (API tests); without a key Ramp's widget shows "integration issue", so a key is required even to try it.
 - **Problem:** there is no way to put money into Kova with a card or bank.
 - **Done:** "Add money → Card or bank" with Ramp Network, buying AUSD on Monad straight into the Kova wallet.
 - **Proof:** a sandbox purchase landing in a Kova wallet.
 - **Needs from you:** a Ramp Network partner key.
 
-### 8. Cash out · built, waiting on a Ramp key with off-ramp enabled
+### 8. Cash out · built, waiting on a Ramp key with off-ramp enabled (shown on mainnet only)
 - **Built (1 Oct):** Profile → Cash out (iOS opens mykova.app/wallet/cash-out in the in-app browser, where the same passkey opens the same wallet; the web has it on Profile). The page opens Ramp's off-ramp for AUSD on Monad, paid out in the person's currency, and answers Ramp's send-crypto callback with an ordinary Kova send to Ramp's address: gas-free, approved with the passkey. API: `GET /v1/wallets/:address/cash-out` serves the settings with the key server-side; "mainnet" until then.
 - **Checked (1 Oct):** Ramp's off-ramp lists AUSD on Monad. Ramp requires a production key with off-ramp switched on for it, and its native flow for mobile wallets (the wallet sends AUSD to Ramp when the widget asks), which Kova's gasless send fits.
 - **Problem:** there is no way to take money out of Kova.

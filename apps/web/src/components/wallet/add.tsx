@@ -26,18 +26,12 @@ export function AddMoney() {
           <Art name="kovi-catch" size={160} />
           <strong>Send AUSD on Monad to your address</strong>
           <span>
-            Bring dollars from any chain, or send AUSD from an exchange or another wallet. Card and
-            bank top-ups are coming.
+            Pay by card or bank with Ramp Network, or send AUSD on Monad from an exchange or another
+            wallet.
           </span>
         </div>
         <CardOrBank />
-        <Link href="/wallet/add/chain" className="w-add-chain">
-          <span>
-            <strong>From another chain</strong>
-            <small>USDC, USDT, ETH, SOL or BTC, from 30+ chains</small>
-          </span>
-          <Icon name="arrow" size={18} />
-        </Link>
+        {chainDeposits ? <FromAnotherChain /> : null}
         <Link href="/wallet/receive" className="pill pill-block" data-tone="ink">
           <span className="pill-label">Show my address</span>
           <span className="pill-cap">
@@ -118,16 +112,27 @@ export function AddMoney() {
             <Icon name="plus" size={18} />
           </span>
         </button>
-        <CardOrBank />
-        <Link href="/wallet/add/chain" className="w-add-chain">
-          <span>
-            <strong>From another chain</strong>
-            <small>USDC, USDT, ETH, SOL or BTC, from 30+ chains</small>
-          </span>
-          <Icon name="arrow" size={18} />
-        </Link>
+        {chainDeposits ? <FromAnotherChain /> : null}
       </div>
     </div>
+  )
+}
+
+/**
+ * Deposits from other chains (Aurora Intents). Off until it can work end to end: it needs mainnet,
+ * a working Monad route and AUSD as a destination. NEXT_PUBLIC_KOVA_CHAIN_DEPOSITS=1 shows it.
+ */
+const chainDeposits = process.env.NEXT_PUBLIC_KOVA_CHAIN_DEPOSITS === '1'
+
+function FromAnotherChain() {
+  return (
+    <Link href="/wallet/add/chain" className="w-add-chain">
+      <span>
+        <strong>From another chain</strong>
+        <small>USDC, USDT, ETH, SOL or BTC, from 30+ chains</small>
+      </span>
+      <Icon name="arrow" size={18} />
+    </Link>
   )
 }
 

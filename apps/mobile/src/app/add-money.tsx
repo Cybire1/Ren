@@ -4,7 +4,7 @@ import { router } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { topUpLink } from '@/lib/chain'
-import { isTestnet } from '@/lib/config'
+import { chainDeposits, isTestnet } from '@/lib/config'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
@@ -95,8 +95,10 @@ export default function AddMoney() {
           </Txt>
         ) : null}
       </Rise>
-      {stage !== 'done' ? (
+      {/* Card or bank (Ramp) buys AUSD on Monad mainnet; on testnet it would be a dead end. */}
+      {stage !== 'done' && (!isTestnet || chainDeposits) ? (
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
+          {isTestnet ? null : (
           <Sticker radius={24} onPress={() => void cardOrBank()} accessibilityLabel="Card or bank" style={{ height: 76, marginBottom: 12 }}>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
@@ -110,6 +112,8 @@ export default function AddMoney() {
               <Icon name="card" size={20} />
             </View>
           </Sticker>
+          )}
+          {chainDeposits ? (
           <Sticker radius={24} onPress={() => router.push('/from-chain')} accessibilityLabel="From another chain" style={{ height: 76 }}>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
@@ -123,6 +127,7 @@ export default function AddMoney() {
               <Icon name="arrow" size={20} />
             </View>
           </Sticker>
+          ) : null}
         </View>
       ) : null}
       <View style={styles.footer}>

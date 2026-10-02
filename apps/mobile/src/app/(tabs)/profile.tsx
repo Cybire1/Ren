@@ -6,7 +6,7 @@ import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import * as WebBrowser from 'expo-web-browser'
-import { network, webUrl } from '@/lib/config'
+import { isTestnet, network, webUrl } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
 import { rateLabel, ratesLive } from '@/lib/rates'
@@ -128,7 +128,9 @@ export default function Profile() {
         <Stat value={formatUsd(stats.moved).replace(/\.\d+$/, '')} label="Moved" />
       </View>
 
-      {/* Ramp's off-ramp runs on the web, where the same passkey opens this wallet. */}
+      {/* Ramp's off-ramp runs on the web, where the same passkey opens this wallet. Mainnet only:
+          on testnet there's nothing real to cash out. */}
+      {isTestnet ? null : (
       <Sticker
         radius={24}
         accessibilityLabel="Cash out to your bank or card"
@@ -147,6 +149,7 @@ export default function Profile() {
           <Icon name="arrow" size={20} />
         </View>
       </Sticker>
+      )}
 
       <MoneyCard
         currency={profile.currency}

@@ -83,13 +83,16 @@ export function Profile() {
         </span>
       </div>
 
-      <Link href="/wallet/cash-out" className="w-add-chain">
-        <span>
-          <strong>Cash out</strong>
-          <small>To your bank or card, with Ramp Network</small>
-        </span>
-        <Icon name="out" size={18} />
-      </Link>
+      {/* Mainnet only: on testnet there's nothing real to cash out. */}
+      {network === 'mainnet' ? (
+        <Link href="/wallet/cash-out" className="w-add-chain">
+          <span>
+            <strong>Cash out</strong>
+            <small>To your bank or card, with Ramp Network</small>
+          </span>
+          <Icon name="out" size={18} />
+        </Link>
+      ) : null}
 
       <section className="w-money">
         <div>
