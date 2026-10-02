@@ -76,8 +76,8 @@ see dollars, their own currency beside them, and Face ID. Nothing else.
 | Kova's relayer, which pays everyone's gas | [`0x5868C3C3D1316AF8a78D2e47ee9F385272771940`](https://testnet.monadscan.com/address/0x5868C3C3D1316AF8a78D2e47ee9F385272771940) |
 | A coffee, $4.50, paid in 1.6 s with a $0.00 fee | [`0x6a52a3cf…eda34e005`](https://testnet.monadscan.com/tx/0x6a52a3cfc7ecdf6400d7d09888e6ef2cf06bd38c2121619a5007d62eda34e005) |
 | $20 to a friend, arriving as ≈ €18.40 | [`0xa92a1733…6b61e0437`](https://testnet.monadscan.com/tx/0xa92a17331a4804556b08779949819220b56aef075c7ada8b5e4c3136b61e0437) |
-| KovaRates, written by Chainlink CRE | [`0x004D499A661756E0eFB972b38d9BAb6C2a538f93`](https://testnet.monadscan.com/address/0x004D499A661756E0eFB972b38d9BAb6C2a538f93) |
-| A Chainlink rate report: NGN 1,328.41, KES 129.72, EUR 0.8821, GBP 0.7549, MXN 18.075 | [`0xe0ebff46…9598c51c`](https://testnet.monadscan.com/tx/0xe0ebff46d1e1517554ab956769ddd4a0a108b85c866831d7663f63029598c51c) |
+| KovaRates, written by Chainlink CRE | [`0xb5322DC6d6AA938C50859f0f0e2DF7b6Da4C9e8e`](https://testnet.monadscan.com/address/0xb5322DC6d6AA938C50859f0f0e2DF7b6Da4C9e8e) |
+| A Chainlink rate report: NGN 1,328.02, KES 129.03, EUR 0.8855, GBP 0.7560, MXN 18.184 | [`0x982e9045…c4fc7694`](https://testnet.monadscan.com/tx/0x982e904589b29fd3a76d0773bb66aa9346eb49ecfaa8faa7f59b4e09c4fc7694) |
 | A bakery sale, $6.50, at a Kova till | [`0x152be347…f1e151265`](https://testnet.monadscan.com/tx/0x152be347b25c3b89a1e70607d7e8d3cb3cd1721adcc3931ac31e784e1f151265) |
 | A send from the one-sheet flow at mykova.app, $2.50 | [`0x3306403e…e6a28ad792`](https://testnet.monadscan.com/tx/0x3306403ec1917c92f39300ab65e85f820101751fc581cc716f04e1e6a28ad792) |
 | $1.00 with a private note ("Puff-puff for the road"), web to phone | [`0xc3645812…e4fd0e05810`](https://testnet.monadscan.com/tx/0xc3645812e47ed594be7ae0d5a8f9f2913688ce3940890ed638045e4fd0e05810) |

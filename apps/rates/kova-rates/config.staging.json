@@ -1,6 +1,7 @@
 {
+  "mode": "production",
   "schedule": "0 */15 * * * *",
-  "receiver": "0x004D499A661756E0eFB972b38d9BAb6C2a538f93",
+  "receiver": "0xb5322DC6d6AA938C50859f0f0e2DF7b6Da4C9e8e",
   "chainSelectorName": "monad-testnet",
   "gasLimit": "400000",
   "maxSpread": 0.02

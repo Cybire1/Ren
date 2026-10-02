@@ -27,10 +27,10 @@ can trust. Those rates come from Chainlink CRE, on Monad.
   the sources disagree on keeps its last good rate; an older report can never move a price back;
   the owner can move the forwarder (simulation → DON).
 - **On Monad testnet:**
-  - KovaRates: `0x004D499A661756E0eFB972b38d9BAb6C2a538f93`
+  - KovaRates: `0xb5322DC6d6AA938C50859f0f0e2DF7b6Da4C9e8e`
   - Deploy: `0x67875eb9dd2a48cdfb866383236cd6caeed21d4a95bef697f5157b14ac3e42b5`
-  - Report (NGN 1,328.41, KES 129.72, EUR 0.8821, GBP 0.7549, MXN 18.075):
-    `0xe0ebff46d1e1517554ab956769ddd4a0a108b85c866831d7663f63029598c51c`
+  - Report (NGN 1,328.02, KES 129.03, EUR 0.8855, GBP 0.7560, MXN 18.184):
+    `0x982e904589b29fd3a76d0773bb66aa9346eb49ecfaa8faa7f59b4e09c4fc7694`
 - **In the product:** Kova's API reads the contract (`GET /v1/rates` → `source: chainlink`), and
   the app and web label every local price "Chainlink rate from 3 min ago". A $20 send to someone
   in Lagos shows "≈ ₦26,568".

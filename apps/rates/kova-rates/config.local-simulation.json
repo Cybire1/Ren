@@ -1,0 +1,7 @@
+{
+  "mode": "local-simulation",
+  "schedule": "0 */15 * * * *",
+  "chainSelectorName": "monad-testnet",
+  "gasLimit": "400000",
+  "maxSpread": 0.02
+}

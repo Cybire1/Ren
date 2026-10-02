@@ -8,3 +8,9 @@ production-settings:
   rpcs:
     - chain-name: monad-testnet
       url: https://testnet-rpc.monad.xyz
+
+# The local run never writes; the CLI still wants an RPC for the chain the workflow names.
+local-simulation:
+  rpcs:
+    - chain-name: monad-testnet
+      url: https://testnet-rpc.monad.xyz

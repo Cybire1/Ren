@@ -75,7 +75,7 @@ Status as of 28 Sep 2026.
 |---|---|
 | AUSD (Agora), every payment's token | `0xa9012a055bd4e0eDfF8Ce09f960291C09D5322dC` |
 | Kova relayer (pays everyone's gas) | `0x5868C3C3D1316AF8a78D2e47ee9F385272771940` |
-| KovaRates (Chainlink CRE writes FX rates) | `0x004D499A661756E0eFB972b38d9BAb6C2a538f93`; report `0xe0ebff46d1e1517554ab956769ddd4a0a108b85c866831d7663f63029598c51c` |
+| KovaRates (Chainlink CRE writes FX rates) | `0xb5322DC6d6AA938C50859f0f0e2DF7b6Da4C9e8e`; report `0x982e904589b29fd3a76d0773bb66aa9346eb49ecfaa8faa7f59b4e09c4fc7694` |
 | A coffee, $4.50, paid in 1.6 s, fee $0.00 | `0x6a52a3cfc7ecdf6400d7d09888e6ef2cf06bd38c2121619a5007d62eda34e005` |
 | $20 to a friend, arrives as €18.40 | `0xa92a17331a4804556b08779949819220b56aef075c7ada8b5e4c3136b61e0437` |
 | A bakery sale, $6.50 | `0x152be347b25c3b89a1e70607d7e8d3cb3cd1721adcc3931ac31e784e1f151265` |
