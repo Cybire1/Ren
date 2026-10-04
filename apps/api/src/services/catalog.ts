@@ -43,6 +43,8 @@ export function slugify(name: string) {
     name
       .toLowerCase()
       .normalize('NFKD')
+      // NFKD splits "á" into "a" and an accent mark: drop the marks, so Tomás is tomas, not toma-s.
+      .replace(/[\u0300-\u036f]/g, '')
       .replace(/['’]/g, '')
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-|-$/g, '')

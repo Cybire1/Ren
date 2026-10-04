@@ -1,6 +1,6 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { View } from 'react-native'
+import { Image, View } from 'react-native'
 import { createItem, getCatalog, getCheckout, lookupBarcode, ringUp, uploadImage } from '@/lib/api'
 import { save } from '@/lib/storage'
 import type { DisplayCurrency } from '@/lib/money'
@@ -42,6 +42,14 @@ const BAKERY = [
   { name: 'Cinnamon bun', price: '3.75', description: 'Cardamom sugar on top' },
   { name: 'Flat white', price: '4.50', description: 'Double shot, whole milk' },
   { name: 'Carrot cake', price: '5.00', description: 'Cream cheese frosting' },
+]
+
+/** A weaver's shop, for the film: each item with its photo, uploaded like any owner's. */
+const WEAVES = [
+  { name: 'Mountain blanket', price: '48.00', description: 'Handwoven wool, three weeks on the loom', photo: require('../../assets/demo/blanket.png') },
+  { name: 'Wool scarf', price: '22.00', description: 'Soft, warm, striped in saffron', photo: require('../../assets/demo/scarf.png') },
+  { name: 'Table runner', price: '16.00', description: 'Diamond weave, finished by hand', photo: require('../../assets/demo/runner.png') },
+  { name: 'Woven pouch', price: '9.00', description: 'For coins, keys, small treasures', photo: require('../../assets/demo/pouch.png') },
 ]
 
 export default function Dev() {
@@ -139,9 +147,15 @@ export default function Dev() {
         if (params.seed) {
           setStep('filling the stall')
           const detail = await stall.refresh()
-          for (const item of params.seed === 'bakery' ? BAKERY : SEED)
-            await createItem({ ...item, stall_ids: detail ? [detail.id] : [] })
-          if (params.seed !== 'bakery') {
+          if (params.seed === 'weaves')
+            for (const { photo, ...item } of WEAVES) {
+              const image = await uploadImage(Image.resolveAssetSource(photo).uri, 'image/png').catch(() => null)
+              await createItem({ ...item, image_id: image?.id ?? null, stall_ids: detail ? [detail.id] : [] })
+            }
+          else
+            for (const item of params.seed === 'bakery' ? BAKERY : SEED)
+              await createItem({ ...item, stall_ids: detail ? [detail.id] : [] })
+          if (params.seed !== 'bakery' && params.seed !== 'weaves') {
             const coke = await lookupBarcode('5449000000996', 'owner').catch(() => null)
             const photo = coke?.suggestion?.image_url
               ? await uploadImage(coke.suggestion.image_url).catch(() => null)
