@@ -51,6 +51,7 @@
         "react-native-nfc-manager",
         {
           "nfcPermission": "Hold a Kova Card near the top of your iPhone to take a payment.",
+          "includeNdefEntitlement": false,
           "selectIdentifiers": [
             "F04B4F564131"
           ]
