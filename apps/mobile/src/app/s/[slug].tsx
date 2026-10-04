@@ -36,8 +36,14 @@ type Basket = Record<string, number>
  * currency, a basket, and two ways to pay: now with Face ID, or by sending the bill to
  * someone who'll pay it from wherever they are.
  */
+/** Development only: a dev link's bag fills once per app run, however often the screen mounts. */
+let devBagFilled = false
+let devOrderPlaced = false
+
 export default function StallFront() {
-  const { slug } = useLocalSearchParams<{ slug: string }>()
+  // bag, note and checkout are development-only: a dev link fills the bag and places the order, so a
+  // film can capture every real screen of buying without anyone tapping.
+  const { slug, bag, note: devNote, checkout } = useLocalSearchParams<{ slug: string; bag?: string; note?: string; checkout?: string }>()
   const { width } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const { profile } = useWallet()
@@ -51,6 +57,19 @@ export default function StallFront() {
       .then(setStall)
       .catch((error: Error) => setProblem(/no such/i.test(error.message) ? 'This stall isn’t here. It may have closed for good.' : error.message))
   }, [slug])
+
+  useEffect(() => {
+    if (!__DEV__ || !bag || !stall || devBagFilled) return
+    devBagFilled = true
+    const next: Basket = {}
+    for (const part of bag.split(';')) {
+      const [name, qty = '1'] = part.split('*')
+      const item = stall.items.find((i) => i.name === name)
+      if (item) next[item.id] = Number(qty)
+    }
+    setBasket(next)
+    setTimeout(() => setOpen(true), 1200)
+  }, [bag, stall])
 
   const currency = profile?.currency ?? 'USD'
   const lines = useMemo(
@@ -234,6 +253,8 @@ export default function StallFront() {
         total={total}
         currency={currency}
         defaultName={profile?.name.split(' ')[0] ?? ''}
+        defaultNote={__DEV__ ? (devNote ?? '') : ''}
+        autoPlace={__DEV__ && checkout === '1'}
         onQty={set}
         onClose={() => setOpen(false)}
         onPaid={() => setBasket({})}
@@ -249,6 +270,8 @@ function BasketSheet({
   total,
   currency,
   defaultName,
+  defaultNote,
+  autoPlace,
   onQty,
   onClose,
   onPaid,
@@ -259,13 +282,16 @@ function BasketSheet({
   total: number
   currency: DisplayCurrency
   defaultName: string
+  defaultNote: string
+  /** Development only: place the order by itself, for a film. */
+  autoPlace: boolean
   onQty: (id: string, quantity: number) => void
   onClose: () => void
   onPaid: () => void
 }) {
   const insets = useSafeAreaInsets()
   const [name, setName] = useState(defaultName)
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState(defaultNote)
   const [busy, setBusy] = useState<'pay' | 'ask' | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const [asked, setAsked] = useState<PlacedOrder | null>(null)
@@ -289,7 +315,7 @@ function BasketSheet({
       else {
         onClose()
         onPaid()
-        router.push({ pathname: '/pay/[id]', params: { id: placed.checkout.id } })
+        router.push({ pathname: '/pay/[id]', params: { id: placed.checkout.id, ...(autoPlace ? { autopay: '1' } : {}) } })
       }
     } catch (error) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
@@ -298,6 +324,17 @@ function BasketSheet({
       setBusy(null)
     }
   }
+
+  useEffect(() => {
+    if (!autoPlace || !visible || lines.length === 0 || devOrderPlaced) return
+    const timer = setTimeout(() => {
+      if (devOrderPlaced) return
+      devOrderPlaced = true
+      void place(false)
+    }, 2600)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlace, visible, lines.length])
 
   const dismiss = () => {
     if (asked) {

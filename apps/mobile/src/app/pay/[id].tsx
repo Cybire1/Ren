@@ -17,8 +17,12 @@ import { Chip, Header, PillButton, Rise, RoundButton, Screen, Sticker, TextLink,
 type Stage = 'loading' | 'review' | 'paying' | 'paid' | 'problem'
 
 /** Paying a shop: see exactly what and to whom, approve (Face ID, unless the wallet is already open), and it's done. */
+/** Development only: a dev link's charge is paid once per app run. */
+let devPaid = false
+
 export default function PayCharge() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  // autopay is development-only: it presses Pay by itself, so a film can capture the real flow.
+  const { id, autopay } = useLocalSearchParams<{ id: string; autopay?: string }>()
   const { profile, balance, payCheckout } = useWallet()
   const [stage, setStage] = useState<Stage>('loading')
   const [checkout, setCheckout] = useState<Checkout | null>(null)
@@ -66,6 +70,17 @@ export default function PayCharge() {
       }
     }
   }
+
+  useEffect(() => {
+    if (!__DEV__ || autopay !== '1' || stage !== 'review' || devPaid) return
+    const timer = setTimeout(() => {
+      if (devPaid) return
+      devPaid = true
+      void pay()
+    }, 2600)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autopay, stage])
 
   if (stage === 'loading')
     return (
