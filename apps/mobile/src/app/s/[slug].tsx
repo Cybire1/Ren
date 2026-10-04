@@ -355,11 +355,11 @@ function BasketSheet({
               <Txt weight="semi" size={14} color={colors.muted} style={styles.label}>
                 Your name <Txt size={13} color="#8C9799">so they know it’s yours</Txt>
               </Txt>
-              <TextInput value={name} onChangeText={setName} maxLength={60} placeholder="Tunde" placeholderTextColor="#8C9799" style={styles.input} />
+              <TextInput value={name} onChangeText={setName} maxLength={60} placeholder="Sam" placeholderTextColor="#8C9799" style={styles.input} />
               <Txt weight="semi" size={14} color={colors.muted} style={styles.label}>
                 A note <Txt size={13} color="#8C9799">optional</Txt>
               </Txt>
-              <TextInput value={note} onChangeText={setNote} maxLength={200} placeholder="No sugar, please" placeholderTextColor="#8C9799" style={styles.input} />
+              <TextInput value={note} onChangeText={setNote} maxLength={200} placeholder="Gift-wrap it, please" placeholderTextColor="#8C9799" style={styles.input} />
 
               {problem ? (
                 <Txt weight="medium" size={14} color={colors.danger} style={{ marginTop: 12, textAlign: 'center' }}>

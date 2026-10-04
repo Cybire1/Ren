@@ -365,11 +365,11 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
                   <label className="field-label" htmlFor="buyer-name">
                     Your name <span className="optional">so they know it’s yours</span>
                   </label>
-                  <input id="buyer-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="Tunde" autoComplete="given-name" />
+                  <input id="buyer-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={60} placeholder="Sam" autoComplete="given-name" />
                   <label className="field-label" htmlFor="buyer-note">
-                    A note for {stall.name} <span className="optional">allergies, anything</span>
+                    A note for {stall.name} <span className="optional">anything they should know</span>
                   </label>
-                  <input id="buyer-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="No sugar, please" />
+                  <input id="buyer-note" value={note} onChange={(e) => setNote(e.target.value)} maxLength={200} placeholder="Gift-wrap it, please" />
                 </div>
                 {error ? <p className="form-error">{error}</p> : null}
                 <div className="basket-pay">
