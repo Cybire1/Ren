@@ -12,6 +12,7 @@ import {
   linkTypedData,
   NO_PERMIT,
   paymentTypedData,
+  permitAbi,
   splitPermit,
   unlinkTypedData,
   updateTypedData,
@@ -147,6 +148,21 @@ export async function cardsOf(holder: Address): Promise<CardRow[]> {
 export async function holderNonce(holder: Address): Promise<bigint> {
   const { contract } = requireCards()
   return publicClient.readContract({ address: contract, abi: kovaCardAbi, functionName: 'nonces', args: [holder] })
+}
+
+/** The wallet's EIP-2612 nonce on the dollar, and what it has allowed the card contract to draw. */
+export async function permitState(holder: Address): Promise<{ nonce: bigint; allowance: bigint }> {
+  const { contract } = requireCards()
+  const [nonce, allowance] = await Promise.all([
+    publicClient.readContract({ address: settlementToken.address, abi: permitAbi, functionName: 'nonces', args: [holder] }),
+    publicClient.readContract({
+      address: settlementToken.address,
+      abi: permitAbi,
+      functionName: 'allowance',
+      args: [holder, contract],
+    }),
+  ])
+  return { nonce, allowance }
 }
 
 export async function serializeCard(row: CardRow) {

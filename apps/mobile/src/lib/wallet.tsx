@@ -3,7 +3,7 @@ import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { type Address, getAddress, isAddress, isAddressEqual, type LocalAccount } from 'viem'
+import { type Address, getAddress, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
 import type { Checkout } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
 import { passkeyDomain } from './config'
@@ -118,6 +118,12 @@ interface Wallet {
    * ownership, which the web checks the same way. It moves no money.
    */
   signMessage: (message: string) => Promise<`0x${string}`>
+  /**
+   * Signs EIP-712 typed data as this wallet (the open session, or Face ID): the Kova Card's link,
+   * limit, freeze and unlink approvals, and the permit that lets a linked card spend. Each says
+   * exactly what it allows; none moves money by itself.
+   */
+  signTypedData: (typedData: TypedDataDefinition) => Promise<`0x${string}`>
   signOut: () => Promise<void>
 }
 
@@ -540,6 +546,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signMessage = useCallback(async (message: string) => (await unlock(0n)).signMessage({ message }), [unlock])
+  const signTypedData = useCallback(
+    async (typedData: TypedDataDefinition) => (await unlock(0n)).signTypedData(typedData),
+    [unlock],
+  )
 
   const createForDev = useCallback(async (name: string, currency: DisplayCurrency) => {
     if (!__DEV__) throw new Error('Development only')
@@ -576,6 +586,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     rememberContact,
     renameContact,
     signMessage,
+    signTypedData,
     signOut,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>

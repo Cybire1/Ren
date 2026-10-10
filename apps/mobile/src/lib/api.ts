@@ -21,6 +21,9 @@ export function setDeviceKey(key: string | null) {
   keys.device = key
 }
 
+/** The device key this phone takes payments with, if it is a till. */
+export const currentDeviceKey = () => keys.device
+
 /** The shop owner's key, set when this phone opened the shop. */
 export function setOwnerKey(key: string | null) {
   keys.owner = key

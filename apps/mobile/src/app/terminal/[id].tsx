@@ -5,11 +5,13 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { settlementToken } from '@/lib/config'
 import { cancelCharge, getCharge, type PaymentIntent, payLinkFor } from '@/lib/api'
+import { CardError, finishTap, isCancelled, type ReadTap, readTap } from '@/lib/card'
 import { useShop } from '@/lib/shop'
 import { colors } from '@/lib/theme'
 import { KoviPeek, peekEdge } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
+import { PinEntry } from '@/ui/PinEntry'
 import { PaidScene } from '@/ui/PaidScene'
 import { Stage as KoviStage } from '@/ui/Stage'
 import { Chip, PillButton, Rise, RoundButton, Screen, Sticker, TextLink, Txt } from '@/ui/primitives'
@@ -26,6 +28,38 @@ export default function CustomerDisplay() {
   const [intent, setIntent] = useState<PaymentIntent | null>(null)
   const started = useRef(Date.now())
   const [tookMs, setTookMs] = useState<number | null>(null)
+  // A Kova Card tap: read and signed in one NFC session, then paid, with the PIN when it's asked.
+  const [tap, setTap] = useState<
+    | { at: 'idle'; problem?: string }
+    | { at: 'reading' }
+    | { at: 'pin'; read: ReadTap; signature: `0x${string}`; pin: string; problem?: string }
+    | { at: 'paying' }
+  >({ at: 'idle' })
+
+  const pay = async (read: ReadTap, signature: `0x${string}`, pin?: string) => {
+    setTap({ at: 'paying' })
+    try {
+      await finishTap(read.id, signature, pin)
+      setIntent(await getCharge(id))
+    } catch (error) {
+      const details = error instanceof CardError ? error.details : {}
+      const message = error instanceof Error ? error.message : 'That didn’t work. Tap again.'
+      // A wrong PIN keeps the same signed tap: the customer just tries the PIN again.
+      if (details.pin_required && pin !== undefined) setTap({ at: 'pin', read, signature, pin: '', problem: message })
+      else setTap({ at: 'idle', problem: message })
+    }
+  }
+
+  const tapCard = async () => {
+    setTap({ at: 'reading' })
+    try {
+      const { tap: read, signature } = await readTap(id)
+      if (read.pin_required) setTap({ at: 'pin', read, signature, pin: '' })
+      else await pay(read, signature)
+    } catch (error) {
+      setTap(isCancelled(error) ? { at: 'idle' } : { at: 'idle', problem: error instanceof Error ? error.message : 'That didn’t work. Tap again.' })
+    }
+  }
 
   useEffect(() => {
     let cancelled = false
@@ -116,6 +150,42 @@ export default function CustomerDisplay() {
       </Screen>
     )
 
+  if (tap.at === 'pin')
+    return (
+      <Screen bg={colors.paper}>
+        <View style={styles.top}>
+          <RoundButton icon="close" label="Cancel tap" onPress={() => setTap({ at: 'idle' })} />
+          <Txt weight="semi" size={18}>
+            Pay {shop.name}
+          </Txt>
+          <Chip label="Card •••" icon="tap" />
+        </View>
+        <View style={{ alignItems: 'center', marginTop: 24, paddingHorizontal: 24 }}>
+          <Txt weight="bold" size={56} style={{ letterSpacing: -2 }} numberOfLines={1} adjustsFontSizeToFit>
+            {price}
+          </Txt>
+          <Txt weight="semi" size={24} style={{ marginTop: 8 }}>
+            Enter your card PIN
+          </Txt>
+          <Txt size={15} color={colors.muted} style={{ marginTop: 4, textAlign: 'center' }}>
+            Cover the keys while you type. Kova checks it; the shop never sees it.
+          </Txt>
+        </View>
+        <View style={{ marginTop: 'auto', paddingBottom: 16 }}>
+          <PinEntry
+            value={tap.pin}
+            length={4}
+            max={6}
+            error={tap.problem ?? null}
+            onChange={(next) => {
+              setTap({ ...tap, pin: next, problem: undefined })
+              if (next.length === 4) void pay(tap.read, tap.signature, next)
+            }}
+          />
+        </View>
+      </Screen>
+    )
+
   const qr = Math.min(width - 150, 240)
   return (
     <Screen bg={colors.tealSoft}>
@@ -161,8 +231,22 @@ export default function CustomerDisplay() {
             Scan with Kova Pay or any Monad wallet
           </Txt>
         </View>
+        {tap.at === 'idle' && tap.problem ? (
+          <Txt weight="medium" size={15} color={colors.danger} style={{ textAlign: 'center', marginTop: 12 }}>
+            {tap.problem}
+          </Txt>
+        ) : null}
       </View>
-      <View style={[styles.footer, { alignItems: 'center' }]}>
+      <View style={[styles.footer, { alignItems: 'center', gap: 12 }]}>
+        <View style={{ alignSelf: 'stretch' }}>
+          <PillButton
+            label={tap.at === 'paying' ? 'Paying…' : tap.at === 'reading' ? 'Hold the card to the phone' : 'Tap a Kova Card'}
+            icon="tap"
+            tone="white"
+            loading={tap.at === 'reading' || tap.at === 'paying'}
+            onPress={() => void tapCard()}
+          />
+        </View>
         <TextLink
           label="Cancel charge"
           onPress={async () => {

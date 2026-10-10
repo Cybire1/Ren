@@ -19,6 +19,7 @@ import {
   completeTap,
   getTap,
   holderNonce,
+  permitState,
   linkCard,
   MAX_DAILY_LIMIT,
   NO_PIN_LIMIT,
@@ -109,8 +110,16 @@ export const cardRoutes = new Hono()
     requireCards()
     const holder = c.req.param('address')
     if (!isAddress(holder)) throw new KovaError('invalid_request', 'Not a Monad address.')
-    const [rows, nonce] = await Promise.all([cardsOf(getAddress(holder)), holderNonce(getAddress(holder))])
-    return c.json({ object: 'list', nonce: nonce.toString(), data: await Promise.all(rows.map(serializeCard)) })
+    const wallet = getAddress(holder)
+    const [rows, nonce, permit] = await Promise.all([cardsOf(wallet), holderNonce(wallet), permitState(wallet)])
+    return c.json({
+      object: 'list',
+      // What the wallet's next card signature must carry, and where its allowance to cards stands.
+      nonce: nonce.toString(),
+      permit_nonce: permit.nonce.toString(),
+      allowance: permit.allowance.toString(),
+      data: await Promise.all(rows.map(serializeCard)),
+    })
   })
   .get('/cards/:card', async (c) => {
     requireCards()

@@ -162,6 +162,9 @@ importers:
 
   packages/monad:
     dependencies:
+      '@noble/curves':
+        specifier: 1.9.1
+        version: 1.9.1
       viem:
         specifier: 2.56.8
         version: 2.56.8(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.6.5)
@@ -5861,7 +5864,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.7
+      '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 

@@ -14,7 +14,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSFaceIDUsageDescription": "Use Face ID to approve payments and unlock your Kova wallet.",
-        "NFCReaderUsageDescription": "Hold a Kova Card near the top of your iPhone to take a payment."
+        "NFCReaderUsageDescription": "Kova reads Kova Cards to link them to your wallet and to take card payments at your till."
       },
       "associatedDomains": [
         "webcredentials:mykova.app",
@@ -50,10 +50,11 @@
       [
         "react-native-nfc-manager",
         {
-          "nfcPermission": "Hold a Kova Card near the top of your iPhone to take a payment.",
+          "nfcPermission": "Kova reads Kova Cards to link them to your wallet and to take card payments at your till.",
           "includeNdefEntitlement": false,
           "selectIdentifiers": [
-            "F04B4F564131"
+            "A0000009490148614C6F",
+            "481199130E9F01"
           ]
         }
       ],
