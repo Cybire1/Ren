@@ -6,6 +6,7 @@ import { feePayerAddress, network } from './chain.js'
 import { config } from './config.js'
 import { errorHandler } from './errors.js'
 import { accountRoutes } from './routes/account.js'
+import { cardRoutes, cardTapRoutes } from './routes/cards.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { checkoutRoutes } from './routes/checkout.js'
 import { healthRoutes } from './routes/health.js'
@@ -34,6 +35,7 @@ app.route('/health', healthRoutes)
 app.route('/v1/checkout', checkoutRoutes)
 app.route('/v1/payment_intents', intentRoutes)
 app.route('/v1/terminals', terminalRoutes)
+app.route('/v1/card_taps', cardTapRoutes)
 app.route('/v1', accountRoutes)
 app.route('/v1', catalogRoutes)
 app.route('/v1', stallRoutes)
@@ -43,6 +45,7 @@ app.route('/v1', insightRoutes)
 // Public: wallets are addresses and prove themselves by signing. Mounted before any router whose
 // middleware covers all of /v1 (reports asks for an API key).
 app.route('/v1', walletRoutes)
+app.route('/v1', cardRoutes)
 app.route('/v1', rateRoutes)
 app.route('/v1', webhookRoutes)
 app.route('/v1', reportRoutes)

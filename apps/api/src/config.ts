@@ -67,6 +67,15 @@ const schema = z.object({
   /** Ramp Network: card and bank top-ups (and cash-out), buying AUSD on Monad. Key from partner@ramp.network. */
   RAMP_HOST_API_KEY: z.string().optional(),
   JEV_MODEL: z.string().optional(),
+  /**
+   * Kova Card: the key that cosigns every tap after Kova's checks (PIN, freeze). It can only
+   * refuse payments, never make one: each also needs the card's own signature. Without it, cards
+   * are off. Rotate with KovaCard.setCosigner.
+   */
+  KOVA_CARD_COSIGNER_KEY: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{64}$/)
+    .optional(),
 })
 
 export type Config = z.infer<typeof schema>

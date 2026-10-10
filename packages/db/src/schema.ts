@@ -763,3 +763,66 @@ export const tripShares = pgTable(
     index('trip_shares_trip_idx').on(t.tripId),
   ],
 )
+
+/**
+ * Kova Cards: NFC chips whose own key spends from a wallet through the KovaCard contract on
+ * Monad. The chain holds who owns a card, its daily limit and whether it is frozen; this holds
+ * what Kova checks before it cosigns a tap: the PIN, and a freeze that takes effect before the
+ * chain has heard of it.
+ */
+export const kovaCards = pgTable(
+  'kova_cards',
+  {
+    /** The card's own address (its key never leaves the chip). Lowercase. */
+    address: address('address').primaryKey(),
+    network: network('network').notNull(),
+    /** The wallet it spends from. Lowercase. */
+    holderAddress: address('holder_address').notNull(),
+    label: text('label').notNull().default('Kova Card'),
+    lastFour: text('last_four').notNull(),
+    /** scrypt: salt.hash, base64url. Checked by Kova at the till, never stored on the phone. */
+    pinHash: text('pin_hash').notNull(),
+    failedPins: integer('failed_pins').notNull().default(0),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
+    /** Taps at or under this many base units need no PIN, like contactless cards. */
+    noPinLimit: amount('no_pin_limit').notNull(),
+    frozen: boolean('frozen').notNull().default(false),
+    /** active, or unlinked for good. */
+    status: text('status').notNull().default('active'),
+    linkTxHash: text('link_tx_hash'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('kova_cards_holder_idx').on(t.holderAddress)],
+)
+
+/**
+ * One tap at a till: the payment Kova prepared for the card to sign, and what came of it. A tap
+ * pays its charge at most once, whatever the till retries.
+ */
+export const cardTaps = pgTable(
+  'card_taps',
+  {
+    id: id(),
+    cardAddress: address('card_address')
+      .notNull()
+      .references(() => kovaCards.address),
+    intentId: uuid('intent_id')
+      .notNull()
+      .references(() => paymentIntents.id),
+    terminalId: uuid('terminal_id').references(() => terminals.id),
+    amount: amount('amount').notNull(),
+    payTo: address('pay_to').notNull(),
+    memo: text('memo').notNull(),
+    /** Unix seconds after which neither signature is any use. */
+    deadline: bigint('deadline', { mode: 'number' }).notNull(),
+    pinRequired: boolean('pin_required').notNull(),
+    /** prepared, paid or failed. */
+    status: text('status').notNull().default('prepared'),
+    txHash: text('tx_hash'),
+    failure: text('failure'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('card_taps_card_idx').on(t.cardAddress, t.createdAt), index('card_taps_intent_idx').on(t.intentId)],
+)

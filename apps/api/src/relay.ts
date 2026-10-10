@@ -85,7 +85,7 @@ async function submit(token: Token, authorization: TransferAuthorization, signat
 }
 
 /** The estimate refused the call: nothing was sent and no gas was spent. */
-class RefusedEstimate extends Error {
+export class RefusedEstimate extends Error {
   constructor(readonly cause: unknown) {
     super('estimate refused')
   }
@@ -96,7 +96,7 @@ class RefusedEstimate extends Error {
  * One round-trip to check (estimate, with fees and nonce alongside), a local signature, then one
  * eth_sendRawTransactionSync that returns the receipt.
  */
-export async function sendFromRelayer(to: Hex, data: Hex): Promise<TransactionReceipt> {
+export async function sendFromRelayer(to: Hex, data: Hex, options: { maxGas?: bigint } = {}): Promise<TransactionReceipt> {
   if (!walletClient || !feePayerAccount) throw new KovaError('chain_error', 'Payments are not switched on for this server yet.')
   let gas: bigint
   let fees: Fees
@@ -113,7 +113,7 @@ export async function sendFromRelayer(to: Hex, data: Hex): Promise<TransactionRe
     resetNonce()
     throw new RefusedEstimate(error)
   }
-  if (gas > config.KOVA_MAX_RELAY_GAS) {
+  if (gas > (options.maxGas ?? config.KOVA_MAX_RELAY_GAS)) {
     resetNonce()
     throw new KovaError('policy_declined', 'This payment would cost more gas than Kova relays.')
   }

@@ -1,5 +1,6 @@
 import { type Address, decodeEventLog, type Hex, isAddressEqual, type Log, type TransactionReceipt } from 'viem'
 import { eip3009Abi } from './authorization.js'
+import { decodeCardPayments } from './card.js'
 
 export interface AuthorizedTransfer {
   authorizer: Address
@@ -45,6 +46,36 @@ export function decodeAuthorizedTransfers(logs: readonly Log[], token: Address):
   })
 }
 
+/**
+ * Pairs each Kova Card payment with the Transfer it made: the KovaCard contract draws `amount`
+ * from the holder's wallet to the shop and records the charge's memo beside it. Reported in the
+ * same shape as an authorization, the holder as the authorizer and the memo as the nonce, so a
+ * card tap settles and indexes exactly like any other Kova payment.
+ */
+export function decodeCardTransfers(logs: readonly Log[], token: Address, cardContract: Address | null | undefined): AuthorizedTransfer[] {
+  const payments = decodeCardPayments(logs, cardContract ?? null)
+  if (payments.length === 0) return []
+  const transfers: { from: Address; to: Address; value: bigint; logIndex: number }[] = []
+  logs.forEach((log, position) => {
+    if (!isAddressEqual(log.address, token)) return
+    try {
+      const event = decodeEventLog({ abi: eip3009Abi, data: log.data, topics: log.topics })
+      if (event.eventName === 'Transfer') transfers.push({ ...event.args, logIndex: log.logIndex ?? position })
+    } catch {
+      // Not a token event.
+    }
+  })
+  const taken = new Set<number>()
+  return payments.flatMap((p) => {
+    const match = transfers
+      .filter((t) => !taken.has(t.logIndex) && isAddressEqual(t.from, p.holder) && isAddressEqual(t.to, p.to) && t.value === p.amount)
+      .sort((a, b) => Math.abs(a.logIndex - p.logIndex) - Math.abs(b.logIndex - p.logIndex))[0]
+    if (!match) return []
+    taken.add(match.logIndex)
+    return [{ authorizer: p.holder, nonce: p.memo, to: p.to, value: p.amount, logIndex: p.logIndex, transferLogIndex: match.logIndex }]
+  })
+}
+
 export interface TokenTransfer {
   from: Address
   to: Address
@@ -61,8 +92,8 @@ export interface TokenTransfer {
  * own signature and does not enforce an eventName, so an AuthorizationUsed log "decodes" too,
  * with no from or to.
  */
-export function decodeTokenTransfers(logs: readonly Log[], token: Address): TokenTransfer[] {
-  const authorized = decodeAuthorizedTransfers(logs, token)
+export function decodeTokenTransfers(logs: readonly Log[], token: Address, cardContract?: Address | null): TokenTransfer[] {
+  const authorized = [...decodeAuthorizedTransfers(logs, token), ...decodeCardTransfers(logs, token, cardContract)]
   const transfers: TokenTransfer[] = []
   logs.forEach((log, position) => {
     if (!isAddressEqual(log.address, token)) return
@@ -94,6 +125,8 @@ export interface ExpectedPayment {
   amount: bigint
   /** The charge's Kova memo, which the authorization's nonce must equal. */
   memo: Hex
+  /** The KovaCard contract, whose card payments count too. */
+  cardContract?: Address | null
 }
 
 export interface PaymentVerdict {
@@ -102,13 +135,16 @@ export interface PaymentVerdict {
 }
 
 /**
- * Decides whether a receipt paid a charge: an authorization whose nonce is the charge's memo,
+ * Decides whether a receipt paid a charge: an authorization (or a Kova Card tap) carrying the charge's memo,
  * moving exactly the amount, in the right token, to the merchant. A transfer that matches on
  * everything but the memo is reported, never counted.
  */
 export function verifyPayment(receipt: Pick<TransactionReceipt, 'status' | 'logs'>, expected: ExpectedPayment): PaymentVerdict {
   if (receipt.status !== 'success') return { status: 'failed' }
-  const moves = decodeAuthorizedTransfers(receipt.logs, expected.token)
+  const moves = [
+    ...decodeAuthorizedTransfers(receipt.logs, expected.token),
+    ...decodeCardTransfers(receipt.logs, expected.token, expected.cardContract),
+  ]
   const exact = moves.find((m) => m.nonce.toLowerCase() === expected.memo.toLowerCase())
   if (exact) {
     if (!isAddressEqual(exact.to, expected.payTo) || exact.value !== expected.amount) return { status: 'unmatched' }

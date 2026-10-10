@@ -1,5 +1,14 @@
 import { schema, uuidv7 } from '@kova/db'
-import { decodeAuthorizedTransfers, decodeMemo, decodeTokenTransfers, eip3009Abi, LOG_RANGE } from '@kova/monad'
+import {
+  decodeAuthorizedTransfers,
+  decodeCardTransfers,
+  decodeMemo,
+  decodeTokenTransfers,
+  eip3009Abi,
+  kovaCardAbi,
+  kovaCardAddress,
+  LOG_RANGE,
+} from '@kova/monad'
 import { eq } from 'drizzle-orm'
 import { type Address, getAbiItem, type Hash, isAddressEqual, type Log } from 'viem'
 import { acceptedTokens, network, publicClient } from '../chain.js'
@@ -21,8 +30,15 @@ import { settleFromReceipt } from '../services/settle.js'
  * reorganized away.
  */
 
-const events = [getAbiItem({ abi: eip3009Abi, name: 'AuthorizationUsed' }), getAbiItem({ abi: eip3009Abi, name: 'Transfer' })]
+const events = [
+  getAbiItem({ abi: eip3009Abi, name: 'AuthorizationUsed' }),
+  getAbiItem({ abi: eip3009Abi, name: 'Transfer' }),
+  getAbiItem({ abi: kovaCardAbi, name: 'CardPayment' }),
+]
 const tokens: Address[] = acceptedTokens.map((t) => t.address)
+/** Card taps: the KovaCard contract records which charge each one paid. */
+const cardContract = kovaCardAddress(config.KOVA_NETWORK)
+const watched: Address[] = cardContract ? [...tokens, cardContract] : tokens
 
 /** About 15 minutes of blocks: a fresh deployment still sees every charge that could be open. */
 const COLD_START_LOOKBACK = 3_000n
@@ -89,9 +105,12 @@ export async function handleLogs(logs: Log[]): Promise<number> {
     for (const token of tokens) {
       const tokenLogs = txLogs.filter((log) => isAddressEqual(log.address, token))
       if (tokenLogs.length === 0) continue
-      const authorized = decodeAuthorizedTransfers(tokenLogs, token)
+      // Card taps pair a CardPayment with the token's Transfer, so both kinds of log are in play.
+      const cardLogs = cardContract ? txLogs.filter((log) => isAddressEqual(log.address, cardContract)) : []
+      const paired = [...tokenLogs, ...cardLogs]
+      const authorized = [...decodeAuthorizedTransfers(tokenLogs, token), ...decodeCardTransfers(paired, token, cardContract)]
       if (authorized.some((a) => decodeMemo(a.nonce)?.kind === 'payment')) paysACharge = true
-      for (const transfer of decodeTokenTransfers(tokenLogs, token)) {
+      for (const transfer of decodeTokenTransfers(paired, token, cardContract)) {
         const log = tokenLogs.find((l) => l.logIndex === transfer.logIndex)
         if (!log || log.blockNumber === null) continue
         rows.push({
@@ -137,7 +156,7 @@ export async function catchUp(fromBlock: bigint, toBlock: bigint): Promise<numbe
       start = end + 1n
     }
     const batches = await Promise.all(
-      windows.map(([from, to]) => publicClient.getLogs({ address: tokens, events, fromBlock: from, toBlock: to })),
+      windows.map(([from, to]) => publicClient.getLogs({ address: watched, events, fromBlock: from, toBlock: to })),
     )
     for (const logs of batches) recorded += await handleLogs(logs as Log[])
   }
