@@ -17,10 +17,10 @@ import type { NetworkId } from './networks.js'
  * set on-chain. The money never leaves the wallet until a tap sends it to the shop.
  */
 
-/** KovaCard deployments. Testnet deployed 2026-10-10, owned by Kova's relayer. */
+/** KovaCard deployments, each owned by Kova's relayer: testnet 2026-10-10, mainnet 2026-10-11 (tx 0xccdea354…901f17). */
 export const kovaCardAddresses: Record<NetworkId, Address | null> = {
   testnet: getAddress('0x8430a32F08b6E4771eaa432729107492266A203d'),
-  mainnet: null,
+  mainnet: getAddress('0x9bee9F2D59d9675F2723B274e1276F5931Ef325E'),
 }
 
 export function kovaCardAddress(network: NetworkId): Address | null {
