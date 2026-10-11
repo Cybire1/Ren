@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Art, type ArtName, Icon, LogoMark } from './brand'
 
-type Currency = 'gbp' | 'eur' | 'ngn'
+type Currency = 'gbp' | 'eur'
 
 interface Receipt {
   shop: string
@@ -20,7 +20,7 @@ interface Receipt {
 const RECEIPTS: Receipt[] = [
   {
     shop: 'Ada’s Bakery',
-    where: 'Lagos',
+    where: 'Singapore',
     at: 'Thursday 3:12 pm',
     items: [
       ['2 × Flat white', '$9.00'],
@@ -45,17 +45,17 @@ const RECEIPTS: Receipt[] = [
     coin: 'eur',
   },
   {
-    shop: 'Mama Tee’s Kitchen',
-    where: 'Accra',
+    shop: 'Luz Taquería',
+    where: 'Mexico City',
     at: 'Saturday 1:05 pm',
     items: [
-      ['Jollof and chicken', '$6.50'],
-      ['Sobolo', '$1.50'],
+      ['Tacos al pastor × 3', '$6.50'],
+      ['Agua de jamaica', '$1.50'],
     ],
     total: '$8.00',
-    saw: '₦11,000',
-    from: 'Abuja',
-    coin: 'ngn',
+    saw: '£6.32',
+    from: 'Manchester',
+    coin: 'gbp',
   },
 ]
 
@@ -73,7 +73,6 @@ const CYCLE = 8200
 const COINS: { name: ArtName; currency: Currency | 'usd'; className: string }[] = [
   { name: 'coin-eur', currency: 'eur', className: 'rh-coin rh-coin-eur' },
   { name: 'coin-gbp', currency: 'gbp', className: 'rh-coin rh-coin-gbp' },
-  { name: 'coin-ngn', currency: 'ngn', className: 'rh-coin rh-coin-ngn' },
   { name: 'coin-usd', currency: 'usd', className: 'rh-coin rh-coin-usd' },
 ]
 

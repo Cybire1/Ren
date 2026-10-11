@@ -157,7 +157,7 @@ export default function Travel() {
               <TextInput
                 value={sentence}
                 onChangeText={setSentence}
-                placeholder="Lagos to London next Friday, back Sunday"
+                placeholder="Lisbon to London next Friday, back Sunday"
                 placeholderTextColor="#8C9799"
                 multiline
                 returnKeyType="go"

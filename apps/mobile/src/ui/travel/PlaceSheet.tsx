@@ -44,7 +44,7 @@ export function PlaceSheet({ visible, title, onClose, onPick }: { visible: boole
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="City or airport, like Lagos or LHR"
+          placeholder="City or airport, like Lisbon or LHR"
           placeholderTextColor="#8C9799"
           autoFocus
           autoCorrect={false}

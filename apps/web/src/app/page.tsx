@@ -100,7 +100,7 @@ export default async function Landing() {
         </article>
         <article className="lp-panel lp-panel-coral" id="people">
           <p className="lp-panel-kicker">Kova Pay, for people</p>
-          <h2>Pay a shop in Lagos with dollars from London</h2>
+          <h2>Pay a shop in Singapore with dollars from London</h2>
           <ul>
             <li>
               <Icon name="tap" size={18} /> Tap to pay at the counter, confirmed with Face ID. Your key never leaves your phone.
@@ -109,7 +109,7 @@ export default async function Landing() {
               <Icon name="send" size={18} /> Send money to anyone, anywhere, in seconds, for a fraction of a cent.
             </li>
             <li>
-              <Icon name="globe" size={18} /> See every amount in your own currency: dollars, euros, pounds or naira.
+              <Icon name="globe" size={18} /> See every amount in your own currency: dollars, euros or pounds.
             </li>
           </ul>
           <div className="lp-flight">
@@ -131,9 +131,6 @@ export default async function Landing() {
           </span>
           <span>
             <Art name="coin-gbp" size={44} /> £9.88
-          </span>
-          <span>
-            <Art name="coin-ngn" size={44} /> ₦17,188
           </span>
         </div>
         <small>At Kova’s published reference rates. Payments always settle in dollars (AUSD, Agora’s dollar).</small>

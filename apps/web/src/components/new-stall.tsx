@@ -27,7 +27,7 @@ export function NewStall() {
           <label className="field-label" htmlFor="stall-tagline">
             A line about it <span className="optional">optional</span>
           </label>
-          <input id="stall-tagline" name="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Fresh every morning in Yaba" maxLength={120} />
+          <input id="stall-tagline" name="tagline" value={tagline} onChange={(e) => setTagline(e.target.value)} placeholder="Fresh every morning, round the corner" maxLength={120} />
           {state.error ? <p className="form-error">{state.error}</p> : null}
           <Pill type="submit" icon="arrow" tone="coral" disabled={pending} wide>
             {pending ? 'Opening' : 'Open my stall'}

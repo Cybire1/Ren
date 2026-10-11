@@ -117,7 +117,7 @@ export function StallEditor({ stall: initial, catalogue: initialCatalogue }: { s
               onChange={(e) => setTagline(e.target.value)}
               onBlur={() => tagline.trim() !== (stall.tagline ?? '') && save({ tagline: tagline.trim() || null }, 'Saved')}
               maxLength={120}
-              placeholder="Fresh every morning in Yaba"
+              placeholder="Fresh every morning, round the corner"
             />
           </div>
         </section>

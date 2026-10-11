@@ -124,7 +124,7 @@ export default function OpenStall() {
           <TextInput
             value={tagline}
             onChangeText={setTagline}
-            placeholder="Fresh bread and coffee, Lekki Phase 1"
+            placeholder="Fresh bread and coffee, round the corner"
             placeholderTextColor="#8C9799"
             maxLength={120}
             editable={!step}

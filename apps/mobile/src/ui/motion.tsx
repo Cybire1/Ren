@@ -153,7 +153,7 @@ export function CoinRain({ width, height = 240 }: { width: number; height?: numb
     { x: 0.52, size: 46, symbol: '$', delay: 400, dur: 2900, spin: 1 },
     { x: 0.74, size: 34, symbol: '£', delay: 1500, dur: 2500, spin: -1 },
     { x: 0.9, size: 42, symbol: '$', delay: 700, dur: 2700, spin: 1 },
-    { x: 0.2, size: 28, symbol: '₦', delay: 1900, dur: 2200, spin: -1 },
+    { x: 0.2, size: 28, symbol: '$', delay: 1900, dur: 2200, spin: -1 },
     { x: 0.64, size: 32, symbol: '€', delay: 2300, dur: 2400, spin: 1 },
     { x: 0.42, size: 26, symbol: '£', delay: 1200, dur: 2100, spin: -1 },
   ]
