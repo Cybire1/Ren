@@ -164,7 +164,7 @@ export default function StallFront() {
               const local = about(item.price, currency)
               return (
                 <View key={item.id} style={[styles.item, qty > 0 && styles.itemIn, item.sold_out && { opacity: 0.55 }]}>
-                  <ItemFace item={item} size={76} radius={20} />
+                  <ItemFace item={item} size={64} radius={17} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Txt weight="semi" size={17} numberOfLines={2}>
                       {item.name}
@@ -498,19 +498,19 @@ const styles = StyleSheet.create({
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    padding: 10,
-    paddingRight: 12,
-    borderRadius: 26,
+    gap: 12,
+    padding: 8,
+    paddingRight: 10,
+    borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,
   },
   itemIn: { backgroundColor: colors.white },
-  add: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.coral, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  add: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.coral, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   barWrap: { position: 'absolute', left: 20, right: 20 },
-  bar: { height: 64, borderRadius: 32, backgroundColor: colors.ink, flexDirection: 'row', alignItems: 'center', gap: 14, paddingLeft: 8, paddingRight: 24 },
-  barCount: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.coral, alignItems: 'center', justifyContent: 'center' },
+  bar: { height: 56, borderRadius: 28, backgroundColor: colors.ink, flexDirection: 'row', alignItems: 'center', gap: 14, paddingLeft: 8, paddingRight: 24 },
+  barCount: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.coral, alignItems: 'center', justifyContent: 'center' },
   backdrop: { flex: 1, backgroundColor: 'rgba(11,26,29,0.32)' },
   sheet: { maxHeight: '88%', backgroundColor: colors.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 20, paddingTop: 10 },
   grip: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(11,26,29,0.16)' },
@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderTopWidth: 2, borderColor: colors.ink },
   label: { marginTop: 16, marginBottom: 8, marginLeft: 4 },
   input: {
-    height: 52,
+    height: 46,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: colors.ink,

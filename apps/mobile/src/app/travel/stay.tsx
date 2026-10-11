@@ -248,7 +248,7 @@ const styles = StyleSheet.create({
   amenities: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
   amenity: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.sunken, justifyContent: 'center' },
   room: { marginBottom: 14, padding: 14, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, gap: 4 },
-  roomPhoto: { width: 64, height: 64, borderRadius: 16, backgroundColor: colors.sunken },
+  roomPhoto: { width: 56, height: 56, borderRadius: 14, backgroundColor: colors.sunken },
   rate: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 12, marginTop: 8, borderTopWidth: 1, borderColor: colors.sunken },
   choose: { height: 38, paddingHorizontal: 18, borderRadius: 19, backgroundColor: colors.ink, justifyContent: 'center' },
 })

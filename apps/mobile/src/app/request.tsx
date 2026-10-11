@@ -74,7 +74,7 @@ export default function Request() {
           style={styles.note}
         />
       </View>
-      <Keypad onKey={(key) => setTyped((v) => applyKey(v, key))} size={68} />
+      <Keypad onKey={(key) => setTyped((v) => applyKey(v, key))} size={60} />
       <View style={[styles.footer, { marginTop: 14 }]}>
         <PillButton label="Create request" icon="request" disabled={amount <= 0} onPress={() => setReady(true)} />
       </View>

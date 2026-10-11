@@ -16,7 +16,7 @@ export function PinEntry({
   length = 4,
   max = 6,
   error,
-  keySize = 68,
+  keySize = 60,
 }: {
   value: string
   onChange: (next: string) => void

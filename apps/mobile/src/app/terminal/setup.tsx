@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
   boxes: { flexDirection: 'row', gap: 8, marginTop: 26 },
   box: {
     flex: 1,
-    height: 64,
+    height: 56,
     borderRadius: 18,
     borderWidth: 2,
     borderColor: 'rgba(11,26,29,0.18)',
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   name: {
-    height: 56,
+    height: 50,
     borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,

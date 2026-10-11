@@ -85,8 +85,8 @@ export function ShopRail({ state, navigation }: BottomTabBarProps) {
 
 const styles = StyleSheet.create({
   rail: { width: RAIL, backgroundColor: colors.ink, alignItems: 'center', paddingHorizontal: 12 },
-  mark: { width: 64, height: 64, borderRadius: 32, borderWidth: 2, borderColor: colors.yellow, alignItems: 'center', justifyContent: 'center' },
-  item: { width: 88, height: 76, borderRadius: 22, alignItems: 'center', justifyContent: 'center', gap: 4 },
+  mark: { width: 56, height: 56, borderRadius: 28, borderWidth: 2, borderColor: colors.yellow, alignItems: 'center', justifyContent: 'center' },
+  item: { width: 88, height: 66, borderRadius: 22, alignItems: 'center', justifyContent: 'center', gap: 4 },
   itemOn: { backgroundColor: colors.surface },
   count: {
     position: 'absolute',

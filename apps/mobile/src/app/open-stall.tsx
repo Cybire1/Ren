@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   kovi: { position: 'absolute', right: 18 },
   label: { marginTop: 20, marginBottom: 8, marginLeft: 4 },
   input: {
-    height: 56,
+    height: 50,
     borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,

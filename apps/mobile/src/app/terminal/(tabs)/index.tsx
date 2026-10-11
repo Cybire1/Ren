@@ -364,7 +364,7 @@ function CartPanel({
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 12 }}>
           {lines.map(({ item, quantity }) => (
             <View key={item.id} style={styles.cartLine}>
-              <ItemFace item={item} size={52} radius={14} />
+              <ItemFace item={item} size={46} radius={12} />
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Txt weight="semi" size={15} numberOfLines={1}>
                   {item.name}
@@ -428,7 +428,7 @@ function KeypadPanel({ bottom }: { bottom: number }) {
   const usd = local > 0 ? localToUsd(local, shop.currency) : '0.00'
   const label = `${info.symbol}${groupTyped(typed)}`
   // The keypad is four rows of (key + 4) with 12 between them.
-  const key = space ? Math.max(48, Math.min(66, Math.floor((space - 52 - ENTRY) / 4))) : 60
+  const key = space ? Math.max(46, Math.min(58, Math.floor((space - 52 - ENTRY) / 4))) : 60
   const roomy = space === 0 || space - (4 * key + 52) >= ENTRY - 12
 
   const charge = async () => {
@@ -879,7 +879,7 @@ function NotInCatalogue({
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <View style={styles.grip} />
           <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', marginTop: 16 }}>
-            {s ? <ItemFace item={{ name: s.name, image_url: s.image_url }} size={72} /> : <Kovi pose="oops" size={80} />}
+            {s ? <ItemFace item={{ name: s.name, image_url: s.image_url }} size={62} /> : <Kovi pose="oops" size={80} />}
             <View style={{ flex: 1 }}>
               <Txt weight="bold" size={22} style={{ letterSpacing: -0.4 }}>
                 Not in your catalogue

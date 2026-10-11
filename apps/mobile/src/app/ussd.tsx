@@ -332,10 +332,10 @@ function Live({
       {busy === 'topup' ? <Txt size={13} color={colors.muted} style={{ marginTop: 8 }}>Adding…</Txt> : null}
 
       <View style={{ flexDirection: 'row', gap: 10, marginTop: 14 }}>
-        <Sticker radius={20} onPress={onTakeBack} disabled={busy !== null || Number(pocket.balance ?? 0) <= 0} style={{ flex: 1, height: 56 }} innerStyle={styles.action}>
+        <Sticker radius={20} onPress={onTakeBack} disabled={busy !== null || Number(pocket.balance ?? 0) <= 0} style={{ flex: 1, height: 50 }} innerStyle={styles.action}>
           <Txt weight="semi" size={15}>{busy === 'back' ? 'Moving…' : 'Back to wallet'}</Txt>
         </Sticker>
-        <Sticker radius={20} onPress={() => setPin(pin === null ? '' : null)} disabled={busy !== null} style={{ flex: 1, height: 56 }} innerStyle={styles.action}>
+        <Sticker radius={20} onPress={() => setPin(pin === null ? '' : null)} disabled={busy !== null} style={{ flex: 1, height: 50 }} innerStyle={styles.action}>
           <Txt weight="semi" size={15}>New PIN</Txt>
         </Sticker>
       </View>
@@ -420,7 +420,7 @@ const styles = StyleSheet.create({
   keys: { flexDirection: 'row', flexWrap: 'wrap', gap: 5, width: 84, marginTop: 9, justifyContent: 'center' },
   key: { width: 23, height: 11, borderRadius: 4, backgroundColor: colors.surface },
   input: {
-    height: 54,
+    height: 48,
     borderRadius: 18,
     borderWidth: 2,
     borderColor: colors.ink,
@@ -434,7 +434,7 @@ const styles = StyleSheet.create({
   choiceOn: { backgroundColor: colors.ink },
   code: {
     marginTop: 24,
-    height: 72,
+    height: 64,
     borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,
@@ -446,7 +446,7 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   pocket: { marginTop: 8, borderRadius: 28, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealSoft, padding: 20 },
-  dial: { marginTop: 14, minHeight: 64, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  dial: { marginTop: 14, minHeight: 56, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   action: { alignItems: 'center', justifyContent: 'center', flex: 1 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.sunken },
 })

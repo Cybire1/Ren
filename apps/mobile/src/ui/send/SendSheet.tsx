@@ -212,7 +212,7 @@ export function SendSheet({ payee }: { payee?: Payee }) {
               />
             </View>
           </View>
-          <Keypad onKey={(key) => setTyped((v) => applyKey(v, key))} size={64} />
+          <Keypad onKey={(key) => setTyped((v) => applyKey(v, key))} size={56} />
           <View style={{ marginTop: 14 }}>
             <PillButton label={over ? 'More than you have' : 'Review'} disabled={amount === 0n || over} onPress={() => moveTo('review')} />
           </View>
@@ -603,8 +603,8 @@ const styles = StyleSheet.create({
   time: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, height: 34, paddingHorizontal: 14, borderRadius: 17, backgroundColor: colors.ink },
   field: {
     marginTop: 14,
-    height: 56,
-    borderRadius: 28,
+    height: 50,
+    borderRadius: 25,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,
@@ -621,7 +621,7 @@ const styles = StyleSheet.create({
   section: { marginTop: 20, marginBottom: 8, marginLeft: 4 },
   recent: { width: 68, alignItems: 'center', gap: 6 },
   list: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, overflow: 'hidden' },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, height: 64 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, height: 56 },
   rule: { borderBottomWidth: 1, borderColor: colors.sunken },
   empty: { alignItems: 'center', paddingTop: 18, paddingHorizontal: 12 },
 })

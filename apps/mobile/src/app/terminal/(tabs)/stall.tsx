@@ -259,7 +259,7 @@ function ItemRow({ item, last, onSoldOut, currency }: { item: CatalogItem; last:
       style={({ pressed }) => [styles.row, !last && styles.rowRule, pressed && { opacity: 0.7 }]}
     >
       <View style={{ opacity: item.sold_out ? 0.5 : 1 }}>
-        <ItemFace item={item} size={56} />
+        <ItemFace item={item} size={48} />
       </View>
       <View style={{ flex: 1, opacity: item.sold_out ? 0.6 : 1 }}>
         <Txt weight="semi" size={16} numberOfLines={1}>
@@ -348,7 +348,7 @@ function ShopMenu() {
         <View style={[styles.list, { marginHorizontal: 0, marginTop: 16 }]}>
           {items.map((item, i) => (
             <View key={item.id} style={[styles.row, i < items.length - 1 && styles.rowRule]}>
-              <ItemFace item={item} size={52} />
+              <ItemFace item={item} size={46} />
               <View style={{ flex: 1 }}>
                 <Txt weight="semi" size={16} numberOfLines={1}>
                   {item.name}

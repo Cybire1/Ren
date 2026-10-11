@@ -69,7 +69,7 @@ export default function Received() {
         </View>
       ) : (
       <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
-        <Sticker radius={24} style={{ height: 76 }}>
+        <Sticker radius={24} style={{ height: 66 }}>
           <View style={styles.row}>
             <Txt size={15} color={colors.muted}>
               Arrived

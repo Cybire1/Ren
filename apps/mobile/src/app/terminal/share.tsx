@@ -134,9 +134,9 @@ const styles = StyleSheet.create({
   },
   actions: { alignSelf: 'stretch', gap: 10, marginTop: 18 },
   action: {
-    height: 58,
+    height: 52,
     paddingHorizontal: 18,
-    borderRadius: 29,
+    borderRadius: 26,
     borderWidth: 2,
     borderColor: colors.ink,
     flexDirection: 'row',

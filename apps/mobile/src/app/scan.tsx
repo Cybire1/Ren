@@ -149,8 +149,8 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', gap: 10, marginTop: 8 },
   option: {
     flex: 1,
-    height: 52,
-    borderRadius: 26,
+    height: 46,
+    borderRadius: 23,
     borderWidth: 2,
     borderColor: colors.ink,
     flexDirection: 'row',

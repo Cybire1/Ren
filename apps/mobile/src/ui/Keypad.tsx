@@ -13,7 +13,7 @@ const rows: Key[][] = [
 ]
 
 /** Round outlined keys that give a little when pressed. */
-export function Keypad({ onKey, decimals = true, size = 72 }: { onKey: (key: Key) => void; decimals?: boolean; size?: number }) {
+export function Keypad({ onKey, decimals = true, size = 62 }: { onKey: (key: Key) => void; decimals?: boolean; size?: number }) {
   return (
     <View style={styles.grid}>
       {rows.map((row) => (

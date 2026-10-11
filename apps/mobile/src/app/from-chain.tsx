@@ -241,7 +241,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   sourceOn: { backgroundColor: colors.ink },
-  disc: { width: 44, height: 44, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  disc: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   soon: { alignItems: 'center', padding: 22 },
   card: { alignItems: 'center', padding: 20 },
   qr: { padding: 12, borderRadius: 20, backgroundColor: colors.surface },

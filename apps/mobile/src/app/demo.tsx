@@ -109,8 +109,8 @@ const styles = StyleSheet.create({
   body: { marginTop: 8, lineHeight: 23 },
   form: { paddingHorizontal: 20, marginTop: 24, gap: 12 },
   input: {
-    height: 58,
-    borderRadius: 29,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,

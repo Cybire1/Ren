@@ -99,7 +99,7 @@ export default function AddMoney() {
       {stage !== 'done' && (!isTestnet || chainDeposits) ? (
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
           {isTestnet ? null : (
-          <Sticker radius={24} onPress={() => void cardOrBank()} accessibilityLabel="Card or bank" style={{ height: 76, marginBottom: 12 }}>
+          <Sticker radius={24} onPress={() => void cardOrBank()} accessibilityLabel="Card or bank" style={{ height: 66, marginBottom: 12 }}>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
                 <Txt weight="semi" size={16}>
@@ -114,7 +114,7 @@ export default function AddMoney() {
           </Sticker>
           )}
           {chainDeposits ? (
-          <Sticker radius={24} onPress={() => router.push('/from-chain')} accessibilityLabel="From another chain" style={{ height: 76 }}>
+          <Sticker radius={24} onPress={() => router.push('/from-chain')} accessibilityLabel="From another chain" style={{ height: 66 }}>
             <View style={styles.row}>
               <View style={{ flex: 1 }}>
                 <Txt weight="semi" size={16}>
