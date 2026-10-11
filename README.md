@@ -4,7 +4,8 @@
 Every payment settles in AUSD on [Monad](https://monad.xyz) in about a second and a half, and Kova
 pays the gas, so nobody needs a crypto token, a seed phrase or an exchange to pay or get paid.
 
-- **Try it:** [mykova.app](https://mykova.app), with $5 of test dollars a day on Monad testnet
+- **Live on Monad mainnet:** [mykova.app](https://mykova.app)
+- **Try it free:** [web-monad.up.railway.app](https://web-monad.up.railway.app), Kova on Monad testnet with $5 of test dollars a day
 - **Built for:** Monad Metropolis, Track 02: Consumer Products & Payments
 - **Demo video:** _link added at submission_
 - **Licence:** [MIT](LICENSE)
