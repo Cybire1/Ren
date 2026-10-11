@@ -7,10 +7,17 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/web/package.json apps/web/
 COPY packages/monad/package.json packages/monad/
+COPY packages/tempo/package.json packages/tempo/
 RUN pnpm install --frozen-lockfile --filter "@kova/web..."
 COPY tsconfig*.json ./
-# The web signs the same payments as the app and the API, with the same Monad package.
+# The web signs the same payments as the app and the API, with the same chain packages.
 COPY packages/monad packages/monad
+COPY packages/tempo packages/tempo
+# NEXT_PUBLIC_ settings are compiled into the pages, so they arrive at build time (Railway passes
+# service variables as build arguments): which chain, and the domain passkeys belong to.
+ARG NEXT_PUBLIC_KOVA_CHAIN
+ARG NEXT_PUBLIC_KOVA_PASSKEY_DOMAIN
+ENV NEXT_PUBLIC_KOVA_CHAIN=$NEXT_PUBLIC_KOVA_CHAIN NEXT_PUBLIC_KOVA_PASSKEY_DOMAIN=$NEXT_PUBLIC_KOVA_PASSKEY_DOMAIN
 COPY apps/web apps/web
 RUN pnpm --filter "@kova/web..." build
 

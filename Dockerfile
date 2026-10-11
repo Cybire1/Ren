@@ -6,6 +6,7 @@ COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api/package.json apps/api/
 COPY packages/db/package.json packages/db/
 COPY packages/monad/package.json packages/monad/
+COPY packages/tempo/package.json packages/tempo/
 RUN pnpm install --frozen-lockfile --filter "@kova/api..."
 COPY tsconfig*.json ./
 COPY packages packages
