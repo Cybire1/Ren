@@ -151,6 +151,22 @@ export default function Profile() {
       </Sticker>
       )}
 
+      {/* Paying from a phone with no data: a small pocket spent by dialling Kova's USSD code. */}
+      <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 72, marginTop: 16 }}>
+        <View style={[styles.cashOut, { gap: 14 }]}>
+          <Icon name="keypad" size={22} />
+          <View style={{ flex: 1 }}>
+            <Txt weight="semi" size={16}>
+              Pay by USSD
+            </Txt>
+            <Txt size={13} color={colors.muted}>
+              From any phone, even with no data
+            </Txt>
+          </View>
+          <Icon name="arrow" size={20} />
+        </View>
+      </Sticker>
+
       <MoneyCard
         currency={profile.currency}
         onChange={(next) => {

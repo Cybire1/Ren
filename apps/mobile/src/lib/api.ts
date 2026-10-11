@@ -113,6 +113,9 @@ export interface CatalogItem {
   image_id: string | null
   barcode: string | null
   sold_out: boolean
+  /** How many are left, or null when the shop doesn't count. */
+  stock: number | null
+  category: string | null
   created_at: string
 }
 
@@ -196,6 +199,8 @@ export const getSummary = () => {
 export const listCharges = (limit = 25) =>
   request<{ data: PaymentIntent[] }>(`/v1/payment_intents?limit=${limit}`, { auth: 'device' }).then((r) => r.data)
 
+export type OrderStatus = 'new' | 'preparing' | 'ready' | 'collected' | 'cancelled'
+
 export interface Order {
   id: string
   source: 'stall' | 'till'
@@ -207,6 +212,8 @@ export interface Order {
   pay_for_me: boolean
   /** What the counter must notice in the note, like "allergy" (read by Jev). */
   flags?: string[]
+  /** Where it is at the counter. */
+  status: OrderStatus
   collected_at: string | null
   created_at: string
   amount?: string
@@ -219,6 +226,10 @@ export const listOrders = (status: 'all' | 'open' | 'collected' | 'unpaid' = 'al
   request<{ data: Order[] }>(`/v1/orders?status=${status}&source=stall&limit=${limit}`, { auth: 'device' }).then((r) => r.data)
 
 /** Handed over, or back to waiting to undo a mistap. */
+/** Moves an order along the counter: new, preparing, ready, collected or cancelled. */
+export const setOrderStatus = (id: string, status: OrderStatus) =>
+  request<Order>(`/v1/orders/${id}/status`, { method: 'POST', auth: 'device', body: JSON.stringify({ status }) })
+
 export const collectOrder = (id: string, collected = true) =>
   request<Order>(`/v1/orders/${id}/collect`, { method: 'POST', auth: 'device', body: JSON.stringify({ collected }) })
 
@@ -318,6 +329,9 @@ export interface ItemInput {
   barcode?: string | null
   image_id?: string | null
   sold_out?: boolean
+  /** How many are left; null stops counting. */
+  stock?: number | null
+  category?: string | null
 }
 
 export const createItem = (item: ItemInput & { stall_ids?: string[] }) =>

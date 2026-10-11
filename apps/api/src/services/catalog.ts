@@ -1,4 +1,4 @@
-import { schema } from '@kova/db'
+import type { schema } from '@kova/db'
 import { formatAmount } from '@kova/monad'
 import { encodeId } from '../ids.js'
 import { imageUrl } from './images.js'
@@ -17,11 +17,18 @@ export function serializeItem(item: Item, origin: string) {
     image_id: item.imageId ? encodeId('image', item.imageId) : null,
     barcode: item.barcode,
     sold_out: item.soldOut,
+    /** How many are left, or null when the shop doesn't count. */
+    stock: item.stock,
+    category: item.category,
     created_at: item.createdAt.toISOString(),
   }
 }
 
-export function serializeStall(stall: Stall, origin: string, extra: { item_ids?: string[]; shop_name?: string } = {}) {
+export function serializeStall(
+  stall: Stall,
+  origin: string,
+  extra: { item_ids?: string[]; shop_name?: string } = {},
+) {
   return {
     object: 'stall',
     id: encodeId('stall', stall.id),

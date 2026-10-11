@@ -555,6 +555,10 @@ export const catalogItems = pgTable(
     /** EAN or UPC, digits only, as printed under the bars. */
     barcode: text('barcode'),
     soldOut: boolean('sold_out').notNull().default(false),
+    /** How many are left, counted down by every paid sale, online or at the till. Null: not counted. */
+    stock: integer('stock'),
+    /** A shelf to group it under on the till and the stall: "Breads", "Drinks". */
+    category: text('category'),
     position: integer('position').notNull().default(0),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: createdAt(),
@@ -639,6 +643,10 @@ export const orders = pgTable(
     /** What the note needs the counter to notice, like "allergy". Set by Jev after checkout. */
     flags: jsonb('flags').$type<string[]>(),
     collectedAt: timestamp('collected_at', { withTimezone: true }),
+    /** Where the order is at the counter: new, preparing, ready, collected or cancelled. */
+    status: text('status').notNull().default('new'),
+    /** The stock this order took, once it was paid: so a payment seen twice counts down once. */
+    stockTakenAt: timestamp('stock_taken_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -762,4 +770,91 @@ export const tripShares = pgTable(
     uniqueIndex('trip_shares_intent_idx').on(t.intentId),
     index('trip_shares_trip_idx').on(t.tripId),
   ],
+)
+
+/**
+ * A USSD pocket: a small dollar balance a wallet sets aside to pay from any phone, even one with
+ * no data, by dialling Kova's USSD code. USSD can't carry a passkey, so the pocket has its own key,
+ * which Kova holds encrypted and signs with when the owner enters their PIN. The owner's main
+ * wallet stays theirs alone: they choose what goes in (up to a cap) and can take it back any time.
+ */
+export const ussdPockets = pgTable(
+  'ussd_pockets',
+  {
+    id: id(),
+    /** The Kova wallet that owns and funds the pocket. Lowercase. */
+    ownerAddress: address('owner_address').notNull(),
+    /** E.164, verified by a code sent to it. */
+    phone: text('phone').notNull(),
+    /** The pocket's own address on Monad. Lowercase. */
+    pocketAddress: address('pocket_address').notNull(),
+    /** The pocket's private key, AES-256-GCM under KOVA_POCKET_MASTER_KEY: iv.tag.ciphertext, base64url. */
+    sealedKey: text('sealed_key').notNull(),
+    /** scrypt: salt.hash, base64url. */
+    pinHash: text('pin_hash').notNull(),
+    /** The most the pocket may hold, and the most it may spend in a day, in base units. */
+    cap: amount('cap').notNull(),
+    failedPins: integer('failed_pins').notNull().default(0),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
+    /** The newest owner signature accepted, in unix seconds: an older one can't be replayed. */
+    lastSignedAt: bigint('last_signed_at', { mode: 'number' }).notNull().default(0),
+    /** pending until the phone's code is entered; closed when the owner turns it off. */
+    status: text('status').notNull().default('pending'),
+    /** The code sent to the phone, scrypt-hashed, and when it stops working. */
+    codeHash: text('code_hash'),
+    codeExpiresAt: timestamp('code_expires_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('ussd_pockets_owner_idx').on(t.ownerAddress),
+    index('ussd_pockets_phone_idx').on(t.phone),
+    uniqueIndex('ussd_pockets_address_idx').on(t.pocketAddress),
+  ],
+)
+
+/** Each payment out of a pocket, one per USSD session, so a resent final step never pays twice. */
+export const ussdSpends = pgTable(
+  'ussd_spends',
+  {
+    id: id(),
+    pocketId: uuid('pocket_id')
+      .notNull()
+      .references(() => ussdPockets.id),
+    /** The USSD session that made it, or "app:<id>" when the owner takes money back. */
+    sessionId: text('session_id').notNull(),
+    /** till, phone, or withdraw. */
+    kind: text('kind').notNull(),
+    /** Lowercase. */
+    toAddress: address('to_address').notNull(),
+    /** Who it went to, for the receipt: a shop's name or a phone number. */
+    toLabel: text('to_label').notNull(),
+    amount: amount('amount').notNull(),
+    intentId: uuid('intent_id').references(() => paymentIntents.id),
+    /** pending, paid or failed. */
+    status: text('status').notNull().default('pending'),
+    txHash: text('tx_hash'),
+    reference: text('reference').notNull(),
+    failure: text('failure'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('ussd_spends_session_idx').on(t.sessionId),
+    index('ussd_spends_pocket_idx').on(t.pocketId, t.createdAt),
+  ],
+)
+
+/** Short codes a till shows beside its QR, so a phone with no camera or data can pay that charge. */
+export const ussdTillCodes = pgTable(
+  'ussd_till_codes',
+  {
+    code: text('code').primaryKey(),
+    intentId: uuid('intent_id')
+      .notNull()
+      .references(() => paymentIntents.id),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('ussd_till_codes_intent_idx').on(t.intentId)],
 )

@@ -266,7 +266,8 @@ export function SendSheet({ payee }: { payee?: Payee }) {
             <Animated.View entering={FadeIn} style={styles.problem}>
               <Icon name="info" size={18} color={colors.danger} />
               <Txt weight="medium" size={14} color={colors.danger} style={{ flex: 1 }}>
-                {problem} Your money hasn’t moved.
+                {problem}
+                {/went through/i.test(problem) ? '' : ' Your money hasn’t moved.'}
               </Txt>
             </Animated.View>
           ) : null}

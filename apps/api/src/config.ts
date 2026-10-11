@@ -67,6 +67,23 @@ const schema = z.object({
   /** Ramp Network: card and bank top-ups (and cash-out), buying AUSD on Monad. Key from partner@ramp.network. */
   RAMP_HOST_API_KEY: z.string().optional(),
   JEV_MODEL: z.string().optional(),
+  /**
+   * USSD pockets: pay from any phone by dialling a code. The master key seals each pocket's own
+   * key at rest (32 bytes, hex); in production it belongs in a KMS. Without it, USSD is off.
+   */
+  KOVA_POCKET_MASTER_KEY: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/)
+    .optional(),
+  /** The secret path segment Africa's Talking calls back on: /v1/ussd/<secret>. */
+  KOVA_USSD_CALLBACK_SECRET: z.string().min(16).optional(),
+  /** The code people dial, as the app shows it. */
+  KOVA_USSD_CODE: z.string().default('*384*25891#'),
+  /** Africa's Talking: USSD sessions and SMS receipts. Username "sandbox" uses their simulator. */
+  AT_USERNAME: z.string().optional(),
+  AT_API_KEY: z.string().optional(),
+  /** An approved sender name for SMS; unset uses Africa's Talking's default. */
+  AT_SENDER_ID: z.string().optional(),
 })
 
 export type Config = z.infer<typeof schema>

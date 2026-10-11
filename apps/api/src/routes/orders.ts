@@ -8,7 +8,7 @@ import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
 import { decodeId } from '../ids.js'
 import { serializeIntent } from '../services/intents.js'
-import { placeOrder, serializeOrder } from '../services/orders.js'
+import { ORDER_STATUSES, placeOrder, serializeOrder } from '../services/orders.js'
 
 /**
  * Orders: what was bought, from a stall or at the till. Any of the shop's keys can read them,
@@ -50,21 +50,29 @@ export const orderRoutes = new Hono()
           eq(schema.orders.merchantId, merchantId),
           stallId ? eq(schema.orders.stallId, stallId) : undefined,
           source ? eq(schema.orders.source, source) : undefined,
-          status === 'open' ? and(eq(schema.paymentIntents.status, 'paid'), isNull(schema.orders.collectedAt)) : undefined,
+          status === 'open'
+            ? and(eq(schema.paymentIntents.status, 'paid'), isNull(schema.orders.collectedAt))
+            : undefined,
           status === 'collected' ? isNotNull(schema.orders.collectedAt) : undefined,
-          status === 'unpaid' ? inArray(schema.paymentIntents.status, ['requires_payment', 'processing']) : undefined,
+          status === 'unpaid'
+            ? inArray(schema.paymentIntents.status, ['requires_payment', 'processing'])
+            : undefined,
         ),
       )
       .orderBy(desc(schema.orders.createdAt))
       .limit(limit)
 
     const stallIds = [...new Set(rows.flatMap((r) => (r.order.stallId ? [r.order.stallId] : [])))]
-    const stalls = stallIds.length ? await db.query.stalls.findMany({ where: inArray(schema.stalls.id, stallIds) }) : []
+    const stalls = stallIds.length
+      ? await db.query.stalls.findMany({ where: inArray(schema.stalls.id, stallIds) })
+      : []
     const byId = new Map(stalls.map((s) => [s.id, s]))
     return c.json({
       object: 'list',
       data: rows.map((r) => ({
-        ...serializeOrder(r.order, { stall: r.order.stallId ? (byId.get(r.order.stallId) ?? null) : null }),
+        ...serializeOrder(r.order, {
+          stall: r.order.stallId ? (byId.get(r.order.stallId) ?? null) : null,
+        }),
         amount: formatAmount(r.intent.amount),
         payment_status: r.intent.status,
         paid_at: r.intent.paidAt?.toISOString() ?? null,
@@ -75,7 +83,8 @@ export const orderRoutes = new Hono()
   /** A till sale: items scanned or picked at the counter. Charges like any other payment. */
   .post('/orders', requireApiKey, async (c) => {
     const parsed = tillBody.safeParse(await c.req.json().catch(() => ({})))
-    if (!parsed.success) throw new KovaError('invalid_request', parsed.error.issues[0]?.message ?? 'Invalid sale')
+    if (!parsed.success)
+      throw new KovaError('invalid_request', parsed.error.issues[0]?.message ?? 'Invalid sale')
     const { order, intent } = await placeOrder({
       merchant: c.get('merchant'),
       source: 'till',
@@ -94,8 +103,36 @@ export const orderRoutes = new Hono()
     const [row] = uuid
       ? await db
           .update(schema.orders)
-          .set({ collectedAt: body.collected === false ? null : new Date() })
-          .where(and(eq(schema.orders.id, uuid), eq(schema.orders.merchantId, c.get('merchant').id)))
+          .set(
+            body.collected === false
+              ? { collectedAt: null, status: 'ready' }
+              : { collectedAt: new Date(), status: 'collected' },
+          )
+          .where(
+            and(eq(schema.orders.id, uuid), eq(schema.orders.merchantId, c.get('merchant').id)),
+          )
+          .returning()
+      : []
+    if (!row) throw notFound('order', id)
+    return c.json(serializeOrder(row))
+  })
+  /** Moves an order along the counter: new, preparing, ready, collected, or cancelled. */
+  .post('/orders/:id/status', requireApiKey, async (c) => {
+    const parsed = z
+      .object({ status: z.enum(ORDER_STATUSES) })
+      .safeParse(await c.req.json().catch(() => ({})))
+    if (!parsed.success)
+      throw new KovaError('invalid_request', `Status is one of ${ORDER_STATUSES.join(', ')}.`)
+    const id = c.req.param('id')
+    const uuid = decodeId('order', id)
+    const status = parsed.data.status
+    const [row] = uuid
+      ? await db
+          .update(schema.orders)
+          .set({ status, collectedAt: status === 'collected' ? new Date() : null })
+          .where(
+            and(eq(schema.orders.id, uuid), eq(schema.orders.merchantId, c.get('merchant').id)),
+          )
           .returning()
       : []
     if (!row) throw notFound('order', id)

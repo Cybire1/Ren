@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { collectOrder, listOrders, type Order } from './api'
+import { collectOrder, listOrders, type Order, type OrderStatus, setOrderStatus } from './api'
 import { useTerminal } from './terminal'
 
 /**
@@ -20,6 +20,8 @@ interface OrdersState {
   fresh: Order | null
   dismissFresh: () => void
   collect: (order: Order, collected?: boolean) => Promise<void>
+  /** Moves an order along the counter: preparing, ready, collected, cancelled. */
+  advance: (order: Order, status: OrderStatus) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -82,18 +84,30 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const advance = useCallback(
+    async (order: Order, status: OrderStatus) => {
+      if (status === 'collected') return collect(order, true)
+      setOrders((list) => list.map((o) => (o.id === order.id ? { ...o, status } : o)))
+      setFresh((f) => (f?.id === order.id ? null : f))
+      void Haptics.selectionAsync()
+      await setOrderStatus(order.id, status).catch(() => refresh())
+    },
+    [collect, refresh],
+  )
+
   const value = useMemo<OrdersState>(
     () => ({
       ready,
-      toHand: orders.filter((o) => isPaid(o) && !o.collected_at),
+      toHand: orders.filter((o) => isPaid(o) && !o.collected_at && o.status !== 'cancelled'),
       waiting: orders.filter(isWaiting),
       done: orders.filter((o) => o.collected_at),
       fresh,
       dismissFresh: () => setFresh(null),
       collect,
+      advance,
       refresh,
     }),
-    [ready, orders, fresh, collect, refresh],
+    [ready, orders, fresh, collect, advance, refresh],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

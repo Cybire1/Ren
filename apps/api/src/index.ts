@@ -15,13 +15,14 @@ import { orderRoutes } from './routes/orders.js'
 import { rateRoutes } from './routes/rates.js'
 import { reportRoutes } from './routes/reports.js'
 import { stallRoutes } from './routes/stalls.js'
-import { expireStaleIntents } from './services/intents.js'
 import { terminalRoutes } from './routes/terminals.js'
 import { travelRoutes } from './routes/travel.js'
-import { rateBook } from './services/rates.js'
-import { expireTrips } from './services/travel.js'
+import { ussdRoutes } from './routes/ussd.js'
 import { walletRoutes } from './routes/wallet.js'
 import { webhookRoutes } from './routes/webhooks.js'
+import { expireStaleIntents } from './services/intents.js'
+import { rateBook } from './services/rates.js'
+import { expireTrips } from './services/travel.js'
 import { startWatcher } from './workers/watcher.js'
 import { startWebhookWorker } from './workers/webhooks.js'
 
@@ -43,6 +44,7 @@ app.route('/v1', insightRoutes)
 // Public: wallets are addresses and prove themselves by signing. Mounted before any router whose
 // middleware covers all of /v1 (reports asks for an API key).
 app.route('/v1', walletRoutes)
+app.route('/v1', ussdRoutes)
 app.route('/v1', rateRoutes)
 app.route('/v1', webhookRoutes)
 app.route('/v1', reportRoutes)

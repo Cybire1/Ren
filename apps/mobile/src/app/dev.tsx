@@ -37,11 +37,14 @@ const SEED = [
 
 /** `seed=bakery`: a small bakery menu, for films and screens that shouldn't point at one country. */
 const BAKERY = [
-  { name: 'Sourdough loaf', price: '6.50', description: 'Slow-proved, with a crackly crust' },
-  { name: 'Croissant', price: '3.25', description: 'All butter, baked this morning' },
-  { name: 'Cinnamon bun', price: '3.75', description: 'Cardamom sugar on top' },
-  { name: 'Flat white', price: '4.50', description: 'Double shot, whole milk' },
-  { name: 'Carrot cake', price: '5.00', description: 'Cream cheese frosting' },
+  { name: 'Sourdough loaf', price: '6.50', description: 'Slow-proved, with a crackly crust', category: 'Breads', stock: 8, photo: require('../../assets/demo/bakery-loaf.png') },
+  { name: 'Baguette', price: '3.00', description: 'Baked three times a day', category: 'Breads', stock: 14, photo: require('../../assets/demo/bakery-baguette.png') },
+  { name: 'Croissant', price: '3.25', description: 'All butter, baked this morning', category: 'Pastries', stock: 12, photo: require('../../assets/demo/bakery-croissant.png') },
+  { name: 'Cinnamon bun', price: '3.75', description: 'Cardamom sugar on top', category: 'Pastries', stock: 3, photo: require('../../assets/demo/bakery-bun.png') },
+  { name: 'Chocolate cookie', price: '2.50', description: 'Sea salt and dark chocolate', category: 'Pastries', stock: 0, photo: require('../../assets/demo/bakery-cookie.png') },
+  { name: 'Carrot cake', price: '5.00', description: 'Cream cheese frosting', category: 'Cakes', stock: 6, photo: require('../../assets/demo/bakery-cake.png') },
+  { name: 'Flat white', price: '4.50', description: 'Double shot, whole milk', category: 'Coffee', stock: null, photo: require('../../assets/demo/bakery-flatwhite.png') },
+  { name: 'Iced latte', price: '4.75', description: 'Over ice, oat milk on request', category: 'Coffee', stock: null, photo: require('../../assets/demo/bakery-latte.png') },
 ]
 
 /** A weaver's shop, for the film: each item with its photo, uploaded like any owner's. */
@@ -147,13 +150,13 @@ export default function Dev() {
         if (params.seed) {
           setStep('filling the stall')
           const detail = await stall.refresh()
-          if (params.seed === 'weaves')
-            for (const { photo, ...item } of WEAVES) {
+          if (params.seed === 'weaves' || params.seed === 'bakery')
+            for (const { photo, ...item } of params.seed === 'weaves' ? WEAVES : BAKERY) {
               const image = await uploadImage(Image.resolveAssetSource(photo).uri, 'image/png').catch(() => null)
               await createItem({ ...item, image_id: image?.id ?? null, stall_ids: detail ? [detail.id] : [] })
             }
           else
-            for (const item of params.seed === 'bakery' ? BAKERY : SEED)
+            for (const item of SEED)
               await createItem({ ...item, stall_ids: detail ? [detail.id] : [] })
           if (params.seed !== 'bakery' && params.seed !== 'weaves') {
             const coke = await lookupBarcode('5449000000996', 'owner').catch(() => null)

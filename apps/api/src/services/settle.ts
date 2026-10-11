@@ -7,6 +7,7 @@ import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { encodeId } from '../ids.js'
 import { findIntentByMemo, type PaymentIntent } from './intents.js'
+import { takeStock } from './orders.js'
 import { onIntentPaid } from './travel.js'
 
 export interface SettleResult {
@@ -103,7 +104,13 @@ export async function settleFromReceipt(
       await tx
         .update(schema.orders)
         .set({ collectedAt: now })
-        .where(and(eq(schema.orders.intentId, intent.id), eq(schema.orders.source, 'till'), isNull(schema.orders.collectedAt)))
+        .where(
+          and(
+            eq(schema.orders.intentId, intent.id),
+            eq(schema.orders.source, 'till'),
+            isNull(schema.orders.collectedAt),
+          ),
+        )
     }
 
     await tx.insert(schema.events).values({
@@ -121,13 +128,18 @@ export async function settleFromReceipt(
   })
 
   // The last share of a Kova Travel trip books it. Outside the transaction: booking calls Duffel.
-  if (status === 'paid') void onIntentPaid(intent.id).catch((error) => console.error('[travel] after payment', error))
+  if (status === 'paid')
+    void onIntentPaid(intent.id).catch((error) => console.error('[travel] after payment', error))
+  if (status === 'paid')
+    void takeStock(intent.id).catch((error) => console.error('[stock] after payment', error))
 
   return { status, paymentId }
 }
 
 /** The intent a receipt claims to pay: the authorization whose nonce is a Kova payment memo. */
-async function findIntentForReceipt(receipt: TransactionReceipt): Promise<PaymentIntent | undefined> {
+async function findIntentForReceipt(
+  receipt: TransactionReceipt,
+): Promise<PaymentIntent | undefined> {
   for (const log of receipt.logs) {
     let nonce: `0x${string}`
     try {

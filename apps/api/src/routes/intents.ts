@@ -1,15 +1,17 @@
-import { Hono } from 'hono'
-import { z } from 'zod'
-import { requireApiKey } from '../auth.js'
-import { idempotent } from '../idempotency.js'
-import { KovaError, notFound } from '../errors.js'
 import { schema } from '@kova/db'
 import { currencies, explorerTxUrl } from '@kova/monad'
 import { eq } from 'drizzle-orm'
+import { Hono } from 'hono'
+import { z } from 'zod'
+import { requireApiKey } from '../auth.js'
 import { network, settlementCurrency } from '../chain.js'
+import { config } from '../config.js'
 import { db } from '../db.js'
+import { KovaError, notFound } from '../errors.js'
+import { idempotent } from '../idempotency.js'
 import { decodeId, encodeId } from '../ids.js'
 import { cancelIntent, createIntent, getIntent, serializeIntent } from '../services/intents.js'
+import { tillCodeFor } from '../services/pockets.js'
 import { confirmTransaction } from '../services/settle.js'
 
 const createBody = z.object({
@@ -59,13 +61,18 @@ export const intentRoutes = new Hono()
   /** One charge, with the transaction that paid it and the terminal that took it. */
   .get('/:id', async (c) => {
     const intent = await getIntent(c.get('merchant').id, intentUuid(c.req.param('id')))
-    const [payment, terminal] = await Promise.all([
+    const [payment, terminal, ussdCode] = await Promise.all([
       db.query.payments.findFirst({ where: eq(schema.payments.intentId, intent.id) }),
-      intent.terminalId ? db.query.terminals.findFirst({ where: eq(schema.terminals.id, intent.terminalId) }) : undefined,
+      intent.terminalId
+        ? db.query.terminals.findFirst({ where: eq(schema.terminals.id, intent.terminalId) })
+        : undefined,
+      tillCodeFor(intent).catch(() => null),
     ])
     return c.json({
       ...serializeIntent(intent),
       terminal: terminal ? { id: encodeId('terminal', terminal.id), name: terminal.name } : null,
+      // For a phone with no data: dial Kova's USSD code and enter this.
+      ussd: ussdCode ? { code: ussdCode, dial: config.KOVA_USSD_CODE } : null,
       payment: payment
         ? {
             id: encodeId('payment', payment.id),

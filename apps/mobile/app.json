@@ -9,12 +9,18 @@
     "backgroundColor": "#E7E5E0",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "xyz.kova.pay.monad",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSFaceIDUsageDescription": "Use Face ID to approve payments and unlock your Kova wallet.",
-        "NFCReaderUsageDescription": "Hold a Kova Card near the top of your iPhone to take a payment."
+        "NFCReaderUsageDescription": "Hold a Kova Card near the top of your iPhone to take a payment.",
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown"
+        ]
       },
       "associatedDomains": [
         "webcredentials:mykova.app",

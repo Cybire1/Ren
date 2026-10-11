@@ -1,7 +1,7 @@
 import { useIsFocused } from '@react-navigation/native'
 import { CameraView, useCameraPermissions } from 'expo-camera'
 import * as Haptics from 'expo-haptics'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   ActivityIndicator,
@@ -29,6 +29,7 @@ import { Icon, type IconName } from '@/ui/Icon'
 import { Keypad } from '@/ui/Keypad'
 import { PillButton, Screen, Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
+import { RAIL, useWide } from '@/ui/ShopRail'
 import { about, dollars, ItemFace, Stepper } from '@/ui/StallParts'
 import { WalletBack } from '@/ui/WalletBack'
 
@@ -37,6 +38,9 @@ const priceCurrencies: DisplayCurrency[] = ['USD', 'EUR', 'GBP', 'NGN', 'KES', '
 const ENTRY = 158
 type Mode = 'keypad' | 'items' | 'scan'
 type Basket = Record<string, number>
+
+/** Development only: a dev link's cart fills once per app run. */
+let devCartFilled = false
 
 const modes: { id: Mode; label: string; icon: IconName }[] = [
   { id: 'keypad', label: 'Keypad', icon: 'keypad' },
@@ -58,6 +62,11 @@ export default function Till() {
   const [problem, setProblem] = useState<string | null>(null)
   const [picking, setPicking] = useState(false)
   const catalog = useCatalog()
+  const wide = useWide()
+  const { width } = useWindowDimensions()
+  /** On a wide screen the cart stands beside the grid, so the grid gets what's left. */
+  const CART = 420
+  const gridWidth = wide ? width - RAIL - CART : width
 
   useEffect(() => {
     void load<Mode>('kova.till.mode', 'keypad').then(setModeState)
@@ -70,6 +79,21 @@ export default function Till() {
   }
 
   const byId = useMemo(() => new Map((catalog.items ?? []).map((i) => [i.id, i])), [catalog.items])
+
+  // Development only: a dev link can fill the cart ("Croissant*2;Flat white*1"), so films and
+  // screenshots show a sale in progress.
+  const { cart: devCart } = useLocalSearchParams<{ cart?: string }>()
+  useEffect(() => {
+    if (!__DEV__ || !devCart || !catalog.items || devCartFilled) return
+    devCartFilled = true
+    const next: Basket = {}
+    for (const part of devCart.split(';')) {
+      const [name, qty = '1'] = part.split('*')
+      const item = catalog.items.find((i) => i.name === name)
+      if (item) next[item.id] = Number(qty)
+    }
+    setBasket(next)
+  }, [devCart, catalog.items])
   const lines = Object.entries(basket).flatMap(([id, quantity]) => {
     const item = byId.get(id)
     return item && quantity > 0 ? [{ item, quantity }] : []
@@ -99,7 +123,64 @@ export default function Till() {
     }
   }
 
-  const footerBottom = shopDockClearance + Math.max(insets.bottom - 6, 16) - 44
+  const footerBottom = wide ? insets.bottom + 16 : shopDockClearance + Math.max(insets.bottom - 6, 16) - 44
+
+  const panel = (
+    <View style={{ flex: 1 }}>
+      {mode === 'items' ? (
+        <ItemsPanel items={catalog.items} problem={catalog.problem} basket={basket} onAdd={add} width={gridWidth} />
+      ) : (
+        <ScanPanel items={catalog.items} lines={lines} onAdd={add} onQty={setQty} reload={catalog.reload} currency={shop.currency} />
+      )}
+    </View>
+  )
+
+  if (wide)
+    return (
+      <Screen bg={colors.tealSoft} edges={['top']}>
+        <View style={{ flex: 1, flexDirection: 'row' }}>
+          <View style={{ flex: 1 }}>
+            <View style={[styles.header, { paddingTop: 8 }]}>
+              <View style={{ flex: 1 }}>
+                <Txt weight="bold" size={28} numberOfLines={1} style={{ letterSpacing: -0.6 }}>
+                  Sell
+                </Txt>
+                <Txt size={14} color={colors.onTint} numberOfLines={1}>
+                  {shop.name} · {shop.terminal}
+                </Txt>
+              </View>
+            </View>
+            <View style={[styles.modes, { marginHorizontal: 20 }]} accessibilityRole="tablist">
+              {modes.map((m) => {
+                const on = m.id === mode
+                return (
+                  <Pressable key={m.id} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setMode(m.id)} style={[styles.mode, on && styles.modeOn]}>
+                    <Icon name={m.icon} size={17} color={on ? colors.white : colors.ink} strokeWidth={on ? 2.6 : 2} />
+                    <Txt weight="semi" size={14} color={on ? colors.white : colors.ink}>
+                      {m.label}
+                    </Txt>
+                  </Pressable>
+                )
+              })}
+            </View>
+            {mode === 'keypad' ? <KeypadPanel bottom={footerBottom} /> : panel}
+          </View>
+          <CartPanel
+            width={CART}
+            lines={lines}
+            count={count}
+            total={total}
+            currency={shop.currency}
+            busy={busy}
+            problem={problem}
+            bottom={footerBottom}
+            onQty={setQty}
+            onClear={() => setBasket({})}
+            onCharge={chargeBasket}
+          />
+        </View>
+      </Screen>
+    )
 
   return (
     <Screen bg={colors.tealSoft} edges={['top']}>
@@ -188,13 +269,7 @@ export default function Till() {
         <KeypadPanel bottom={footerBottom} />
       ) : (
         <>
-          <View style={{ flex: 1 }}>
-            {mode === 'items' ? (
-              <ItemsPanel items={catalog.items} problem={catalog.problem} basket={basket} onAdd={add} />
-            ) : (
-              <ScanPanel items={catalog.items} lines={lines} onAdd={add} onQty={setQty} reload={catalog.reload} currency={shop.currency} />
-            )}
-          </View>
+          {panel}
           <View style={[styles.footer, { paddingBottom: footerBottom }]}>
             {count > 0 ? (
               <View style={styles.basketRow}>
@@ -230,6 +305,106 @@ export default function Till() {
         </>
       )}
     </Screen>
+  )
+}
+
+/**
+ * The cart, beside the grid on a wide screen: every line with its quantity and total, and Charge.
+ */
+function CartPanel({
+  width,
+  lines,
+  count,
+  total,
+  currency,
+  busy,
+  problem,
+  bottom,
+  onQty,
+  onClear,
+  onCharge,
+}: {
+  width: number
+  lines: { item: CatalogItem; quantity: number }[]
+  count: number
+  total: number
+  currency: DisplayCurrency
+  busy: boolean
+  problem: string | null
+  bottom: number
+  onQty: (id: string, quantity: number) => void
+  onClear: () => void
+  onCharge: () => void
+}) {
+  return (
+    <View style={[styles.cart, { width }]}>
+      <View style={styles.cartHead}>
+        <Txt weight="bold" size={22} style={{ letterSpacing: -0.4 }}>
+          Cart
+        </Txt>
+        {count > 0 ? (
+          <Pressable accessibilityRole="button" hitSlop={10} onPress={onClear}>
+            <Txt weight="semi" size={15} style={{ textDecorationLine: 'underline' }}>
+              Clear
+            </Txt>
+          </Pressable>
+        ) : null}
+      </View>
+      {lines.length === 0 ? (
+        <View style={[styles.center, { paddingHorizontal: 28 }]}>
+          <Kovi pose="wave" size={110} />
+          <Txt weight="semi" size={18} style={{ marginTop: 10 }}>
+            Nothing in the cart
+          </Txt>
+          <Txt size={14} color={colors.muted} style={{ textAlign: 'center', marginTop: 4, lineHeight: 20 }}>
+            Tap what they’re buying, or scan it.
+          </Txt>
+        </View>
+      ) : (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 18, paddingBottom: 12 }}>
+          {lines.map(({ item, quantity }) => (
+            <View key={item.id} style={styles.cartLine}>
+              <ItemFace item={item} size={52} radius={14} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Txt weight="semi" size={15} numberOfLines={1}>
+                  {item.name}
+                </Txt>
+                <Txt size={13} color={colors.muted}>
+                  {dollars(item.price)} each
+                </Txt>
+              </View>
+              <Stepper small value={quantity} max={999} name={item.name} onChange={(n) => onQty(item.id, n)} />
+              <Txt weight="bold" size={15} style={{ width: 76, textAlign: 'right' }}>
+                {dollars(Number(item.price) * quantity)}
+              </Txt>
+            </View>
+          ))}
+        </ScrollView>
+      )}
+      <View style={[styles.cartFoot, { paddingBottom: bottom }]}>
+        <View style={styles.cartTotal}>
+          <Txt weight="semi" size={16} color={colors.muted}>
+            {count} {count === 1 ? 'item' : 'items'}
+          </Txt>
+          <View style={{ alignItems: 'flex-end' }}>
+            <Txt weight="bold" size={30} style={{ letterSpacing: -0.8 }}>
+              {dollars(total)}
+            </Txt>
+            {currency !== 'USD' && count > 0 ? (
+              <Txt size={13} color={colors.muted}>
+                {formatLocal(total, currency)}
+              </Txt>
+            ) : null}
+          </View>
+        </View>
+        {problem ? (
+          <Txt weight="medium" size={14} color={colors.danger} style={{ marginBottom: 8, textAlign: 'center' }}>
+            {problem}
+          </Txt>
+        ) : null}
+        <PillButton label={count > 0 ? `Charge ${dollars(total)}` : 'Charge'} icon="tap" disabled={count === 0} loading={busy} onPress={onCharge} />
+      </View>
+    </View>
   )
 }
 
@@ -321,16 +496,21 @@ function ItemsPanel({
   problem,
   basket,
   onAdd,
+  width,
 }: {
   items: CatalogItem[] | null
   problem: string | null
   basket: Basket
   onAdd: (item: CatalogItem, by?: number) => void
+  /** The room the grid has: the whole phone, or what the cart leaves on a wide screen. */
+  width: number
 }) {
-  const { width } = useWindowDimensions()
   const { owned } = useStall()
   const [query, setQuery] = useState('')
-  const tile = Math.floor((width - 40 - 20) / 3)
+  const [shelf, setShelf] = useState<string | null>(null)
+  const shelves = useMemo(() => [...new Set((items ?? []).flatMap((i) => (i.category ? [i.category] : [])))].sort(), [items])
+  const columns = Math.max(3, Math.floor((width - 40) / 180))
+  const tile = Math.floor((width - 40 - 10 * (columns - 1)) / columns)
 
   if (!items)
     return (
@@ -367,23 +547,42 @@ function ItemsPanel({
     )
 
   const q = query.trim().toLowerCase()
-  const shown = q ? items.filter((i) => `${i.name} ${i.barcode ?? ''}`.toLowerCase().includes(q)) : items
+  const shown = items.filter(
+    (i) => (!q || `${i.name} ${i.barcode ?? ''}`.toLowerCase().includes(q)) && (shelf === null || i.category === shelf),
+  )
   return (
     <FlatList
       data={shown}
+      key={columns}
       keyExtractor={(i) => i.id}
-      numColumns={3}
+      numColumns={columns}
       keyboardShouldPersistTaps="handled"
       onScrollBeginDrag={Keyboard.dismiss}
       columnWrapperStyle={{ gap: 10 }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 12, gap: 10 }}
       ListHeaderComponent={
-        items.length > 9 ? (
-          <View style={styles.search}>
-            <Icon name="scan" size={18} color={colors.onTint} />
-            <TextInput value={query} onChangeText={setQuery} placeholder="Find an item" placeholderTextColor="rgba(13,13,18,0.45)" style={styles.searchInput} />
-          </View>
-        ) : null
+        <>
+          {items.length > 9 ? (
+            <View style={styles.search}>
+              <Icon name="scan" size={18} color={colors.onTint} />
+              <TextInput value={query} onChangeText={setQuery} placeholder="Find an item" placeholderTextColor="rgba(13,13,18,0.45)" style={styles.searchInput} />
+            </View>
+          ) : null}
+          {shelves.length > 1 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingBottom: 4 }}>
+              {[null, ...shelves].map((name) => {
+                const on = shelf === name
+                return (
+                  <Pressable key={name ?? 'all'} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setShelf(name)} style={[styles.shelf, on && styles.shelfOn]}>
+                    <Txt weight="semi" size={14} color={on ? colors.white : colors.ink}>
+                      {name ?? 'All'}
+                    </Txt>
+                  </Pressable>
+                )
+              })}
+            </ScrollView>
+          ) : null}
+        </>
       }
       renderItem={({ item }) => {
         const qty = basket[item.id] ?? 0
@@ -401,6 +600,13 @@ function ItemsPanel({
               <View style={{ opacity: item.sold_out ? 0.5 : 1 }}>
                 <ItemFace item={item} size={tile - 16} radius={14} />
               </View>
+              {item.sold_out || (item.stock !== null && item.stock <= 5) ? (
+                <View style={[styles.stockTag, item.sold_out && { backgroundColor: colors.ink }]} pointerEvents="none">
+                  <Txt weight="bold" size={11} color={colors.white}>
+                    {item.sold_out ? 'Sold out' : `${item.stock} left`}
+                  </Txt>
+                </View>
+              ) : null}
               <Txt weight="semi" size={13} numberOfLines={2} style={styles.tileName}>
                 {item.name}
               </Txt>
@@ -699,6 +905,14 @@ function NotInCatalogue({
 }
 
 const styles = StyleSheet.create({
+  cart: { backgroundColor: colors.surface, borderLeftWidth: 2, borderLeftColor: colors.ink },
+  shelf: { height: 38, paddingHorizontal: 16, borderRadius: 19, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, justifyContent: 'center' },
+  shelfOn: { backgroundColor: colors.ink },
+  stockTag: { position: 'absolute', left: 14, top: 14, paddingHorizontal: 8, height: 22, borderRadius: 11, backgroundColor: colors.coral, justifyContent: 'center' },
+  cartHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, paddingTop: 18, paddingBottom: 10 },
+  cartLine: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.sunken },
+  cartFoot: { paddingHorizontal: 18, paddingTop: 14, borderTopWidth: 2, borderTopColor: colors.ink, gap: 10 },
+  cartTotal: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
   back: { paddingHorizontal: 20, paddingTop: 6 },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 20, paddingTop: 10, gap: 12 },
   currency: {

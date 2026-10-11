@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native'
 import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import type { Order } from '@/lib/api'
+import type { Order, OrderStatus } from '@/lib/api'
 import { useOrders } from '@/lib/orders'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
@@ -13,6 +13,7 @@ import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
 import { Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
+import { useWide } from '@/ui/ShopRail'
 import { dollars } from '@/ui/StallParts'
 import { WalletBack } from '@/ui/WalletBack'
 
@@ -32,6 +33,79 @@ function ago(iso: string) {
  * name, what they chose and any note, until someone taps Handed over.
  */
 export default function Orders() {
+  const wide = useWide()
+  return wide ? <Board /> : <OrderList />
+}
+
+const COLUMNS: { status: OrderStatus; title: string; next: OrderStatus; action: string; tone: string }[] = [
+  { status: 'new', title: 'New', next: 'preparing', action: 'Start', tone: colors.coral },
+  { status: 'preparing', title: 'Preparing', next: 'ready', action: 'Ready', tone: colors.yellow },
+  { status: 'ready', title: 'Ready', next: 'collected', action: 'Handed over', tone: colors.tealSoft },
+]
+
+/**
+ * The counter board on a wide screen: every paid order, online or at the counter, moving left to
+ * right from New to Preparing to Ready, and off the board when it's handed over.
+ */
+function Board() {
+  const insets = useSafeAreaInsets()
+  const orders = useOrders()
+  const waiting = orders.waiting.length
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.paper, paddingTop: insets.top + 16 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: 28, gap: 16 }}>
+        <View style={{ flex: 1 }}>
+          <Txt weight="bold" size={30} style={{ letterSpacing: -0.7 }}>
+            Orders
+          </Txt>
+          <Txt size={14} color={colors.muted}>
+            From your online shop and the counter, in one queue.
+          </Txt>
+        </View>
+        {waiting ? (
+          <View style={styles.waitChip}>
+            <View style={styles.waitDot} />
+            <Txt weight="semi" size={13}>
+              {waiting} waiting for payment
+            </Txt>
+          </View>
+        ) : null}
+      </View>
+      <View style={{ flex: 1, flexDirection: 'row', gap: 16, padding: 20 }}>
+        {COLUMNS.map((col) => {
+          const list = orders.toHand.filter((o) => (o.status ?? 'new') === col.status)
+          return (
+            <View key={col.status} style={styles.column}>
+              <View style={styles.columnHead}>
+                <View style={[styles.columnDot, { backgroundColor: col.tone }]} />
+                <Txt weight="bold" size={18} style={{ flex: 1 }}>
+                  {col.title}
+                </Txt>
+                <Txt weight="bold" size={16} color={colors.muted}>
+                  {list.length}
+                </Txt>
+              </View>
+              <ScrollView contentContainerStyle={{ gap: 12, paddingBottom: insets.bottom + 20 }}>
+                {list.map((order) => (
+                  <Animated.View key={order.id} entering={FadeInDown} exiting={FadeOut} layout={LinearTransition}>
+                    <Ticket order={order} action={col.action} onHandOver={() => void orders.advance(order, col.next)} />
+                  </Animated.View>
+                ))}
+                {list.length === 0 ? (
+                  <Txt size={14} color={colors.muted} style={{ textAlign: 'center', paddingVertical: 24 }}>
+                    {col.status === 'new' ? 'New orders land here.' : 'Nothing here.'}
+                  </Txt>
+                ) : null}
+              </ScrollView>
+            </View>
+          )
+        })}
+      </View>
+    </View>
+  )
+}
+
+function OrderList() {
   const insets = useSafeAreaInsets()
   const orders = useOrders()
   const { owned } = useStall()
@@ -125,7 +199,7 @@ export default function Orders() {
 }
 
 /** One order, as the kitchen reads it: who, what, any note, and one big button. */
-function Ticket({ order, onHandOver }: { order: Order; onHandOver?: () => void }) {
+function Ticket({ order, onHandOver, action }: { order: Order; onHandOver?: () => void; action?: string }) {
   const who = order.customer_name ?? 'Someone'
   const waiting = !onHandOver
   return (
@@ -206,7 +280,7 @@ function Ticket({ order, onHandOver }: { order: Order; onHandOver?: () => void }
         {onHandOver ? (
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={`Handed over to ${who}`}
+            accessibilityLabel={action ? `${action}: ${who}` : `Handed over to ${who}`}
             onPress={() => {
               void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
               onHandOver()
@@ -214,7 +288,7 @@ function Ticket({ order, onHandOver }: { order: Order; onHandOver?: () => void }
             style={({ pressed }) => [styles.handOver, pressed && { transform: [{ scale: 0.96 }] }]}
           >
             <Txt weight="semi" size={15} color={colors.white}>
-              Handed over
+              {action ?? 'Handed over'}
             </Txt>
             <View style={styles.handDisc}>
               <Icon name="check" size={18} strokeWidth={2.6} />
@@ -283,6 +357,9 @@ function Empty({ filter, owner }: { filter: Filter; owner: boolean }) {
 }
 
 const styles = StyleSheet.create({
+  column: { flex: 1, backgroundColor: colors.sunken, borderRadius: 26, padding: 12 },
+  columnHead: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 8, paddingTop: 6, paddingBottom: 12 },
+  columnDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: colors.ink },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   live: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.surface },
   liveDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.teal },
