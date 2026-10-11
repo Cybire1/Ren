@@ -146,7 +146,7 @@
   margin-top: 1.75rem;
   font-size: 1.1875rem;
   line-height: 1.55;
-  color: #2a3a3d;
+  color: var(--ink-2);
   font-weight: 500;
   animation: word 0.9s var(--spring) 0.45s both;
 }
@@ -311,7 +311,7 @@
   padding: 2.1em 1.9em 1.6em;
   border: 2px solid var(--ink);
   border-top: 0;
-  background: #f8f7f3;
+  background: var(--card);
   transform: none;
 }
 
@@ -539,7 +539,7 @@
 .rh-screen-shop {
   font-size: 0.8125em;
   font-weight: 800;
-  color: #1f3438;
+  color: var(--ink-2);
 }
 
 .rh-screen-amount {
@@ -555,7 +555,7 @@
   gap: 0.4em;
   font-size: 0.875em;
   font-weight: 800;
-  color: #1f3438;
+  color: var(--ink-2);
 }
 
 .rh-waves {
@@ -625,14 +625,14 @@
   height: 44px;
   border: 0;
   border-radius: 50%;
-  background: rgba(11, 26, 29, 0.07);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
   color: var(--ink);
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .rh-pause:hover {
-  background: rgba(11, 26, 29, 0.13);
+  background: color-mix(in srgb, var(--ink) 13%, transparent);
 }
 
 .rh[data-paused] *,
@@ -704,7 +704,7 @@
 }
 
 .lp-track::before {
-  border-top: 2px dashed rgba(11, 26, 29, 0.35);
+  border-top: 2px dashed color-mix(in srgb, var(--ink) 35%, transparent);
 }
 
 .lp-track::after {
@@ -891,7 +891,7 @@
   align-items: baseline;
   gap: 0.5rem;
   padding: 0.6rem 0;
-  border-top: 1px dashed rgba(11, 26, 29, 0.22);
+  border-top: 1px dashed color-mix(in srgb, var(--ink) 22%, transparent);
 }
 
 .lp-tally > div:first-child {
@@ -913,7 +913,7 @@
   content: "";
   flex: 1;
   min-width: 1rem;
-  border-bottom: 2px dotted rgba(11, 26, 29, 0.3);
+  border-bottom: 2px dotted color-mix(in srgb, var(--ink) 30%, transparent);
   transform: translateY(-0.25em);
 }
 
@@ -1035,7 +1035,7 @@
   grid-template-columns: 1.1rem 1fr;
   gap: 0.7rem;
   font-weight: 500;
-  color: #1f3438;
+  color: var(--ink-2);
 }
 
 .lp-panel li svg {
@@ -1161,7 +1161,7 @@
   padding: 3rem;
   border-radius: 2.5rem;
   background: var(--ink);
-  color: #e6eeee;
+  color: var(--on-teal);
   scroll-margin-top: 1.5rem;
 }
 

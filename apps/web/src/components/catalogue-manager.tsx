@@ -16,7 +16,7 @@ export function ItemFace({ item, size = 56 }: { item: Pick<CatalogItem, 'name' |
       // biome-ignore lint/performance/noImgElement: the seller's own photo, already sized
       <img className="item-face" src={item.image_url} alt="" width={size} height={size} />
     )
-  const tones = ['#a9c9c9', '#ebb3aa', '#dedcd8', '#f3d6d0']
+  const tones = ['var(--teal-soft)', 'var(--coral-soft)', 'var(--sunken)', 'var(--coral-tint)']
   const tone = tones[[...item.name].reduce((n, c) => n + c.charCodeAt(0), 0) % tones.length]
   return (
     <span className="item-face item-face-letter" style={{ width: size, height: size, background: tone }} aria-hidden="true">

@@ -10,7 +10,7 @@ import { Icon } from './Icon'
 import { Txt } from './primitives'
 
 /** Secondary text on teal. */
-const onTeal = '#DCEBEA'
+const onTeal = '#E3FFF5'
 
 /**
  * The balance, as the first thing on Home: dollars as the headline with the sign and cents set

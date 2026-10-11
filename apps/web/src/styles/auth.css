@@ -40,7 +40,7 @@
 .auth-sub {
   max-width: 28rem;
   margin-top: 0.75rem;
-  color: #1f3438;
+  color: var(--ink-2);
   font-weight: 500;
 }
 

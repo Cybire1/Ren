@@ -9,13 +9,13 @@ import type { Entry } from './wallet'
  * payment is only ever asked about once.
  */
 export const categoryInfo: Record<SpendingCategory, { label: string; color: string }> = {
-  food: { label: 'Eating out', color: '#D46558' },
-  groceries: { label: 'Groceries', color: '#46878B' },
-  travel: { label: 'Travel', color: '#376B70' },
-  transport: { label: 'Getting around', color: '#8FB9BB' },
-  shopping: { label: 'Shopping', color: '#EBB3AA' },
-  bills: { label: 'Bills and airtime', color: '#566568' },
-  health: { label: 'Health', color: '#A94B40' },
+  food: { label: 'Eating out', color: '#FF5E7E' },
+  groceries: { label: 'Groceries', color: '#00A37A' },
+  travel: { label: 'Travel', color: '#00805F' },
+  transport: { label: 'Getting around', color: '#6FD3B3' },
+  shopping: { label: 'Shopping', color: '#FFC0CC' },
+  bills: { label: 'Bills and airtime', color: '#4F6577' },
+  health: { label: 'Health', color: '#D13C5C' },
   people: { label: 'Family and friends', color: '#E8C35A' },
   other: { label: 'Other', color: '#B9B6AF' },
 }

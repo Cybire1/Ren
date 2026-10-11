@@ -169,7 +169,7 @@
 }
 
 .more-row:hover {
-  background: rgba(11, 26, 29, 0.04);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
 .more-list > * + * {
@@ -322,7 +322,7 @@
 
 .chip-onink {
   background: rgba(255, 255, 255, 0.1);
-  color: #e6eeee;
+  color: var(--on-teal);
 }
 
 /* Payment rows now link to their charge. */
@@ -346,7 +346,7 @@
 }
 
 .row-item .row:hover {
-  background: rgba(11, 26, 29, 0.04);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
 .row-text {
@@ -691,7 +691,7 @@
   padding: 0.5rem 0.7rem;
   border-radius: 0.9rem;
   background: var(--ink);
-  color: #e6eeee;
+  color: var(--on-teal);
   font-size: 0.75rem;
   white-space: nowrap;
   text-align: center;
@@ -814,7 +814,7 @@
   gap: 0.35rem;
   font-size: 0.75rem;
   font-weight: 700;
-  color: #1f3438;
+  color: var(--ink-2);
 }
 
 .phone-dot {
@@ -848,7 +848,7 @@
 .phone-count {
   font-size: 0.8125rem;
   font-weight: 700;
-  color: #1f3438;
+  color: var(--ink-2);
 }
 
 .phone-api {
@@ -880,7 +880,7 @@
   place-items: center;
   align-content: center;
   gap: 0.75rem;
-  border: 2px dashed rgba(11, 26, 29, 0.35);
+  border: 2px dashed color-mix(in srgb, var(--ink) 35%, transparent);
   background: transparent;
   font: inherit;
   font-weight: 700;
@@ -952,7 +952,7 @@
   padding: 0 1rem;
   border-radius: 999px;
   background: var(--ink);
-  color: #c9d6d6;
+  color: var(--on-teal);
   font-size: 0.75rem;
   font-weight: 800;
 }
@@ -986,7 +986,7 @@
   min-height: 0;
   margin-top: -0.6rem;
   padding-top: 0.6rem;
-  background: #f8f7f3;
+  background: var(--card);
   border-left: 2px solid var(--ink);
   border-right: 2px solid var(--ink);
   overflow: hidden;
@@ -1027,7 +1027,7 @@
 }
 
 .tape-line a:hover {
-  background: rgba(11, 26, 29, 0.04);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
 .tape-time {
@@ -1078,7 +1078,7 @@
 
 .tape-line[data-status="requires_payment"] a,
 .tape-line[data-status="processing"] a {
-  background: #f3d6d0;
+  background: var(--coral-tint);
 }
 
 .tape-line[data-status="requires_payment"] .tape-status,
@@ -1554,7 +1554,7 @@
   border: 0;
   border-radius: 1.75rem;
   background: var(--ink);
-  color: #e6eeee;
+  color: var(--on-teal);
   text-align: left;
   font: inherit;
   animation: rise 0.55s var(--spring) both;
@@ -1629,7 +1629,7 @@
   align-content: center;
   gap: 0.75rem;
   background: transparent;
-  border: 2px dashed rgba(11, 26, 29, 0.35);
+  border: 2px dashed color-mix(in srgb, var(--ink) 35%, transparent);
   color: var(--ink);
   font-weight: 700;
   cursor: pointer;
@@ -1689,7 +1689,7 @@
 .codecard {
   border-radius: 1.75rem;
   background: var(--ink);
-  color: #e6eeee;
+  color: var(--on-teal);
   overflow: hidden;
 }
 
@@ -1946,7 +1946,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
   padding: 1rem;
   border-radius: 1.25rem;
   background: var(--ink);
-  color: #e6eeee;
+  color: var(--on-teal);
   animation: rise 0.5s var(--spring);
 }
 
@@ -2005,7 +2005,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
 }
 
 .event:hover {
-  background: rgba(11, 26, 29, 0.04);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
 .event code {
@@ -2047,7 +2047,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
   margin: 0 0.75rem 0.75rem;
   border-radius: 1rem;
   background: var(--ink);
-  color: #e6eeee;
+  color: var(--on-teal);
   font-size: 0.75rem;
 }
 

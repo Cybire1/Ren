@@ -12,7 +12,7 @@ import { chainName } from '@/lib/chain'
 type Placed = { id: string; checkout: { id: string; amount: string; expires_at: string } }
 
 /** A tint for a product with no photo yet, stable per name. */
-const TINTS = ['#a9c9c9', '#ebb3aa', '#f3d6d0', '#cfe3dc', '#efe0c6']
+const TINTS = ['var(--teal-soft)', 'var(--coral-soft)', 'var(--coral-tint)', 'var(--tint-mint)', 'var(--tint-sand)']
 const tintFor = (name: string) => TINTS[[...name].reduce((n, c) => n + c.charCodeAt(0), 0) % TINTS.length]
 
 type Item = PublicStall['items'][number]

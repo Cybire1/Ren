@@ -53,7 +53,7 @@ export default function PrivyWallet({
         loginMethods: ['email', 'google'],
         appearance: {
           theme: 'light',
-          accentColor: '#d46558',
+          accentColor: '#ff5e7e',
           landingHeader: title,
           showWalletLoginFirst: false,
         },

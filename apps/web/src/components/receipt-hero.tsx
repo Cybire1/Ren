@@ -142,8 +142,7 @@ export function ReceiptHero() {
             >
               <path
                 d="M0 15 L12 3 L24 15 L36 3 L48 15 L60 3 L72 15 L84 3 L96 15 L108 3 L120 15 L132 3 L144 15 L156 3 L168 15 L180 3 L192 15 L204 3 L216 15 L228 3 L240 15 L252 3 L264 15 L276 3 L288 15 L300 3 L312 15 L324 3 L336 15 L348 3 L360 15"
-                fill="#f8f7f3"
-                stroke="#0b1a1d"
+                style={{ fill: 'var(--card)', stroke: 'var(--ink)' }}
                 strokeWidth="2"
                 strokeLinejoin="round"
                 vectorEffect="non-scaling-stroke"
@@ -198,7 +197,7 @@ export function ReceiptHero() {
               <defs>
                 <path id="rh-ring" d="M64 64 m-41 0 a41 41 0 1 1 82 0 a41 41 0 1 1 -82 0" />
               </defs>
-              <circle cx="64" cy="64" r="61" fill="#d46558" stroke="#0b1a1d" strokeWidth="3" />
+              <circle cx="64" cy="64" r="61" style={{ fill: 'var(--coral)', stroke: 'var(--ink)' }} strokeWidth="3" />
               <circle
                 cx="64"
                 cy="64"
@@ -208,7 +207,7 @@ export function ReceiptHero() {
                 strokeWidth="2"
                 strokeDasharray="4 5"
               />
-              <text fontSize="9.5" fontWeight="800" fill="#0b1a1d" letterSpacing="1.4">
+              <text fontSize="9.5" fontWeight="800" style={{ fill: 'var(--ink)' }} letterSpacing="1.4">
                 <textPath href="#rh-ring" textLength="252" lengthAdjust="spacing">
                   SETTLED ON MONAD • SETTLED ON MONAD •
                 </textPath>

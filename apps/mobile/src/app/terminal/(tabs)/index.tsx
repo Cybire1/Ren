@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(11,26,29,0.55)',
+    backgroundColor: 'rgba(16,35,63,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   },
   typeAdd: { height: 46, paddingHorizontal: 18, borderRadius: 23, backgroundColor: colors.ink, justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 7 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(11,26,29,0.32)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(16,35,63,0.32)' },
   sheet: { backgroundColor: colors.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 20, paddingTop: 10 },
-  grip: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(11,26,29,0.16)' },
+  grip: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(16,35,63,0.16)' },
 })

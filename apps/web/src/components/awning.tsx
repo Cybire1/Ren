@@ -6,7 +6,7 @@
  * shape however wide the awning is: it simply repeats across its container.
  */
 export function Awning({ height = 56, stripe = 24, className, tone = 'coral' }: { height?: number; stripe?: number; className?: string; tone?: 'coral' | 'teal' }) {
-  const fill = tone === 'coral' ? '#d46558' : '#46878b'
+  const fill = tone === 'coral' ? 'var(--coral)' : 'var(--teal)'
   const id = `awning-${tone}-${stripe}-${height}`
   const r = stripe / 2
   const edge = height - r
@@ -14,14 +14,14 @@ export function Awning({ height = 56, stripe = 24, className, tone = 'coral' }: 
     <svg className={className} width="100%" height={height} aria-hidden="true" style={{ display: 'block' }}>
       <defs>
         <pattern id={id} width={stripe * 2} height={height} patternUnits="userSpaceOnUse">
-          <rect x="0" y="0" width={stripe} height={edge} fill={fill} />
-          <rect x={stripe} y="0" width={stripe} height={edge} fill="#f8f7f3" />
-          <path d={`M0 ${edge} A${r} ${r} 0 0 0 ${stripe} ${edge} Z`} fill={fill} stroke="#0b1a1d" strokeWidth="2" strokeLinejoin="round" />
-          <path d={`M${stripe} ${edge} A${r} ${r} 0 0 0 ${stripe * 2} ${edge} Z`} fill="#f8f7f3" stroke="#0b1a1d" strokeWidth="2" strokeLinejoin="round" />
+          <rect x="0" y="0" width={stripe} height={edge} style={{ fill }} />
+          <rect x={stripe} y="0" width={stripe} height={edge} style={{ fill: 'var(--card)' }} />
+          <path d={`M0 ${edge} A${r} ${r} 0 0 0 ${stripe} ${edge} Z`} style={{ fill, stroke: 'var(--ink)' }} strokeWidth="2" strokeLinejoin="round" />
+          <path d={`M${stripe} ${edge} A${r} ${r} 0 0 0 ${stripe * 2} ${edge} Z`} style={{ fill: 'var(--card)', stroke: 'var(--ink)' }} strokeWidth="2" strokeLinejoin="round" />
         </pattern>
       </defs>
       <rect x="0" y="0" width="100%" height={height} fill={`url(#${id})`} />
-      <rect x="0" y="0" width="100%" height="2" fill="#0b1a1d" />
+      <rect x="0" y="0" width="100%" height="2" style={{ fill: 'var(--ink)' }} />
     </svg>
   )
 }

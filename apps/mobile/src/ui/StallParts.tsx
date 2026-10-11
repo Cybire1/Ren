@@ -14,7 +14,7 @@ export const dollars = (price: string | number) =>
 export const about = (price: string | number, currency: DisplayCurrency) =>
   currency === 'USD' ? null : `about ${formatLocal(Number(price), currency)}`
 
-const tones = [colors.tealSoft, colors.coralSoft, colors.sunken, '#F3D6D0']
+const tones = [colors.tealSoft, colors.coralSoft, colors.sunken, '#FFE0E6']
 
 /** What an item looks like everywhere: its photo, or its first letter on a tone picked from its name. */
 export function ItemFace({ item, size = 56, radius }: { item: { name: string; image_url: string | null }; size?: number; radius?: number }) {

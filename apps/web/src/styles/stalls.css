@@ -108,7 +108,7 @@
   border-radius: 1.1rem;
   object-fit: cover;
   background: var(--sunken);
-  box-shadow: inset 0 0 0 2px rgba(11, 26, 29, 0.08);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 .item-face-letter {
@@ -144,7 +144,7 @@
 }
 
 .photo-pick[data-empty] {
-  box-shadow: inset 0 0 0 2px rgba(11, 26, 29, 0.3);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--ink) 30%, transparent);
   background: repeating-linear-gradient(135deg, var(--surface) 0 12px, #ebe9e4 12px 24px);
 }
 
@@ -195,7 +195,7 @@
   min-height: 15rem;
   margin-top: 1rem;
   padding: 1.5rem;
-  border: 2px dashed rgba(11, 26, 29, 0.35);
+  border: 2px dashed color-mix(in srgb, var(--ink) 35%, transparent);
   border-radius: 1.75rem;
   background: var(--surface);
   text-align: center;
@@ -323,7 +323,7 @@
 }
 
 .cat-item[data-soldout] {
-  border-color: rgba(11, 26, 29, 0.3);
+  border-color: color-mix(in srgb, var(--ink) 30%, transparent);
 }
 
 .cat-item[data-soldout] .item-face,
@@ -487,7 +487,7 @@
 
 .stall-card-line {
   font-weight: 500;
-  color: #2a3a3d;
+  color: var(--ink-2);
 }
 
 .stall-card-meta {
@@ -539,7 +539,7 @@
   min-width: 1.3rem;
   padding: 0 0.3rem;
   border-radius: 999px;
-  background: rgba(11, 26, 29, 0.1);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
   font-size: 0.6875rem;
 }
 
@@ -571,7 +571,7 @@
   gap: 0.25rem;
   padding: 0.85rem 1rem;
   border-radius: 1.2rem;
-  background: #f8f7f3;
+  background: var(--card);
   box-shadow: inset 0 0 0 1.5px var(--hairline);
   animation: rise 0.4s var(--spring) both;
 }
@@ -601,7 +601,7 @@
 .order-note {
   font-size: 0.875rem;
   font-style: italic;
-  color: #2a3a3d;
+  color: var(--ink-2);
 }
 
 .order-foot {
@@ -838,7 +838,7 @@
   gap: 0.35rem;
   height: 2.3rem;
   padding: 0 0.85rem 0 0.6rem;
-  border: 2px dashed rgba(11, 26, 29, 0.35);
+  border: 2px dashed color-mix(in srgb, var(--ink) 35%, transparent);
   border-radius: 999px;
   background: none;
   font-size: 0.875rem;
@@ -961,7 +961,7 @@
   margin-top: 0.5rem;
   font-size: 1.0625rem;
   font-weight: 500;
-  color: #2a3a3d;
+  color: var(--ink-2);
 }
 
 .shop-meta {
@@ -1355,7 +1355,7 @@
   display: flex;
   flex-direction: column;
   border: 2px solid var(--ink);
-  background: #f8f7f3;
+  background: var(--card);
   overflow: hidden;
 }
 
@@ -1385,7 +1385,7 @@
   margin-top: 0.6em;
   font-size: clamp(0.95rem, 2.2vw, 1.3rem);
   font-weight: 600;
-  color: #2a3a3d;
+  color: var(--ink-2);
 }
 
 .poster-ask {
@@ -1438,7 +1438,7 @@
   margin-top: 4%;
   font-size: clamp(0.85rem, 2vw, 1.1rem);
   font-weight: 600;
-  color: #2a3a3d;
+  color: var(--ink-2);
 }
 
 .poster-foot {
@@ -1658,7 +1658,7 @@
 }
 
 .store-sign .store-tagline {
-  color: #dcebea;
+  color: var(--on-teal);
 }
 
 .store-sign-kovi {

@@ -1,5 +1,5 @@
 /**
- * Kova's visual system: warm paper, one deep teal-black ink, and three colours that each
+ * Ren's visual system: mint paper, one deep teal-black ink, and three colours that each
  * mean something.
  *
  * Every surface is flat, drawn with a 2px ink outline and no shadows. Teal is money at rest
@@ -7,34 +7,39 @@
  */
 export const colors = {
   /** The ground every screen sits on. */
-  paper: '#E7E5E0',
+  paper: '#E8F7EF',
   /** Cards, keys and inputs: a shade lighter than the ground. */
-  surface: '#F1EFEA',
+  surface: '#F6FCF8',
   /** Recessed areas: chips, input fills, frozen things. */
-  sunken: '#DEDCD8',
-  ink: '#0B1A1D',
-  teal: '#46878B',
-  tealDeep: '#376B70',
+  sunken: '#D6EEE1',
+  ink: '#10233F',
+  teal: '#00A37A',
+  tealDeep: '#00805F',
   /** Teal grounds that carry ink text. */
-  tealSoft: '#A9C9C9',
-  tealLight: '#8FB9BB',
+  tealSoft: '#A6E8D2',
+  tealLight: '#6FD3B3',
   /** The pay colour: the Pay button, its pulse, and every action that spends. */
-  coral: '#D46558',
-  coralDeep: '#A94B40',
+  coral: '#FF5E7E',
+  coralDeep: '#D13C5C',
   /** Coral grounds that carry ink text. */
-  coralSoft: '#EBB3AA',
+  coralSoft: '#FFC0CC',
   /** The coin colour: Kovi, the coins, the card chip. Soft coral, a quieter echo of the pay colour. */
-  yellow: '#EBB3AA',
-  blush: '#E8A89C',
+  yellow: '#FFC0CC',
+  blush: '#FF9DB0',
   /** Text and icons on ink or coral. */
   white: '#FFFFFF',
-  muted: '#566568',
+  muted: '#4F6577',
   /** Secondary text on tinted grounds; plain muted grey is too faint there. */
-  onTint: '#1F3438',
+  onTint: '#1E3557',
   /** Secondary text on ink. */
-  onInk: '#A7B8B9',
-  positive: '#2E7268',
-  danger: '#B03E32',
+  onInk: '#A9C1D6',
+  /** Text on teal. */
+  onTeal: '#E3FFF5',
+  /** Light grounds inside cards: the awning's stripes, receipts. */
+  card: '#FFFFFF',
+  coralTint: '#FFE0E6',
+  positive: '#00805F',
+  danger: '#D2334B',
 } as const
 
 /** Manrope: a calm, open grotesk with even figures, so amounts read cleanly. */

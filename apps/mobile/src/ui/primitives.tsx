@@ -191,7 +191,7 @@ export function RoundButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.round,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: fill ?? 'rgba(11,26,29,0.07)' },
+        { width: size, height: size, borderRadius: size / 2, backgroundColor: fill ?? 'rgba(16,35,63,0.07)' },
         pressed && { transform: [{ scale: 0.92 }], opacity: 0.8 },
       ]}
     >

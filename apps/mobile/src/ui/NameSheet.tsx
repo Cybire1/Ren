@@ -84,7 +84,7 @@ export function NameSheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(11,26,29,0.32)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(16,35,63,0.32)' },
   sheet: {
     backgroundColor: colors.paper,
     borderTopLeftRadius: 32,
@@ -92,7 +92,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 10,
   },
-  grip: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(11,26,29,0.16)' },
+  grip: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(16,35,63,0.16)' },
   face: { alignSelf: 'center', marginTop: 18 },
   input: {
     marginTop: 22,

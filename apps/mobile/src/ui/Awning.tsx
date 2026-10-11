@@ -2,7 +2,7 @@ import Svg, { G, Path, Rect } from 'react-native-svg'
 import { colors } from '@/lib/theme'
 
 /** The awning's light stripe: a shade warmer than white, like canvas. */
-export const canvas = '#F8F7F3'
+export const canvas = '#FFFFFF'
 
 /**
  * A market stall's awning: coral and canvas stripes with a scalloped edge, outlined in ink like

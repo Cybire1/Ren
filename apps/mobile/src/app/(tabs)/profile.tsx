@@ -193,7 +193,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 /** Secondary text on teal. */
-const onTeal = '#DCEBEA'
+const onTeal = '#E3FFF5'
 
 /** Your currency, at today's rate, with where that rate comes from. */
 function MoneyCard({ currency, onChange }: { currency: DisplayCurrency; onChange: (currency: DisplayCurrency) => void }) {
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: colors.sunken,
   },
-  sessionOpen: { backgroundColor: '#DCEBEA' },
+  sessionOpen: { backgroundColor: '#E3FFF5' },
   liveDotWrap: { width: 12, height: 12, alignItems: 'center', justifyContent: 'center' },
   liveDot: { width: 12, height: 12, borderRadius: 6 },
   lock: {
