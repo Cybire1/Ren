@@ -317,7 +317,8 @@ export function SendSheet({ to }: { to?: string }) {
                 {problem ? (
                   <p className="w-sheet-problem" role="alert">
                     <Icon name="info" size={18} />
-                    {problem} Your money hasn’t moved.
+                    {problem}
+                    {/went through/i.test(problem) ? '' : ' Your money hasn’t moved.'}
                   </p>
                 ) : null}
                 {over ? (

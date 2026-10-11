@@ -316,7 +316,11 @@ export function PayCharge({ id }: { id: string }) {
             </div>
           </div>
           {stage.at === 'problem' ? (
-            <p className="form-error">{stage.message} Nothing was paid.</p>
+            <p className="form-error">
+              {stage.message}
+              {/* A timeout may still land: then the message says so, and we don't claim otherwise. */}
+              {/went through/i.test(stage.message) ? '' : ' Nothing was paid.'}
+            </p>
           ) : null}
           {short_ ? (
             <>
