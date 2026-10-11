@@ -14,6 +14,7 @@ import {
   type StallDetail,
   setOwnerKey,
   shopChallenge,
+  signInToShop,
 } from './api'
 import { confirmWithFace } from './auth'
 import { useTerminal } from './terminal'
@@ -47,6 +48,11 @@ interface StallState {
   /** Shows a change at once; the server's answer replaces it on the next refresh. */
   patch: (next: StallDetail) => void
   open: (input: { name: string; tagline?: string; phone: string; settleTo: string }, onStep?: (step: OpenStep) => void) => Promise<void>
+  /**
+   * Brings back the shop this wallet owns, on a phone that doesn't hold its key: signs in with the
+   * wallet, keeps a lasting owner key, and makes this phone its till. False if it owns none.
+   */
+  recover: () => Promise<boolean>
   /** The owner key, after Face ID, to sign in to the Kova dashboard with. */
   revealKey: () => Promise<string | null>
   /** Whether the wallet's passkey signs in to this shop on the web. Null until known. */
@@ -209,6 +215,39 @@ export function StallProvider({ children }: { children: ReactNode }) {
     [remember, refresh, terminal, wallet],
   )
 
+  const recover = useCallback<StallState['recover']>(async () => {
+    const me = wallet.profile?.address
+    if (!me) return false
+    if (saved.current?.owner === me.toLowerCase()) return true
+    const challenge = await shopChallenge(me, 'sign_in')
+    const signature = await wallet.signMessage(challenge.message)
+    let session: Awaited<ReturnType<typeof signInToShop>>
+    try {
+      session = await signInToShop(challenge.message, signature)
+    } catch (error) {
+      if (error instanceof Error && /no shop/i.test(error.message)) return false
+      throw error
+    }
+    // The session lapses in a month; the phone keeps a lasting owner key of its own, as when opening.
+    setOwnerKey(session.key)
+    const lasting = await createOwnerKey('Kova app')
+    setOwnerKey(lasting.secret)
+    await remember({
+      merchantId: session.merchant.id,
+      name: session.merchant.name,
+      stallId: null,
+      key: lasting.secret,
+      owner: me.toLowerCase(),
+    })
+    await refresh()
+    if (terminal.paired?.merchantId !== session.merchant.id) {
+      if (terminal.paired) await terminal.unpair()
+      const { code } = await createPairing()
+      await terminal.pair(code, 'This phone')
+    }
+    return true
+  }, [remember, refresh, terminal, wallet])
+
   // Whether this wallet already signs in to the shop on the web. A shop saved before phones kept
   // its owner learns it here, and disappears if it belongs to another wallet.
   useEffect(() => {
@@ -245,7 +284,7 @@ export function StallProvider({ children }: { children: ReactNode }) {
   const shown = mine ? owned : null
   const complete = Boolean(shown?.stallId) && terminal.paired?.merchantId === shown?.merchantId
   return (
-    <Ctx.Provider value={{ ready, owned: shown, complete, stall: mine ? stall : null, refresh, patch: setStall, open, revealKey, ownerLinked, linkOwner }}>
+    <Ctx.Provider value={{ ready, owned: shown, complete, stall: mine ? stall : null, refresh, patch: setStall, open, recover, revealKey, ownerLinked, linkOwner }}>
       {children}
     </Ctx.Provider>
   )

@@ -1,14 +1,18 @@
 import { schema, uuidv7 } from '@kova/db'
-import { decodeMemo, eip3009Abi, verifyPayment } from '@kova/monad'
+import { decodeCardPayments, decodeMemo, eip3009Abi, kovaCardAddress, verifyPayment } from '@kova/monad'
 import { and, eq, isNull } from 'drizzle-orm'
 import { type Address, decodeEventLog, type Hash, type TransactionReceipt } from 'viem'
 import { publicClient } from '../chain.js'
+import { config } from '../config.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { encodeId } from '../ids.js'
 import { findIntentByMemo, type PaymentIntent } from './intents.js'
 import { takeStock } from './orders.js'
 import { onIntentPaid } from './travel.js'
+
+/** Kova Card taps settle like any payment: the KovaCard contract records the charge's memo. */
+const cardContract = kovaCardAddress(config.KOVA_NETWORK)
 
 export interface SettleResult {
   status: 'paid' | 'held' | 'failed' | 'ignored'
@@ -41,6 +45,7 @@ export async function settleFromReceipt(
     payTo: intent.payTo as Address,
     amount: intent.amount,
     memo: intent.memo as `0x${string}`,
+    cardContract,
   })
 
   if (verdict.status === 'pending') return { status: 'ignored', reason: 'pending' }
@@ -136,10 +141,13 @@ export async function settleFromReceipt(
   return { status, paymentId }
 }
 
-/** The intent a receipt claims to pay: the authorization whose nonce is a Kova payment memo. */
-async function findIntentForReceipt(
-  receipt: TransactionReceipt,
-): Promise<PaymentIntent | undefined> {
+/** The intent a receipt claims to pay: the authorization (or card tap) carrying a Kova payment memo. */
+async function findIntentForReceipt(receipt: TransactionReceipt): Promise<PaymentIntent | undefined> {
+  for (const tap of decodeCardPayments(receipt.logs, cardContract)) {
+    if (decodeMemo(tap.memo)?.kind !== 'payment') continue
+    const intent = await findIntentByMemo(tap.memo)
+    if (intent) return intent
+  }
   for (const log of receipt.logs) {
     let nonce: `0x${string}`
     try {

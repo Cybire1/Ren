@@ -39,6 +39,12 @@ importers:
       '@kova/monad':
         specifier: workspace:*
         version: link:../../packages/monad
+      '@scure/bip32':
+        specifier: 2.4.0
+        version: 2.4.0
+      '@scure/bip39':
+        specifier: 2.4.0
+        version: 2.4.0
       drizzle-orm:
         specifier: 0.45.2
         version: 0.45.2(kysely@0.29.6)(pg@8.23.0)(postgres@3.4.9)
@@ -162,6 +168,9 @@ importers:
 
   packages/monad:
     dependencies:
+      '@noble/curves':
+        specifier: 1.9.1
+        version: 1.9.1
       viem:
         specifier: 2.56.8
         version: 2.56.8(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@5.0.10)(zod@4.6.5)
@@ -5861,7 +5870,7 @@ snapshots:
 
   '@scure/bip32@1.7.0':
     dependencies:
-      '@noble/curves': 1.9.7
+      '@noble/curves': 1.9.1
       '@noble/hashes': 1.8.0
       '@scure/base': 1.2.6
 
@@ -7958,7 +7967,7 @@ snapshots:
 
   extension-port-stream@3.0.0:
     dependencies:
-      readable-stream: 3.6.2
+      readable-stream: 4.7.0
       webextension-polyfill: 0.10.0
 
   fast-copy@3.1.0: {}

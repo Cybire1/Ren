@@ -93,6 +93,8 @@ export default function RootLayout() {
                   <Stack.Screen name="received" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
                   <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
                   <Stack.Screen name="open-stall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="card/link" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="card/pin" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="send/index" options={sendSheet} />

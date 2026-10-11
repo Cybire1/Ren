@@ -2,6 +2,7 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Image, View } from 'react-native'
 import { createItem, getCatalog, getCheckout, lookupBarcode, ringUp, uploadImage } from '@/lib/api'
+import { finishTap, linkCard, readTap } from '@/lib/card'
 import { save } from '@/lib/storage'
 import type { DisplayCurrency } from '@/lib/money'
 import { type Mode, usePrefs } from '@/lib/prefs'
@@ -20,6 +21,7 @@ import { Txt } from '@/ui/primitives'
  * `stall=<name>&tagline=<line>` opens a stall from this wallet the way Profile does, `seed=1` fills
  * that stall with a small menu (and a barcoded drink for the till), `seed=bakery` with a bakery's, `till=keypad|items|scan` picks
  * the till's mode, and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
+ * `card=link&limit=100&pin=4827` links the software Kova Card; `tapcard=<charge>` taps it at this till.
  * Release builds redirect home.
  */
 /** A small Lagos kitchen menu for trying the stall screens. */
@@ -77,6 +79,11 @@ export default function Dev() {
     till?: string
     sell?: string
     payee?: string
+    card?: string
+    limit?: string
+    pin?: string
+    tapcard?: string
+    demo?: string
   }>()
   const wallet = useWallet()
   const prefs = usePrefs()
@@ -110,6 +117,20 @@ export default function Dev() {
             await wallet.signOut()
             return
           }
+        }
+        // demo=<username>:<password>: signs in to the App Review demo account, as its screen does.
+        if (params.demo && !progress.current.created) {
+          progress.current.created = true
+          setStep('signing in to the demo account')
+          const [user, ...pass] = params.demo.split(':')
+          await wallet.signInDemo(user ?? '', pass.join(':'))
+          return
+        }
+        if (params.demo && !progress.current.finished) {
+          progress.current.finished = true
+          setStep('bringing back the shop')
+          await stall.recover()
+          return router.replace((params.to as never) || '/')
         }
         if (params.mode) prefs.setMode(params.mode as Mode)
         if (params.name && wallet.status === 'none') {
@@ -188,6 +209,24 @@ export default function Dev() {
             pathname: '/terminal/[id]',
             params: { id: sale.payment_intent.id, price: `$${usd}`, usd },
           })
+        }
+        // card=link: links this install's software Kova Card (the simulator has no NFC) through the
+        // real flow, with `limit` dollars a day and `pin`, then shows the Card tab.
+        if (params.card === 'link' && wallet.profile) {
+          setStep('linking a card')
+          await linkCard(
+            { holder: wallet.profile.address, dailyLimit: params.limit || '100', pin: params.pin || '4827' },
+            wallet.signTypedData,
+          )
+          return router.replace('/(tabs)/card')
+        }
+        // tapcard=<charge>: taps the software card on this till for that charge, as a customer would.
+        if (params.tapcard) {
+          setStep('tapping a card')
+          const { tap, signature } = await readTap(params.tapcard)
+          if (!tap.pin_required) await finishTap(tap.id, signature)
+          else if (params.pin) await finishTap(tap.id, signature, params.pin)
+          return router.replace({ pathname: '/terminal/[id]', params: { id: params.tapcard } })
         }
         if (params.rename) {
           const [address, ...name] = params.rename.split(':')

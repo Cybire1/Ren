@@ -21,6 +21,9 @@ export function setDeviceKey(key: string | null) {
   keys.device = key
 }
 
+/** The device key this phone takes payments with, if it is a till. */
+export const currentDeviceKey = () => keys.device
+
 /** The shop owner's key, set when this phone opened the shop. */
 export function setOwnerKey(key: string | null) {
   keys.owner = key
@@ -51,6 +54,19 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
   if (!response.ok) throw new Error(body.error?.message ?? `Kova is unreachable (${response.status})`)
   return body as T
 }
+
+// --- App Review demo account ---------------------------------------------------------------
+
+export interface DemoAccount {
+  secret: `0x${string}`
+  name: string
+  currency: string
+  contacts: { address: string; name: string }[]
+}
+
+/** Testnet only: the demo account's username and password, for its wallet's secret. */
+export const demoSignIn = (username: string, password: string) =>
+  request<DemoAccount>('/v1/demo/sign_in', { method: 'POST', body: JSON.stringify({ username, password }) })
 
 // --- payer ---------------------------------------------------------------------------------
 
@@ -296,6 +312,13 @@ export const openShop = (name: string, settlementAddress: string, owner?: { mess
   request<OpenedShop>('/v1/merchants', {
     method: 'POST',
     body: JSON.stringify({ name, settlement_address: settlementAddress, ...(owner ? { owner } : {}) }),
+  })
+
+/** Signs a wallet in to the shop it owns (its newest, if several): a session key for this phone. */
+export const signInToShop = (message: string, signature: string) =>
+  request<{ key: string; merchant: { id: string; name: string } }>('/v1/sign_in', {
+    method: 'POST',
+    body: JSON.stringify({ message, signature, newest: true }),
   })
 
 /** Who signs in to the shop this phone owns: its owner's wallet, or nobody's yet. */

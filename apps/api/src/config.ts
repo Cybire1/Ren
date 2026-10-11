@@ -84,6 +84,25 @@ const schema = z.object({
   AT_API_KEY: z.string().optional(),
   /** An approved sender name for SMS; unset uses Africa's Talking's default. */
   AT_SENDER_ID: z.string().optional(),
+  /**
+   * The App Review demo account (testnet only): a username and password that open one shared
+   * test wallet whose 32-byte secret stands in for a passkey. Unset, there is no demo account.
+   */
+  KOVA_DEMO_USERNAME: z.string().min(3).optional(),
+  KOVA_DEMO_PASSWORD: z.string().min(8).optional(),
+  KOVA_DEMO_SECRET: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{64}$/)
+    .optional(),
+  /**
+   * Kova Card: the key that cosigns every tap after Kova's checks (PIN, freeze). It can only
+   * refuse payments, never make one: each also needs the card's own signature. Without it, cards
+   * are off. Rotate with KovaCard.setCosigner.
+   */
+  KOVA_CARD_COSIGNER_KEY: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{64}$/)
+    .optional(),
 })
 
 export type Config = z.infer<typeof schema>
