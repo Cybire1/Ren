@@ -46,6 +46,7 @@ const domains = config.KOVA_SIGN_IN_DOMAINS
       'www.mykova.app',
       'web-monad.up.railway.app',
       'web-monad-mainnet.up.railway.app',
+      'test.mykova.app',
       ...(isProduction ? [] : ['localhost:3000', 'localhost:3002']),
     ]
 
