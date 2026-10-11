@@ -9,6 +9,8 @@ import { OS_DURATION, ShopOsFilm } from './os/ShopOsFilm'
 import { STORE_DURATION, StoreFilm } from './store/StoreFilm'
 import { CustomerPaidScreen, CustomerReel, CustomerTapScreen, RegisterReel, TerminalReel, OrdersScreen, SellScreen, TerminalPaidScreen, TerminalSellScreen, TodayScreen } from './os/ui/Screens'
 import { ProductArt } from './atm/ProductArt'
+import { MerchArt, MerchMenu } from './store/MerchArt'
+import { MerchHero } from './store/MerchHero'
 import { TERMINAL_DURATION, TerminalFilm } from './terminal/TerminalFilm'
 import { TerminalShowcase } from './terminal/TerminalShowcase'
 import { KovaPointFilm, POINT_DURATION } from './atm/KovaPointFilm'
@@ -36,6 +38,9 @@ export const RemotionRoot = () => (
     <Composition id="TerminalFilm" component={TerminalFilm} durationInFrames={TERMINAL_DURATION * FPS} fps={FPS} width={1920} height={1080} />
     <Composition id="TerminalShowcase" component={TerminalShowcase} durationInFrames={240} fps={FPS} width={1920} height={1080} />
     <Composition id="KovaPoint" component={KovaPointShowcase} durationInFrames={300} fps={FPS} width={1920} height={1080} />
+    <Still id="MerchArt" component={MerchArt} width={600} height={600} defaultProps={{ kind: 'mug' as const }} />
+    <Still id="MerchHero" component={MerchHero} width={1200} height={1200} defaultProps={{ kind: 'mug' as const }} />
+    <Still id="MerchMenu" component={MerchMenu} width={1200} height={1500} />
     <Still id="ProductArt" component={ProductArt} width={600} height={600} defaultProps={{ kind: 'croissant' as const }} />
     <Still id="TerminalScreen" component={TerminalScreen} width={900} height={1800} defaultProps={{ screen: 'charge' as const }} />
     <Still id="TerminalReceipt" component={TerminalReceipt} width={600} height={1500} />
