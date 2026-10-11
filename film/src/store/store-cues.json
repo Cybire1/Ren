@@ -1,0 +1,60 @@
+{
+  "bpm": 110,
+  "duration": 57,
+  "shots": {
+    "open": 0.0,
+    "title": 4.364,
+    "setup": 8.727,
+    "online": 13.091,
+    "orders": 19.636,
+    "sell": 24.0,
+    "pay": 28.364,
+    "hand": 32.727,
+    "stock": 37.091,
+    "today": 39.273,
+    "send": 43.636,
+    "end": 49.091
+  },
+  "vo": {
+    "open": 0.9,
+    "title": 4.75,
+    "setup": 9.0,
+    "online": 13.5,
+    "orders": 20.0,
+    "sell": 24.3,
+    "pay": 28.8,
+    "hand": 33.1,
+    "today": 39.6,
+    "send": 44.0,
+    "end": 49.7
+  },
+  "flip": 1.636,
+  "shopTaps": {
+    "add": 1.091,
+    "pay": 3.273,
+    "paid": 3.818
+  },
+  "orderTaps": {
+    "arrives": 0.545,
+    "start": 1.636,
+    "ready": 2.727,
+    "handed": 3.818
+  },
+  "card": [
+    28.964,
+    30.0
+  ],
+  "paid": 30.546,
+  "print": [
+    31.091,
+    32.728
+  ],
+  "handCard": [
+    36.1,
+    36.545
+  ],
+  "handPaid": 36.545,
+  "sendTap": 46.363,
+  "sent": 46.909,
+  "url": 53.0
+}

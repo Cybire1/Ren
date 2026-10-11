@@ -94,7 +94,7 @@ try {
   // Pay with the Kova wallet: the passkey approves it.
   const started = Date.now()
   await clickText('Pay $')
-  await page.waitForFunction(() => /paid/i.test(document.body.innerText), { timeout: 60000 })
+  await page.waitForFunction(() => /Paid!/.test(document.body.innerText), { timeout: 60000 })
   console.log(`PAID in ${((Date.now() - started) / 1000).toFixed(2)} s (tap to paid, from here)`)
   await wait(400)
   await shot('5-paid')

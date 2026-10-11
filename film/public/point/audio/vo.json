@@ -1,0 +1,402 @@
+{
+  "voiceId": "pFZP5JQG7iQjIQuC4Bku",
+  "lines": [
+    {
+      "id": "street",
+      "file": "point/audio/vo-1.mp3",
+      "duration": 4.48,
+      "words": [
+        {
+          "text": "Every",
+          "start": 0,
+          "end": 0.4
+        },
+        {
+          "text": "street",
+          "start": 0.48,
+          "end": 0.8
+        },
+        {
+          "text": "has",
+          "start": 0.88,
+          "end": 0.96
+        },
+        {
+          "text": "a",
+          "start": 1.04,
+          "end": 1.12
+        },
+        {
+          "text": "shop.",
+          "start": 1.2,
+          "end": 2
+        },
+        {
+          "text": "Soon,",
+          "start": 2.08,
+          "end": 2.64
+        },
+        {
+          "text": "every",
+          "start": 2.72,
+          "end": 3.04
+        },
+        {
+          "text": "shop",
+          "start": 3.12,
+          "end": 3.36
+        },
+        {
+          "text": "can",
+          "start": 3.44,
+          "end": 3.6
+        },
+        {
+          "text": "have",
+          "start": 3.68,
+          "end": 3.76
+        },
+        {
+          "text": "Kova.",
+          "start": 3.84,
+          "end": 4.48
+        }
+      ]
+    },
+    {
+      "id": "tap",
+      "file": "point/audio/vo-2.mp3",
+      "duration": 3.28,
+      "words": [
+        {
+          "text": "Tap",
+          "start": 0,
+          "end": 0.24
+        },
+        {
+          "text": "your",
+          "start": 0.32,
+          "end": 0.4
+        },
+        {
+          "text": "Kova",
+          "start": 0.48,
+          "end": 0.8
+        },
+        {
+          "text": "card,",
+          "start": 1,
+          "end": 1.28
+        },
+        {
+          "text": "and",
+          "start": 1.32,
+          "end": 1.36
+        },
+        {
+          "text": "your",
+          "start": 1.44,
+          "end": 1.6
+        },
+        {
+          "text": "dollars",
+          "start": 1.68,
+          "end": 2
+        },
+        {
+          "text": "are",
+          "start": 2.08,
+          "end": 2.24
+        },
+        {
+          "text": "right",
+          "start": 2.32,
+          "end": 2.56
+        },
+        {
+          "text": "there.",
+          "start": 2.64,
+          "end": 3.36
+        }
+      ]
+    },
+    {
+      "id": "send",
+      "file": "point/audio/vo-3.mp3",
+      "duration": 5.84,
+      "words": [
+        {
+          "text": "Send",
+          "start": 0,
+          "end": 0.24
+        },
+        {
+          "text": "them",
+          "start": 0.32,
+          "end": 0.56
+        },
+        {
+          "text": "anywhere",
+          "start": 0.64,
+          "end": 1.04
+        },
+        {
+          "text": "in",
+          "start": 1.08,
+          "end": 1.12
+        },
+        {
+          "text": "the",
+          "start": 1.2,
+          "end": 1.28
+        },
+        {
+          "text": "world.",
+          "start": 1.36,
+          "end": 2.32
+        },
+        {
+          "text": "Lena,",
+          "start": 2.4,
+          "end": 2.84
+        },
+        {
+          "text": "in",
+          "start": 2.88,
+          "end": 2.96
+        },
+        {
+          "text": "Berlin,",
+          "start": 3.04,
+          "end": 3.64
+        },
+        {
+          "text": "has",
+          "start": 3.68,
+          "end": 3.84
+        },
+        {
+          "text": "hers",
+          "start": 3.92,
+          "end": 4.24
+        },
+        {
+          "text": "in",
+          "start": 4.28,
+          "end": 4.32
+        },
+        {
+          "text": "about",
+          "start": 4.4,
+          "end": 4.64
+        },
+        {
+          "text": "a",
+          "start": 4.72,
+          "end": 4.8
+        },
+        {
+          "text": "second.",
+          "start": 5.32,
+          "end": 5.92
+        }
+      ]
+    },
+    {
+      "id": "cash",
+      "file": "point/audio/vo-4.mp3",
+      "duration": 2.88,
+      "words": [
+        {
+          "text": "Need",
+          "start": 0,
+          "end": 0.16
+        },
+        {
+          "text": "cash?",
+          "start": 0.32,
+          "end": 1.12
+        },
+        {
+          "text": "Take",
+          "start": 1.2,
+          "end": 1.36
+        },
+        {
+          "text": "it",
+          "start": 1.4,
+          "end": 1.44
+        },
+        {
+          "text": "out",
+          "start": 1.52,
+          "end": 1.6
+        },
+        {
+          "text": "at",
+          "start": 1.68,
+          "end": 1.76
+        },
+        {
+          "text": "the",
+          "start": 1.8,
+          "end": 1.84
+        },
+        {
+          "text": "counter.",
+          "start": 1.92,
+          "end": 2.88
+        }
+      ]
+    },
+    {
+      "id": "home",
+      "file": "point/audio/vo-5.mp3",
+      "duration": 5.76,
+      "words": [
+        {
+          "text": "And",
+          "start": 0,
+          "end": 0.16
+        },
+        {
+          "text": "when",
+          "start": 0.28,
+          "end": 0.4
+        },
+        {
+          "text": "family",
+          "start": 0.48,
+          "end": 0.8
+        },
+        {
+          "text": "sends",
+          "start": 0.88,
+          "end": 1.2
+        },
+        {
+          "text": "money",
+          "start": 1.32,
+          "end": 1.44
+        },
+        {
+          "text": "home,",
+          "start": 1.52,
+          "end": 2.04
+        },
+        {
+          "text": "it",
+          "start": 2.08,
+          "end": 2.16
+        },
+        {
+          "text": "lands",
+          "start": 2.32,
+          "end": 2.48
+        },
+        {
+          "text": "here",
+          "start": 2.6,
+          "end": 2.72
+        },
+        {
+          "text": "too.",
+          "start": 3.12,
+          "end": 3.6
+        },
+        {
+          "text": "No",
+          "start": 3.72,
+          "end": 3.84
+        },
+        {
+          "text": "bank,",
+          "start": 4.12,
+          "end": 4.48
+        },
+        {
+          "text": "no",
+          "start": 4.56,
+          "end": 4.8
+        },
+        {
+          "text": "waiting.",
+          "start": 5.28,
+          "end": 5.84
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "file": "point/audio/vo-6.mp3",
+      "duration": 5.84,
+      "words": [
+        {
+          "text": "Kova",
+          "start": 0,
+          "end": 0.32
+        },
+        {
+          "text": "Point.",
+          "start": 0.4,
+          "end": 1.2
+        },
+        {
+          "text": "Coming",
+          "start": 1.36,
+          "end": 1.52
+        },
+        {
+          "text": "to",
+          "start": 1.56,
+          "end": 1.6
+        },
+        {
+          "text": "the",
+          "start": 1.68,
+          "end": 1.76
+        },
+        {
+          "text": "shop",
+          "start": 1.84,
+          "end": 2.08
+        },
+        {
+          "text": "on",
+          "start": 2.16,
+          "end": 2.24
+        },
+        {
+          "text": "your",
+          "start": 2.32,
+          "end": 2.48
+        },
+        {
+          "text": "corner.",
+          "start": 2.68,
+          "end": 3.36
+        },
+        {
+          "text": "Get",
+          "start": 3.48,
+          "end": 3.6
+        },
+        {
+          "text": "Kova",
+          "start": 3.68,
+          "end": 4.16
+        },
+        {
+          "text": "at",
+          "start": 4.28,
+          "end": 4.4
+        },
+        {
+          "text": "mykova.app",
+          "start": 4.52,
+          "end": 5.92
+        }
+      ]
+    }
+  ]
+}

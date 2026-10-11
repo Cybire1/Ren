@@ -151,11 +151,11 @@ export function Tap({ t, at, x, y }: { t: number; at: number; x: number; y: numb
   )
 }
 
-type Line = { id: string; words: { text: string; start: number; end: number }[] }
+export type Line = { id: string; words: { text: string; start: number; end: number }[] }
 
 /** The voiceover, word for word, in a low band. Words land as they are said. */
-export function Captions({ t, starts }: { t: number; starts: Record<string, number> }) {
-  const line = (vo.lines as Line[]).find((l) => {
+export function Captions({ t, starts, lines = vo.lines as Line[] }: { t: number; starts: Record<string, number>; lines?: Line[] }) {
+  const line = lines.find((l) => {
     const s = starts[l.id]
     const last = l.words[l.words.length - 1]
     return s !== undefined && t >= s - 0.1 && t <= s + last.end + 0.45

@@ -1,0 +1,406 @@
+{
+  "voiceId": "pFZP5JQG7iQjIQuC4Bku",
+  "lines": [
+    {
+      "id": "problem",
+      "file": "os/audio/vo-1.mp3",
+      "duration": 2.08,
+      "words": [
+        {
+          "text": "Running",
+          "start": 0,
+          "end": 0.4
+        },
+        {
+          "text": "a",
+          "start": 0.44,
+          "end": 0.48
+        },
+        {
+          "text": "shop",
+          "start": 0.64,
+          "end": 0.96
+        },
+        {
+          "text": "is",
+          "start": 1.04,
+          "end": 1.12
+        },
+        {
+          "text": "a",
+          "start": 1.2,
+          "end": 1.32
+        },
+        {
+          "text": "lot.",
+          "start": 1.44,
+          "end": 2.08
+        }
+      ]
+    },
+    {
+      "id": "intro",
+      "file": "os/audio/vo-2.mp3",
+      "duration": 3.52,
+      "words": [
+        {
+          "text": "Kova",
+          "start": 0,
+          "end": 0.32
+        },
+        {
+          "text": "Shop",
+          "start": 0.4,
+          "end": 0.64
+        },
+        {
+          "text": "OS",
+          "start": 0.72,
+          "end": 1.12
+        },
+        {
+          "text": "puts",
+          "start": 1.2,
+          "end": 1.52
+        },
+        {
+          "text": "all",
+          "start": 1.6,
+          "end": 1.76
+        },
+        {
+          "text": "of",
+          "start": 1.8,
+          "end": 1.84
+        },
+        {
+          "text": "it",
+          "start": 1.92,
+          "end": 2.08
+        },
+        {
+          "text": "on",
+          "start": 2.2,
+          "end": 2.32
+        },
+        {
+          "text": "one",
+          "start": 2.4,
+          "end": 2.64
+        },
+        {
+          "text": "counter.",
+          "start": 3.08,
+          "end": 3.6
+        }
+      ]
+    },
+    {
+      "id": "sell",
+      "file": "os/audio/vo-3.mp3",
+      "duration": 3.6,
+      "words": [
+        {
+          "text": "Tap",
+          "start": 0,
+          "end": 0.32
+        },
+        {
+          "text": "to",
+          "start": 0.4,
+          "end": 0.48
+        },
+        {
+          "text": "sell.",
+          "start": 0.56,
+          "end": 1.36
+        },
+        {
+          "text": "The",
+          "start": 1.44,
+          "end": 1.52
+        },
+        {
+          "text": "cart",
+          "start": 1.6,
+          "end": 1.92
+        },
+        {
+          "text": "builds",
+          "start": 2,
+          "end": 2.4
+        },
+        {
+          "text": "as",
+          "start": 2.48,
+          "end": 2.56
+        },
+        {
+          "text": "you",
+          "start": 2.64,
+          "end": 2.72
+        },
+        {
+          "text": "go.",
+          "start": 2.8,
+          "end": 3.6
+        }
+      ]
+    },
+    {
+      "id": "pay",
+      "file": "os/audio/vo-4.mp3",
+      "duration": 4.64,
+      "words": [
+        {
+          "text": "They",
+          "start": 0,
+          "end": 0.24
+        },
+        {
+          "text": "tap.",
+          "start": 0.44,
+          "end": 1.04
+        },
+        {
+          "text": "It’s",
+          "start": 1.12,
+          "end": 1.28
+        },
+        {
+          "text": "paid",
+          "start": 1.36,
+          "end": 1.6
+        },
+        {
+          "text": "in",
+          "start": 1.68,
+          "end": 1.76
+        },
+        {
+          "text": "about",
+          "start": 1.92,
+          "end": 2.08
+        },
+        {
+          "text": "a",
+          "start": 2.16,
+          "end": 2.24
+        },
+        {
+          "text": "second,",
+          "start": 2.48,
+          "end": 2.88
+        },
+        {
+          "text": "with",
+          "start": 3,
+          "end": 3.12
+        },
+        {
+          "text": "no",
+          "start": 3.24,
+          "end": 3.36
+        },
+        {
+          "text": "card",
+          "start": 3.44,
+          "end": 3.68
+        },
+        {
+          "text": "fees.",
+          "start": 3.76,
+          "end": 4.64
+        }
+      ]
+    },
+    {
+      "id": "orders",
+      "file": "os/audio/vo-5.mp3",
+      "duration": 2.64,
+      "words": [
+        {
+          "text": "Online",
+          "start": 0,
+          "end": 0.48
+        },
+        {
+          "text": "orders",
+          "start": 0.56,
+          "end": 0.96
+        },
+        {
+          "text": "join",
+          "start": 1.04,
+          "end": 1.28
+        },
+        {
+          "text": "the",
+          "start": 1.36,
+          "end": 1.44
+        },
+        {
+          "text": "same",
+          "start": 1.6,
+          "end": 1.76
+        },
+        {
+          "text": "queue.",
+          "start": 1.84,
+          "end": 2.72
+        }
+      ]
+    },
+    {
+      "id": "hand",
+      "file": "os/audio/vo-6.mp3",
+      "duration": 3.12,
+      "words": [
+        {
+          "text": "Take",
+          "start": 0,
+          "end": 0.16
+        },
+        {
+          "text": "it",
+          "start": 0.24,
+          "end": 0.32
+        },
+        {
+          "text": "to",
+          "start": 0.36,
+          "end": 0.4
+        },
+        {
+          "text": "the",
+          "start": 0.48,
+          "end": 0.56
+        },
+        {
+          "text": "table.",
+          "start": 0.96,
+          "end": 1.4
+        },
+        {
+          "text": "It’s",
+          "start": 1.44,
+          "end": 1.6
+        },
+        {
+          "text": "the",
+          "start": 1.68,
+          "end": 1.76
+        },
+        {
+          "text": "same",
+          "start": 1.92,
+          "end": 2.08
+        },
+        {
+          "text": "shop.",
+          "start": 2.16,
+          "end": 3.2
+        }
+      ]
+    },
+    {
+      "id": "today",
+      "file": "os/audio/vo-7.mp3",
+      "duration": 3.84,
+      "words": [
+        {
+          "text": "At",
+          "start": 0,
+          "end": 0.24
+        },
+        {
+          "text": "close,",
+          "start": 0.32,
+          "end": 1.04
+        },
+        {
+          "text": "see",
+          "start": 1.12,
+          "end": 1.28
+        },
+        {
+          "text": "what",
+          "start": 1.36,
+          "end": 1.44
+        },
+        {
+          "text": "you",
+          "start": 1.52,
+          "end": 1.6
+        },
+        {
+          "text": "made,",
+          "start": 1.8,
+          "end": 2.24
+        },
+        {
+          "text": "and",
+          "start": 2.4,
+          "end": 2.56
+        },
+        {
+          "text": "what",
+          "start": 2.64,
+          "end": 2.72
+        },
+        {
+          "text": "you",
+          "start": 2.8,
+          "end": 2.88
+        },
+        {
+          "text": "kept.",
+          "start": 3.08,
+          "end": 3.84
+        }
+      ]
+    },
+    {
+      "id": "end",
+      "file": "os/audio/vo-8.mp3",
+      "duration": 3.84,
+      "words": [
+        {
+          "text": "Kova",
+          "start": 0,
+          "end": 0.32
+        },
+        {
+          "text": "Shop",
+          "start": 0.4,
+          "end": 0.64
+        },
+        {
+          "text": "OS.",
+          "start": 0.72,
+          "end": 1.52
+        },
+        {
+          "text": "Get",
+          "start": 1.6,
+          "end": 1.76
+        },
+        {
+          "text": "it",
+          "start": 1.84,
+          "end": 2.08
+        },
+        {
+          "text": "at",
+          "start": 2.16,
+          "end": 2.24
+        },
+        {
+          "text": "mykova.app",
+          "start": 2.32,
+          "end": 3.92
+        }
+      ]
+    }
+  ]
+}

@@ -8,12 +8,20 @@
     "render": "remotion render KovisDay out/kovis-day-silent.mp4"
   },
   "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.1",
+    "@react-three/postprocessing": "3.1.3",
     "@remotion/cli": "4.0.520",
     "@remotion/fonts": "4.0.520",
+    "@remotion/motion-blur": "4.0.520",
+    "@remotion/noise": "4.0.520",
     "@remotion/renderer": "4.0.520",
+    "@remotion/three": "4.0.520",
+    "@types/three": "0.180.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "remotion": "4.0.520"
+    "remotion": "4.0.520",
+    "three": "0.180.0"
   },
   "devDependencies": {
     "@types/react": "19.2.18",

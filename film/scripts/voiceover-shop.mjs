@@ -64,7 +64,7 @@ for (const [i, line] of LINES.entries()) {
       headers: { 'xi-api-key': key, 'content-type': 'application/json' },
       body: JSON.stringify({
         text: line.say,
-        model_id: 'eleven_multilingual_v2',
+        model_id: process.env.ELEVENLABS_MODEL ?? 'eleven_v4',
         previous_text: LINES[i - 1]?.say,
         next_text: LINES[i + 1]?.say,
         voice_settings: { stability: 0.45, similarity_boost: 0.8, style: 0.35, use_speaker_boost: true },

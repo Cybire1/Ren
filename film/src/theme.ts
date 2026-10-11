@@ -21,5 +21,7 @@ export const fontsReady = Promise.all(
     ['600', 'Manrope_600SemiBold'],
     ['700', 'Manrope_700Bold'],
     ['800', 'Manrope_800ExtraBold'],
-  ].map(([weight, file]) => loadFont({ family: 'Manrope', url: staticFile(`fonts/${file}.ttf`), weight })),
+  ].map(([weight, file]) => loadFont({ family: 'Manrope', url: staticFile(`fonts/${file}.ttf`), weight }))
+    // The hand-lettered notes on the cards.
+    .concat(loadFont({ family: 'Caveat', url: staticFile('fonts/Caveat-Bold.ttf'), weight: '700' })),
 )
