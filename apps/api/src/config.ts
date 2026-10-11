@@ -72,6 +72,16 @@ const schema = z.object({
    * refuse payments, never make one: each also needs the card's own signature. Without it, cards
    * are off. Rotate with KovaCard.setCosigner.
    */
+  /**
+   * The App Review demo account (testnet only): a username and password that open one shared
+   * test wallet whose 32-byte secret stands in for a passkey. Unset, there is no demo account.
+   */
+  KOVA_DEMO_USERNAME: z.string().min(3).optional(),
+  KOVA_DEMO_PASSWORD: z.string().min(8).optional(),
+  KOVA_DEMO_SECRET: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{64}$/)
+    .optional(),
   KOVA_CARD_COSIGNER_KEY: z
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/)

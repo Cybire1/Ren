@@ -83,6 +83,8 @@ const challengeBody = z.object({
 const signInBody = signedMessage.extend({
   /** Which shop, when the wallet signs in to more than one. */
   merchant: z.string().optional(),
+  /** Or the one it opened last: the app, bringing a wallet's shop back on a new phone. */
+  newest: z.boolean().optional(),
 })
 
 const updateBody = z
@@ -193,7 +195,11 @@ export const accountRoutes = new Hono()
     })
     if (shops.length === 0) throw new KovaError('not_found', 'No shop signs in with this wallet yet.', { reason: 'no_shop' })
     const chosen = parsed.data.merchant ? decodeId('merchant', parsed.data.merchant) : null
-    const shop = chosen ? shops.find((s) => s.id === chosen) : shops.length === 1 ? shops[0] : undefined
+    const shop = chosen
+      ? shops.find((s) => s.id === chosen)
+      : shops.length === 1 || parsed.data.newest
+        ? shops[0]
+        : undefined
     if (!shop) {
       if (chosen) throw notFound('shop', parsed.data.merchant ?? '')
       throw new KovaError('conflict', 'This wallet signs in to more than one shop. Choose one.', {

@@ -7,6 +7,7 @@ import { config } from './config.js'
 import { errorHandler } from './errors.js'
 import { accountRoutes } from './routes/account.js'
 import { cardRoutes, cardTapRoutes } from './routes/cards.js'
+import { demoRoutes } from './routes/demo.js'
 import { catalogRoutes } from './routes/catalog.js'
 import { checkoutRoutes } from './routes/checkout.js'
 import { healthRoutes } from './routes/health.js'
@@ -20,6 +21,7 @@ import { expireStaleIntents } from './services/intents.js'
 import { terminalRoutes } from './routes/terminals.js'
 import { travelRoutes } from './routes/travel.js'
 import { rateBook } from './services/rates.js'
+import { startDemo } from './services/demo.js'
 import { expireTrips } from './services/travel.js'
 import { walletRoutes } from './routes/wallet.js'
 import { webhookRoutes } from './routes/webhooks.js'
@@ -46,6 +48,7 @@ app.route('/v1', insightRoutes)
 // middleware covers all of /v1 (reports asks for an API key).
 app.route('/v1', walletRoutes)
 app.route('/v1', cardRoutes)
+app.route('/v1', demoRoutes)
 app.route('/v1', rateRoutes)
 app.route('/v1', webhookRoutes)
 app.route('/v1', reportRoutes)
@@ -56,6 +59,8 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
   // The watcher settles charges paid by any route and indexes transfers for wallets.
   void startWatcher().catch((error) => console.error('[watcher] failed to start', error))
   startWebhookWorker()
+  // The App Review demo account stays stocked (testnet, and only where it is configured).
+  startDemo()
   // Charges nobody paid close when their code expires, so "waiting" means someone could still pay.
   const expire = () => {
     void expireStaleIntents().catch((error) => console.error('[expiry]', error))

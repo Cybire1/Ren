@@ -80,6 +80,7 @@ export default function Dev() {
     limit?: string
     pin?: string
     tapcard?: string
+    demo?: string
   }>()
   const wallet = useWallet()
   const prefs = usePrefs()
@@ -113,6 +114,20 @@ export default function Dev() {
             await wallet.signOut()
             return
           }
+        }
+        // demo=<username>:<password>: signs in to the App Review demo account, as its screen does.
+        if (params.demo && !progress.current.created) {
+          progress.current.created = true
+          setStep('signing in to the demo account')
+          const [user, ...pass] = params.demo.split(':')
+          await wallet.signInDemo(user ?? '', pass.join(':'))
+          return
+        }
+        if (params.demo && !progress.current.finished) {
+          progress.current.finished = true
+          setStep('bringing back the shop')
+          await stall.recover()
+          return router.replace((params.to as never) || '/')
         }
         if (params.mode) prefs.setMode(params.mode as Mode)
         if (params.name && wallet.status === 'none') {

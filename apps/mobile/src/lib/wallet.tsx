@@ -1,10 +1,12 @@
 import { createPasskeyWithPrfOutput, getPasskeyPrfOutput, isMeraError } from '@category-labs/mera'
+import { hkdf } from '@noble/hashes/hkdf.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { type Address, getAddress, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
-import type { Checkout } from './api'
+import { type Address, getAddress, hexToBytes, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
+import { type Checkout, demoSignIn } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
 import { passkeyDomain } from './config'
 import { openSigningSession } from './keys'
@@ -28,6 +30,8 @@ import { ensureNoteKey, myNoteKeys, readNote, theirNoteKey } from './notes'
 const PRF = 'kova.monad.prf.v1'
 /** Development only: a wallet made without the passkey sheet keeps its key here, so it still signs after a reload. */
 const DEV_PRF = 'kova.dev.prf'
+/** The App Review demo account's secret, which stands where a passkey's PRF output would. */
+const DEMO_PRF = 'kova.demo.prf.v1'
 const PROFILE = 'kova.profile.v1'
 // History, balance and the block cursor belong to one chain, so the Monad build keeps its own.
 const ACTIVITY = 'kova.monad.activity.v1'
@@ -45,6 +49,8 @@ export interface Profile {
   createdAt?: number
   /** The passkey this wallet comes from, so Kova asks for that one and no other. */
   passkey?: { credentialId: string; transports?: readonly string[] }
+  /** The App Review demo account: opened with a username and password, on testnet only. */
+  demo?: boolean
 }
 
 export type EntryKind = 'paid' | 'sent' | 'received' | 'added'
@@ -101,6 +107,11 @@ interface Wallet {
    * all it has, and it ends with the app.
    */
   createForDev?: (name: string, currency: DisplayCurrency) => Promise<void>
+  /**
+   * Opens the App Review demo account (testnet): Kova checks the username and password and gives
+   * back the wallet's secret, which this phone keeps instead of a passkey's.
+   */
+  signInDemo: (username: string, password: string) => Promise<void>
   /** Brings a wallet back from its passkey, on this phone or a new one. The name may be empty. */
   restore: () => Promise<Profile>
   setName: (name: string) => Promise<void>
@@ -335,6 +346,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!profile) throw new Error('No wallet on this phone')
       const open = sessionAccount(amount)
       if (open) return open
+      if (profile.demo) {
+        // A shared test wallet: its secret came from a password, so a passkey would add nothing.
+        const demo = await SecureStore.getItemAsync(DEMO_PRF).catch(() => null)
+        if (!demo) throw new Error('Sign in to the demo account again.')
+        return begin(base64urlnopad.decode(demo), profile.address)
+      }
       if (__DEV__ && !profile.protected) {
         const dev = await SecureStore.getItemAsync(DEV_PRF).catch(() => null)
         if (dev) return begin(base64urlnopad.decode(dev), profile.address)
@@ -536,6 +553,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     endSession()
     await SecureStore.deleteItemAsync(PRF)
     await SecureStore.deleteItemAsync(DEV_PRF).catch(() => {})
+    await SecureStore.deleteItemAsync(DEMO_PRF).catch(() => {})
     await forgetVaultSecret()
     await remove(PROFILE, ACTIVITY, CONTACTS, CURSOR, BALANCE)
     setProfile(null)
@@ -565,6 +583,34 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setStatus('ready')
   }, [])
 
+  const signInDemo = useCallback(async (username: string, password: string) => {
+    const account = await demoSignIn(username, password)
+    const entropy = hexToBytes(account.secret)
+    await SecureStore.setItemAsync(DEMO_PRF, base64urlnopad.encode(entropy), {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    })
+    // The vault and note keys come from the secret too, so every phone signed in sees the same ones.
+    await keepVaultSecret(hkdf(sha256, entropy, undefined, 'kova.demo.vault.v1', 32))
+    const opened = await begin(entropy, undefined)
+    const contacts = account.contacts.filter((c) => isAddress(c.address)) as Contact[]
+    setSavedContacts(contacts)
+    await save(CONTACTS, contacts)
+    await remove(ACTIVITY, CURSOR, BALANCE)
+    setActivity([])
+    const next: Profile = {
+      name: account.name,
+      address: opened.address,
+      currency: (account.currency as DisplayCurrency) || 'USD',
+      protected: false,
+      demo: true,
+      createdAt: Date.now(),
+    }
+    await save(PROFILE, next)
+    setProfile(next)
+    setBalance(null)
+    setStatus('ready')
+  }, [])
+
   const value: Wallet = {
     status,
     profile,
@@ -576,6 +622,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     refresh,
     create,
     ...(__DEV__ ? { createForDev } : {}),
+    signInDemo,
     restore,
     setName,
     setCurrency,

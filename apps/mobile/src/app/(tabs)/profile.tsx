@@ -158,7 +158,26 @@ export default function Profile() {
           void setCurrency(next)
         }}
       />
-      <KeysCard />
+      {profile.demo ? (
+        <View style={styles.keys}>
+          <View style={styles.keysTop}>
+            <View style={styles.keyIcon}>
+              <Icon name="info" size={19} color={colors.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt weight="bold" size={17}>
+                You’re in the demo account
+              </Txt>
+              <Txt size={14} color={colors.muted} style={{ marginTop: 2, lineHeight: 20 }}>
+                A shared test wallet with test dollars, on Monad testnet. A real Kova wallet is a passkey: remove this one
+                and choose “Create my wallet”.
+              </Txt>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <KeysCard />
+      )}
 
       <View style={{ marginTop: 26, alignItems: 'center' }}>
         {confirmRemove ? (
@@ -167,7 +186,9 @@ export default function Profile() {
               Remove this wallet from the phone?
             </Txt>
             <Txt size={14} color={colors.muted} style={{ marginTop: 4, lineHeight: 20 }}>
-              {stall.owned
+              {profile.demo
+                ? 'It’s the shared demo account: sign in again with its username and password whenever you like.'
+                : stall.owned
                 ? `Your money stays in the wallet, and ${stall.owned.name} keeps paying into it. Your passkey brings it back here any time: choose “I already have Kova”.`
                 : 'Your money stays in the wallet. Your passkey brings it back here, or on any phone, any time: choose “I already have Kova”.'}
             </Txt>
