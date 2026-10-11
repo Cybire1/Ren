@@ -2081,3 +2081,201 @@ button.w-person {
 .pay-kova-web {
   margin-top: 0.6rem;
 }
+
+/*
+ * On a desk: the dock stands up as a sidebar on the left, with the brand at its head and Pay (or
+ * Charge) first, and the screens use the room beside it. Phones keep the floating pill.
+ */
+
+.w-dock-brand,
+.w-dock-back {
+  display: none;
+}
+
+@media (max-width: 1023px) {
+  .w-home-side .w-entries > :nth-child(n + 4) {
+    display: none;
+  }
+}
+
+@media (min-width: 1024px) {
+  .w-app:has(> .w-dock) {
+    --rail: 15.5rem;
+    padding-left: calc(var(--rail) + 1.5rem);
+    padding-right: 1.25rem;
+  }
+
+  .shop-back {
+    visibility: hidden;
+  }
+
+  .w-dock {
+    --rail: 15.5rem;
+    top: 1.25rem;
+    bottom: 1.25rem;
+    left: 1.25rem;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: flex-start;
+    gap: 0.3rem;
+    width: var(--rail);
+    height: auto;
+    padding: 1.4rem 0.9rem 1rem;
+    border-radius: 2rem;
+    transform: none;
+    overflow-y: auto;
+  }
+
+  .w-dock-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0.5rem 1.4rem;
+    text-decoration: none;
+  }
+
+  .w-dock-pay {
+    order: -1;
+    justify-content: flex-start;
+    height: 3.6rem;
+    margin-bottom: 0.9rem;
+    padding: 0 1.25rem;
+    font-size: 1.125rem;
+  }
+
+  .w-dock-brand {
+    order: -2;
+  }
+
+  .w-dock-pay.w-dock-on {
+    box-shadow:
+      0 0 0 3px var(--ink),
+      0 0 0 5px #f5c542;
+  }
+
+  .w-dock-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    min-width: 0;
+    height: 3rem;
+    padding: 0 1rem;
+    border-radius: 999px;
+    font-size: 0.975rem;
+    font-weight: 650;
+  }
+
+  .w-dock-tab:hover {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .w-dock-on {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .w-dock-on::after {
+    margin: 0 0 0 auto;
+  }
+
+  .w-dock-back {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-top: auto;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    color: var(--on-ink);
+    font-size: 0.875rem;
+    font-weight: 650;
+    text-decoration: none;
+  }
+
+  .w-dock-back:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  /* The wallet's own top bar only held the brand, which the sidebar now carries. */
+  .w-app:not(.shop-mode):has(> .w-dock) > .w-top {
+    display: none;
+  }
+
+  .w-main {
+    max-width: 40rem;
+    padding: 2rem 2rem 3rem;
+  }
+
+  .shop-main {
+    padding-bottom: 3rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .w-main:has(.w-home) {
+    max-width: 72rem;
+  }
+
+  .w-home {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 2.5rem;
+  }
+
+  .w-home-side {
+    position: sticky;
+    top: 2rem;
+    padding: 1.5rem 1.6rem 1.25rem;
+    border: 2px solid var(--ink);
+    border-radius: 1.75rem;
+    background: var(--surface);
+  }
+
+  .w-home-side > .w-section:first-child {
+    margin-top: 0;
+  }
+}
+
+/* Welcome on a desk: the painted world on the left, the two ways in on the right. */
+@media (min-width: 1024px) {
+  .w-app:not(:has(> .w-dock)) > .w-top {
+    max-width: 72rem;
+    padding: 1.25rem 2rem;
+  }
+
+  .w-main:has(> .w-welcome:not(.w-welcome-name)) {
+    max-width: 72rem;
+    padding: 1.5rem 2rem 3rem;
+  }
+
+  .w-welcome:not(.w-welcome-name) {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 30rem);
+    column-gap: 4rem;
+    align-content: center;
+    min-height: calc(100dvh - 9rem);
+  }
+
+  .w-welcome:not(.w-welcome-name) > * {
+    grid-column: 2;
+  }
+
+  .w-welcome:not(.w-welcome-name) > .w-welcome-art {
+    grid-column: 1;
+    grid-row: 1 / span 8;
+    align-self: stretch;
+    justify-self: stretch;
+    width: 100%;
+    height: 100%;
+    max-height: 34rem;
+    padding: 3rem;
+    box-sizing: border-box;
+    object-fit: contain;
+    border: 2px solid var(--ink);
+    border-radius: 2rem;
+    background: color-mix(in srgb, var(--teal-light) 45%, var(--paper));
+  }
+
+  .w-main:has(> .w-welcome-name) {
+    padding-top: 3rem;
+  }
+}

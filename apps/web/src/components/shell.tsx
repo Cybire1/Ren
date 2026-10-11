@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { Art, Icon, type IconName } from './brand'
 import { chainName } from '@/lib/chain'
+import { DockBrand } from './wallet/shell'
 
 const TABS: { href: string; label: string; icon: IconName; also?: string[] }[] = [
   { href: '/dashboard', label: 'Today', icon: 'home' },
@@ -103,12 +104,17 @@ export function Shell({
       <main className="shop-main">{children}</main>
 
       <nav className="w-dock" aria-label="Shop">
+        <DockBrand href="/dashboard" />
         {TABS.map(tab)}
         <Link href="/charge" className="w-dock-pay" aria-label="Charge. Take a payment">
           <Icon name="tap" size={22} />
           <span>Charge</span>
         </Link>
         {TABS_AFTER.map(tab)}
+        <Link href="/wallet" className="w-dock-back">
+          <Icon name="back" size={18} />
+          <span>Back to wallet</span>
+        </Link>
       </nav>
     </div>
   )

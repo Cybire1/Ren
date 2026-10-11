@@ -20,115 +20,119 @@ export function Home() {
   const empty = balance === 0n
 
   return (
-    <div className="w-screen">
-      <div className="w-hello">
-        <Link href="/wallet/profile" aria-label="Your profile">
-          <Avatar name={profile.name} id={profile.address} size={44} />
-        </Link>
-        <div className="w-hello-text">
-          <span>Hello</span>
-          <strong>{profile.name ? profile.name.split(' ')[0] : 'there'}</strong>
-        </div>
-        <Link href="/wallet/activity" className="round" aria-label="Activity">
-          <Icon name="bell" size={20} />
-        </Link>
-      </div>
-
-      {profile.name ? null : <NameYourself />}
-
-      <BalanceCard />
-
-      <div className="w-hero">
-        <Link href="/wallet/pay" className="w-pay" aria-label="Pay. Scan a code or pay a link">
-          <span className="w-pay-icons">
-            <span className="w-pay-icon w-pay-icon-coral">
-              <Icon name="scan" size={22} />
-            </span>
-            <span className="w-pay-icon">
-              <Icon name="tap" size={22} />
-            </span>
-          </span>
-          <svg
-            className="w-pay-waves"
-            width="92"
-            height="92"
-            viewBox="-46 -46 92 92"
-            aria-hidden="true"
-          >
-            <circle r="40" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="2" />
-            <circle r="26" fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="2" />
-            <circle r="12" fill="none" stroke="#fff" strokeOpacity="0.26" strokeWidth="2" />
-          </svg>
-          <span>
-            <span className="w-pay-label">Pay</span>
-            <span className="w-pay-sub">Scan a code or pay a link</span>
-          </span>
-        </Link>
-        <div className="w-hero-side">
-          <ActionTile kind="send" />
-          <ActionTile kind="request" />
-        </div>
-      </div>
-
-      <ShopCard />
-
-      {empty ? (
-        <Link href="/wallet/add" className="w-notice">
-          <span className="w-notice-icon">
-            <Icon name="plus" size={20} />
-          </span>
-          <span className="w-notice-text">
-            <strong>
-              {network === 'testnet' ? 'Add test dollars to start' : 'Add money to start paying'}
-            </strong>
-            <span>
-              {network === 'testnet'
-                ? `$5 a day, free on ${chainName} testnet. Arrives in about a second.`
-                : `Send ${onTempo ? 'USDC' : 'AUSD'} on ${chainName} to your address.`}
-            </span>
-          </span>
-          <span className="w-notice-cta">Add</span>
-        </Link>
-      ) : null}
-
-      <h2 className="w-section">Send again</h2>
-      <div className="w-people">
-        <Link href="/wallet/send" className="w-person" aria-label="Pay someone new">
-          <span className="w-person-new">
-            <Icon name="plus" size={22} />
-          </span>
-          <span>New</span>
-        </Link>
-        {contacts.slice(0, 8).map((c) => (
-          <Link
-            key={c.address}
-            href={`/wallet/send/${c.address}?name=${encodeURIComponent(c.name)}${c.currency ? `&cur=${c.currency}` : ''}`}
-            className="w-person"
-            aria-label={`Send to ${c.name}`}
-          >
-            <Avatar name={c.name} id={c.address} size={56} />
-            <span>{isUnnamed(c.name) ? c.address.slice(0, 6) : c.name.split(' ')[0]}</span>
+    <div className="w-screen w-home">
+      <div className="w-home-main">
+        <div className="w-hello">
+          <Link href="/wallet/profile" aria-label="Your profile">
+            <Avatar name={profile.name} id={profile.address} size={44} />
           </Link>
-        ))}
-      </div>
+          <div className="w-hello-text">
+            <span>Hello</span>
+            <strong>{profile.name ? profile.name.split(' ')[0] : 'there'}</strong>
+          </div>
+          <Link href="/wallet/activity" className="round" aria-label="Activity">
+            <Icon name="bell" size={20} />
+          </Link>
+        </div>
 
-      <div className="w-section-row">
-        <h2 className="w-section">Recent</h2>
-        {activity.length > 3 ? (
-          <Link href="/wallet/activity" className="w-see-all">
-            See all
+        {profile.name ? null : <NameYourself />}
+
+        <BalanceCard />
+
+        <div className="w-hero">
+          <Link href="/wallet/pay" className="w-pay" aria-label="Pay. Scan a code or pay a link">
+            <span className="w-pay-icons">
+              <span className="w-pay-icon w-pay-icon-coral">
+                <Icon name="scan" size={22} />
+              </span>
+              <span className="w-pay-icon">
+                <Icon name="tap" size={22} />
+              </span>
+            </span>
+            <svg
+              className="w-pay-waves"
+              width="92"
+              height="92"
+              viewBox="-46 -46 92 92"
+              aria-hidden="true"
+            >
+              <circle r="40" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="2" />
+              <circle r="26" fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="2" />
+              <circle r="12" fill="none" stroke="#fff" strokeOpacity="0.26" strokeWidth="2" />
+            </svg>
+            <span>
+              <span className="w-pay-label">Pay</span>
+              <span className="w-pay-sub">Scan a code or pay a link</span>
+            </span>
+          </Link>
+          <div className="w-hero-side">
+            <ActionTile kind="send" />
+            <ActionTile kind="request" />
+          </div>
+        </div>
+
+        <ShopCard />
+
+        {empty ? (
+          <Link href="/wallet/add" className="w-notice">
+            <span className="w-notice-icon">
+              <Icon name="plus" size={20} />
+            </span>
+            <span className="w-notice-text">
+              <strong>
+                {network === 'testnet' ? 'Add test dollars to start' : 'Add money to start paying'}
+              </strong>
+              <span>
+                {network === 'testnet'
+                  ? `$5 a day, free on ${chainName} testnet. Arrives in about a second.`
+                  : `Send ${onTempo ? 'USDC' : 'AUSD'} on ${chainName} to your address.`}
+              </span>
+            </span>
+            <span className="w-notice-cta">Add</span>
           </Link>
         ) : null}
       </div>
-      {activity.length === 0 ? (
-        <p className="w-quiet">Your payments show up here the moment they land.</p>
-      ) : (
-        <div className="w-entries">
-          {activity.slice(0, 3).map((entry) => (
-            <EntryRow key={entry.id} entry={entry} />
+
+      <div className="w-home-side">
+        <h2 className="w-section">Send again</h2>
+        <div className="w-people">
+          <Link href="/wallet/send" className="w-person" aria-label="Pay someone new">
+            <span className="w-person-new">
+              <Icon name="plus" size={22} />
+            </span>
+            <span>New</span>
+          </Link>
+          {contacts.slice(0, 8).map((c) => (
+            <Link
+              key={c.address}
+              href={`/wallet/send/${c.address}?name=${encodeURIComponent(c.name)}${c.currency ? `&cur=${c.currency}` : ''}`}
+              className="w-person"
+              aria-label={`Send to ${c.name}`}
+            >
+              <Avatar name={c.name} id={c.address} size={56} />
+              <span>{isUnnamed(c.name) ? c.address.slice(0, 6) : c.name.split(' ')[0]}</span>
+            </Link>
           ))}
         </div>
-      )}
+
+        <div className="w-section-row">
+          <h2 className="w-section">Recent</h2>
+          {activity.length > 3 ? (
+            <Link href="/wallet/activity" className="w-see-all">
+              See all
+            </Link>
+          ) : null}
+        </div>
+        {activity.length === 0 ? (
+          <p className="w-quiet">Your payments show up here the moment they land.</p>
+        ) : (
+          <div className="w-entries">
+            {activity.slice(0, 6).map((entry) => (
+              <EntryRow key={entry.id} entry={entry} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

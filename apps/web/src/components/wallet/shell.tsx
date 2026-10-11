@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Brand, Icon, type IconName } from '@/components/brand'
+import { Brand, Icon, type IconName, LogoMark, Wordmark } from '@/components/brand'
 import { useWallet } from './provider'
 import { Welcome } from './welcome'
 
@@ -62,6 +62,7 @@ function Dock({ path }: { path: string }) {
   )
   return (
     <nav className="w-dock" aria-label="Ren">
+      <DockBrand href="/wallet" />
       {before.map(tab)}
       <Link
         href="/wallet/pay"
@@ -73,5 +74,15 @@ function Dock({ path }: { path: string }) {
       </Link>
       {after.map(tab)}
     </nav>
+  )
+}
+
+/** On a desk the dock stands up as a sidebar, and carries the brand at its head. */
+export function DockBrand({ href }: { href: string }) {
+  return (
+    <Link href={href} className="w-dock-brand" aria-label="Ren home">
+      <LogoMark size={34} stem="#fff" />
+      <Wordmark height={20} ink="#fff" coin="var(--coral)" />
+    </Link>
   )
 }
