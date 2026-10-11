@@ -15,7 +15,14 @@ import {
 import * as SecureStore from 'expo-secure-store'
 import { Platform } from 'react-native'
 import NfcManager, { NfcTech } from 'react-native-nfc-manager'
-import { type Address, getAddress, type Hex, hashTypedData, maxUint256, type TypedDataDefinition } from 'viem'
+import {
+  type Address,
+  getAddress,
+  type Hex,
+  hashTypedData,
+  maxUint256,
+  type TypedDataDefinition,
+} from 'viem'
 import { generatePrivateKey } from 'viem/accounts'
 import { currentDeviceKey } from './api'
 import { apiUrl, settlementToken } from './config'
@@ -59,7 +66,11 @@ async function call<T>(path: string, init: RequestInit & { device?: boolean } = 
     error?: { message?: string; details?: Record<string, unknown> }
   }
   if (!response.ok)
-    throw new CardError(body.error?.message ?? `Kova is unreachable (${response.status})`, response.status, body.error?.details)
+    throw new CardError(
+      body.error?.message ?? `Kova is unreachable (${response.status})`,
+      response.status,
+      body.error?.details,
+    )
   return body as T
 }
 
@@ -115,6 +126,11 @@ async function devCard(): Promise<Transceive> {
   return softCard(key)
 }
 
+/** Development: forget this install's software card, so the next link makes a fresh one. */
+export async function forgetDevCard(): Promise<void> {
+  await SecureStore.deleteItemAsync(DEV_CARD)
+}
+
 let started = false
 
 /** Whether this phone can read a Kova Card. */
@@ -150,7 +166,9 @@ export async function withCard<T>(
   } catch (error) {
     if (Platform.OS === 'ios')
       await NfcManager.invalidateSessionWithErrorIOS(
-        error instanceof HaloError || error instanceof CardError ? error.message : 'That didn’t work. Try again.',
+        error instanceof HaloError || error instanceof CardError
+          ? error.message
+          : 'That didn’t work. Try again.',
       ).catch(() => {})
     throw cancelled(error) ? new CardError('Cancelled.', 0, { cancelled: true }) : error
   } finally {
@@ -164,7 +182,8 @@ function cancelled(error: unknown): boolean {
   return /cancel|UserCancel|session.*(invalidated|timeout)/i.test(text)
 }
 
-export const isCancelled = (error: unknown) => error instanceof CardError && Boolean(error.details.cancelled)
+export const isCancelled = (error: unknown) =>
+  error instanceof CardError && Boolean(error.details.cancelled)
 
 // ── Holder actions ──────────────────────────────────────────────────────────────────────────
 
@@ -185,7 +204,8 @@ export interface LinkPlan {
  */
 export async function linkCard(plan: LinkPlan, signTypedData: SignTypedData): Promise<KovaCard> {
   const config = await getCardConfig()
-  if (!config.ready || !config.contract) throw new CardError('Kova Cards aren’t switched on yet.', 0)
+  if (!config.ready || !config.contract)
+    throw new CardError('Kova Cards aren’t switched on yet.', 0)
   const contract = config.contract
   const deadline = inTenMinutes()
 
@@ -196,7 +216,11 @@ export async function linkCard(plan: LinkPlan, signTypedData: SignTypedData): Pr
       const status = await cardStatus(address)
       if (status.linked && status.holder && getAddress(status.holder) !== getAddress(plan.holder))
         throw new CardError('This card is linked to another Kova wallet.', 409)
-      const claim = claimTypedData(config.chain_id, contract, { card: address, holder: plan.holder, deadline })
+      const claim = claimTypedData(config.chain_id, contract, {
+        card: address,
+        holder: plan.holder,
+        deadline,
+      })
       const signed = await signWithCard(transceive, hashTypedData(claim))
       return { card: signed.card, cardSignature: signed.signature }
     },
@@ -283,7 +307,10 @@ export async function removeCard(card: KovaCard, signTypedData: SignTypedData): 
       deadline,
     }),
   )
-  await post(`/v1/cards/${card.address}/unlink`, { deadline: Number(deadline), holder_signature: signature })
+  await post(`/v1/cards/${card.address}/unlink`, {
+    deadline: Number(deadline),
+    holder_signature: signature,
+  })
 }
 
 export async function changePin(
@@ -292,7 +319,9 @@ export async function changePin(
   signMessage: (message: string) => Promise<Hex>,
 ): Promise<void> {
   const signedAt = Math.floor(Date.now() / 1000)
-  const signature = await signMessage(cardPinMessage({ card: card.address, holder: card.holder, signedAt }))
+  const signature = await signMessage(
+    cardPinMessage({ card: card.address, holder: card.holder, signedAt }),
+  )
   await post(`/v1/cards/${card.address}/pin`, { pin, signed_at: signedAt, signature })
 }
 
@@ -314,15 +343,17 @@ export async function readTap(paymentIntent: string): Promise<{ tap: ReadTap; si
     'Hold the Kova Card to the top of the iPhone',
     async (transceive) => {
       const card = await readCard(transceive)
-      const prepared = await post<ReadTap & { typed_data: TypedDataDefinition & { message: Record<string, string> } }>(
-        '/v1/card_taps',
-        { payment_intent: paymentIntent, card },
-        true,
-      )
+      const prepared = await post<
+        ReadTap & { typed_data: TypedDataDefinition & { message: Record<string, string> } }
+      >('/v1/card_taps', { payment_intent: paymentIntent, card }, true)
       const td = prepared.typed_data
       const digest = hashTypedData({
         ...td,
-        message: { ...td.message, amount: BigInt(td.message.amount ?? 0), deadline: BigInt(td.message.deadline ?? 0) },
+        message: {
+          ...td.message,
+          amount: BigInt(td.message.amount ?? 0),
+          deadline: BigInt(td.message.deadline ?? 0),
+        },
       } as TypedDataDefinition)
       const { signature } = await signWithCard(transceive, digest)
       return { tap: prepared, signature }

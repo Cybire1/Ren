@@ -22,9 +22,10 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { changeCard, type KovaCard, listCards, removeCard } from '@/lib/card'
+import { load as loadSaved, save } from '@/lib/storage'
 import { colors } from '@/lib/theme'
-import { useWallet } from '@/lib/wallet'
-import { CardArt } from '@/ui/art'
+import { isUnnamed, useWallet } from '@/lib/wallet'
+import { type CardDesign, CardDesignPicker, CardFace } from '@/ui/CardFace'
 import { dockClearance } from '@/ui/Dock'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Snowfall } from '@/ui/motion'
@@ -80,7 +81,10 @@ export default function Card() {
   const scroll = (children: ReactNode) => (
     <ScrollView
       style={{ flex: 1, backgroundColor: frozen ? colors.sunken : colors.paper }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: dockClearance + insets.bottom }}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8,
+        paddingBottom: dockClearance + insets.bottom,
+      }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -101,7 +105,11 @@ export default function Card() {
       <View style={{ paddingTop: 160, alignItems: 'center', gap: 12 }}>
         {problem ? (
           <>
-            <Txt size={16} color={colors.muted} style={{ textAlign: 'center', paddingHorizontal: 40 }}>
+            <Txt
+              size={16}
+              color={colors.muted}
+              style={{ textAlign: 'center', paddingHorizontal: 40 }}
+            >
               {problem}
             </Txt>
             <Pressable onPress={() => void load()} hitSlop={10}>
@@ -122,10 +130,13 @@ export default function Card() {
     <CardView
       key={card.address}
       card={card}
+      holderName={profile && !isUnnamed(profile.name) ? profile.name : undefined}
       others={cards}
       selected={selected}
       onSelect={setSelected}
-      onChanged={(next) => setCards((list) => list?.map((c) => (c.address === next.address ? next : c)) ?? null)}
+      onChanged={(next) =>
+        setCards((list) => list?.map((c) => (c.address === next.address ? next : c)) ?? null)
+      }
       onRemoved={() => {
         setSelected(0)
         void load()
@@ -145,7 +156,7 @@ function NoCard() {
         </Txt>
       </View>
       <View style={[styles.hero, { opacity: 0.55 }]}>
-        <CardArt width={width - 60} last4="••••" />
+        <CardFace design="main" boxW={width - 60} boxH={(width - 60) * 0.95} />
       </View>
       <View style={styles.body}>
         <View style={styles.section}>
@@ -153,8 +164,8 @@ function NoCard() {
             Pay with a tap, from your wallet.
           </Txt>
           <Txt size={15} color={colors.muted} style={{ marginTop: 6, lineHeight: 21 }}>
-            A Kova Card is a chip that pays at any Kova till. It needs no phone, data or signal, and spends straight from
-            this wallet, so there’s nothing to top up.
+            A Kova Card is a chip that pays at any Kova till. It needs no phone, data or signal, and
+            spends straight from this wallet, so there’s nothing to top up.
           </Txt>
           <View style={{ gap: 10, marginTop: 14 }}>
             <Point icon="lock" text="A PIN over $25, checked by Kova, never stored on the card." />
@@ -176,6 +187,7 @@ function CardView({
   onChanged,
   onRemoved,
   signTypedData,
+  holderName,
 }: {
   card: KovaCard
   others: KovaCard[]
@@ -184,8 +196,18 @@ function CardView({
   onChanged: (card: KovaCard) => void
   onRemoved: () => void
   signTypedData: ReturnType<typeof useWallet>['signTypedData']
+  holderName?: string
 }) {
   const { width } = useWindowDimensions()
+  // The design is the holder's choice, kept on this phone for each card.
+  const [design, setDesign] = useState<CardDesign>('main')
+  useEffect(() => {
+    loadSaved<CardDesign>(`card-design:${card.address}`, 'main').then(setDesign)
+  }, [card.address])
+  const pick = (d: CardDesign) => {
+    setDesign(d)
+    save(`card-design:${card.address}`, d).catch(() => {})
+  }
   const reduced = useReducedMotion()
   const cardW = width - 60
   const [pending, setPending] = useState<string | null>(null)
@@ -211,10 +233,15 @@ function CardView({
   // The freeze switch's thumb slides between its two halves.
   const frozenAt = useSharedValue(card.frozen ? 1 : 0)
   useEffect(() => {
-    frozenAt.value = withTiming(card.frozen ? 1 : 0, { duration: 320, easing: Easing.bezier(0.32, 0.72, 0, 1) })
+    frozenAt.value = withTiming(card.frozen ? 1 : 0, {
+      duration: 320,
+      easing: Easing.bezier(0.32, 0.72, 0, 1),
+    })
   }, [card.frozen, frozenAt])
   const [trackW, setTrackW] = useState(0)
-  const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: frozenAt.value * (trackW / 2) }] }))
+  const thumb = useAnimatedStyle(() => ({
+    transform: [{ translateX: frozenAt.value * (trackW / 2) }],
+  }))
 
   const limit = card.daily_limit ?? '0'
   const change = async (what: string, next: { dailyLimit: string; frozen: boolean }) => {
@@ -224,7 +251,9 @@ function CardView({
     try {
       const updated = await changeCard(card, next, signTypedData)
       void Haptics.notificationAsync(
-        next.frozen ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success,
+        next.frozen
+          ? Haptics.NotificationFeedbackType.Warning
+          : Haptics.NotificationFeedbackType.Success,
       )
       onChanged(updated)
     } catch (error) {
@@ -282,13 +311,24 @@ function CardView({
 
       <GestureDetector gesture={tilt}>
         <Animated.View style={[styles.hero, tilted]}>
-          <CardArt width={cardW} last4={card.last_four} frozen={card.frozen} />
+          <CardFace
+            design={design}
+            boxW={cardW}
+            boxH={cardW * 0.95}
+            name={holderName}
+            frozen={card.frozen}
+          />
           {card.frozen ? <Snowfall width={cardW + 20} height={cardW * 0.82} /> : null}
         </Animated.View>
       </GestureDetector>
       <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 6 }}>
-        {card.frozen ? 'Nobody can tap with it until you unfreeze it.' : 'Tap it at any Kova till. Drag it to tilt it.'}
+        {card.frozen
+          ? 'Nobody can tap with it until you unfreeze it.'
+          : 'Tap it at any Kova till. Drag it to tilt it.'}
       </Txt>
+      <View style={{ marginTop: 18 }}>
+        <CardDesignPicker value={design} onChange={pick} />
+      </View>
 
       {others.length > 1 ? (
         <View style={styles.picker}>
@@ -316,7 +356,11 @@ function CardView({
           accessibilityLabel="Card status"
         >
           <Animated.View
-            style={[styles.thumb, { width: trackW / 2, backgroundColor: card.frozen ? colors.ink : colors.teal }, thumb]}
+            style={[
+              styles.thumb,
+              { width: trackW / 2, backgroundColor: card.frozen ? colors.ink : colors.teal },
+              thumb,
+            ]}
           />
           <Choice
             icon="tap"
@@ -325,7 +369,13 @@ function CardView({
             busy={pending === 'unfreeze'}
             onPress={() => setFrozen(false)}
           />
-          <Choice icon="snow" label="Frozen" on={card.frozen} busy={pending === 'freeze'} onPress={() => setFrozen(true)} />
+          <Choice
+            icon="snow"
+            label="Frozen"
+            on={card.frozen}
+            busy={pending === 'freeze'}
+            onPress={() => setFrozen(true)}
+          />
         </View>
 
         {problem ? (
@@ -365,7 +415,12 @@ function CardView({
             </Txt>
           </View>
           <View style={styles.meter}>
-            <View style={[styles.meterFill, { width: `${Math.max(2, Math.min(100, (spent / max) * 100))}%` }]} />
+            <View
+              style={[
+                styles.meterFill,
+                { width: `${Math.max(2, Math.min(100, (spent / max) * 100))}%` },
+              ]}
+            />
           </View>
           <View style={styles.ticks}>
             {limits.map((l) => {
@@ -405,10 +460,17 @@ function CardView({
         <View style={[styles.section, { padding: 0 }]}>
           <Pressable
             accessibilityRole="button"
-            onPress={() => router.push({ pathname: '/card/pin', params: { address: card.address } })}
+            onPress={() =>
+              router.push({ pathname: '/card/pin', params: { address: card.address } })
+            }
             style={({ pressed }) => pressed && { opacity: 0.7 }}
           >
-            <Row icon="lock" tint={colors.tealSoft} label="Change PIN" value="For taps over the no-PIN limit">
+            <Row
+              icon="lock"
+              tint={colors.tealSoft}
+              label="Change PIN"
+              value="For taps over the no-PIN limit"
+            >
               <Icon name="arrow" size={20} />
             </Row>
           </Pressable>
@@ -422,7 +484,9 @@ function CardView({
               icon="snow"
               tint={colors.coralSoft}
               label="Report lost"
-              value={card.frozen ? 'Frozen. Unfreeze it if you find it.' : 'Freezes it straight away'}
+              value={
+                card.frozen ? 'Frozen. Unfreeze it if you find it.' : 'Freezes it straight away'
+              }
             >
               <Icon name="arrow" size={20} />
             </Row>
@@ -432,7 +496,12 @@ function CardView({
             onPress={() => router.push('/card/link')}
             style={({ pressed }) => pressed && { opacity: 0.7 }}
           >
-            <Row icon="plus" tint={colors.sunken} label="Link another card" value="Each with its own limit and PIN">
+            <Row
+              icon="plus"
+              tint={colors.sunken}
+              label="Link another card"
+              value="Each with its own limit and PIN"
+            >
               <Icon name="arrow" size={20} />
             </Row>
           </Pressable>
@@ -442,8 +511,18 @@ function CardView({
             onPress={remove}
             style={({ pressed }) => pressed && { opacity: 0.7 }}
           >
-            <Row icon="trash" tint={colors.sunken} label="Remove card" value="It stops working for good" last>
-              {pending === 'remove' ? <ActivityIndicator color={colors.ink} /> : <Icon name="arrow" size={20} />}
+            <Row
+              icon="trash"
+              tint={colors.sunken}
+              label="Remove card"
+              value="It stops working for good"
+              last
+            >
+              {pending === 'remove' ? (
+                <ActivityIndicator color={colors.ink} />
+              ) : (
+                <Icon name="arrow" size={20} />
+              )}
             </Row>
           </Pressable>
         </View>
@@ -467,7 +546,11 @@ function CardView({
                     {t.shop}
                   </Txt>
                   <Txt size={13} color={colors.muted}>
-                    {new Date(t.at).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(t.at).toLocaleString([], {
+                      weekday: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </Txt>
                 </View>
                 <Txt weight="semi" size={16}>
@@ -562,8 +645,20 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20 },
-  status: { height: 32, paddingHorizontal: 12, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  head: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+  },
+  status: {
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   hero: { alignItems: 'center', marginTop: 18, paddingHorizontal: 20 },
   body: { paddingHorizontal: 20, marginTop: 18, gap: 14 },
   picker: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 12 },
@@ -597,7 +692,13 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   limitHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
-  meter: { height: 10, borderRadius: 5, backgroundColor: colors.sunken, marginTop: 12, overflow: 'hidden' },
+  meter: {
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.sunken,
+    marginTop: 12,
+    overflow: 'hidden',
+  },
   meterFill: { height: '100%', borderRadius: 5, backgroundColor: colors.coral },
   ticks: { flexDirection: 'row', gap: 8, marginTop: 12 },
   tick: {
@@ -610,8 +711,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   tickOn: { backgroundColor: colors.ink },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
   rowRule: { borderBottomWidth: 1, borderColor: colors.sunken },
-  rowIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   tap: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12 },
 })

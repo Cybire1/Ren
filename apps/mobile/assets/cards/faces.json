@@ -1,0 +1,72 @@
+{
+  "main": {
+    "w": 638,
+    "h": 1012,
+    "name": {
+      "x": 56,
+      "y": 921,
+      "w": 147.21875,
+      "h": 33,
+      "size": 24,
+      "weight": "700",
+      "color": "rgb(11, 26, 29)",
+      "letterSpacing": 3,
+      "align": "start"
+    }
+  },
+  "coral": {
+    "w": 638,
+    "h": 1012,
+    "name": {
+      "x": 450.28125,
+      "y": 893,
+      "w": 127.71875,
+      "h": 24,
+      "size": 18,
+      "weight": "800",
+      "color": "rgb(11, 26, 29)",
+      "letterSpacing": 4,
+      "align": "start"
+    }
+  },
+  "metal": {
+    "w": 638,
+    "h": 1012,
+    "name": null
+  },
+  "drop": {
+    "w": 1012,
+    "h": 638,
+    "name": {
+      "x": 816.5625,
+      "y": 555,
+      "w": 145.4375,
+      "h": 47,
+      "size": 15,
+      "weight": "800",
+      "color": "rgb(11, 26, 29)",
+      "letterSpacing": 3,
+      "align": "start"
+    }
+  },
+  "night": {
+    "w": 1012,
+    "h": 638,
+    "name": {
+      "x": 60,
+      "y": 547,
+      "w": 186.28125,
+      "h": 41,
+      "size": 30,
+      "weight": "700",
+      "color": "rgb(241, 239, 234)",
+      "letterSpacing": 4,
+      "align": "start"
+    }
+  },
+  "open": {
+    "w": 1012,
+    "h": 638,
+    "name": null
+  }
+}

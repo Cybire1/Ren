@@ -2,13 +2,13 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Image, View } from 'react-native'
 import { createItem, getCatalog, getCheckout, lookupBarcode, ringUp, uploadImage } from '@/lib/api'
-import { finishTap, linkCard, readTap } from '@/lib/card'
-import { save } from '@/lib/storage'
+import { finishTap, forgetDevCard, linkCard, readTap } from '@/lib/card'
 import type { DisplayCurrency } from '@/lib/money'
 import { type Mode, usePrefs } from '@/lib/prefs'
-import { colors } from '@/lib/theme'
 import { useStall } from '@/lib/stall'
+import { save } from '@/lib/storage'
 import { useTerminal } from '@/lib/terminal'
+import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Txt } from '@/ui/primitives'
 
@@ -21,7 +21,7 @@ import { Txt } from '@/ui/primitives'
  * `stall=<name>&tagline=<line>` opens a stall from this wallet the way Profile does, `seed=1` fills
  * that stall with a small menu (and a barcoded drink for the till), `seed=bakery` with a bakery's, `till=keypad|items|scan` picks
  * the till's mode, and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
- * `card=link&limit=100&pin=4827` links the software Kova Card; `tapcard=<charge>` taps it at this till.
+ * `card=link&limit=100&pin=4827` links the software Kova Card (`newcard=1` makes a fresh one first); `tapcard=<charge>` taps it at this till.
  * Release builds redirect home.
  */
 /** A small Lagos kitchen menu for trying the stall screens. */
@@ -39,22 +39,98 @@ const SEED = [
 
 /** `seed=bakery`: a small bakery menu, for films and screens that shouldn't point at one country. */
 const BAKERY = [
-  { name: 'Sourdough loaf', price: '6.50', description: 'Slow-proved, with a crackly crust', category: 'Breads', stock: 8, photo: require('../../assets/demo/bakery-loaf.png') },
-  { name: 'Baguette', price: '3.00', description: 'Baked three times a day', category: 'Breads', stock: 14, photo: require('../../assets/demo/bakery-baguette.png') },
-  { name: 'Croissant', price: '3.25', description: 'All butter, baked this morning', category: 'Pastries', stock: 12, photo: require('../../assets/demo/bakery-croissant.png') },
-  { name: 'Cinnamon bun', price: '3.75', description: 'Cardamom sugar on top', category: 'Pastries', stock: 3, photo: require('../../assets/demo/bakery-bun.png') },
-  { name: 'Chocolate cookie', price: '2.50', description: 'Sea salt and dark chocolate', category: 'Pastries', stock: 0, photo: require('../../assets/demo/bakery-cookie.png') },
-  { name: 'Carrot cake', price: '5.00', description: 'Cream cheese frosting', category: 'Cakes', stock: 6, photo: require('../../assets/demo/bakery-cake.png') },
-  { name: 'Flat white', price: '4.50', description: 'Double shot, whole milk', category: 'Coffee', stock: null, photo: require('../../assets/demo/bakery-flatwhite.png') },
-  { name: 'Iced latte', price: '4.75', description: 'Over ice, oat milk on request', category: 'Coffee', stock: null, photo: require('../../assets/demo/bakery-latte.png') },
+  {
+    name: 'Sourdough loaf',
+    price: '6.50',
+    description: 'Slow-proved, with a crackly crust',
+    category: 'Breads',
+    stock: 8,
+    photo: require('../../assets/demo/bakery-loaf.png'),
+  },
+  {
+    name: 'Baguette',
+    price: '3.00',
+    description: 'Baked three times a day',
+    category: 'Breads',
+    stock: 14,
+    photo: require('../../assets/demo/bakery-baguette.png'),
+  },
+  {
+    name: 'Croissant',
+    price: '3.25',
+    description: 'All butter, baked this morning',
+    category: 'Pastries',
+    stock: 12,
+    photo: require('../../assets/demo/bakery-croissant.png'),
+  },
+  {
+    name: 'Cinnamon bun',
+    price: '3.75',
+    description: 'Cardamom sugar on top',
+    category: 'Pastries',
+    stock: 3,
+    photo: require('../../assets/demo/bakery-bun.png'),
+  },
+  {
+    name: 'Chocolate cookie',
+    price: '2.50',
+    description: 'Sea salt and dark chocolate',
+    category: 'Pastries',
+    stock: 0,
+    photo: require('../../assets/demo/bakery-cookie.png'),
+  },
+  {
+    name: 'Carrot cake',
+    price: '5.00',
+    description: 'Cream cheese frosting',
+    category: 'Cakes',
+    stock: 6,
+    photo: require('../../assets/demo/bakery-cake.png'),
+  },
+  {
+    name: 'Flat white',
+    price: '4.50',
+    description: 'Double shot, whole milk',
+    category: 'Coffee',
+    stock: null,
+    photo: require('../../assets/demo/bakery-flatwhite.png'),
+  },
+  {
+    name: 'Iced latte',
+    price: '4.75',
+    description: 'Over ice, oat milk on request',
+    category: 'Coffee',
+    stock: null,
+    photo: require('../../assets/demo/bakery-latte.png'),
+  },
 ]
 
 /** A weaver's shop, for the film: each item with its photo, uploaded like any owner's. */
 const WEAVES = [
-  { name: 'Mountain blanket', price: '48.00', description: 'Handwoven wool, three weeks on the loom', photo: require('../../assets/demo/blanket.png') },
-  { name: 'Wool scarf', price: '22.00', description: 'Soft, warm, striped in saffron', photo: require('../../assets/demo/scarf.png') },
-  { name: 'Table runner', price: '16.00', description: 'Diamond weave, finished by hand', photo: require('../../assets/demo/runner.png') },
-  { name: 'Woven pouch', price: '9.00', description: 'For coins, keys, small treasures', photo: require('../../assets/demo/pouch.png') },
+  {
+    name: 'Mountain blanket',
+    price: '48.00',
+    description: 'Handwoven wool, three weeks on the loom',
+    photo: require('../../assets/demo/blanket.png'),
+  },
+  {
+    name: 'Wool scarf',
+    price: '22.00',
+    description: 'Soft, warm, striped in saffron',
+    photo: require('../../assets/demo/scarf.png'),
+  },
+  {
+    name: 'Table runner',
+    price: '16.00',
+    description: 'Diamond weave, finished by hand',
+    photo: require('../../assets/demo/runner.png'),
+  },
+  {
+    name: 'Woven pouch',
+    price: '9.00',
+    description: 'For coins, keys, small treasures',
+    photo: require('../../assets/demo/pouch.png'),
+  },
 ]
 
 export default function Dev() {
@@ -80,6 +156,7 @@ export default function Dev() {
     sell?: string
     payee?: string
     card?: string
+    newcard?: string
     limit?: string
     pin?: string
     tapcard?: string
@@ -173,8 +250,15 @@ export default function Dev() {
           const detail = await stall.refresh()
           if (params.seed === 'weaves' || params.seed === 'bakery')
             for (const { photo, ...item } of params.seed === 'weaves' ? WEAVES : BAKERY) {
-              const image = await uploadImage(Image.resolveAssetSource(photo).uri, 'image/png').catch(() => null)
-              await createItem({ ...item, image_id: image?.id ?? null, stall_ids: detail ? [detail.id] : [] })
+              const image = await uploadImage(
+                Image.resolveAssetSource(photo).uri,
+                'image/png',
+              ).catch(() => null)
+              await createItem({
+                ...item,
+                image_id: image?.id ?? null,
+                stall_ids: detail ? [detail.id] : [],
+              })
             }
           else
             for (const item of SEED)
@@ -214,8 +298,14 @@ export default function Dev() {
         // real flow, with `limit` dollars a day and `pin`, then shows the Card tab.
         if (params.card === 'link' && wallet.profile) {
           setStep('linking a card')
+          // newcard=1: a fresh software card, when this install's last one is linked to an old wallet.
+          if (params.newcard) await forgetDevCard()
           await linkCard(
-            { holder: wallet.profile.address, dailyLimit: params.limit || '100', pin: params.pin || '4827' },
+            {
+              holder: wallet.profile.address,
+              dailyLimit: params.limit || '100',
+              pin: params.pin || '4827',
+            },
             wallet.signTypedData,
           )
           return router.replace('/(tabs)/card')
