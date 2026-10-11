@@ -134,7 +134,7 @@ export default async function PaymentPage(props: { params: Promise<{ id: string 
                   ) : null}
                   <div>
                     <dt>Fee</dt>
-                    <dd>$0.00 to the customer, covered by Kova</dd>
+                    <dd>$0.00 to the customer, covered by Ren</dd>
                   </div>
                 </>
               ) : null}
@@ -150,7 +150,7 @@ export default async function PaymentPage(props: { params: Promise<{ id: string 
               </div>
               {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
               <div className="qr qr-big" dangerouslySetInnerHTML={{ __html: qr }} />
-              <p className="code-meta">Scan with Kova Pay or any {chainName} wallet. Code expires {clock(p.expires_at)}.</p>
+              <p className="code-meta">Scan with Ren Pay or any {chainName} wallet. Code expires {clock(p.expires_at)}.</p>
               <CopyField label="Pay link" value={payLink} />
               <div style={{ marginTop: '1rem' }}>
                 <CancelCharge id={p.id} />

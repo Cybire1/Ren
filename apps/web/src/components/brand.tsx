@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 /**
- * Kova's brand on the web: the Tap K mark, the wordmark (its o is a coin) and the painted art.
+ * Ren's brand on the web: the tap mark, the wordmark (its e is a coin) and the painted art.
  * Geometry matches the app's ui/Logo.tsx and docs/design/logo/*.svg.
  */
 
@@ -14,7 +14,7 @@ const WAVES = [
 
 export function LogoMark({ size = 40, stem = 'var(--ink)', wave = 'var(--coral)' }: { size?: number; stem?: string; wave?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 200 200" role="img" aria-label="Kova">
+    <svg width={size} height={size} viewBox="0 0 200 200" role="img" aria-label="Ren">
       <path d={STEM} stroke={stem} strokeWidth={19} strokeLinecap="round" />
       {WAVES.map((d) => (
         <path key={d} d={d} stroke={wave} strokeWidth={17} strokeLinecap="round" fill="none" />
@@ -26,14 +26,13 @@ export function LogoMark({ size = 40, stem = 'var(--ink)', wave = 'var(--coral)'
 export function Wordmark({ height = 24, ink = 'var(--ink)', coin = 'var(--coral-soft)' }: { height?: number; ink?: string; coin?: string }) {
   const line = { stroke: ink, strokeWidth: 15.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' }
   return (
-    <svg width={(height * 252) / 100} height={height} viewBox="0 0 252 100" role="img" aria-label="Kova">
-      <path d="M8 8 V92" {...line} />
-      <path d="M12 70 L40 38" {...line} />
-      <path d="M26 56 L44 92" {...line} />
-      <circle cx={86} cy={65} r={27} fill={coin} stroke={ink} strokeWidth={15.5} />
-      <path d="M130 40 L150 92 L170 40" {...line} />
-      <circle cx={212} cy={66} r={26} {...line} />
-      <path d="M238 40 V92" {...line} />
+    <svg width={(height * 184) / 78} height={height} viewBox="0 27 184 78" role="img" aria-label="Ren">
+      <path d="M8 40 V92" {...line} />
+      <path d="M8 66 Q8 40 40 41" {...line} />
+      <circle cx={80} cy={66} r={26} fill={coin} />
+      <path d="M54 66 H106 A26 26 0 1 0 98.4 84.4" {...line} />
+      <path d="M132 40 V92" {...line} />
+      <path d="M132 64 A22 22 0 0 1 176 64 V92" {...line} />
     </svg>
   )
 }
@@ -41,7 +40,7 @@ export function Wordmark({ height = 24, ink = 'var(--ink)', coin = 'var(--coral-
 /** Mark + wordmark + what this surface is, e.g. "Merchant". */
 export function Brand({ label, href = '/' }: { label?: string; href?: string }) {
   return (
-    <Link href={href} className="brand" aria-label="Kova home">
+    <Link href={href} className="brand" aria-label="Ren home">
       <LogoMark size={34} />
       <Wordmark height={20} />
       {label ? <span className="brand-label">{label}</span> : null}

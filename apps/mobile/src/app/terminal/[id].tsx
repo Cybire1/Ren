@@ -158,7 +158,7 @@ export default function CustomerDisplay() {
             <Icon name="scan" size={18} color={colors.white} />
           </View>
           <Txt weight="medium" size={15}>
-            Scan with Kova Pay or any {chainName} wallet
+            Scan with Ren Pay or any {chainName} wallet
           </Txt>
         </View>
       </View>

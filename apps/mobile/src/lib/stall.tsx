@@ -160,7 +160,7 @@ export function StallProvider({ children }: { children: ReactNode }) {
         const shop = await openShop(name, settleTo, { message: challenge.message, signature })
         // That sign-in key lapses with a web session; the till gets a lasting owner key of its own.
         setOwnerKey(shop.key)
-        const lasting = await createOwnerKey('Kova app')
+        const lasting = await createOwnerKey('Ren app')
         setOwnerKey(lasting.secret)
         current = { merchantId: shop.id, name: shop.name, stallId: null, key: lasting.secret }
         await remember(current)

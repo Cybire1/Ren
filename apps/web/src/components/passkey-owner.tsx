@@ -76,7 +76,7 @@ export function PasskeyOwner({
     setError(null)
     try {
       const challenge = await walletChallenge(wallet.address, 'own_shop')
-      if (!challenge.message) throw new Error(challenge.error ?? 'Kova didn’t answer. Try again.')
+      if (!challenge.message) throw new Error(challenge.error ?? 'Ren didn’t answer. Try again.')
       const asserted = await openKovaPasskey(wallet.passkey).catch((e) => {
         throw new Error(passkeyProblem(e))
       })
@@ -84,7 +84,7 @@ export function PasskeyOwner({
       try {
         if (!same(account.address, wallet.address))
           throw new Error(
-            'That passkey opens a different Kova wallet. Choose the one for this wallet.',
+            'That passkey opens a different Ren wallet. Choose the one for this wallet.',
           )
         const signature = await account.signMessage({ message: challenge.message })
         const result = await linkShopOwner({
@@ -98,7 +98,7 @@ export function PasskeyOwner({
       }
       router.refresh()
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Kova couldn’t link your wallet. Try again.')
+      setError(e instanceof Error ? e.message : 'Ren couldn’t link your wallet. Try again.')
     } finally {
       setWorking(false)
     }
@@ -122,27 +122,27 @@ export function PasskeyOwner({
         </span>
         <div>
           <h2 className="setting-title">
-            {linked ? 'Your Kova passkey signs in here' : 'Sign in with your Kova passkey'}
+            {linked ? 'Your Ren passkey signs in here' : 'Sign in with your Ren passkey'}
           </h2>
           <p className="field-help">
             {linked && wallet
-              ? `This shop belongs to ${wallet.name ? `${wallet.name}’s` : 'your'} Kova wallet, ${short(wallet.address)}. Your passkey opens it here and in the Kova app.`
+              ? `This shop belongs to ${wallet.name ? `${wallet.name}’s` : 'your'} Ren wallet, ${short(wallet.address)}. Your passkey opens it here and in the Ren app.`
               : owner
-                ? `This shop signs in with another wallet, ${short(owner)}. Switch it to your Kova wallet, and your passkey opens it everywhere.`
-                : 'This shop signs in with a secret key or email. Link it to your Kova wallet, and your passkey opens it here and in the Kova app.'}
+                ? `This shop signs in with another wallet, ${short(owner)}. Switch it to your Ren wallet, and your passkey opens it everywhere.`
+                : 'This shop signs in with a secret key or email. Link it to your Ren wallet, and your passkey opens it here and in the Ren app.'}
           </p>
         </div>
       </div>
 
       {!home ? (
         <p className="form-note">
-          Passkeys for Kova work on{' '}
+          Passkeys for Ren work on{' '}
           <a href={`https://${passkeyDomain}/dashboard/settings`}>{passkeyDomain}</a>.
         </p>
       ) : !wallet ? (
         <div className="owner-actions">
           <p className="field-help">
-            Open your Kova wallet on this browser first, then come back here from its Your shop
+            Open your Ren wallet on this browser first, then come back here from its Your shop
             card.
           </p>
           <Link href="/wallet" className="mini mini-ink">
@@ -164,7 +164,7 @@ export function PasskeyOwner({
               disabled={working}
               onClick={() => void payHere()}
             >
-              <Icon name="card" size={14} /> {working ? 'Moving…' : 'Get paid into my Kova wallet'}
+              <Icon name="card" size={14} /> {working ? 'Moving…' : 'Get paid into my Ren wallet'}
             </button>
           </div>
         )
@@ -177,7 +177,7 @@ export function PasskeyOwner({
                 checked={settle}
                 onChange={(e) => setSettle(e.target.checked)}
               />
-              Get paid into my Kova wallet too ({short(wallet.address)})
+              Get paid into my Ren wallet too ({short(wallet.address)})
             </label>
           ) : null}
           <button
@@ -188,7 +188,7 @@ export function PasskeyOwner({
             onClick={() => void link()}
           >
             <span className="pill-label">
-              {working ? 'Waiting for your passkey…' : 'Use my Kova passkey'}
+              {working ? 'Waiting for your passkey…' : 'Use my Ren passkey'}
             </span>
             <span className="pill-cap">
               <Icon name="face" size={18} />

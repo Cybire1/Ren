@@ -55,7 +55,7 @@ async function call<T>(path: string, init: RequestInit, key?: string): Promise<T
   const body = (await response.json().catch(() => ({}))) as Record<string, unknown>
   if (!response.ok) {
     const error = body.error as { message?: string; code?: string; details?: Record<string, unknown> } | undefined
-    throw new ApiError(error?.message ?? `Kova is unreachable (${response.status})`, response.status, error?.code, error?.details)
+    throw new ApiError(error?.message ?? `Ren is unreachable (${response.status})`, response.status, error?.code, error?.details)
   }
   return body as T
 }

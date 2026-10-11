@@ -78,7 +78,7 @@ export function StallEditor({ stall: initial, catalogue: initialCatalogue }: { s
     setTimeout(() => setCopied(false), 1600)
   }
 
-  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`Order from ${stall.name} and pay with Kova: ${url}`)}`
+  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`Order from ${stall.name} and pay with Ren: ${url}`)}`
 
   return (
     <div className="editor">

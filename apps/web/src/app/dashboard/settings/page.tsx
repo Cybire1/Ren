@@ -49,7 +49,7 @@ export default async function SettingsPage() {
             </div>
             <div>
               <dt>Fees</dt>
-              <dd>Kova pays the network fee on every payment</dd>
+              <dd>Ren pays the network fee on every payment</dd>
             </div>
             <div>
               <dt>Shop ID</dt>

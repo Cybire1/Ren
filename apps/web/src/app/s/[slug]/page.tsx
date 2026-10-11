@@ -16,7 +16,7 @@ async function load(slug: string) {
 export async function generateMetadata(props: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const stall = await load((await props.params).slug)
   return stall
-    ? { title: { absolute: `${stall.name} · order and pay with Kova` }, description: stall.tagline ?? `Order from ${stall.name} and pay in dollars with Kova.` }
+    ? { title: { absolute: `${stall.name} · order and pay with Ren` }, description: stall.tagline ?? `Order from ${stall.name} and pay in dollars with Ren.` }
     : { title: 'Stall' }
 }
 

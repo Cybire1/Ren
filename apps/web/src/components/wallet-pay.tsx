@@ -179,7 +179,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
           paid = response.ok && body.status === 'paid'
           if (!paid) await new Promise((r) => setTimeout(r, 500))
         }
-        if (!paid) throw new Error('Your wallet sent it, but Kova hasn’t seen it land yet. This page updates when it does.')
+        if (!paid) throw new Error('Your wallet sent it, but Ren hasn’t seen it land yet. This page updates when it does.')
       }
       setStage({ name: 'paid' })
       router.refresh()
@@ -207,7 +207,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
         body: JSON.stringify({ token: checkout.token, ...message, signature }),
       })
       const body = (await response.json().catch(() => ({}))) as { error?: string }
-      if (!response.ok) throw new Error(body.error ?? 'Kova couldn’t take that payment. Nothing was paid.')
+      if (!response.ok) throw new Error(body.error ?? 'Ren couldn’t take that payment. Nothing was paid.')
       setStage({ name: 'paid' })
       router.refresh()
     } catch (error) {
@@ -259,7 +259,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
   }
 
   const payWithEmbedded = (wallet: EmbeddedWallet) =>
-    prepare({ info: { uuid: 'privy', name: 'your Kova wallet', icon: '', rdns: 'privy' }, provider: wallet.provider }, { who: wallet.signedInAs })
+    prepare({ info: { uuid: 'privy', name: 'your Ren wallet', icon: '', rdns: 'privy' }, provider: wallet.provider }, { who: wallet.signedInAs })
 
   const onPrivyWallet = useCallback(
     (wallet: EmbeddedWallet) => {
@@ -285,8 +285,8 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
       <p>
         {privyAppId ? `Use your email or Google, or any ${chainName} wallet.` : `Use any ${chainName} wallet.`}{' '}
         {onTempo
-          ? `With email or Google, Kova covers the fee. A browser wallet pays ${chainName}’s fee, under a cent, in the same ${checkout.token_symbol ?? 'dollars'}.`
-          : `Kova covers the network fee, so you only need ${checkout.token_symbol ?? 'AUSD'}.`}
+          ? `With email or Google, Ren covers the fee. A browser wallet pays ${chainName}’s fee, under a cent, in the same ${checkout.token_symbol ?? 'dollars'}.`
+          : `Ren covers the network fee, so you only need ${checkout.token_symbol ?? 'AUSD'}.`}
       </p>
       {privyAppId && privy !== 'off' ? (
         <PrivyWallet appId={privyAppId} chainId={checkout.chain_id} onWallet={onPrivyWallet} onCancel={onPrivyCancel} />
@@ -338,7 +338,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
               </span>
             </button>
           ) : testnet ? (
-            <p>Kova’s test dollars come $5 a day, which won’t cover this.</p>
+            <p>Ren’s test dollars come $5 a day, which won’t cover this.</p>
           ) : null}
           <button type="button" className="textlink wallet-again" onClick={() => setStage({ name: 'choose' })}>
             Use another wallet
@@ -406,7 +406,7 @@ export function WalletPay({ checkout, testnet, privyAppId }: { checkout: Checkou
               </li>
             </ul>
           ) : (
-            <p className="wallet-none">No wallet in this browser. Pay with Kova on your phone, or open this page where MetaMask, Rabby or Phantom is installed.</p>
+            <p className="wallet-none">No wallet in this browser. Pay with Ren on your phone, or open this page where MetaMask, Rabby or Phantom is installed.</p>
           )}
         </>
       )}

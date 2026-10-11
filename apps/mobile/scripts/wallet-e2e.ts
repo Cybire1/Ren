@@ -58,7 +58,7 @@ async function main() {
   const exact = left === funded - 1_600_000n - 2_000_000n
   console.log(
     exact
-      ? 'maya paid no fees: Kova covered them'
+      ? 'maya paid no fees: Ren covered them'
       : `maya's balance is off by ${formatUsd(funded - 3_600_000n - left)}`,
   )
   if (after.status !== 'paid' || seen.length !== 1 || !exact) process.exit(1)

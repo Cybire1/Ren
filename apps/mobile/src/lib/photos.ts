@@ -15,7 +15,7 @@ export async function takePhoto(
   if (from === 'camera') {
     // The library needs no permission (the system picker only hands over what's chosen); the camera does.
     const permission = await ImagePicker.requestCameraPermissionsAsync()
-    if (!permission.granted) throw new Error('Kova needs the camera for this. Allow it in Settings.')
+    if (!permission.granted) throw new Error('Ren needs the camera for this. Allow it in Settings.')
   }
   const options: ImagePicker.ImagePickerOptions = {
     mediaTypes: ['images'],

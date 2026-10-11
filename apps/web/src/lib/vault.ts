@@ -64,7 +64,7 @@ export async function openVault(secret: Uint8Array): Promise<VaultContents | nul
   const keys = vaultKeys(secret)
   const response = await fetch(`/api/vaults/${keys.id}`, { cache: 'no-store' })
   if (response.status === 404) return null
-  if (!response.ok) throw new Error(`Kova couldn’t fetch your details (${response.status}).`)
+  if (!response.ok) throw new Error(`Ren couldn’t fetch your details (${response.status}).`)
   const sealed = (await response.json()) as { ciphertext: string; nonce: string }
   const plain = cipher(keys, base64urlnopad.decode(sealed.nonce)).decrypt(
     base64urlnopad.decode(sealed.ciphertext),

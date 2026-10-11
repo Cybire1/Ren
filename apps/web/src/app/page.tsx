@@ -8,7 +8,7 @@ import { PaidInASecond } from '@/components/paid-in-a-second'
 import { chainName, onTempo } from '@/lib/chain'
 
 export const metadata: Metadata = {
-  title: { absolute: 'Kova · Tap. Paid. Anywhere.' },
+  title: { absolute: 'Ren · Tap. Paid. Anywhere.' },
   description: `Turn any phone into a till for digital dollars. Customers tap or scan, and it settles on ${chainName} in about a second, straight to your own wallet.`,
 }
 
@@ -34,7 +34,7 @@ export default async function Landing() {
             </Link>
           )}
           <Pill href="/wallet" icon="arrow">
-            Open Kova
+            Open Ren
           </Pill>
         </div>
       </header>
@@ -57,7 +57,7 @@ export default async function Landing() {
             </span>
           </h1>
           <p className="lp-lead">
-            Kova turns any phone into a till for digital dollars. Your customer taps or scans, and the money settles on {chainName} in about a second, straight to your own
+            Ren turns any phone into a till for digital dollars. Your customer taps or scans, and the money settles on {chainName} in about a second, straight to your own
             wallet. No card machine, no card fees, no waiting days to get paid.
           </p>
           <div className="lp-ctas">
@@ -84,7 +84,7 @@ export default async function Landing() {
       {/* Two sides --------------------------------------------------------------------------- */}
       <section className="lp-duo">
         <article className="lp-panel lp-panel-teal" id="shops">
-          <p className="lp-panel-kicker">Kova Terminal, for shops</p>
+          <p className="lp-panel-kicker">Ren Terminal, for shops</p>
           <h2>Your phone is the card machine</h2>
           <ul>
             <li>
@@ -94,13 +94,13 @@ export default async function Landing() {
               <Icon name="list" size={18} /> Every payment lands live on your dashboard, with the on-chain proof one click away.
             </li>
             <li>
-              <Icon name="shield" size={18} /> Money settles to your own address. Kova never holds it, so there’s nothing to withdraw.
+              <Icon name="shield" size={18} /> Money settles to your own address. Ren never holds it, so there’s nothing to withdraw.
             </li>
           </ul>
           <Art name="scene-paid-terminal" size={290} className="lp-panel-art" />
         </article>
         <article className="lp-panel lp-panel-coral" id="people">
-          <p className="lp-panel-kicker">Kova Pay, for people</p>
+          <p className="lp-panel-kicker">Ren Pay, for people</p>
           <h2>Pay a shop in Lagos with dollars from London</h2>
           <ul>
             <li>
@@ -137,7 +137,7 @@ export default async function Landing() {
             <Art name="coin-ngn" size={44} /> ₦17,188
           </span>
         </div>
-        <small>At Kova’s published reference rates. Payments always settle in dollars ({onTempo ? 'USDC' : 'AUSD, Agora’s dollar'}).</small>
+        <small>At Ren’s published reference rates. Payments always settle in dollars ({onTempo ? 'USDC' : 'AUSD, Agora’s dollar'}).</small>
       </section>
 
       {/* Developers -------------------------------------------------------------------------- */}
@@ -146,7 +146,7 @@ export default async function Landing() {
           <p className="lp-panel-kicker">For developers</p>
           <h2>One POST to charge. A signed webhook when it’s paid.</h2>
           <p>
-            Take Kova payments on your own site or till software. Create a charge, show its code, and hear about it the moment it settles. Retries are safe with an
+            Take Ren payments on your own site or till software. Create a charge, show its code, and hear about it the moment it settles. Retries are safe with an
             Idempotency-Key, and every payment is matched on-chain, so there’s nothing to reconcile by hand.
           </p>
           <Pill href="/wallet/shop?go=open" icon="code" tone="paper">
@@ -184,22 +184,22 @@ export default async function Landing() {
 
       {/* Trust --------------------------------------------------------------------------------- */}
       <section className="lp-section">
-        <h2 className="lp-h2">Kova never holds your money</h2>
+        <h2 className="lp-h2">Ren never holds your money</h2>
         <div className="lp-trust">
           <div>
             <Icon name="shield" size={24} />
             <h3>Settles to you, directly</h3>
-            <p>Payments move from your customer’s wallet to yours. There’s no Kova balance in between, and nothing to freeze.</p>
+            <p>Payments move from your customer’s wallet to yours. There’s no Ren balance in between, and nothing to freeze.</p>
           </div>
           <div>
             <Icon name="key" size={24} />
             <h3>Keys stay on phones</h3>
-            <p>A Kova Pay wallet key lives in the phone’s secure chip behind Face ID. It never touches a server.</p>
+            <p>A Ren Pay wallet key lives in the phone’s secure chip behind Face ID. It never touches a server.</p>
           </div>
           <div>
             <Icon name="check" size={24} />
             <h3>Checked on-chain</h3>
-            <p>Every payment carries a memo tying it to its charge, and Kova verifies it on {chainName} before anything says Paid.</p>
+            <p>Every payment carries a memo tying it to its charge, and Ren verifies it on {chainName} before anything says Paid.</p>
           </div>
         </div>
       </section>
@@ -225,7 +225,7 @@ export default async function Landing() {
         <Brand />
         <p>Tap. Paid. Anywhere. Built on {chainName}. A test network preview: no real money moves.</p>
         <nav aria-label="Footer">
-          <Link href="/wallet">Open Kova</Link>
+          <Link href="/wallet">Open Ren</Link>
           <Link href="/wallet/shop?go=open">Open a shop</Link>
           <Link href="/signin">Shop sign-in with email or a key</Link>
           <a href="#developers">Developers</a>

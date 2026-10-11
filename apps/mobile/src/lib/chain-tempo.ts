@@ -46,7 +46,7 @@ async function kova<T>(path: string, body?: unknown): Promise<T> {
   )
   const json = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
   if (!response.ok)
-    throw new Error(json.error?.message ?? `Kova is unreachable (${response.status})`)
+    throw new Error(json.error?.message ?? `Ren is unreachable (${response.status})`)
   return json as T
 }
 
@@ -104,7 +104,7 @@ function plain(error: unknown, fallback: string): Error {
 export async function payCharge(account: LocalAccount, charge: Charge): Promise<Sent> {
   const started = Date.now()
   const token = tokenByAddress(networkId, charge.token)
-  if (!token) throw new Error('This charge asks for a token Kova doesn’t use. Nothing was paid.')
+  if (!token) throw new Error('This charge asks for a token Ren doesn’t use. Nothing was paid.')
   if (Date.parse(charge.expires_at) < Date.now())
     throw new Error('This charge has expired. Ask for a new code.')
   let hash: Hash

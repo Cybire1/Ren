@@ -32,7 +32,7 @@ const message = (error: unknown) =>
 export async function signIn(_: FormState, form: FormData): Promise<FormState> {
   const key = String(form.get('key') ?? '').trim()
   if (!/^kova_(test|live)_sk_/.test(key))
-    return { error: 'That isn’t a Kova secret key. It starts with kova_test_sk_ or kova_live_sk_.' }
+    return { error: 'That isn’t a Ren secret key. It starts with kova_test_sk_ or kova_live_sk_.' }
   try {
     await kovaPublic<Merchant>('/v1/account', {}, key)
   } catch (error) {
@@ -41,7 +41,7 @@ export async function signIn(_: FormState, form: FormData): Promise<FormState> {
         error:
           error.status === 403
             ? 'That’s a terminal’s key. Sign in with your shop’s secret key.'
-            : 'Kova doesn’t recognise that key, or it was revoked.',
+            : 'Ren doesn’t recognise that key, or it was revoked.',
       }
     return { error: message(error) }
   }

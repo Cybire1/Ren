@@ -171,7 +171,7 @@ export default function Stay() {
           </Txt>
           {stay.rooms_available.every((r) => r.rates.length === 0) ? (
             <Txt size={15} color={colors.muted}>
-              No rooms Kova can book here for these dates.
+              No rooms Ren can book here for these dates.
             </Txt>
           ) : (
             stay.rooms_available

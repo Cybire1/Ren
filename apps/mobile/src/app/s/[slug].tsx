@@ -194,7 +194,7 @@ export default function StallFront() {
           </View>
         )}
         <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 22, paddingHorizontal: 32, lineHeight: 19 }}>
-          You pay in dollars from your Kova wallet, with no card fees. Local prices are a guide at Kova’s reference rate.
+          You pay in dollars from your Ren wallet, with no card fees. Local prices are a guide at Ren’s reference rate.
         </Txt>
       </ScrollView>
 
@@ -384,7 +384,7 @@ function AskedToPay({ stall, placed, onDone }: { stall: PublicStall; placed: Pla
   const [paid, setPaid] = useState(false)
   const [copied, setCopied] = useState(false)
   const link = payLinkFor(placed.checkout.id)
-  const message = `Can you pay for my order at ${stall.name}? It’s ${dollars(placed.checkout.amount)}, paid in dollars with Kova: ${link}`
+  const message = `Can you pay for my order at ${stall.name}? It’s ${dollars(placed.checkout.amount)}, paid in dollars with Ren: ${link}`
 
   useEffect(() => {
     const id = setInterval(async () => {
@@ -421,7 +421,7 @@ function AskedToPay({ stall, placed, onDone }: { stall: PublicStall; placed: Pla
         Send it to whoever’s paying
       </Txt>
       <Txt size={15} color={colors.muted} style={{ textAlign: 'center', marginTop: 6, lineHeight: 21 }}>
-        They can pay from anywhere with Kova or any {chainName} wallet. The link stays open for a day, and this updates when it’s paid.
+        They can pay from anywhere with Ren or any {chainName} wallet. The link stays open for a day, and this updates when it’s paid.
       </Txt>
       <Pressable
         accessibilityRole="button"

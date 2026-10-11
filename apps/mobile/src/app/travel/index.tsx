@@ -73,7 +73,7 @@ export default function Travel() {
       setPeople({ adults: t.adults, children: t.children, infants: t.infants, cabin: t.cabin, rooms: t.rooms })
       setWishes(t.wishes ?? '')
       const missing = t.kind === 'flight' ? [!t.from_place && 'where from', !t.to_place && 'where to', !t.depart && 'when'].filter(Boolean) : [!t.city_place && 'where', !t.check_in && 'when'].filter(Boolean)
-      setUnderstood(missing.length ? `Got most of it. Add ${missing.join(' and ')} below.` : 'Here’s what Kova understood. Check it, then search.')
+      setUnderstood(missing.length ? `Got most of it. Add ${missing.join(' and ')} below.` : 'Here’s what Ren understood. Check it, then search.')
     } catch (error) {
       setProblem(error instanceof Error ? error.message : 'Couldn’t read that. Try saying where and when.')
     } finally {
@@ -259,7 +259,7 @@ export default function Travel() {
           </View>
           {wishes.trim() ? (
             <Txt size={13} color={colors.muted} style={{ marginTop: 6, marginLeft: 6 }}>
-              Kova marks the {kind === 'flight' ? 'flight' : 'hotel'} that fits this best.
+              Ren marks the {kind === 'flight' ? 'flight' : 'hotel'} that fits this best.
             </Txt>
           ) : null}
 
@@ -274,7 +274,7 @@ export default function Travel() {
                 Booking isn’t switched on yet
               </Txt>
               <Txt size={14} color={colors.muted} style={{ marginTop: 2, lineHeight: 20 }}>
-                This Kova server doesn’t have its travel supplier connected yet. Searches will work once it does.
+                This Ren server doesn’t have its travel supplier connected yet. Searches will work once it does.
               </Txt>
             </View>
           ) : null}

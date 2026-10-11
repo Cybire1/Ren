@@ -37,12 +37,12 @@ export async function kovaTravel(): Promise<Merchant> {
   const existing = await db.query.merchants.findFirst({ where: eq(schema.merchants.slug, 'kova-travel') })
   if (existing) return (travelShop = existing)
   const address = config.KOVA_TRAVEL_SETTLEMENT_ADDRESS ?? (config.KOVA_NETWORK === 'testnet' ? feePayerAddress : undefined)
-  if (!address || !isAddress(address)) throw new KovaError('internal', 'Kova Travel has no settlement address. Set KOVA_TRAVEL_SETTLEMENT_ADDRESS.')
+  if (!address || !isAddress(address)) throw new KovaError('internal', 'Ren Travel has no settlement address. Set KOVA_TRAVEL_SETTLEMENT_ADDRESS.')
   const [created] = await db
     .insert(schema.merchants)
     .values({
       id: uuidv7(),
-      name: 'Kova Travel',
+      name: 'Ren Travel',
       slug: 'kova-travel',
       settlementAddress: getAddress(address),
       network: config.KOVA_NETWORK,
@@ -104,7 +104,7 @@ async function createShares(trip: Trip, payers: string[], reference: string) {
 }
 
 function requireDuffel() {
-  if (!duffel) throw new KovaError('invalid_request', 'Kova Travel is not set up on this server yet (it needs a Duffel key).')
+  if (!duffel) throw new KovaError('invalid_request', 'Ren Travel is not set up on this server yet (it needs a Duffel key).')
   return duffel
 }
 
@@ -125,7 +125,7 @@ export async function createFlightTrip(input: {
   const client = requireDuffel()
   const { data: offer } = await client.offers.get(input.offerId, { return_available_services: true })
   const view = serializeOffer(offer)
-  if (!view) throw new KovaError('invalid_request', `Kova can't price fares in ${offer.total_currency} yet.`)
+  if (!view) throw new KovaError('invalid_request', `Ren can't price fares in ${offer.total_currency} yet.`)
   if (new Date(offer.expires_at).getTime() < Date.now()) throw new KovaError('conflict', 'This fare has expired. Search again for the latest price.')
   if (input.travellers.length !== offer.passengers.length)
     throw new KovaError('invalid_request', `This fare is for ${offer.passengers.length} ${offer.passengers.length === 1 ? 'traveller' : 'travellers'}.`)
@@ -152,7 +152,7 @@ export async function createFlightTrip(input: {
   }
   const fareText = fare.toFixed(2)
   const price = money(fareText, offer.total_currency)
-  if (!price) throw new KovaError('invalid_request', `Kova can't price fares in ${offer.total_currency} yet.`)
+  if (!price) throw new KovaError('invalid_request', `Ren can't price fares in ${offer.total_currency} yet.`)
 
   const travellers = input.travellers.map((t, i) => ({ ...t, supplier_id: t.passenger_id ?? offer.passengers[i]?.id }))
 
@@ -231,7 +231,7 @@ export async function createStayTrip(input: {
   const client = requireDuffel()
   const { data: quote } = await client.stays.quotes.create(input.rateId)
   const price = money(quote.total_amount, quote.total_currency)
-  if (!price) throw new KovaError('invalid_request', `Kova can't price rooms in ${quote.total_currency} yet.`)
+  if (!price) throw new KovaError('invalid_request', `Ren can't price rooms in ${quote.total_currency} yet.`)
   const room = quote.accommodation.rooms[0]
   const rate = room?.rates.find((r) => r.id === input.rateId) ?? room?.rates[0]
   // A quote holds the rate for a short while; half an hour at most, or the rate's own expiry.
@@ -343,8 +343,8 @@ export async function onIntentPaid(intentId: string) {
 }
 
 function bookingFailure(message: string) {
-  if (/price|changed/i.test(message)) return 'The airline changed the price before Kova could book it.'
-  if (/unavailable|sold|expired|no longer/i.test(message)) return 'It sold out before Kova could book it.'
+  if (/price|changed/i.test(message)) return 'The airline changed the price before Ren could book it.'
+  if (/unavailable|sold|expired|no longer/i.test(message)) return 'It sold out before Ren could book it.'
   return 'The booking didn’t go through.'
 }
 

@@ -92,7 +92,7 @@ const { receipt } = await client.token.transferSync({
 assert(receipt.status === 'success', `paid through ${site}/api/relay in ${Date.now() - started}ms`)
 assert(
   (receipt as { feePayer?: string }).feePayer !== undefined,
-  `Kova's fee payer ${(receipt as { feePayer?: string }).feePayer} paid the fee`,
+  `Ren's fee payer ${(receipt as { feePayer?: string }).feePayer} paid the fee`,
 )
 
 const confirmed = await post(`${site}/api/checkout/${id}/confirm`, {

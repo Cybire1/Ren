@@ -116,12 +116,12 @@ function vaultId(c: { req: { param: (name: string) => string } }): Address {
 
 export const walletRoutes = new Hono()
   .post('/transfers', async (c) => {
-    if (onTempo) throw new KovaError('not_found', 'On Tempo, send through Kova’s relay.')
+    if (onTempo) throw new KovaError('not_found', 'On Tempo, send through Ren’s relay.')
     const signed = parseSignedAuthorization(await c.req.json().catch(() => null))
     if (!signed) throw new KovaError('invalid_request', 'Expected a signed transfer authorization.')
     const { authorization, signature } = signed
     const token = kit.tokenByAddress(signed.token)
-    if (!token) throw new KovaError('invalid_request', 'Kova only sends the dollars it settles in.')
+    if (!token) throw new KovaError('invalid_request', 'Ren only sends the dollars it settles in.')
     // Charges have their own door, which checks the charge. A Kova memo here is refused, so
     // nothing can pay a charge without that check.
     if (decodeMemo(authorization.nonce))

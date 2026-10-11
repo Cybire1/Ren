@@ -37,7 +37,7 @@ export const relayHandler = feePayerAccount
       feePayer: {
         account: feePayerAccount,
         feeToken: settlementToken.address,
-        name: 'Kova',
+        name: 'Ren',
         url: 'https://mykova.app',
         validate: async (request) => {
           const decision = await shouldSponsor(request as never, {

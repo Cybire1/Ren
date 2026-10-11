@@ -17,7 +17,7 @@ export function useCatalog() {
       setProblem(null)
       return next
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'Kova is unreachable')
+      setProblem(error instanceof Error ? error.message : 'Ren is unreachable')
       return null
     }
   }, [])

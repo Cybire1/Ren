@@ -92,11 +92,11 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
           <p className="await-label">{c.reference}</p>
         ) : null}
         <Pill href={`kova://pay/${c.id}`} icon="tap" tone="coral" wide>
-          Pay with the Kova app
+          Pay with the Ren app
         </Pill>
         {/* The same wallet in the browser, opened with the app's passkey (or made here in a moment). */}
         <Pill href={`/wallet/pay/${c.id}`} icon="arrow" tone="light" wide className="pay-kova-web">
-          Pay with my Kova wallet
+          Pay with my Ren wallet
         </Pill>
       </section>
 

@@ -52,7 +52,7 @@ export default function Setup() {
             Your wallet is a passkey.
           </Txt>
           <Txt size={17} color={colors.onTint} style={styles.body}>
-            Face ID makes it, and iCloud Keychain keeps it, so it opens your wallet on your next phone too. No seed phrase to write down, and nothing for Kova to hold.
+            Face ID makes it, and iCloud Keychain keeps it, so it opens your wallet on your next phone too. No seed phrase to write down, and nothing for Ren to hold.
           </Txt>
           {problem ? (
             <Txt weight="medium" size={15} color={colors.danger} style={{ marginTop: 12 }}>

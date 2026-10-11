@@ -38,7 +38,7 @@ export function TerminalsManager({ initial }: { initial: Terminal[] }) {
         <section className="card empty big-empty">
           <Art name="kovi-wave" size={150} />
           <h3>No terminals yet</h3>
-          <p>Any phone with Kova becomes a till. Pair one with a one-time code; it gets its own key, only for taking payments.</p>
+          <p>Any phone with Ren becomes a till. Pair one with a one-time code; it gets its own key, only for taking payments.</p>
           <Pill icon="plus" tone="coral" onClick={() => setPairing(true)}>
             Pair your first phone
           </Pill>

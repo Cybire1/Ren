@@ -7,7 +7,7 @@ import '../styles/stalls.css'
 import '../styles/wallet.css'
 
 export const metadata: Metadata = {
-  title: { default: 'Kova', template: '%s · Kova' },
+  title: { default: 'Ren', template: '%s · Ren' },
   description: 'Tap. Paid. Anywhere. Stablecoin payments for real shops.',
 }
 

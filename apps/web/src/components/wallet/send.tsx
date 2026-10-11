@@ -59,11 +59,11 @@ export function SendPicker() {
 
   const go = (value: string) => {
     const s = parseScanned(value)
-    if (!s) return setError('That isn’t a Kova link or a wallet address.')
+    if (!s) return setError('That isn’t a Ren link or a wallet address.')
     if (s.kind === 'charge') return router.push(`/wallet/pay/${s.id}`)
     if (s.kind === 'stall') return router.push(`/s/${s.slug}`)
     if (s.kind === 'pair')
-      return setError('That code pairs a phone with a shop. Open it in the Kova app.')
+      return setError('That code pairs a phone with a shop. Open it in the Ren app.')
     const params = new URLSearchParams()
     if (s.name) params.set('name', s.name)
     if (s.currency) params.set('cur', s.currency)
@@ -110,7 +110,7 @@ export function SendPicker() {
             className="w-find-btn"
             onClick={async () => {
               const pasted = await navigator.clipboard.readText().catch(() => '')
-              if (!pasted.trim()) return setError('Nothing to paste. Ask them for their Kova link.')
+              if (!pasted.trim()) return setError('Nothing to paste. Ask them for their Ren link.')
               setText(pasted.trim())
             }}
           >
@@ -143,7 +143,7 @@ export function SendPicker() {
           <Art name="scene-send" size={220} />
           <strong>Send your first payment</strong>
           <span>
-            Paste a friend’s Kova link or their {chainName} address. It lands in about a second, and Kova
+            Paste a friend’s Ren link or their {chainName} address. It lands in about a second, and Ren
             covers the fee.
           </span>
         </div>
@@ -242,7 +242,7 @@ export function SendFlow({ to }: { to: string }) {
         <ScreenHead title="Send" back="/wallet/send" />
         <div className="w-empty">
           <strong>That address doesn’t look right.</strong>
-          <span>Ask them for their Kova link, or check the address.</span>
+          <span>Ask them for their Ren link, or check the address.</span>
         </div>
       </div>
     )
@@ -259,7 +259,7 @@ export function SendFlow({ to }: { to: string }) {
       await new Promise((r) => setTimeout(r, wait))
       setStage({ at: 'sent', ms: moved.ms, hash: moved.hash })
     } catch (e) {
-      const message = e instanceof Error ? e.message : 'Kova couldn’t send it.'
+      const message = e instanceof Error ? e.message : 'Ren couldn’t send it.'
       if (/cancel/i.test(message)) return setStage({ at: 'review' })
       setStage({ at: 'problem', message })
     }
@@ -358,7 +358,7 @@ export function SendFlow({ to }: { to: string }) {
             ) : null}
             <div className="w-review-row">
               <span>Fee</span>
-              <strong>$0.00, Kova covers it</strong>
+              <strong>$0.00, Ren covers it</strong>
             </div>
           </div>
           {short_ ? (
@@ -381,7 +381,7 @@ export function SendFlow({ to }: { to: string }) {
           <p className="w-fine w-center">
             {quick
               ? 'Your wallet is open, so this one needs no passkey.'
-              : 'Your passkey approves it. Kova never holds your money.'}
+              : 'Your passkey approves it. Ren never holds your money.'}
           </p>
         </div>
       </div>

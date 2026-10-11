@@ -55,7 +55,7 @@ export default function Receive() {
         <PillButton
           label="Share my link"
           icon="share"
-          onPress={() => void Share.share({ message: `Pay me on Kova: ${link}` })}
+          onPress={() => void Share.share({ message: `Pay me on Ren: ${link}` })}
         />
       </View>
     </Screen>

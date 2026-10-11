@@ -114,7 +114,7 @@ export default function Profile() {
               </Txt>
             </Pressable>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Show my Kova code" onPress={() => router.push('/receive')} style={styles.qr}>
+          <Pressable accessibilityRole="button" accessibilityLabel="Show my Ren code" onPress={() => router.push('/receive')} style={styles.qr}>
             <QRCode value={link} size={76} color={colors.ink} backgroundColor={colors.surface} ecl="L" />
           </Pressable>
         </View>
@@ -144,8 +144,8 @@ export default function Profile() {
             </Txt>
             <Txt size={14} color={colors.muted} style={{ marginTop: 4, lineHeight: 20 }}>
               {stall.owned
-                ? `Your money stays in the wallet, and ${stall.owned.name} keeps paying into it. Your passkey brings it back here any time: choose “I already have Kova”.`
-                : 'Your money stays in the wallet. Your passkey brings it back here, or on any phone, any time: choose “I already have Kova”.'}
+                ? `Your money stays in the wallet, and ${stall.owned.name} keeps paying into it. Your passkey brings it back here any time: choose “I already have Ren”.`
+                : 'Your money stays in the wallet. Your passkey brings it back here, or on any phone, any time: choose “I already have Ren”.'}
             </Txt>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
               <Pressable accessibilityRole="button" onPress={() => setConfirmRemove(false)} style={[styles.small, { backgroundColor: colors.surface }]}>
@@ -326,7 +326,7 @@ function KeysCard() {
         <Icon name={backedUp ? 'check' : 'info'} size={15} color={backedUp ? colors.positive : colors.muted} />
         <Txt size={13} color={colors.muted} style={{ flex: 1, lineHeight: 18 }}>
           {backedUp
-            ? 'Your name and contacts are backed up, sealed by your passkey. Kova can’t read them.'
+            ? 'Your name and contacts are backed up, sealed by your passkey. Ren can’t read them.'
             : 'Your name and contacts back up, sealed by your passkey, the next time you change them.'}
         </Txt>
       </View>

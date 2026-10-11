@@ -63,7 +63,7 @@ export default function Card() {
   const setFrozen = async (next: boolean) => {
     if (next === card.frozen) return
     if (!next) {
-      if (!(await confirmWithFace('Unfreeze your Kova Card'))) return
+      if (!(await confirmWithFace('Unfreeze your Ren Card'))) return
     }
     void Haptics.notificationAsync(next ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success)
     updateCard({ frozen: next })
@@ -155,7 +155,7 @@ export default function Card() {
         </View>
 
         <View style={[styles.section, { padding: 0 }]}>
-          <Row icon="tap" tint={colors.tealSoft} label="Kova terminals only" value="Online checkouts can’t charge it">
+          <Row icon="tap" tint={colors.tealSoft} label="Ren terminals only" value="Online checkouts can’t charge it">
             <Switch
               value={card.terminalsOnly}
               onValueChange={(v) => updateCard({ terminalsOnly: v })}

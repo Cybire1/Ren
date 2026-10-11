@@ -41,12 +41,12 @@ export default function Scan() {
     if (handled.current) return
     const scanned = parseScanned(text)
     if (scanned) open(scanned)
-    else setProblem("That code isn't a Kova payment. Try the shop's Kova QR.")
+    else setProblem("That code isn't a Ren payment. Try the shop's Ren QR.")
   }
 
   const paste = async () => {
     const text = await Clipboard.getStringAsync()
-    if (!text) return setProblem('Nothing to paste. Copy a Kova pay link first.')
+    if (!text) return setProblem('Nothing to paste. Copy a Ren pay link first.')
     handled.current = false
     onText(text)
   }
@@ -88,7 +88,7 @@ export default function Scan() {
         {permission && !permission.granted ? (
           <>
             <Txt weight="semi" size={22}>
-              Let Kova use the camera
+              Let Ren use the camera
             </Txt>
             <Txt size={15} color={colors.muted} style={styles.sheetBody}>
               It only looks for payment codes. Nothing is recorded.
@@ -98,7 +98,7 @@ export default function Scan() {
         ) : (
           <>
             <Txt weight="semi" size={22}>
-              Point at a Kova code
+              Point at a Ren code
             </Txt>
             <Txt size={15} color={problem ? colors.danger : colors.muted} style={styles.sheetBody}>
               {problem ?? "A shop's QR, a stall's table poster, or a friend's code from their Receive screen."}

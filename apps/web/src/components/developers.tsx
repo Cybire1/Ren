@@ -174,7 +174,7 @@ export function WebhooksCard({ endpoints }: { endpoints: WebhookEndpoint[] }) {
       <div className="card-head">
         <div>
           <h2>Webhooks</h2>
-          <p>Kova posts each event to your URL, signed, and retries for up to a day if your server is down.</p>
+          <p>Ren posts each event to your URL, signed, and retries for up to a day if your server is down.</p>
         </div>
       </div>
       {endpoints.length > 0 ? (

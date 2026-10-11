@@ -120,7 +120,7 @@ export function ReceiptHero() {
       <div
         className="rh-art"
         role="img"
-        aria-label={`A Kova terminal at ${r.shop} in ${r.where} taking ${r.total}, paid from ${r.from}, and printing the receipt`}
+        aria-label={`A Ren terminal at ${r.shop} in ${r.where} taking ${r.total}, paid from ${r.from}, and printing the receipt`}
       >
         {COINS.map((c) => (
           <Art
@@ -175,7 +175,7 @@ export function ReceiptHero() {
             <dl className="rh-facts">
               <div>
                 <dt>Paid with</dt>
-                <dd>Kova Pay and Face ID</dd>
+                <dd>Ren Pay and Face ID</dd>
               </div>
               <div>
                 <dt>Customer saw</dt>

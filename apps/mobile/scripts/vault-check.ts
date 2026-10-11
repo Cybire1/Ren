@@ -29,7 +29,7 @@ async function main() {
 
   // What Kova stores is ciphertext: fetch the raw record and look for the name.
   const listing = await fetch(`${apiUrl}/v1/vaults/${(await vaultIdOf(secret))}`).then((r) => r.json() as Promise<{ ciphertext: string }>)
-  assert(!JSON.stringify(listing).includes('Adaeze') && !JSON.stringify(listing).includes('Mama Ada'), 'Kova holds only ciphertext')
+  assert(!JSON.stringify(listing).includes('Adaeze') && !JSON.stringify(listing).includes('Mama Ada'), 'Ren holds only ciphertext')
 
   // An impostor signs a replacement for someone else's vault.
   const impostor = privateKeyToAccount(generatePrivateKey())

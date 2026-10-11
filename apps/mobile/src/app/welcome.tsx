@@ -49,7 +49,7 @@ export default function Welcome() {
         <View style={styles.actions}>
           <PillButton label="Create my wallet" onPress={() => router.push('/setup')} />
           <View style={styles.links}>
-            <TextLink label="I already have Kova" onPress={() => router.push('/restore')} />
+            <TextLink label="I already have Ren" onPress={() => router.push('/restore')} />
             <TextLink label="I run a shop" onPress={() => router.push('/terminal/setup')} />
           </View>
         </View>

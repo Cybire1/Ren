@@ -80,7 +80,7 @@ function OwnerStall() {
   }
 
   const share = async () => {
-    await Share.share({ message: `Order from ${stall.name} and pay in dollars with Kova: ${link}` })
+    await Share.share({ message: `Order from ${stall.name} and pay in dollars with Ren: ${link}` })
   }
 
   return (
@@ -187,7 +187,7 @@ function OwnerStall() {
             Put something on the counter
           </Txt>
           <Txt size={15} color={colors.muted} style={{ marginTop: 4, textAlign: 'center', lineHeight: 21 }}>
-            Add items one by one with a photo and a price, or photograph your menu board and Kova fills it in.
+            Add items one by one with a photo and a price, or photograph your menu board and Ren fills it in.
           </Txt>
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
             <Pressable accessibilityRole="button" onPress={() => router.push('/terminal/item')} style={styles.bigChoice}>
@@ -333,7 +333,7 @@ function ShopMenu() {
         Menu
       </Txt>
       <Txt size={14} color={colors.muted} style={{ marginTop: 4, lineHeight: 20 }}>
-        Everything {shop.name} sells. Only the phone that opened the shop, or the Kova dashboard, can change it.
+        Everything {shop.name} sells. Only the phone that opened the shop, or the Ren dashboard, can change it.
       </Txt>
       {catalog.items === null ? (
         <ActivityIndicator color={colors.ink} style={{ marginTop: 30 }} />

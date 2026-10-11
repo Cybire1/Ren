@@ -47,8 +47,8 @@ export default function SnapMenu() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setStage('review')
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Kova couldn’t read that menu.'
-      setProblem(/not set up/i.test(message) ? 'Reading menus isn’t switched on for this Kova server yet. Add items one at a time for now.' : message)
+      const message = error instanceof Error ? error.message : 'Ren couldn’t read that menu.'
+      setProblem(/not set up/i.test(message) ? 'Reading menus isn’t switched on for this Ren server yet. Add items one at a time for now.' : message)
       setStage('pick')
     }
   }
@@ -97,7 +97,7 @@ export default function SnapMenu() {
             </Txt>
             <Txt size={15} color={colors.muted} style={{ textAlign: 'center', marginTop: 6, lineHeight: 22 }}>
               {stage === 'reading'
-                ? 'Picking out every item and price. Prices in naira, euros or pounds become dollars at Kova’s reference rate.'
+                ? 'Picking out every item and price. Prices in naira, euros or pounds become dollars at Ren’s reference rate.'
                 : 'A menu, a chalkboard or a printed price list. You check every line before anything goes on your stall.'}
             </Txt>
             {problem ? (

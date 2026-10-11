@@ -37,7 +37,7 @@ function limit(key: string, max: number, windowMs: number) {
 const ip = clientIp
 
 function client() {
-  if (!duffel) throw new KovaError('invalid_request', 'Kova Travel is not set up on this server yet (it needs a Duffel key).')
+  if (!duffel) throw new KovaError('invalid_request', 'Ren Travel is not set up on this server yet (it needs a Duffel key).')
   return duffel
 }
 
@@ -178,7 +178,7 @@ export const travelRoutes = new Hono()
     limit(`offer:${ip(c)}`, 120, 600_000)
     const { data } = await client().offers.get(c.req.param('id'), { return_available_services: true })
     const offer = serializeOffer(data)
-    if (!offer) throw new KovaError('invalid_request', `Kova can't price fares in ${data.total_currency} yet.`)
+    if (!offer) throw new KovaError('invalid_request', `Ren can't price fares in ${data.total_currency} yet.`)
     return c.json({ object: 'offer', ...offer, extra_bags: serializeBags(data) })
   })
 

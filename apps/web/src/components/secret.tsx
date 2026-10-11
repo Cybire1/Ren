@@ -25,7 +25,7 @@ export function SecretReveal({ label, value, note }: { label: string; value: str
           <Icon name={copied ? 'check' : 'copy'} size={14} /> {copied ? 'Copied' : 'Copy'}
         </button>
       </div>
-      <p>{note ?? 'Copy it now and keep it somewhere safe. Kova only stores a hash, so it can’t show it again.'}</p>
+      <p>{note ?? 'Copy it now and keep it somewhere safe. Ren only stores a hash, so it can’t show it again.'}</p>
     </div>
   )
 }

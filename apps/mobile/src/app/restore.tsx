@@ -76,7 +76,7 @@ export default function Restore() {
           Welcome back.
         </Txt>
         <Txt size={17} color={colors.onTint} style={styles.body}>
-          Use the passkey you made with Kova. iCloud Keychain brings it to this phone, and your wallet comes with it.
+          Use the passkey you made with Ren. iCloud Keychain brings it to this phone, and your wallet comes with it.
         </Txt>
         {problem ? (
           <Txt weight="medium" size={15} color={colors.danger} style={{ marginTop: 12 }}>

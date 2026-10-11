@@ -107,7 +107,7 @@ async function deliver(delivery: typeof schema.webhookDeliveries.$inferSelect) {
       method: 'POST',
       headers: {
         'content-type': 'application/json',
-        'user-agent': 'Kova-Webhooks/1',
+        'user-agent': 'Ren-Webhooks/1',
         'kova-signature': sign(endpoint.secret, body),
         'kova-event-id': encodeId('event', event.id),
       },

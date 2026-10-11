@@ -121,7 +121,7 @@ export const checkoutRoutes = new Hono()
     if (onTempo)
       throw new KovaError(
         'not_found',
-        'On Tempo, pay through Kova’s relay and report the transaction.',
+        'On Tempo, pay through Ren’s relay and report the transaction.',
       )
     const signed = parseSignedAuthorization(await c.req.json().catch(() => null))
     if (!signed) throw new KovaError('invalid_request', 'Expected a signed transfer authorization.')

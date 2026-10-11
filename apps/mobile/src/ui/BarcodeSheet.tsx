@@ -55,7 +55,7 @@ export function BarcodeSheet({ visible, onClose, onCode }: { visible: boolean; o
           {permission && !permission.granted ? (
             <>
               <Txt weight="semi" size={20}>
-                Let Kova use the camera
+                Let Ren use the camera
               </Txt>
               <Txt size={15} color={colors.muted} style={{ marginTop: 4, marginBottom: 14, lineHeight: 21 }}>
                 It only reads the barcode. Or type the number under the bars.

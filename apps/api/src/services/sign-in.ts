@@ -27,9 +27,9 @@ export type SignInPurpose = 'sign_in' | 'open_shop' | 'own_shop'
 
 /** What the wallet shows its owner. The purpose is in the words, so one can't stand in for the other. */
 const statements: Record<SignInPurpose, string> = {
-  sign_in: 'Sign in to your shop on Kova.',
-  open_shop: 'Open a shop on Kova that you sign in to with this wallet.',
-  own_shop: 'Sign in to this shop on Kova with this wallet from now on.',
+  sign_in: 'Sign in to your shop on Ren.',
+  open_shop: 'Open a shop on Ren that you sign in to with this wallet.',
+  own_shop: 'Sign in to this shop on Ren with this wallet from now on.',
 }
 
 const CHALLENGE_TTL_MS = 10 * 60_000
@@ -58,7 +58,7 @@ export async function createChallenge(input: {
   purpose: SignInPurpose
 }) {
   if (!domains.includes(input.domain))
-    throw new KovaError('invalid_request', `Kova doesn’t sign in from ${input.domain}.`)
+    throw new KovaError('invalid_request', `Ren doesn’t sign in from ${input.domain}.`)
   const nonce = generateSiweNonce()
   const issuedAt = new Date()
   const expiresAt = new Date(issuedAt.getTime() + CHALLENGE_TTL_MS)
@@ -97,11 +97,11 @@ export async function verifyChallenge(input: {
   try {
     fields = parseSiweMessage(input.message)
   } catch {
-    throw new KovaError('invalid_request', 'That isn’t a Kova sign-in message.')
+    throw new KovaError('invalid_request', 'That isn’t a Ren sign-in message.')
   }
   const { address, nonce, domain } = fields
   if (!address || !nonce || !domain || fields.statement !== statements[input.purpose])
-    throw new KovaError('invalid_request', 'That isn’t a Kova sign-in message.')
+    throw new KovaError('invalid_request', 'That isn’t a Ren sign-in message.')
   if (!domains.includes(domain) || fields.chainId !== network.chain.id)
     throw new KovaError('invalid_request', 'That sign-in was made for another site.')
   if (!validateSiweMessage({ message: fields, time: new Date() })) throw expired()

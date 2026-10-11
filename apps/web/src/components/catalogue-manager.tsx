@@ -80,7 +80,7 @@ export function CatalogueManager({ initial }: { initial: CatalogItem[] }) {
               <Icon name="search" size={18} />
               <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search by name or barcode" aria-label="Search the catalogue" />
             </form>
-            <p className="field-help">Scan barcodes with the Kova app to add packaged goods in a second.</p>
+            <p className="field-help">Scan barcodes with the Ren app to add packaged goods in a second.</p>
           </div>
           <ul className="cat-grid">
             {shown.map((item) => (

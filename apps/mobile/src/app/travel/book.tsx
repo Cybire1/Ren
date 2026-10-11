@@ -85,7 +85,7 @@ export default function Book() {
     setBusy(true)
     setProblem(null)
     try {
-      const bookedBy = profile?.name ?? 'A Kova user'
+      const bookedBy = profile?.name ?? 'A Ren user'
       const trip = flight
         ? await createFlightTrip({
             offer_id: flight.offer.id,

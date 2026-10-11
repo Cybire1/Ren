@@ -162,7 +162,7 @@ export function Charge() {
           <section className="await">
             <div className="await-card">
               <p className="await-amount">{usd(intent.amount)}</p>
-              <p className="await-label">{intent.reference ?? `Scan with Kova Pay or any ${chainName} wallet`}</p>
+              <p className="await-label">{intent.reference ?? `Scan with Ren Pay or any ${chainName} wallet`}</p>
               {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
               {qr ? <div className="qr qr-big" aria-label="Payment QR code" dangerouslySetInnerHTML={{ __html: qr }} /> : null}
               <p className="waiting">

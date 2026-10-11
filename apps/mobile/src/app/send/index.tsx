@@ -67,7 +67,7 @@ export default function PickPerson() {
 
   const go = (value: string) => {
     const scanned = parseScanned(value)
-    if (!scanned) return setProblem('That isn’t a Kova link or a wallet address.')
+    if (!scanned) return setProblem('That isn’t a Ren link or a wallet address.')
     if (scanned.kind === 'charge') return router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
     if (scanned.kind === 'pair') return router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
     if (scanned.kind === 'stall') return router.replace({ pathname: '/s/[slug]', params: { slug: scanned.slug } })
@@ -79,9 +79,9 @@ export default function PickPerson() {
 
   const paste = async () => {
     const clip = (await Clipboard.getStringAsync()).trim()
-    if (!clip) return setProblem('Nothing to paste. Ask them for their Kova link.')
+    if (!clip) return setProblem('Nothing to paste. Ask them for their Ren link.')
     setText(clip)
-    setProblem(parseScanned(clip) ? null : 'That isn’t a Kova link or a wallet address.')
+    setProblem(parseScanned(clip) ? null : 'That isn’t a Ren link or a wallet address.')
   }
 
   return (
@@ -152,7 +152,7 @@ export default function PickPerson() {
                 Send your first payment
               </Txt>
               <Txt size={15} color={colors.muted} style={{ textAlign: 'center', marginTop: 4, lineHeight: 22 }}>
-                Scan a friend’s Kova code or paste their link. They’ll be saved here for next time.
+                Scan a friend’s Ren code or paste their link. They’ll be saved here for next time.
               </Txt>
             </View>
           ) : null}
@@ -226,7 +226,7 @@ export default function PickPerson() {
             </>
           ) : query && !direct ? (
             <Txt size={15} color={colors.muted} style={{ marginTop: 20, marginLeft: 6 }}>
-              No one matches “{text.trim()}”. Paste their Kova link or a full address.
+              No one matches “{text.trim()}”. Paste their Ren link or a full address.
             </Txt>
           ) : null}
         </ScrollView>

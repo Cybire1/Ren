@@ -68,7 +68,7 @@ export default function Receipt() {
           <Row label="When" value={`${new Date(entry.at).toLocaleDateString([], { day: 'numeric', month: 'long' })}, ${when(entry.at)}`} />
           {['Sent', 'Arrived', 'Scan to pay', TEST_DOLLARS_DETAIL, 'AUSD test faucet'].includes(entry.detail) ? null : <Row label="For" value={entry.detail} />}
           {entry.ms ? <Row label="Took" value={`${(entry.ms / 1000).toFixed(1)} seconds`} /> : null}
-          <Row label="Fee" value={entry.kind === 'paid' ? '$0.00, covered by Kova' : entry.kind === 'sent' ? 'Under $0.01' : '$0.00'} />
+          <Row label="Fee" value={entry.kind === 'paid' ? '$0.00, covered by Ren' : entry.kind === 'sent' ? 'Under $0.01' : '$0.00'} />
           <Row label="Amount" value={formatUsd(BigInt(entry.amount))} />
           {entry.txHash ? (
             <View style={{ alignItems: 'center', marginTop: 14 }}>
@@ -86,7 +86,7 @@ export default function Receipt() {
           icon="share"
           onPress={() =>
             void Share.share({
-              message: `${titles[entry.kind]} ${formatUsd(BigInt(entry.amount))} ${incoming ? 'from' : 'to'} ${entry.name} on Kova.${entry.txHash ? ` ${explorerTx(entry.txHash)}` : ''}`,
+              message: `${titles[entry.kind]} ${formatUsd(BigInt(entry.amount))} ${incoming ? 'from' : 'to'} ${entry.name} on Ren.${entry.txHash ? ` ${explorerTx(entry.txHash)}` : ''}`,
             })
           }
         />

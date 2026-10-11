@@ -84,7 +84,7 @@ export async function giveTestDollars(to: Address): Promise<Drip> {
       )
       throw new KovaError(
         'chain_error',
-        'Test dollars have run out for the moment. Kova is topping up; try again later.',
+        'Test dollars have run out for the moment. Ren is topping up; try again later.',
       )
     }
     const txHash = await sendFromTreasury({

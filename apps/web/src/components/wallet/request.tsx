@@ -58,12 +58,12 @@ export function Request() {
             <QR value={link} size={220} label={`Code to pay ${profile.name} ${amount} dollars`} />
           </div>
           <p className="w-fine w-center">
-            They can scan it with the Kova app or any phone camera. It opens on the web if they
-            don’t have Kova, and they can pay with email or Google.
+            They can scan it with the Ren app or any phone camera. It opens on the web if they
+            don’t have Ren, and they can pay with email or Google.
           </p>
           <ShareButton
             title={`Pay ${profile.name}`}
-            text={`${profile.name} asked you for $${amount}${note.trim() ? ` for ${note.trim()}` : ''} on Kova:`}
+            text={`${profile.name} asked you for $${amount}${note.trim() ? ` for ${note.trim()}` : ''} on Ren:`}
             url={link}
             label="Share request"
           />
@@ -140,7 +140,7 @@ export function Receive() {
         <p className="w-fine w-center">{chainName} address. Send only {onTempo ? 'USDC' : 'AUSD'} on {chainName} to it.</p>
         <ShareButton
           title={`Pay ${profile.name}`}
-          text="Pay me on Kova:"
+          text="Pay me on Ren:"
           url={link}
           label="Share my link"
         />

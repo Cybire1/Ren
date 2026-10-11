@@ -12,11 +12,11 @@ import type { LocalAccount } from 'viem'
  * signing session, in memory, and is zeroed when the session ends.
  */
 export async function openSigningSession(prfOutput: Uint8Array): Promise<{ session: Secp256k1SigningSession; account: LocalAccount }> {
-  if (prfOutput.length !== 32) throw new Error('This passkey didn’t give Kova a key. Try again.')
+  if (prfOutput.length !== 32) throw new Error('This passkey didn’t give Ren a key. Try again.')
   const seed = await mnemonicToSeed(entropyToMnemonic(prfOutput, wordlist))
   const node = HDKey.fromMasterSeed(seed).derive("m/44'/60'/0'/0/0")
   seed.fill(0)
-  if (!node.privateKey) throw new Error('This passkey didn’t give Kova a key. Try again.')
+  if (!node.privateKey) throw new Error('This passkey didn’t give Ren a key. Try again.')
   const session = createSecp256k1SigningSession({ privateKey: node.privateKey })
   node.wipePrivateData()
   return { session, account: toViemAccount(session) }

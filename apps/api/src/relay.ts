@@ -84,7 +84,7 @@ async function submit(token: Token, authorization: TransferAuthorization, signat
   } catch (error) {
     throw await explainRefusal(token, authorization, error)
   }
-  if (gas > config.KOVA_MAX_RELAY_GAS) throw new KovaError('policy_declined', 'This payment would cost more gas than Kova relays.')
+  if (gas > config.KOVA_MAX_RELAY_GAS) throw new KovaError('policy_declined', 'This payment would cost more gas than Ren relays.')
 
   // Monad charges for the gas limit, not the gas used, so ask for the estimate plus a sliver.
   const request = await walletClient.prepareTransactionRequest({

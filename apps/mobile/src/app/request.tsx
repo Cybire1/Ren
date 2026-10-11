@@ -49,7 +49,7 @@ export default function Request() {
           <PillButton
             label="Share request"
             icon="share"
-            onPress={() => void Share.share({ message: `${profile.name} asked you for $${fixed}${note ? ` for ${note}` : ''} on Kova: ${link}` })}
+            onPress={() => void Share.share({ message: `${profile.name} asked you for $${fixed}${note ? ` for ${note}` : ''} on Ren: ${link}` })}
           />
           <View style={{ alignItems: 'center' }}>
             <TextLink label="Change amount" onPress={() => setReady(false)} />

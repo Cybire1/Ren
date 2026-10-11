@@ -34,7 +34,7 @@ export default function ShareStall() {
     )
 
   const link = stallLinkFor(stall.slug)
-  const message = `Order from ${stall.name} and pay in dollars with Kova: ${link}`
+  const message = `Order from ${stall.name} and pay in dollars with Ren: ${link}`
   const card = Math.min(width - 48, 340)
   const qr = card - 84
 

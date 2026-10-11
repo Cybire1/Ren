@@ -116,7 +116,7 @@ export default function PayCharge() {
           </Txt>
           {checkout.trip ? (
             <Txt size={15} color={colors.onTint} style={{ textAlign: 'center' }}>
-              {checkout.trip.share === 'You' ? 'Kova is booking it now.' : `${checkout.trip.booked_by}’s trip gets booked once it’s all paid.`}
+              {checkout.trip.share === 'You' ? 'Ren is booking it now.' : `${checkout.trip.booked_by}’s trip gets booked once it’s all paid.`}
             </Txt>
           ) : null}
           {checkout.order?.pay_for_me && checkout.order.customer_name ? (
@@ -237,7 +237,7 @@ export default function PayCharge() {
         <Sticker radius={24}>
           <View style={styles.lines}>
             <Line label="From" value={`Your wallet, ${balance === null ? '…' : formatUsd(balance)}`} />
-            <Line label="Fee" value="$0.00, Kova covers it" />
+            <Line label="Fee" value="$0.00, Ren covers it" />
           </View>
         </Sticker>
         {short ? (

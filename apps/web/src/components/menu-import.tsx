@@ -105,7 +105,7 @@ export function MenuImportSheet({ stallId, onClose, onAdded }: { stallId?: strin
         ) : (
           <>
             <p className="field-help">
-              {lines.length} found{currency !== 'USD' && currency !== 'UNKNOWN' ? `, priced in ${currency} and converted to dollars at Kova’s reference rate` : ''}. Untick anything that isn’t for sale.
+              {lines.length} found{currency !== 'USD' && currency !== 'UNKNOWN' ? `, priced in ${currency} and converted to dollars at Ren’s reference rate` : ''}. Untick anything that isn’t for sale.
             </p>
             <ul className="menu-lines">
               {lines.map((l, i) => (

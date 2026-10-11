@@ -17,7 +17,7 @@ export default ({ config }: ConfigContext): ExpoConfig => {
 
   return {
     ...(config as ExpoConfig),
-    name: 'Kova',
+    name: 'Ren',
     ios: {
       ...config.ios,
       bundleIdentifier: bundle,

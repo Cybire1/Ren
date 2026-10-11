@@ -61,7 +61,7 @@ function Dock({ path }: { path: string }) {
     </Link>
   )
   return (
-    <nav className="w-dock" aria-label="Kova">
+    <nav className="w-dock" aria-label="Ren">
       {before.map(tab)}
       <Link
         href="/wallet/pay"

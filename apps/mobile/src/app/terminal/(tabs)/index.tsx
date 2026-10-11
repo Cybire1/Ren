@@ -92,7 +92,7 @@ export default function Till() {
       setBasket({})
       router.push({ pathname: '/terminal/[id]', params: { id: sale.payment_intent.id, price: dollars(usd), usd } })
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'Kova is unreachable. Check the connection.')
+      setProblem(error instanceof Error ? error.message : 'Ren is unreachable. Check the connection.')
       void catalog.reload()
     } finally {
       setBusy(false)
@@ -268,7 +268,7 @@ function KeypadPanel({ bottom }: { bottom: number }) {
       setNote('')
       router.push({ pathname: '/terminal/[id]', params: { id: intent.id, price: label, usd } })
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'Kova is unreachable. Check the connection.')
+      setProblem(error instanceof Error ? error.message : 'Ren is unreachable. Check the connection.')
     } finally {
       setBusy(false)
     }
@@ -353,7 +353,7 @@ function ItemsPanel({
           Nothing to sell yet
         </Txt>
         <Txt size={15} color={colors.onTint} style={{ textAlign: 'center', marginTop: 4, lineHeight: 21 }}>
-          {owned ? 'Add what you sell once, then ring it up with a tap.' : 'The shop’s owner adds items from their phone or the Kova dashboard.'}
+          {owned ? 'Add what you sell once, then ring it up with a tap.' : 'The shop’s owner adds items from their phone or the Ren dashboard.'}
         </Txt>
         {owned ? (
           <Pressable accessibilityRole="button" onPress={() => router.push('/terminal/item')} style={styles.inlineButton}>

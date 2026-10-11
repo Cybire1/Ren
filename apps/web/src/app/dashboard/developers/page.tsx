@@ -14,7 +14,7 @@ export default async function DevelopersPage() {
   const apiUrl = process.env.KOVA_PUBLIC_API_URL ?? process.env.KOVA_API_URL ?? 'http://localhost:4000'
   return (
     <>
-      <PageHead title="Developers" sub="Take Kova payments from your own website, app or till software" />
+      <PageHead title="Developers" sub="Take Ren payments from your own website, app or till software" />
       <div className="dev">
         <div className="stack">
           <Quickstart apiUrl={apiUrl} />

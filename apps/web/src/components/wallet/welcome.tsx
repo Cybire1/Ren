@@ -112,7 +112,7 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
         </form>
         <p className="w-fine">
           Your passkey protects this wallet, and your phone or computer keeps it, as it does your
-          passwords. Kova never sees it.
+          passwords. Ren never sees it.
         </p>
         <button
           type="button"
@@ -130,13 +130,13 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
       <h1 className="w-hero-title">Tap. Paid. Anywhere.</h1>
       <p className="w-lead">
         {forShop
-          ? 'Your shop lives in your Kova wallet: its sales land there, and your passkey opens both. Open your wallet, or make one, then your shop.'
-          : 'Your Kova wallet, in your browser. The same one as in the Kova app: one passkey, one wallet.'}
+          ? 'Your shop lives in your Ren wallet: its sales land there, and your passkey opens both. Open your wallet, or make one, then your shop.'
+          : 'Your Ren wallet, in your browser. The same one as in the Ren app: one passkey, one wallet.'}
       </p>
 
       {!home ? (
         <p className="form-note">
-          Kova wallets open on <a href={`https://${passkeyDomain}/wallet`}>{passkeyDomain}</a>,
+          Ren wallets open on <a href={`https://${passkeyDomain}/wallet`}>{passkeyDomain}</a>,
           where your passkey lives.
         </p>
       ) : null}
@@ -158,9 +158,9 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
           <span>
             {step.at === 'waiting' && step.what === 'open'
               ? 'Waiting for your passkey…'
-              : 'Open my Kova wallet'}
+              : 'Open my Ren wallet'}
             <small className="wallet-sub">
-              With the passkey from the Kova app, or one you made here
+              With the passkey from the Ren app, or one you made here
             </small>
           </span>
           <Icon name="arrow" size={18} />
@@ -185,8 +185,8 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
       </div>
       {error ? <p className="form-error">{error}</p> : null}
       <p className="w-fine">
-        On a Mac or iPhone, iCloud Keychain brings the Kova app’s passkey here. Anywhere else,
-        choose “Use a phone” and scan the code with the phone that has Kova.
+        On a Mac or iPhone, iCloud Keychain brings the Ren app’s passkey here. Anywhere else,
+        choose “Use a phone” and scan the code with the phone that has Ren.
       </p>
     </div>
   )

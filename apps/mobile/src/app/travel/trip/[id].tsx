@@ -52,7 +52,7 @@ export default function TripScreen() {
         }
         if (next.status === 'awaiting_payment' || next.status === 'booking') timer = setTimeout(load, 3000)
       } catch (error) {
-        if (live) setProblem(error instanceof Error ? error.message : 'Kova is unreachable.')
+        if (live) setProblem(error instanceof Error ? error.message : 'Ren is unreachable.')
       }
     }
     void load()
@@ -154,7 +154,7 @@ function Paying({ trip }: { trip: Trip }) {
         </Txt>
         {trip.fare.currency !== 'USD' ? (
           <Txt size={13} color={colors.muted}>
-            The fare is {trip.fare.currency} {Number(trip.fare.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}, in dollars at Kova’s reference rate
+            The fare is {trip.fare.currency} {Number(trip.fare.amount).toLocaleString('en-US', { minimumFractionDigits: 2 })}, in dollars at Ren’s reference rate
           </Txt>
         ) : null}
       </View>
@@ -172,8 +172,8 @@ function ShareRow({ share, trip }: { share: TripShare; trip: Trip }) {
   const link = share.checkout ? payLinkFor(share.checkout) : ''
   const message =
     trip.shares.length > 1
-      ? `Your share of ${trip.summary.title} is ${dollars(share.amount)}. Pay it in dollars with Kova: ${link}`
-      : `Can you pay for my ${trip.kind === 'flight' ? 'flight' : 'hotel'}, ${trip.summary.title}? It’s ${dollars(share.amount)}, paid in dollars with Kova: ${link}`
+      ? `Your share of ${trip.summary.title} is ${dollars(share.amount)}. Pay it in dollars with Ren: ${link}`
+      : `Can you pay for my ${trip.kind === 'flight' ? 'flight' : 'hotel'}, ${trip.summary.title}? It’s ${dollars(share.amount)}, paid in dollars with Ren: ${link}`
   return (
     <View style={[styles.share, done && styles.shareDone]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>

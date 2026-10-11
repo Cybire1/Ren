@@ -61,9 +61,9 @@ export function SignInForm({
             <Icon name="face" size={16} />
           </span>
           <span>
-            Use my Kova passkey
+            Use my Ren passkey
             <small className="wallet-sub">
-              The one from the Kova app, or your Kova wallet on the web
+              The one from the Ren app, or your Ren wallet on the web
             </small>
           </span>
           <Icon name="arrow" size={18} />
@@ -97,7 +97,7 @@ export function SignInForm({
         </Pill>
       </form>
       <p className="auth-switch">
-        New to Kova? <Link href="/wallet">Open the app</Link>
+        New to Ren? <Link href="/wallet">Open the app</Link>
       </p>
     </div>
   )
@@ -190,7 +190,7 @@ function EmailSignIn({ appId, chainId }: { appId: string; chainId: number }) {
       else if (result.shops) setStep({ at: 'choose', wallet, proof, shops: result.shops })
       else {
         await wallet.logout().catch(() => {})
-        setStep({ at: 'problem', message: result.error ?? 'Kova couldn’t sign you in. Try again.' })
+        setStep({ at: 'problem', message: result.error ?? 'Ren couldn’t sign you in. Try again.' })
       }
     },
     [router],
@@ -201,14 +201,14 @@ function EmailSignIn({ appId, chainId }: { appId: string; chainId: number }) {
       setStep({ at: 'checking', who: wallet.signedInAs })
       try {
         const challenge = await walletChallenge(wallet.address, 'sign_in')
-        if (!challenge.message) throw new Error(challenge.error ?? 'Kova didn’t answer. Try again.')
+        if (!challenge.message) throw new Error(challenge.error ?? 'Ren didn’t answer. Try again.')
         await finish(wallet, {
           message: challenge.message,
           signature: await signWith(wallet, challenge.message),
         })
       } catch (error) {
         await wallet.logout().catch(() => {})
-        setStep({ at: 'problem', message: explain(error, 'Kova couldn’t sign you in. Try again.') })
+        setStep({ at: 'problem', message: explain(error, 'Ren couldn’t sign you in. Try again.') })
       }
     },
     [finish],
@@ -256,11 +256,11 @@ function EmailSignIn({ appId, chainId }: { appId: string; chainId: number }) {
         <div className="signin-panel" role="status">
           <p className="signin-panel-title">No shop uses {step.wallet.signedInAs} yet</p>
           <p className="signin-panel-body">
-            New shops open in the Kova app: your wallet first, then your shop. It takes a passkey
+            New shops open in the Ren app: your wallet first, then your shop. It takes a passkey
             and a name.
           </p>
           <Pill href="/wallet/shop?go=open" icon="arrow" tone="coral" wide>
-            Open a shop in the Kova app
+            Open a shop in the Ren app
           </Pill>
           {differentEmail}
         </div>

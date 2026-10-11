@@ -55,7 +55,7 @@ async function post<T>(path: string, body: unknown): Promise<T> {
   })
   const json = (await response.json().catch(() => ({}))) as { error?: string }
   if (!response.ok)
-    throw new Error(json.error ?? `Kova didn’t answer (${response.status}). Nothing moved.`)
+    throw new Error(json.error ?? `Ren didn’t answer (${response.status}). Nothing moved.`)
   return json as T
 }
 
@@ -130,7 +130,7 @@ export async function payCharge(
   charge: ChargeToPay,
 ): Promise<Moved> {
   const token = tokenByAddress(network, charge.token as Address)
-  if (!token) throw new Error('This charge asks for a token Kova doesn’t pay with.')
+  if (!token) throw new Error('This charge asks for a token Ren doesn’t pay with.')
   const started = performance.now()
   let hash: Hex
   try {

@@ -91,7 +91,7 @@ export const webhookRoutes = new Hono()
         id: eventId,
         merchantId: endpoint.merchantId,
         type: 'test.ping',
-        data: { message: 'Hello from Kova. Your endpoint is set up.' },
+        data: { message: 'Hello from Ren. Your endpoint is set up.' },
       })
       // Queued directly for this endpoint only, not fanned out to the others.
       await tx.insert(schema.webhookDeliveries).values({ id: uuidv7(), endpointId: endpoint.id, eventId })

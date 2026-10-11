@@ -43,8 +43,8 @@ export default async function PayPersonPage(props: Props) {
       <main className="to-page">
         <Brand />
         <div className="to-card">
-          <h1 className="w-title">This link isn’t a Kova request</h1>
-          <p className="w-lead">Ask them to share their Kova link again.</p>
+          <h1 className="w-title">This link isn’t a Ren request</h1>
+          <p className="w-lead">Ask them to share their Ren link again.</p>
         </div>
       </main>
     )
@@ -77,15 +77,15 @@ export default async function PayPersonPage(props: Props) {
             className="pill pill-block"
             data-tone="light"
           >
-            <span className="pill-label">Open in the Kova app</span>
+            <span className="pill-label">Open in the Ren app</span>
             <span className="pill-cap">
               <Icon name="tap" size={18} />
             </span>
           </a>
         </div>
         <p className="w-fine">
-          Pays from your Kova wallet, in dollars on {chainName}. {firstName} gets it in about a second,
-          and Kova covers the fee. New to Kova? Your wallet takes a passkey and a moment.
+          Pays from your Ren wallet, in dollars on {chainName}. {firstName} gets it in about a second,
+          and Ren covers the fee. New to Ren? Your wallet takes a passkey and a moment.
         </p>
       </div>
     </main>

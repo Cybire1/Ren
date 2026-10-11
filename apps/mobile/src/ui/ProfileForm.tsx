@@ -182,7 +182,7 @@ export function CurrencySheet({
   return (
     <Sheet visible={visible} onClose={onClose} title="Show my money in">
       <Txt size={14} color={colors.muted} style={{ marginBottom: 14 }}>
-        Your money stays in dollars. This is only how Kova shows it to you.
+        Your money stays in dollars. This is only how Ren shows it to you.
       </Txt>
       <View style={styles.grid}>
         {displayCurrencies.map((code) => {
@@ -217,7 +217,7 @@ export function CurrencySheet({
             ? ratesOnChain()
               ? `${rateLabel()}, published on ${chainName}`
               : `${rateLabel()}, two sources checked against each other`
-            : 'Reference rates, updated by Kova'}
+            : 'Reference rates, updated by Ren'}
         </Txt>
       </View>
     </Sheet>

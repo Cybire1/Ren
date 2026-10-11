@@ -103,9 +103,9 @@ export function PairSheet({
           <>
             <Art name="kovi-wave" size={84} className="sheet-art" />
             <h2 id="pair-title">Add a terminal</h2>
-            <p className="sheet-lead">Any phone with Kova becomes a till for your shop.</p>
+            <p className="sheet-lead">Any phone with Ren becomes a till for your shop.</p>
             <ol className="steps">
-              <li>Open Kova on the phone, then Profile, then Kova Terminal.</li>
+              <li>Open Ren on the phone, then Profile, then Ren Terminal.</li>
               <li>Scan this code, or type it in.</li>
             </ol>
 

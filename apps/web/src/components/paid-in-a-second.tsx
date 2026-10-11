@@ -45,7 +45,7 @@ export function PaidInASecond() {
             <span className="lp-price">$12.50</span>
           </div>
           <h3>Type the price</h3>
-          <p>On Kova Terminal, on any phone. Add what it’s for if you like: “Two flat whites”.</p>
+          <p>On Ren Terminal, on any phone. Add what it’s for if you like: “Two flat whites”.</p>
         </li>
         <li className="lp-stop">
           <span className="lp-clock">0.4s</span>
@@ -53,7 +53,7 @@ export function PaidInASecond() {
             <Art name="scene-faceid" size={200} />
           </div>
           <h3>They tap or scan</h3>
-          <p>With Kova Pay it’s one tap and Face ID. Any {chainName} wallet can scan the code and pay, and Kova covers the network fee.</p>
+          <p>With Ren Pay it’s one tap and Face ID. Any {chainName} wallet can scan the code and pay, and Ren covers the network fee.</p>
         </li>
         <li className="lp-stop">
           <span className="lp-clock">0.9s</span>

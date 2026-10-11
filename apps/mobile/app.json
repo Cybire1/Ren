@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Kova",
+    "name": "Ren",
     "slug": "kova",
     "scheme": "kova",
     "version": "0.1.0",
@@ -13,8 +13,8 @@
       "bundleIdentifier": "xyz.kova.pay.monad",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSFaceIDUsageDescription": "Use Face ID to approve payments and unlock your Kova wallet.",
-        "NFCReaderUsageDescription": "Hold a Kova Card near the top of your iPhone to take a payment."
+        "NSFaceIDUsageDescription": "Use Face ID to approve payments and unlock your Ren wallet.",
+        "NFCReaderUsageDescription": "Hold a Ren Card near the top of your iPhone to take a payment."
       },
       "associatedDomains": [
         "webcredentials:mykova.app",
@@ -47,7 +47,7 @@
       [
         "react-native-nfc-manager",
         {
-          "nfcPermission": "Hold a Kova Card near the top of your iPhone to take a payment.",
+          "nfcPermission": "Hold a Ren Card near the top of your iPhone to take a payment.",
           "selectIdentifiers": [
             "F04B4F564131"
           ]
@@ -57,7 +57,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Kova uses the camera to scan payment codes and barcodes, and to photograph what you sell.",
+          "cameraPermission": "Ren uses the camera to scan payment codes and barcodes, and to photograph what you sell.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }
@@ -65,8 +65,8 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Kova lets you pick photos of what you sell for your stall.",
-          "cameraPermission": "Kova uses the camera to scan payment codes and barcodes, and to photograph what you sell.",
+          "photosPermission": "Ren lets you pick photos of what you sell for your stall.",
+          "cameraPermission": "Ren uses the camera to scan payment codes and barcodes, and to photograph what you sell.",
           "microphonePermission": false
         }
       ],

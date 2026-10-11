@@ -67,7 +67,7 @@ export function Profile() {
               currency: profile.currency,
             })}
             size={104}
-            label="Your Kova code"
+            label="Your Ren code"
           />
         </Link>
       </section>
@@ -119,7 +119,7 @@ export function Profile() {
           </span>
           <span>
             <strong>Your passkey</strong>
-            <small>The same one as the Kova app. It opens this wallet on any device.</small>
+            <small>The same one as the Ren app. It opens this wallet on any device.</small>
           </span>
         </div>
         <div className={`w-session${session.open ? ' w-session-open' : ''}`}>
@@ -143,7 +143,7 @@ export function Profile() {
           <span>3 quiet minutes</span>
         </div>
         <p className="w-fine">
-          Your name and the people you pay are sealed with your passkey. Kova stores them and can’t
+          Your name and the people you pay are sealed with your passkey. Ren stores them and can’t
           read them.
         </p>
       </section>
@@ -152,7 +152,7 @@ export function Profile() {
         <div className="w-forget">
           <p>
             This browser forgets your wallet. Your money stays on {chainName}, and your passkey opens it
-            again here or in the Kova app: choose <em>Open my Kova wallet</em>.
+            again here or in the Ren app: choose <em>Open my Ren wallet</em>.
           </p>
           <div className="w-forget-actions">
             <button type="button" className="mini" onClick={() => setForgetting(false)}>

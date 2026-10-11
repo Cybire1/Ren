@@ -221,7 +221,7 @@ export function Receipt({ id }: { id: string }) {
         <div className="w-empty">
           <strong>Looking for this payment</strong>
           <span>
-            It shows here as soon as Kova’s record of {chainName} has it, usually within a second or two.
+            It shows here as soon as Ren’s record of {chainName} has it, usually within a second or two.
           </span>
         </div>
       </div>
@@ -230,9 +230,9 @@ export function Receipt({ id }: { id: string }) {
   const person = entry.kind === 'sent' || entry.kind === 'received'
   const fee =
     entry.kind === 'paid'
-      ? '$0.00, covered by Kova'
+      ? '$0.00, covered by Ren'
       : entry.kind === 'sent'
-        ? '$0.00, covered by Kova'
+        ? '$0.00, covered by Ren'
         : '$0.00'
   return (
     <div className="w-screen">

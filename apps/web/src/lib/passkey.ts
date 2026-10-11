@@ -140,9 +140,9 @@ export function passkeyProblem(error: unknown): string {
   const name = error instanceof DOMException ? error.name : ''
   if (name === 'NotAllowedError' || name === 'AbortError')
     return 'The passkey was cancelled. Nothing changed.'
-  if (name === 'SecurityError') return `Passkeys for Kova only work on ${passkeyDomain}.`
+  if (name === 'SecurityError') return `Passkeys for Ren only work on ${passkeyDomain}.`
   if (isMeraError(error) && error.code === 'PRF_UNAVAILABLE')
-    return 'This browser can’t open a Kova wallet with a passkey. Try Safari or Chrome on a Mac or iPhone, or use your phone.'
+    return 'This browser can’t open a Ren wallet with a passkey. Try Safari or Chrome on a Mac or iPhone, or use your phone.'
   return error instanceof Error && error.message
     ? error.message
     : 'The passkey didn’t work. Try again.'
@@ -151,7 +151,7 @@ export function passkeyProblem(error: unknown): string {
 /** A new passkey and a new wallet, as "Create my wallet" does in the app. */
 export async function createKovaPasskey(name: string): Promise<PasskeyOutput> {
   const created = await createPasskeyWithPrfOutput({
-    rp: { id: passkeyDomain, name: 'Kova' },
+    rp: { id: passkeyDomain, name: 'Ren' },
     user: { name, displayName: name },
     webAuthnClient: kovaBrowserClient,
   })
@@ -192,11 +192,11 @@ export async function openKovaPasskey(
 export async function openSigningSession(
   prfOutput: Uint8Array,
 ): Promise<{ session: Secp256k1SigningSession; account: LocalAccount }> {
-  if (prfOutput.length !== 32) throw new Error('This passkey didn’t give Kova a key. Try again.')
+  if (prfOutput.length !== 32) throw new Error('This passkey didn’t give Ren a key. Try again.')
   const seed = await mnemonicToSeed(entropyToMnemonic(prfOutput, wordlist))
   const node = HDKey.fromMasterSeed(seed).derive("m/44'/60'/0'/0/0")
   seed.fill(0)
-  if (!node.privateKey) throw new Error('This passkey didn’t give Kova a key. Try again.')
+  if (!node.privateKey) throw new Error('This passkey didn’t give Ren a key. Try again.')
   const session = createSecp256k1SigningSession({ privateKey: node.privateKey })
   node.wipePrivateData()
   return { session, account: toViemAccount(session) }

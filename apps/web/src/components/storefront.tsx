@@ -245,7 +245,7 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
           {stall.tagline ? <p>{stall.tagline}</p> : null}
         </div>
         <p className="store-powered">
-          <LogoMark size={20} /> Paid in dollars with Kova. No card fees, settled in seconds.
+          <LogoMark size={20} /> Paid in dollars with Ren. No card fees, settled in seconds.
         </p>
       </footer>
 
@@ -419,13 +419,13 @@ function AskedToPay({ stall, placed }: { stall: PublicStall; placed: Placed }) {
       </div>
     )
 
-  const message = `Can you pay for my order at ${stall.name}? It’s ${usd(placed.checkout.amount)}, paid in dollars with Kova: ${link}`
+  const message = `Can you pay for my order at ${stall.name}? It’s ${usd(placed.checkout.amount)}, paid in dollars with Ren: ${link}`
   const canShare = typeof navigator !== 'undefined' && 'share' in navigator
   return (
     <div className="asked">
       <Art name="kovi-ride" size={130} />
       <h2>Send it to whoever’s paying</h2>
-      <p className="sheet-lead">They can pay from anywhere, with Kova Pay or any {chainName} wallet. The link stays open for 24 hours, and this page updates when it’s paid.</p>
+      <p className="sheet-lead">They can pay from anywhere, with Ren Pay or any {chainName} wallet. The link stays open for 24 hours, and this page updates when it’s paid.</p>
       <div className="field-value">
         <code>{link}</code>
         <button

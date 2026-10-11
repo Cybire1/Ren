@@ -131,7 +131,7 @@ export default function TerminalSetup() {
             {stall.owned ? 'Or pair with another shop' : 'Pair this phone with your shop'}
           </Txt>
           <Txt size={16} color={colors.muted} style={{ marginTop: 8, lineHeight: 23 }}>
-            In your Kova dashboard, tap Add a terminal. Type the code it shows, or scan it.
+            In your Ren dashboard, tap Add a terminal. Type the code it shows, or scan it.
           </Txt>
 
           {/* The code, as six boxes over one hidden input */}

@@ -13,7 +13,7 @@ interface Shop {
   setCurrency: (c: DisplayCurrency) => void
 }
 
-const ShopContext = createContext<Shop>({ name: 'Your shop', terminal: 'Kova Terminal', currency: 'USD', setCurrency: () => {} })
+const ShopContext = createContext<Shop>({ name: 'Your shop', terminal: 'Ren Terminal', currency: 'USD', setCurrency: () => {} })
 export const useShop = () => useContext(ShopContext)
 
 /** The merchant side shares one idea of the shop: its name and the currency it prices in. */
@@ -45,6 +45,6 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <ShopContext.Provider value={{ name, terminal: paired?.name ?? 'Kova Terminal', currency, setCurrency }}>{children}</ShopContext.Provider>
+    <ShopContext.Provider value={{ name, terminal: paired?.name ?? 'Ren Terminal', currency, setCurrency }}>{children}</ShopContext.Provider>
   )
 }

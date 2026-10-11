@@ -40,7 +40,7 @@ export function Shop() {
       let signed = proof
       if (!signed) {
         const challenge = await walletChallenge(profile.address, 'sign_in')
-        if (!challenge.message) throw new Error(challenge.error ?? 'Kova didn’t answer. Try again.')
+        if (!challenge.message) throw new Error(challenge.error ?? 'Ren didn’t answer. Try again.')
         signed = { message: challenge.message, signature: await signMessage(challenge.message) }
       }
       const result = await signInWithWallet({ ...signed, merchant })
@@ -50,9 +50,9 @@ export function Shop() {
       }
       if (result.noShop) return setStage({ at: 'no-shop' })
       if (result.shops) return setStage({ at: 'pick', ...signed, shops: result.shops })
-      throw new Error(result.error ?? 'Kova couldn’t sign you in.')
+      throw new Error(result.error ?? 'Ren couldn’t sign you in.')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Kova couldn’t sign you in.')
+      setError(e instanceof Error ? e.message : 'Ren couldn’t sign you in.')
       setStage({ at: 'choose' })
     }
   }
@@ -64,7 +64,7 @@ export function Shop() {
     setStage({ at: 'working', what: 'open' })
     try {
       const challenge = await walletChallenge(profile.address, 'open_shop')
-      if (!challenge.message) throw new Error(challenge.error ?? 'Kova didn’t answer. Try again.')
+      if (!challenge.message) throw new Error(challenge.error ?? 'Ren didn’t answer. Try again.')
       const signature = await signMessage(challenge.message)
       const opened = await openShopWithWallet({
         name,
@@ -72,11 +72,11 @@ export function Shop() {
         message: challenge.message,
         signature,
       })
-      if (!opened.ok) throw new Error(opened.error ?? 'Kova couldn’t open your shop.')
+      if (!opened.ok) throw new Error(opened.error ?? 'Ren couldn’t open your shop.')
       rememberShop(opened.name ?? name.trim())
       router.push('/dashboard')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Kova couldn’t open your shop.')
+      setError(e instanceof Error ? e.message : 'Ren couldn’t open your shop.')
       setStage({ at: 'open' })
     }
   }
@@ -104,7 +104,7 @@ export function Shop() {
         <h1 className="w-title">Take payments into this wallet</h1>
         <p className="w-lead">
           A shop, a stall page and a till, with sales landing here in about a second. You sign in to
-          it with your passkey, on the web or in the Kova app.
+          it with your passkey, on the web or in the Ren app.
         </p>
 
         {stage.at === 'pick' ? (
@@ -187,7 +187,7 @@ export function Shop() {
             </button>
             <p className="w-fine">
               Payments land in this wallet, {profile.address.slice(0, 6)}…
-              {profile.address.slice(-4)}. Kova never holds them.
+              {profile.address.slice(-4)}. Ren never holds them.
             </p>
           </form>
         ) : (

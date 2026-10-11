@@ -22,11 +22,11 @@ function useRoute() {
   const router = useRouter()
   return (value: string): string | null => {
     const s = parseScanned(value)
-    if (!s) return 'That code isn’t a Kova payment. Try the shop’s Kova QR.'
+    if (!s) return 'That code isn’t a Ren payment. Try the shop’s Ren QR.'
     if (s.kind === 'charge') router.push(`/wallet/pay/${s.id}`)
     else if (s.kind === 'stall') router.push(`/s/${s.slug}`)
     else if (s.kind === 'pair')
-      return 'That code pairs a phone with a shop. Open it in the Kova app.'
+      return 'That code pairs a phone with a shop. Open it in the Ren app.'
     else {
       const params = new URLSearchParams()
       if (s.name) params.set('name', s.name)
@@ -89,7 +89,7 @@ export function Pay() {
       void look()
     } catch {
       setCamera('off')
-      setError('Kova couldn’t use the camera. Allow it in the browser, or paste the link.')
+      setError('Ren couldn’t use the camera. Allow it in the browser, or paste the link.')
     }
   }
 
@@ -107,12 +107,12 @@ export function Pay() {
               <>
                 <strong>Scan with your phone’s camera</strong>
                 <span>
-                  A shop’s Kova code opens the payment right here. Or paste the link below.
+                  A shop’s Ren code opens the payment right here. Or paste the link below.
                 </span>
               </>
             ) : (
               <>
-                <strong>Point at a Kova code</strong>
+                <strong>Point at a Ren code</strong>
                 <span>
                   A shop’s QR, a stall’s table poster, or a friend’s code. It only looks for payment
                   codes.
@@ -209,7 +209,7 @@ export function PayCharge({ id }: { id: string }) {
       .catch(
         () =>
           live &&
-          setStage({ at: 'closed', message: 'Kova couldn’t find this charge. Check the link.' }),
+          setStage({ at: 'closed', message: 'Ren couldn’t find this charge. Check the link.' }),
       )
     return () => {
       live = false
@@ -312,7 +312,7 @@ export function PayCharge({ id }: { id: string }) {
             </div>
             <div className="w-review-row">
               <span>Fee</span>
-              <strong>$0.00, Kova covers it</strong>
+              <strong>$0.00, Ren covers it</strong>
             </div>
           </div>
           {stage.at === 'problem' ? (
@@ -342,7 +342,7 @@ export function PayCharge({ id }: { id: string }) {
                   const moved = await payCheckout(charge)
                   setStage({ at: 'paid', ms: moved.ms, hash: moved.hash })
                 } catch (e) {
-                  const message = e instanceof Error ? e.message : 'Kova couldn’t pay it.'
+                  const message = e instanceof Error ? e.message : 'Ren couldn’t pay it.'
                   setStage(/cancel/i.test(message) ? { at: 'review' } : { at: 'problem', message })
                 }
               }}

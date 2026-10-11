@@ -27,7 +27,7 @@ export function AddMoney() {
           <Art name="kovi-catch" size={160} />
           <strong>Send {onTempo ? 'USDC' : 'AUSD'} on {chainName} to your address</strong>
           <span>
-            Card and bank top-ups are coming to Kova. For now, send {onTempo ? 'USDC' : 'AUSD'} from an exchange or another
+            Card and bank top-ups are coming to Ren. For now, send {onTempo ? 'USDC' : 'AUSD'} from an exchange or another
             wallet.
           </span>
         </div>
@@ -66,7 +66,7 @@ export function AddMoney() {
         <Art name="kovi-catch" size={150} className="w-add-art" />
         <h1 className="w-title">Free test dollars</h1>
         <p className="w-lead">
-          Kova is running on {chainName}’s test network. It sends you $5 of test dollars a day to try
+          Ren is running on {chainName}’s test network. It sends you $5 of test dollars a day to try
           every payment for real, and pays the gas.
         </p>
         <dl className="w-review-card">
@@ -76,7 +76,7 @@ export function AddMoney() {
           </div>
           <div className="w-review-row">
             <dt>From</dt>
-            <dd>Kova, on {chainName} testnet</dd>
+            <dd>Ren, on {chainName} testnet</dd>
           </div>
           <div className="w-review-row">
             <dt>Arrives</dt>

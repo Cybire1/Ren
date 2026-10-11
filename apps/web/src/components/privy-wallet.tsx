@@ -42,7 +42,7 @@ export default function PrivyWallet({
   chainId,
   onWallet,
   onCancel,
-  title = 'Your Kova wallet',
+  title = 'Your Ren wallet',
   fresh = false,
 }: Props) {
   const chain = [tempo, tempoModerato, monad, monadTestnet].find((c) => c.id === chainId) ?? tempoModerato

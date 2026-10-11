@@ -27,7 +27,7 @@ export default function AddMoney() {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setStage('done')
     } catch (error) {
-      setProblem(error instanceof Error ? error.message : 'Kova didn’t answer. Try again.')
+      setProblem(error instanceof Error ? error.message : 'Ren didn’t answer. Try again.')
       setStage('problem')
     }
   }
@@ -57,7 +57,7 @@ export default function AddMoney() {
               Free test dollars
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Kova is running on {chainName}’s test network. It sends you $5 of test dollars a day to try every payment for real, and pays every fee.
+              Ren is running on {chainName}’s test network. It sends you $5 of test dollars a day to try every payment for real, and pays every fee.
             </Txt>
           </>
         ) : (
@@ -66,7 +66,7 @@ export default function AddMoney() {
               Add money
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Card and bank top-ups are coming to Kova. For now, send {settlementToken.symbol} on {chainName} to your address.
+              Card and bank top-ups are coming to Ren. For now, send {settlementToken.symbol} on {chainName} to your address.
             </Txt>
           </>
         )}

@@ -48,7 +48,7 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
   })
   const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
   if (auth && key && response.status === 401) revoked[auth]?.()
-  if (!response.ok) throw new Error(body.error?.message ?? `Kova is unreachable (${response.status})`)
+  if (!response.ok) throw new Error(body.error?.message ?? `Ren is unreachable (${response.status})`)
   return body as T
 }
 

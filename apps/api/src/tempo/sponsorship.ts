@@ -59,7 +59,7 @@ export async function shouldSponsor(
   const call = calls[0]
   if (!call?.to || !call.data) return { sponsor: false, reason: 'call missing to/data' }
   const token = acceptedTokens.find((t) => isAddressEqual(t.address, call.to as Address))
-  if (!token) return { sponsor: false, reason: 'not a dollar Kova accepts' }
+  if (!token) return { sponsor: false, reason: 'not a dollar Ren accepts' }
   const withMemo = call.data.startsWith(TRANSFER_WITH_MEMO_SELECTOR)
   if (!withMemo && !call.data.startsWith(TRANSFER_SELECTOR))
     return { sponsor: false, reason: 'only transfers are sponsored' }
@@ -86,7 +86,7 @@ export async function shouldSponsor(
     if (!takeSend(request.from)) return { sponsor: false, reason: 'daily sponsored sends used up' }
     return { sponsor: true, kind: 'send' }
   }
-  if (kova.kind !== 'payment') return { sponsor: false, reason: `a ${kova.kind} is Kova's to send` }
+  if (kova.kind !== 'payment') return { sponsor: false, reason: `a ${kova.kind} is Ren's to send` }
 
   const intent = await findIntentByMemo(memo as Hex)
   if (!intent) return { sponsor: false, reason: 'no matching charge' }

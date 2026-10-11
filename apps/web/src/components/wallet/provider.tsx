@@ -354,7 +354,7 @@ export function WalletProvider({
       if (account.address !== profile.address) {
         session.end()
         throw new Error(
-          'That passkey opens a different Kova wallet. Choose the one for this wallet.',
+          'That passkey opens a different Ren wallet. Choose the one for this wallet.',
         )
       }
       startSession(session, account)
@@ -555,7 +555,7 @@ export function WalletProvider({
             : t.kind === 'refund'
               ? 'Refund'
               : (nameFor(t.from) ?? short(t.from)),
-          detail: t.faucet ? 'Kova test dollars' : t.kind === 'refund' ? 'Money back' : 'Arrived',
+          detail: t.faucet ? 'Ren test dollars' : t.kind === 'refund' ? 'Money back' : 'Arrived',
           address: t.from,
           txHash: t.tx_hash,
           explorer: t.explorer_url,

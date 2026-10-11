@@ -61,7 +61,7 @@ export async function fund(api: string, address: Address): Promise<bigint> {
 export async function pay(api: string, checkout: Checkout, customer: LocalAccount): Promise<Paid & { roundTripMs: number }> {
   const network = networkByChainId(checkout.chain_id)
   const token = tokenByAddress(network.id, checkout.token)
-  if (!token) throw new Error(`${checkout.token} is not a dollar Kova settles in`)
+  if (!token) throw new Error(`${checkout.token} is not a dollar Ren settles in`)
   const authorization = {
     from: customer.address,
     to: checkout.pay_to,

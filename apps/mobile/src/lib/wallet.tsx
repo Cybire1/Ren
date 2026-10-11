@@ -34,7 +34,7 @@ const CURSOR = chainKey('cursor.v1')
 const BALANCE = chainKey('balance.v1')
 
 /** How test dollars read in Activity and on receipts. */
-export const TEST_DOLLARS_DETAIL = 'Kova test dollars'
+export const TEST_DOLLARS_DETAIL = 'Ren test dollars'
 
 export interface Profile {
   name: string
@@ -137,7 +137,7 @@ async function keep(prf: Uint8Array) {
 /** What went wrong with a passkey, in words someone can act on. */
 function passkeyProblem(error: unknown): string {
   if (isMeraError(error) && error.code === 'PRF_UNAVAILABLE')
-    return 'This phone’s passkeys can’t hold a wallet yet. Kova needs iOS 18 or later, with iCloud Keychain on.'
+    return 'This phone’s passkeys can’t hold a wallet yet. Ren needs iOS 18 or later, with iCloud Keychain on.'
   const message = error instanceof Error ? error.message : ''
   if (/cancel/i.test(message)) return 'Cancelled. Nothing was changed.'
   return 'The passkey didn’t open. Try again.'
@@ -149,7 +149,7 @@ async function begin(prf: Uint8Array, expected?: Address): Promise<LocalAccount>
   prf.fill(0)
   if (expected && !isAddressEqual(account.address, expected)) {
     session.end()
-    throw new Error('That passkey belongs to a different Kova wallet.')
+    throw new Error('That passkey belongs to a different Ren wallet.')
   }
   startSession(session, account)
   return account
@@ -344,7 +344,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const create = useCallback(async (name: string, currency: DisplayCurrency) => {
     const clean = name.trim()
     const created = await createPasskeyWithPrfOutput({
-      rp: { id: passkeyDomain, name: 'Kova' },
+      rp: { id: passkeyDomain, name: 'Ren' },
       user: { name: clean, displayName: clean },
       webAuthnClient: kovaWebAuthnClient,
     }).catch((error) => {

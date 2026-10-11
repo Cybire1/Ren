@@ -12,7 +12,7 @@ export interface BarcodeSuggestion {
 }
 
 const TIMEOUT = 4_000
-const HEADERS = { 'user-agent': 'Kova/1.0 (https://github.com/kova; payments for small shops)' }
+const HEADERS = { 'user-agent': 'Ren/1.0 (https://github.com/kova; payments for small shops)' }
 
 /** EAN-8, UPC-A, EAN-13 or GTIN-14, digits only. */
 export const isBarcode = (code: string) => /^\d{8,14}$/.test(code)
