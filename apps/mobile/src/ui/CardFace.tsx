@@ -75,6 +75,7 @@ export function CardFace({
       {slot && name ? (
         <Txt
           weight="bold"
+          exact
           numberOfLines={1}
           adjustsFontSizeToFit
           size={slot.size * k}

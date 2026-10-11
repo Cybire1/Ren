@@ -47,7 +47,7 @@ export default function Home() {
     >
       <View style={styles.header}>
         <Pressable accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/(tabs)/profile')}>
-          <Avatar name={profile.name} id={profile.address} size={44} />
+          <Avatar name={profile.name} id={profile.address} size={38} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <Txt size={13} color={colors.muted}>
@@ -57,7 +57,7 @@ export default function Home() {
             {profile.name.split(' ')[0]}
           </Txt>
         </View>
-        <RoundButton icon="bell" label="Activity" size={40} onPress={() => router.push('/(tabs)/activity')} />
+        <RoundButton icon="bell" label="Activity" size={36} onPress={() => router.push('/(tabs)/activity')} />
       </View>
 
       <BalanceCard balance={balance} currency={profile.currency} />
@@ -115,7 +115,7 @@ export default function Home() {
         </View>
         {/* The plane flies over the top right, clear of the line of text below it. */}
         <View style={styles.travelPlane} pointerEvents="none">
-          <Flyer size={70} />
+          <Flyer size={60} />
         </View>
         <View style={styles.travelGo}>
           <Icon name="arrow" color={colors.white} />
@@ -163,7 +163,7 @@ export default function Home() {
             onPress={() => router.push({ pathname: '/send/[to]', params: { to: c.address, name: c.name, cur: c.currency ?? '' } })}
             style={styles.person}
           >
-            <Avatar name={c.name} id={c.address} size={56} />
+            <Avatar name={c.name} id={c.address} size={48} />
             <Txt weight="medium" size={13} numberOfLines={1}>
               {isUnnamed(c.name) ? c.address.slice(0, 6) : c.name.split(' ')[0]}
             </Txt>
@@ -253,7 +253,7 @@ function ShopCard() {
     >
       <Awning width={width - 44} height={22} stripe={16} tone={shop && !shop.open ? 'teal' : 'coral'} />
       <View style={styles.shopBody}>
-        <ShopBadge size={50} />
+        <ShopBadge size={42} />
         <View style={{ flex: 1 }}>
           <Txt size={12} weight="semi" color={colors.onTint}>
             {card.label}
@@ -283,9 +283,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   shopBody: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 14, paddingRight: 12, paddingTop: 8, paddingBottom: 12 },
-  shopGo: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
-  hero: { flexDirection: 'row', gap: 12, height: 204, marginTop: 14 },
+  shopGo: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 46 },
+  hero: { flexDirection: 'row', gap: 12, height: 182, marginTop: 12 },
   pay: {
     flex: 1.35,
     borderRadius: 30,
@@ -294,13 +294,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     overflow: 'hidden',
   },
-  payIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  payIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
   waves: { position: 'absolute', right: -14, top: 40 },
   small: { flex: 1, padding: 14, paddingHorizontal: 16, justifyContent: 'space-between' },
   travel: {
     marginTop: 12,
-    height: 76,
-    borderRadius: 26,
+    height: 66,
+    borderRadius: 24,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.tealSoft,
@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   travelPlane: { position: 'absolute', right: 58, top: -6, transform: [{ rotate: '-6deg' }] },
-  travelGo: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  travelGo: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   notice: {
     marginTop: 22,
     borderRadius: 24,
@@ -326,22 +326,22 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   noticeIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 2,
     borderColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  noticeCta: { height: 40, paddingHorizontal: 18, borderRadius: 20, backgroundColor: colors.ink, justifyContent: 'center' },
+  noticeCta: { height: 36, paddingHorizontal: 16, borderRadius: 18, backgroundColor: colors.ink, justifyContent: 'center' },
   section: { marginTop: 26, marginBottom: 12 },
   sectionRow: { marginTop: 26, marginBottom: 4, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  person: { alignItems: 'center', gap: 6, width: 60 },
+  person: { alignItems: 'center', gap: 6, width: 54 },
   newPerson: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 2,
     borderColor: colors.ink,
     borderStyle: 'dashed',

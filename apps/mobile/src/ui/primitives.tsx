@@ -18,24 +18,28 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { colors, fonts } from '@/lib/theme'
+import { colors, density, fonts } from '@/lib/theme'
 import { Icon, type IconName } from './Icon'
 
 type Weight = keyof typeof fonts
 
-/** Text in the app font (Manrope). Numbers always use tabular figures so amounts don't jitter as they change. */
+/**
+ * Text in the app font (Manrope). Numbers always use tabular figures so amounts don't jitter as
+ * they change. Sizes are scaled by the app's text density unless `exact` (text drawn onto art).
+ */
 export function Txt({
   weight = 'regular',
   size = 16,
   color = colors.ink,
+  exact,
   style,
   ...rest
-}: TextProps & { weight?: Weight; size?: number; color?: string }) {
+}: TextProps & { weight?: Weight; size?: number; color?: string; exact?: boolean }) {
   return (
     <Text
       {...rest}
       style={[
-        { fontFamily: fonts[weight], fontSize: size, color, fontVariant: ['tabular-nums'] },
+        { fontFamily: fonts[weight], fontSize: exact ? size : size * density.text, color, fontVariant: ['tabular-nums'] },
         style,
       ]}
     />
@@ -268,7 +272,7 @@ export function Header({
       {onBack ? (
         <RoundButton icon={backIcon} label={backIcon === 'close' ? 'Close' : 'Back'} onPress={onBack} />
       ) : (
-        <View style={{ width: 40 }} />
+        <View style={{ width: 36 }} />
       )}
       <View style={{ alignItems: 'center', flexShrink: 1 }}>
         {title ? (
@@ -282,7 +286,7 @@ export function Header({
           </Txt>
         ) : null}
       </View>
-      <View style={{ minWidth: 40, alignItems: 'flex-end' }}>{right}</View>
+      <View style={{ minWidth: 36, alignItems: 'flex-end' }}>{right}</View>
     </View>
   )
 }
@@ -316,18 +320,18 @@ export function Rise({ children, delay = 0, style }: { children: ReactNode; dela
 
 const styles = StyleSheet.create({
   pill: {
-    height: 54,
-    borderRadius: 27,
+    height: 48,
+    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: 22,
-    paddingRight: 7,
+    paddingLeft: 20,
+    paddingRight: 6,
   },
   pillDisc: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -337,13 +341,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 8,
-    minHeight: 56,
+    paddingTop: 6,
+    minHeight: 50,
   },
   chip: {
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 14,
     backgroundColor: colors.ink,
     flexDirection: 'row',
     alignItems: 'center',

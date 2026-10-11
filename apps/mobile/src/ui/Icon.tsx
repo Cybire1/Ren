@@ -1,5 +1,5 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg'
-import { colors } from '@/lib/theme'
+import { colors, density } from '@/lib/theme'
 
 /** Line icons on a 24px grid, drawn to match the illustrations' rounded ink stroke. */
 const glyphs = {
@@ -88,7 +88,7 @@ export function Icon({
     fill: 'none',
   }
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={size * density.icon} height={size * density.icon} viewBox="0 0 24 24">
       {name === 'clock' || name === 'info' || name === 'web' ? <Circle cx={12} cy={12} r={8.5} {...common} /> : null}
       {name === 'user' ? <Circle cx={12} cy={8} r={4} {...common} /> : null}
       {name === 'eye' ? <Circle cx={12} cy={12} r={3} {...common} /> : null}

@@ -72,7 +72,7 @@ export default function Profile() {
       <View style={styles.pass}>
         <View style={styles.passTop}>
           <View style={styles.ring}>
-            <Avatar name={profile.name} id={profile.address} size={64} />
+            <Avatar name={profile.name} id={profile.address} size={54} />
           </View>
           <View style={{ flex: 1 }}>
             <Txt weight="bold" size={22} color={colors.white} numberOfLines={1} style={{ letterSpacing: -0.4 }}>
@@ -116,7 +116,7 @@ export default function Profile() {
             </Pressable>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Show my Kova code" onPress={() => router.push('/receive')} style={styles.qr}>
-            <QRCode value={link} size={76} color={colors.ink} backgroundColor={colors.surface} ecl="L" />
+            <QRCode value={link} size={68} color={colors.ink} backgroundColor={colors.surface} ecl="L" />
           </Pressable>
         </View>
       </View>
@@ -135,7 +135,7 @@ export default function Profile() {
         radius={24}
         accessibilityLabel="Cash out to your bank or card"
         onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet/cash-out`)}
-        style={{ height: 72, marginTop: 16 }}
+        style={{ height: 62, marginTop: 14 }}
       >
         <View style={styles.cashOut}>
           <View style={{ flex: 1 }}>
@@ -152,7 +152,7 @@ export default function Profile() {
       )}
 
       {/* Paying from a phone with no data: a small pocket spent by dialling Kova's USSD code. */}
-      <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 72, marginTop: 16 }}>
+      <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 62, marginTop: 14 }}>
         <View style={[styles.cashOut, { gap: 14 }]}>
           <Icon name="keypad" size={22} />
           <View style={{ flex: 1 }}>
@@ -399,7 +399,7 @@ const styles = StyleSheet.create({
   cashOut: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18 },
   pass: { marginTop: 16, borderRadius: 28, backgroundColor: colors.ink },
   passTop: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, paddingBottom: 16 },
-  ring: { borderRadius: 36, borderWidth: 3, borderColor: colors.yellow, padding: 2 },
+  ring: { borderRadius: 31, borderWidth: 3, borderColor: colors.yellow, padding: 2 },
   network: {
     height: 20,
     paddingHorizontal: 8,
@@ -460,7 +460,7 @@ const styles = StyleSheet.create({
   provenance: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   keys: { marginTop: 12, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, padding: 16 },
   keysTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  keyIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  keyIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   session: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -488,5 +488,5 @@ const styles = StyleSheet.create({
   rule: { height: 28, paddingHorizontal: 10, borderRadius: 14, borderWidth: 1.5, borderColor: colors.ink, justifyContent: 'center' },
   backup: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12 },
   confirm: { alignSelf: 'stretch', borderRadius: 22, borderWidth: 2, borderColor: colors.ink, padding: 16, backgroundColor: colors.surface },
-  small: { flex: 1, height: 44, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  small: { flex: 1, height: 40, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
 })

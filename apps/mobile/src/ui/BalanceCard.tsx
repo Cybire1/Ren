@@ -39,10 +39,10 @@ export function BalanceCard({
       </Svg>
       <View style={styles.coins} pointerEvents="none">
         <View style={{ transform: [{ rotate: '-14deg' }] }}>
-          <Coin size={50} symbol="$" />
+          <Coin size={44} symbol="$" />
         </View>
         <View style={styles.coinBack}>
-          <Coin size={40} symbol="€" />
+          <Coin size={34} symbol="€" />
         </View>
       </View>
 
@@ -161,10 +161,10 @@ const styles = StyleSheet.create({
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
   add: {
-    height: 36,
-    paddingLeft: 10,
-    paddingRight: 14,
-    borderRadius: 18,
+    height: 32,
+    paddingLeft: 9,
+    paddingRight: 12,
+    borderRadius: 16,
     backgroundColor: colors.surface,
     borderWidth: 2,
     borderColor: colors.ink,

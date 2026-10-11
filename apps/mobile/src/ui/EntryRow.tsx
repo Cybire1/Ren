@@ -30,11 +30,11 @@ export function EntryRow({ entry }: { entry: Entry }) {
       style={({ pressed }) => [styles.row, pressed && { opacity: 0.6 }]}
     >
       {entry.kind === 'paid' ? (
-        <ShopBadge size={44} />
+        <ShopBadge size={38} />
       ) : entry.kind === 'added' ? (
-        <AddBadge size={44} />
+        <AddBadge size={38} />
       ) : (
-        <Avatar name={entry.name} id={entry.address} size={44} />
+        <Avatar name={entry.name} id={entry.address} size={38} />
       )}
       <View style={{ flex: 1 }}>
         <Txt weight="semi" size={16} numberOfLines={1}>

@@ -38,6 +38,12 @@ export const colors = {
 } as const
 
 /** Manrope: a calm, open grotesk with even figures, so amounts read cleanly. */
+/**
+ * The whole app is drawn a step smaller than the sizes written in each screen: text by 8%,
+ * icons by 12%. One place to tune how dense Kova feels.
+ */
+export const density = { text: 0.92, icon: 0.88 } as const
+
 export const fonts = {
   regular: 'Manrope_400Regular',
   medium: 'Manrope_500Medium',

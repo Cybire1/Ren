@@ -1,5 +1,5 @@
 import Svg, { Circle, Path, Rect } from 'react-native-svg'
-import { colors } from '@/lib/theme'
+import { colors, density } from '@/lib/theme'
 
 /**
  * Kova's own tab icons. Each one tells part of the money story: home has a coin for a door,
@@ -31,7 +31,7 @@ export function NavIcon({
   const fill = (accent: string) => (active ? accent : 'none')
 
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24">
+    <Svg width={size * density.icon} height={size * density.icon} viewBox="0 0 24 24">
       {name === 'home' ? (
         <>
           <Path d="M3.8 10.4 12 3.8l8.2 6.6v8.4a1.7 1.7 0 0 1-1.7 1.7h-13a1.7 1.7 0 0 1-1.7-1.7z" fill={fill(colors.tealLight)} {...line} />
