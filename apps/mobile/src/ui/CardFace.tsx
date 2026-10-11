@@ -154,8 +154,8 @@ export function CardDesignPicker({
               borderColor: on ? colors.ink : 'transparent',
             }}
           >
-            <View style={{ width: 64, height: 64, alignItems: 'center', justifyContent: 'center' }}>
-              <CardFace design={d} boxW={62} boxH={62} />
+            <View style={{ width: 84, height: 54, alignItems: 'center', justifyContent: 'center' }}>
+              <CardFace design={d} boxW={84} boxH={54} />
             </View>
             <Txt size={11} weight={on ? 'bold' : 'medium'} color={on ? colors.ink : colors.muted}>
               {DESIGN_NAMES[d]}

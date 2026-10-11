@@ -1,11 +1,12 @@
 // Renders the six Kova Card designs (src/cards/markup.json) into the app: one 2x PNG per design
-// with the holder's name left blank, plus where the name goes (apps/mobile/assets/cards).
+// (all landscape) with the holder's name left blank, plus where the name goes (apps/mobile/assets/cards).
 // Run from film/: node scripts/card-faces.mjs
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import puppeteer from 'puppeteer-core'
 
-const markup = JSON.parse(readFileSync('src/cards/markup.json', 'utf8'))
+// Every card in the app is landscape: the three portrait designs use their landscape layouts.
+const markup = { ...JSON.parse(readFileSync('src/cards/markup.json', 'utf8')), ...JSON.parse(readFileSync('src/cards/landscape.json', 'utf8')) }
 const out = resolve('../apps/mobile/assets/cards')
 mkdirSync(out, { recursive: true })
 const font = (family, file, weight) => `@font-face{font-family:${family};src:url(file://${resolve('public/fonts', file)});font-weight:${weight}}`

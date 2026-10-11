@@ -159,7 +159,7 @@ export function PillButton({
           style,
         ]}
       >
-        <Txt weight="medium" size={18} color={fg}>
+        <Txt weight="medium" size={16} color={fg}>
           {label}
         </Txt>
         <View style={[styles.pillDisc, { backgroundColor: fg }]}>
@@ -175,7 +175,7 @@ export function RoundButton({
   label,
   onPress,
   fill,
-  size = 40,
+  size = 36,
 }: {
   icon: IconName
   label: string
@@ -316,18 +316,18 @@ export function Rise({ children, delay = 0, style }: { children: ReactNode; dela
 
 const styles = StyleSheet.create({
   pill: {
-    height: 64,
-    borderRadius: 32,
+    height: 54,
+    borderRadius: 27,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: 26,
-    paddingRight: 8,
+    paddingLeft: 22,
+    paddingRight: 7,
   },
   pillDisc: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },

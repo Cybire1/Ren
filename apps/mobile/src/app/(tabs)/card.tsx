@@ -471,7 +471,7 @@ function CardView({
               label="Change PIN"
               value="For taps over the no-PIN limit"
             >
-              <Icon name="arrow" size={20} />
+              <Icon name="arrow" size={17} />
             </Row>
           </Pressable>
           <Pressable
@@ -488,7 +488,7 @@ function CardView({
                 card.frozen ? 'Frozen. Unfreeze it if you find it.' : 'Freezes it straight away'
               }
             >
-              <Icon name="arrow" size={20} />
+              <Icon name="arrow" size={17} />
             </Row>
           </Pressable>
           <Pressable
@@ -502,7 +502,7 @@ function CardView({
               label="Link another card"
               value="Each with its own limit and PIN"
             >
-              <Icon name="arrow" size={20} />
+              <Icon name="arrow" size={17} />
             </Row>
           </Pressable>
           <Pressable
@@ -521,7 +521,7 @@ function CardView({
               {pending === 'remove' ? (
                 <ActivityIndicator color={colors.ink} />
               ) : (
-                <Icon name="arrow" size={20} />
+                <Icon name="arrow" size={17} />
               )}
             </Row>
           </Pressable>
@@ -602,9 +602,9 @@ function Choice({
       {busy ? (
         <ActivityIndicator color={on ? colors.white : colors.ink} />
       ) : (
-        <Icon name={icon} size={18} color={on ? colors.white : colors.ink} />
+        <Icon name={icon} size={15} color={on ? colors.white : colors.ink} />
       )}
-      <Txt weight="semi" size={16} color={on ? colors.white : colors.ink}>
+      <Txt weight="semi" size={14} color={on ? colors.white : colors.ink}>
         {label}
       </Txt>
     </Pressable>
@@ -629,10 +629,10 @@ function Row({
   return (
     <View style={[styles.row, !last && styles.rowRule]}>
       <View style={[styles.rowIcon, { backgroundColor: tint }]}>
-        <Icon name={icon} size={19} />
+        <Icon name={icon} size={16} />
       </View>
       <View style={{ flex: 1 }}>
-        <Txt weight="semi" size={16}>
+        <Txt weight="semi" size={15}>
           {label}
         </Txt>
         <Txt size={13} color={colors.muted} numberOfLines={1}>
@@ -672,15 +672,15 @@ const styles = StyleSheet.create({
   },
   pickOn: { backgroundColor: colors.ink },
   switch: {
-    height: 60,
-    borderRadius: 30,
+    height: 48,
+    borderRadius: 24,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     padding: 4,
   },
-  thumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 26 },
+  thumb: { position: 'absolute', left: 4, top: 4, bottom: 4, borderRadius: 20 },
   choice: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
   problem: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 4 },
   section: {
@@ -703,8 +703,8 @@ const styles = StyleSheet.create({
   ticks: { flexDirection: 'row', gap: 8, marginTop: 12 },
   tick: {
     flex: 1,
-    height: 38,
-    borderRadius: 19,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: colors.ink,
     alignItems: 'center',
@@ -720,9 +720,9 @@ const styles = StyleSheet.create({
   },
   rowRule: { borderBottomWidth: 1, borderColor: colors.sunken },
   rowIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
