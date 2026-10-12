@@ -1,6 +1,8 @@
 import { Composition, Still } from 'remotion'
 import { SPOT_DURATION, TableSpot } from './spot/TableSpot'
 import { TableTent } from './spot/TableTent'
+import { QueueArt } from './queue/QueueArt'
+import { QUEUE_DURATION, QueueFilm } from './queue/QueueFilm'
 import { CARDS_DURATION, KovaCards } from './KovaCards'
 import { DURATION, KovisDay } from './KovisDay'
 import { FPS } from './motion'
@@ -61,5 +63,7 @@ export const RemotionRoot = () => (
     <Still id="KovaCard" component={OgCard} width={1200} height={630} />
     <Composition id="TableSpot" component={TableSpot} durationInFrames={SPOT_DURATION * FPS} fps={FPS} width={1920} height={1080} />
     <Still id="TableTent" component={TableTent} width={1333} height={1000} />
+    <Composition id="QueueFilm" component={QueueFilm} durationInFrames={QUEUE_DURATION * FPS} fps={FPS} width={1920} height={1080} />
+    <Still id="QueueArt" component={QueueArt} width={1000} height={1000} defaultProps={{ kind: 'wait' as const, n: 3 }} />
   </>
 )
