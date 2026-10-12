@@ -15,9 +15,10 @@ import { wordlist } from '@scure/bip39/wordlists/english.js'
 import { type LocalAccount, stringToBytes } from 'viem'
 
 /**
- * Your Kova account on the web: the same passkey, and so the same wallet, as the Kova app.
+ * Your Ren account on the web: the same passkey, and so the same wallet, as the Ren app.
  *
- * The app makes its passkey for mykova.app, and a passkey belongs to its domain, not to a device:
+ * The app makes its passkey for this site's domain (Ren's site on Tempo, mykova.app on Monad), set
+ * by NEXT_PUBLIC_KOVA_PASSKEY_DOMAIN here, and a passkey belongs to its domain, not to a device:
  * iCloud Keychain carries it to Safari and Chrome on your Mac, and "use a phone" reaches it from
  * anywhere else. Every ceremony evaluates the same two PRF salts as the app (apps/mobile
  * src/lib/passkey.ts): Mera's wallet salt, which becomes the Monad account through Mera's documented
@@ -31,7 +32,7 @@ export const passkeyDomain = process.env.NEXT_PUBLIC_KOVA_PASSKEY_DOMAIN ?? 'myk
 /** Kova's second salt (the app's VAULT_SALT). A different salt gives an unrelated key. */
 export const VAULT_SALT = sha256(stringToBytes('kova.vault.prf.v1'))
 
-/** A passkey works only on its own domain: mykova.app, not a preview or localhost address. */
+/** A passkey works only on its own domain: this site's, not a preview or localhost address. */
 export function passkeyHome(): boolean {
   if (typeof window === 'undefined') return false
   const host = window.location.hostname

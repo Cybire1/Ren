@@ -9,7 +9,7 @@ import { displayCurrencies } from './money'
  * - A charge: a terminal's QR (`https://…/pay/<id>`) or `kova://pay/<id>`.
  * - A stall: its table poster or shared link (`https://…/s/<slug>`), or `kova://s/<slug>`. A
  *   table's own code adds `?table=3`, so the order is brought to that table.
- * - A person: `https://mykova.app/to/<address>?name=Maya&cur=EUR&amount=24.00&note=Dinner`, from
+ * - A person: `https://…/to/<address>?name=Maya&cur=EUR&amount=24.00&note=Dinner`, from
  *   someone's Receive or Request screen, in the app or on the web. The older `kova://to/…` form and
  *   a bare address work too.
  */
@@ -68,8 +68,8 @@ export function tableFrom(value: string | null | undefined): string | undefined 
 }
 
 /**
- * A link anyone can pay you with. It's an https link, so any phone camera opens it: in Kova when
- * it's installed (mykova.app vouches for the app), on the web when it isn't.
+ * A link anyone can pay you with. It's an https link, so any phone camera opens it: in Ren when
+ * it's installed (the site vouches for the app), on the web when it isn't.
  */
 export function personLink(p: {
   address: Address

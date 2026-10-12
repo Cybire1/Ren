@@ -115,7 +115,7 @@ export default function ShopTab() {
             <Row
               icon="face"
               label={linking === 'working' ? 'Waiting for Face ID…' : linking === 'failed' ? 'That didn’t work. Try again' : 'Sign in on the web with Face ID'}
-              value={`Your passkey opens ${shop.name} at mykova.app`}
+              value={`Your passkey opens ${shop.name} on Ren’s website`}
               onPress={async () => {
                 if (linking === 'working') return
                 setLinking('working')
@@ -132,7 +132,7 @@ export default function ShopTab() {
           <Row
             icon="web"
             label="Open your shop on the web"
-            value={ownerLinked ? 'Your passkey signs you in at mykova.app' : 'Payments, stalls and terminals on a big screen'}
+            value={ownerLinked ? 'Your passkey signs you in there' : 'Payments, stalls and terminals on a big screen'}
             onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet`)}
           />
           <Row
