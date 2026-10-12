@@ -52,88 +52,111 @@ export async function settleFromReceipt(
   const paymentId = uuidv7()
   const now = new Date()
 
-  await db.transaction(async (tx) => {
-    await tx.insert(schema.payments).values({
-      id: paymentId,
-      intentId: intent.id,
-      txHash: receipt.transactionHash,
-      blockNumber: receipt.blockNumber,
-      payerAddress: verdict.payer ?? '0x',
-      credentialId: options.credentialId ?? null,
-      amount: intent.amount,
-      tokenAddress: intent.tokenAddress,
-      status,
-      gasUsed: receipt.gasUsed,
-      // Whoever paid the fee: Kova's fee payer (Tempo's sponsored transactions name it), Kova's
-      // relayer (Monad), or the payer's own wallet.
-      feePayerAddress: (receipt as { feePayer?: Address }).feePayer ?? receipt.from,
-      confirmedAt: status === 'paid' ? now : null,
+  try {
+    await recordPayment(intent)
+  } catch (error) {
+    // The relay, the chain watcher and /confirm can all record the same transfer at the same
+    // moment, and on Tempo's half-second blocks they often do. The unique index on tx_hash
+    // lets exactly one of them win; the others roll back whole and report what it wrote.
+    if (!isUniqueViolation(error)) throw error
+    const winner = await db.query.payments.findFirst({
+      where: eq(schema.payments.txHash, receipt.transactionHash),
     })
-
-    await tx
-      .update(schema.paymentIntents)
-      .set({
-        status,
-        paidAt: status === 'paid' ? now : null,
-        updatedAt: now,
-      })
-      .where(eq(schema.paymentIntents.id, intent.id))
-
-    if (status === 'paid') {
-      // Double entry: the payer's funds left an account Kova does not control, and the
-      // merchant's settlement address gained them.
-      await tx.insert(schema.ledgerEntries).values([
-        {
-          id: uuidv7(),
-          account: 'external',
-          direction: 'debit',
-          amount: intent.amount,
-          currency: intent.currency,
-          refType: 'payment',
-          refId: paymentId,
-        },
-        {
-          id: uuidv7(),
-          account: `merchant:${intent.merchantId}`,
-          direction: 'credit',
-          amount: intent.amount,
-          currency: intent.currency,
-          refType: 'payment',
-          refId: paymentId,
-        },
-      ])
-      // A till sale changes hands across the counter as it is paid: it is never waiting to be collected.
-      await tx
-        .update(schema.orders)
-        .set({ collectedAt: now })
-        .where(
-          and(
-            eq(schema.orders.intentId, intent.id),
-            eq(schema.orders.source, 'till'),
-            isNull(schema.orders.collectedAt),
-          ),
-        )
-    }
-
-    await tx.insert(schema.events).values({
-      id: uuidv7(),
-      merchantId: intent.merchantId,
-      type: status === 'paid' ? 'payment_intent.paid' : `payment_intent.${status}`,
-      data: {
-        payment_intent: encodeId('paymentIntent', intent.id),
-        payment: encodeId('payment', paymentId),
-        tx_hash: receipt.transactionHash,
-        amount: intent.amount.toString(),
-        currency: intent.currency,
-      },
-    })
-  })
+    if (!winner) throw error
+    return { status: winner.status as SettleResult['status'], paymentId: winner.id }
+  }
 
   // The last share of a Kova Travel trip books it. Outside the transaction: booking calls Duffel.
   if (status === 'paid')
     void onIntentPaid(intent.id).catch((error) => console.error('[travel] after payment', error))
 
   return { status, paymentId }
+
+  async function recordPayment(intent: PaymentIntent) {
+    await db.transaction(async (tx) => {
+      await tx.insert(schema.payments).values({
+        id: paymentId,
+        intentId: intent.id,
+        txHash: receipt.transactionHash,
+        blockNumber: receipt.blockNumber,
+        payerAddress: verdict.payer ?? '0x',
+        credentialId: options.credentialId ?? null,
+        amount: intent.amount,
+        tokenAddress: intent.tokenAddress,
+        status,
+        gasUsed: receipt.gasUsed,
+        // Whoever paid the fee: Kova's fee payer (Tempo's sponsored transactions name it), Kova's
+        // relayer (Monad), or the payer's own wallet.
+        feePayerAddress: (receipt as { feePayer?: Address }).feePayer ?? receipt.from,
+        confirmedAt: status === 'paid' ? now : null,
+      })
+
+      await tx
+        .update(schema.paymentIntents)
+        .set({
+          status,
+          paidAt: status === 'paid' ? now : null,
+          updatedAt: now,
+        })
+        .where(eq(schema.paymentIntents.id, intent.id))
+
+      if (status === 'paid') {
+        // Double entry: the payer's funds left an account Kova does not control, and the
+        // merchant's settlement address gained them.
+        await tx.insert(schema.ledgerEntries).values([
+          {
+            id: uuidv7(),
+            account: 'external',
+            direction: 'debit',
+            amount: intent.amount,
+            currency: intent.currency,
+            refType: 'payment',
+            refId: paymentId,
+          },
+          {
+            id: uuidv7(),
+            account: `merchant:${intent.merchantId}`,
+            direction: 'credit',
+            amount: intent.amount,
+            currency: intent.currency,
+            refType: 'payment',
+            refId: paymentId,
+          },
+        ])
+        // A till sale changes hands across the counter as it is paid: it is never waiting to be collected.
+        await tx
+          .update(schema.orders)
+          .set({ collectedAt: now })
+          .where(
+            and(
+              eq(schema.orders.intentId, intent.id),
+              eq(schema.orders.source, 'till'),
+              isNull(schema.orders.collectedAt),
+            ),
+          )
+      }
+
+      await tx.insert(schema.events).values({
+        id: uuidv7(),
+        merchantId: intent.merchantId,
+        type: status === 'paid' ? 'payment_intent.paid' : `payment_intent.${status}`,
+        data: {
+          payment_intent: encodeId('paymentIntent', intent.id),
+          payment: encodeId('payment', paymentId),
+          tx_hash: receipt.transactionHash,
+          amount: intent.amount.toString(),
+          currency: intent.currency,
+        },
+      })
+    })
+  }
+}
+
+/** Postgres's unique_violation, as postgres.js raises it or as Drizzle wraps it. */
+function isUniqueViolation(error: unknown): boolean {
+  const code = (e: unknown) =>
+    e && typeof e === 'object' && 'code' in e ? (e as { code?: unknown }).code : undefined
+  return code(error) === '23505' || code((error as { cause?: unknown } | null)?.cause) === '23505'
 }
 
 /**
