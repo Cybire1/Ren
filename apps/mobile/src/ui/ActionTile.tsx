@@ -34,7 +34,7 @@ export function ActionTile({
         </Svg>
       </View>
       <View style={send ? styles.plane : styles.coin} pointerEvents="none">
-        {send ? <Plane size={54} /> : <Coin size={30} symbol="$" />}
+        {send ? <Plane size={46} /> : <Coin size={26} symbol="$" />}
       </View>
       <View style={styles.body}>
         <View style={[styles.disc, { backgroundColor: tone.disc }]}>
@@ -50,7 +50,7 @@ export function ActionTile({
 
 const styles = StyleSheet.create({
   body: { flex: 1, padding: 12, paddingHorizontal: 14, justifyContent: 'space-between' },
-  disc: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  disc: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
   plane: { position: 'absolute', right: -4, top: -8, transform: [{ rotate: '-8deg' }] },
   coin: { position: 'absolute', right: 30, top: 10, transform: [{ rotate: '-14deg' }] },
 })

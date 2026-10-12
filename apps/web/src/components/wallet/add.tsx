@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Art, Icon } from '@/components/brand'
 import { formatUsd } from '@/lib/wallet/money'
 import { ScreenHead } from './activity'
@@ -14,7 +14,7 @@ type Stage =
   | { at: 'done'; balance: bigint }
   | { at: 'problem'; message: string }
 
-/** Money in. On the test network, Kova sends $5 of test dollars a day and pays every fee; on mainnet, dollars to your address. */
+/** Money in. On the test network, Ren sends $5 of test dollars a day and pays every fee; on mainnet, dollars to your address. */
 export function AddMoney() {
   const { network, addTestDollars } = useWallet()
   const [stage, setStage] = useState<Stage>({ at: 'ready' })
@@ -25,12 +25,18 @@ export function AddMoney() {
         <ScreenHead title="Add money" />
         <div className="w-empty w-empty-art">
           <Art name="reni-catch" size={160} />
-          <strong>Send {onTempo ? 'USDC' : 'AUSD'} on {chainName} to your address</strong>
+          <strong>
+            Send {onTempo ? 'USDC' : 'AUSD'} on {chainName} to your address
+          </strong>
           <span>
-            Card and bank top-ups are coming to Ren. For now, send {onTempo ? 'USDC' : 'AUSD'} from an exchange or another
-            wallet.
+            {onTempo
+              ? 'Card and bank top-ups are coming to Ren on Tempo. For now, send USDC from an exchange or another wallet.'
+              : 'Pay by card or bank with Ramp Network, or send AUSD on Monad from an exchange or another wallet.'}
           </span>
         </div>
+        {/* Ramp sells AUSD on Monad: there is no card or bank route on Tempo yet. */}
+        {onTempo ? null : <CardOrBank />}
+        {chainDeposits ? <FromAnotherChain /> : null}
         <Link href="/wallet/receive" className="pill pill-block" data-tone="ink">
           <span className="pill-label">Show my address</span>
           <span className="pill-cap">
@@ -111,7 +117,62 @@ export function AddMoney() {
             <Icon name="plus" size={18} />
           </span>
         </button>
+        {chainDeposits ? <FromAnotherChain /> : null}
       </div>
     </div>
+  )
+}
+
+/**
+ * Deposits from other chains (Aurora Intents). Off until it can work end to end: it needs mainnet,
+ * a working Monad route and AUSD as a destination. NEXT_PUBLIC_KOVA_CHAIN_DEPOSITS=1 shows it, on
+ * Monad only.
+ */
+const chainDeposits = !onTempo && process.env.NEXT_PUBLIC_KOVA_CHAIN_DEPOSITS === '1'
+
+function FromAnotherChain() {
+  return (
+    <Link href="/wallet/add/chain" className="w-add-chain">
+      <span>
+        <strong>From another chain</strong>
+        <small>USDC, USDT, ETH, SOL or BTC, from 30+ chains</small>
+      </span>
+      <Icon name="arrow" size={18} />
+    </Link>
+  )
+}
+
+/** Ramp Network's checkout in a new tab; it sends AUSD on Monad to this wallet. */
+function CardOrBank() {
+  const { profile } = useWallet()
+  const [top, setTop] = useState<{ live: boolean; url: string | null } | null>(null)
+  const [note, setNote] = useState<string | null>(null)
+  const address = profile?.address
+  const currency = profile?.currency
+  // Fetched ahead, so the tap opens Ramp at once (a tab opened after a wait counts as a pop-up).
+  useEffect(() => {
+    if (!address) return
+    void fetch(
+      `/api/wallet/${address}/top-up?currency=${currency}&return_to=${encodeURIComponent('https://mykova.app/wallet')}`,
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then(setTop)
+      .catch(() => setTop(null))
+  }, [address, currency])
+  return (
+    <button
+      type="button"
+      className="w-add-chain"
+      onClick={() => {
+        if (top?.live && top.url) window.open(top.url, '_blank', 'noopener')
+        else setNote('Opens on Monad mainnet: buys AUSD straight into this wallet.')
+      }}
+    >
+      <span>
+        <strong>Card or bank</strong>
+        <small>{note ?? 'Card, Apple Pay or bank, with Ramp Network'}</small>
+      </span>
+      <Icon name="card" size={18} />
+    </button>
   )
 }

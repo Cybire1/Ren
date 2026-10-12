@@ -9,15 +9,18 @@
     "build": "next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run --passWithNoTests",
+    "check:notes": "node ../../node_modules/.pnpm/tsx@4.23.13/node_modules/tsx/dist/cli.mjs scripts/notes-check.ts"
   },
   "dependencies": {
     "@category-labs/mera": "0.2.0",
     "@kova/monad": "workspace:*",
     "@kova/tempo": "workspace:*",
     "@noble/ciphers": "^1.3.0",
+    "@noble/curves": "1.9.1",
     "@noble/hashes": "^2.4.0",
     "@privy-io/react-auth": "3.45.0",
+    "@ramp-network/ramp-instant-sdk": "^6.2.0",
     "@scure/base": "^2.4.0",
     "@scure/bip32": "^2.4.0",
     "@scure/bip39": "^2.4.0",

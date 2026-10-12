@@ -67,7 +67,7 @@ function NewOrderBanner() {
             {who} paid {dollars(fresh.amount ?? 0)}
           </Txt>
           <Txt size={13} color={colors.onInk} numberOfLines={1}>
-            {what}
+            {fresh.table ? `Table ${fresh.table}: ${what}` : what}
           </Txt>
         </View>
         <View style={styles.see}>

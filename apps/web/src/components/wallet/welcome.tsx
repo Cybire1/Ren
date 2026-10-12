@@ -11,6 +11,7 @@ import {
 } from '@/lib/wallet/money'
 import { useWallet } from './provider'
 import { Avatar } from './ui'
+import { InAppNote } from './in-app'
 
 type Step = { at: 'start' } | { at: 'name' } | { at: 'waiting'; what: 'create' | 'open' }
 
@@ -133,6 +134,8 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
           ? 'Your shop lives in your Ren wallet: its sales land there, and your passkey opens both. Open your wallet, or make one, then your shop.'
           : 'Your Ren wallet, in your browser. The same one as in the Ren app: one passkey, one wallet.'}
       </p>
+
+      <InAppNote />
 
       {!home ? (
         <p className="form-note">

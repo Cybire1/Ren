@@ -72,7 +72,15 @@ export interface ChainKit {
   logRange: bigint
   /** The token events the watcher scans for. */
   watchEvents: readonly AbiEvent[]
-  /** Transfers of one token within one transaction's logs, each with its memo. */
+  /**
+   * Every contract whose logs the watcher reads: the tokens Kova accepts, and on Monad the
+   * KovaCard contract, whose taps record the charge each one paid.
+   */
+  watchAddresses: Address[]
+  /**
+   * Transfers of one token within one transaction's logs, each with its memo. Pass the whole
+   * transaction's logs: a card tap's memo sits on the card contract's log, not the token's.
+   */
   indexTransfers: (logs: readonly Log[], token: Address) => IndexedTransfer[]
   /** The Kova memos a transaction's logs carry: the charges it pays, refunds it makes. */
   memos: (logs: readonly Log[]) => Hex[]

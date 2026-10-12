@@ -17,7 +17,7 @@ const tabs: Record<string, { label: string; icon: NavIconName }> = {
   profile: { label: 'Profile', icon: 'profile' },
 }
 
-const H = 68
+const H = 58
 
 /**
  * A floating ink pill. Pay is a coral capsule in the middle, lettered in ink so it reads at a glance, one tap from anywhere and never
@@ -52,7 +52,7 @@ export function Dock({ state, navigation }: BottomTabBarProps) {
         <View style={[styles.tab, focused && styles.tabOn]}>
           {tab.icon === 'profile' && profile ? (
             <View style={[styles.face, { borderColor: focused ? colors.yellow : 'rgba(255,255,255,0.45)' }]}>
-              <Avatar name={profile.name} id={profile.address} size={focused ? 32 : 30} />
+              <Avatar name={profile.name} id={profile.address} size={focused ? 28 : 26} />
             </View>
           ) : (
             <NavIcon name={tab.icon} active={focused} size={26} color={focused ? colors.ink : 'rgba(255,255,255,0.66)'} />
@@ -109,19 +109,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   slot: { flex: 1, height: H, alignItems: 'center', justifyContent: 'center' },
-  tab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  tab: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   tabOn: { backgroundColor: colors.surface },
   /** You, on the Profile tab: your own face in a ring that lights up yellow when you're there. */
-  face: { borderRadius: 20, borderWidth: 2, padding: 1 },
+  face: { borderRadius: 18, borderWidth: 2, padding: 1 },
   pay: {
-    height: 52,
+    height: 44,
     marginHorizontal: 6,
-    paddingHorizontal: 22,
-    borderRadius: 26,
+    paddingHorizontal: 18,
+    borderRadius: 22,
     backgroundColor: colors.coral,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 7,
+    gap: 6,
   },
 })
 

@@ -105,13 +105,14 @@ export default function Today() {
               Taken today
             </Txt>
             <View style={styles.amount}>
-              <Txt weight="heavy" size={26} style={{ marginTop: 12, marginRight: 3 }} importantForAccessibility="no" accessibilityElementsHidden>
+              <Txt weight="heavy" size={26} exact style={{ marginTop: 12, marginRight: 3 }} importantForAccessibility="no" accessibilityElementsHidden>
                 $
               </Txt>
               <Odometer value={whole} size={60} label={`Taken today, ${money(total)}`} />
               <Txt
                 weight="heavy"
                 size={26}
+                exact
                 color={colors.muted}
                 style={{ marginTop: 12, marginLeft: 5 }}
                 importantForAccessibility="no"

@@ -1,10 +1,19 @@
 import { schema } from '@kova/db'
 import { formatAmount } from '@kova/tempo'
 import { eq, lt } from 'drizzle-orm'
-import type { Address, Hash } from 'viem'
-import { balanceOf, feePayerAccount, kit, sendFromTreasury, settlementToken } from '../chain.js'
+import { type Address, encodeFunctionData, type Hash } from 'viem'
+import {
+  balanceOf,
+  erc20Abi,
+  feePayerAccount,
+  kit,
+  onTempo,
+  sendFromTreasury,
+  settlementToken,
+} from '../chain.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
+import { sendFromRelayer } from '../relay.js'
 
 /**
  * Test dollars, on testnet only: five a day for each wallet, from Kova's own testnet treasury (the
@@ -87,11 +96,7 @@ export async function giveTestDollars(to: Address): Promise<Drip> {
         'Test dollars have run out for the moment. Ren is topping up; try again later.',
       )
     }
-    const txHash = await sendFromTreasury({
-      token: settlementToken.address,
-      to,
-      amount: TEST_DOLLARS_A_DAY,
-    })
+    const txHash = await sendTestDollars(to)
     await db
       .update(schema.testDollarClaims)
       .set({ txHash })
@@ -111,4 +116,21 @@ export async function giveTestDollars(to: Address): Promise<Drip> {
       'The test-dollar top-up didn’t go through. Try again in a moment.',
     )
   }
+}
+
+/**
+ * Sends one wallet its test dollars from the treasury. On Monad the treasury is the relayer, so
+ * the transfer goes through the relayer's one send path and never races a payment for a nonce.
+ * On Tempo the relay only co-signs payers' fees, so the treasury sends on its own.
+ */
+async function sendTestDollars(to: Address): Promise<Hash> {
+  if (onTempo)
+    return sendFromTreasury({ token: settlementToken.address, to, amount: TEST_DOLLARS_A_DAY })
+  const receipt = await sendFromRelayer(
+    settlementToken.address,
+    encodeFunctionData({ abi: erc20Abi, functionName: 'transfer', args: [to, TEST_DOLLARS_A_DAY] }),
+  )
+  if (receipt.status !== 'success')
+    throw new KovaError('chain_error', 'The test-dollar top-up failed. Try again in a moment.')
+  return receipt.transactionHash
 }

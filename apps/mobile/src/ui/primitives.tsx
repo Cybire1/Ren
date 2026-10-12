@@ -18,24 +18,28 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { colors, fonts } from '@/lib/theme'
+import { colors, density, fonts } from '@/lib/theme'
 import { Icon, type IconName } from './Icon'
 
 type Weight = keyof typeof fonts
 
-/** Text in the app font (Manrope). Numbers always use tabular figures so amounts don't jitter as they change. */
+/**
+ * Text in the app font (Manrope). Numbers always use tabular figures so amounts don't jitter as
+ * they change. Sizes are scaled by the app's text density unless `exact` (text drawn onto art).
+ */
 export function Txt({
   weight = 'regular',
   size = 16,
   color = colors.ink,
+  exact,
   style,
   ...rest
-}: TextProps & { weight?: Weight; size?: number; color?: string }) {
+}: TextProps & { weight?: Weight; size?: number; color?: string; exact?: boolean }) {
   return (
     <Text
       {...rest}
       style={[
-        { fontFamily: fonts[weight], fontSize: size, color, fontVariant: ['tabular-nums'] },
+        { fontFamily: fonts[weight], fontSize: exact ? size : size * density.text, color, fontVariant: ['tabular-nums'] },
         style,
       ]}
     />
@@ -183,7 +187,7 @@ export function PillButton({
           style,
         ]}
       >
-        <Txt weight="medium" size={18} color={fg}>
+        <Txt weight="medium" size={16} color={fg}>
           {label}
         </Txt>
         <View style={[styles.pillDisc, { backgroundColor: fg }]}>
@@ -199,7 +203,7 @@ export function RoundButton({
   label,
   onPress,
   fill,
-  size = 40,
+  size = 36,
 }: {
   icon: IconName
   label: string
@@ -292,7 +296,7 @@ export function Header({
       {onBack ? (
         <RoundButton icon={backIcon} label={backIcon === 'close' ? 'Close' : 'Back'} onPress={onBack} />
       ) : (
-        <View style={{ width: 40 }} />
+        <View style={{ width: 36 }} />
       )}
       <View style={{ alignItems: 'center', flexShrink: 1 }}>
         {title ? (
@@ -306,7 +310,7 @@ export function Header({
           </Txt>
         ) : null}
       </View>
-      <View style={{ minWidth: 40, alignItems: 'flex-end' }}>{right}</View>
+      <View style={{ minWidth: 36, alignItems: 'flex-end' }}>{right}</View>
     </View>
   )
 }
@@ -342,18 +346,18 @@ const styles = StyleSheet.create({
   /** The hard ink shadow a lifted sticker stands on: its own shape, set LIFT points lower. */
   plate: { position: 'absolute', left: 0, right: 0, top: LIFT, bottom: -LIFT, backgroundColor: colors.ink },
   pill: {
-    height: 64,
-    borderRadius: 32,
+    height: 48,
+    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingLeft: 26,
-    paddingRight: 8,
+    paddingLeft: 20,
+    paddingRight: 6,
   },
   pillDisc: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -363,13 +367,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 8,
-    minHeight: 56,
+    paddingTop: 6,
+    minHeight: 50,
   },
   chip: {
-    height: 32,
-    paddingHorizontal: 12,
-    borderRadius: 16,
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 14,
     backgroundColor: colors.ink,
     flexDirection: 'row',
     alignItems: 'center',

@@ -7,9 +7,11 @@
  * it), so a payer spends exactly the price and a friend receives every cent sent. Balances are
  * read straight from the chain; what arrived comes from Kova's API, which reads it from Tempo.
  */
+import type { SealedNote } from '@kova/monad'
 import { tokenByAddress } from '@kova/tempo'
 import { type Address, type Hash, type Hex, http, isAddressEqual, type LocalAccount } from 'viem'
 import { Actions, createClient, withRelay } from 'viem/tempo'
+import type { NoteToSeal } from './chain-monad'
 import { apiUrl, isTestnet, network, networkId, settlementToken } from './config'
 
 export const publicClient = createClient({
@@ -126,8 +128,16 @@ export async function payCharge(account: LocalAccount, charge: Charge): Promise<
   return { hash, ms }
 }
 
-/** Sends dollars to a person through Kova's relay: Kova pays the fee, they get every cent sent. */
-export async function sendMoney(account: LocalAccount, to: Address, amount: bigint): Promise<Sent> {
+/**
+ * Sends dollars to a person through Ren's relay: Ren pays the fee, they get every cent sent.
+ * Private notes are sealed against a Monad send's authorization, so on Tempo none travels.
+ */
+export async function sendMoney(
+  account: LocalAccount,
+  to: Address,
+  amount: bigint,
+  _note?: NoteToSeal,
+): Promise<Sent> {
   const started = Date.now()
   try {
     const { receipt } = await walletClient(account).token.transferSync({
@@ -152,6 +162,8 @@ export interface Incoming {
   kind: 'payment' | 'refund' | 'payout' | null
   /** Test dollars from the testnet faucet, not from a person. */
   faucet: boolean
+  /** A sender's private note. Notes travel with Monad sends only, so on Tempo this is null. */
+  note: { sealed: SealedNote; auth_nonce: Hex } | null
 }
 
 interface ChainTransfer {
@@ -183,6 +195,7 @@ export async function incomingSince(
         block: BigInt(t.block),
         kind: t.kind,
         faucet: t.faucet,
+        note: null,
       })),
   }
 }

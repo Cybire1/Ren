@@ -175,7 +175,7 @@ export default function ItemEditor() {
                 {shown ? (
                   <Image source={{ uri: shown }} style={styles.photo} contentFit="cover" transition={150} accessibilityLabel={`Photo of ${name || 'the item'}`} />
                 ) : (
-                  <ItemFace item={{ name: name || '?', image_url: null }} size={128} radius={30} />
+                  <ItemFace item={{ name: name || '?', image_url: null }} size={112} radius={26} />
                 )}
                 {busy === 'photo' ? (
                   <View style={styles.photoBusy}>
@@ -259,7 +259,7 @@ export default function ItemEditor() {
               placeholderTextColor="#8C9799"
               maxLength={200}
               multiline
-              style={[styles.input, { height: 80, paddingTop: 16, textAlignVertical: 'top' }]}
+              style={[styles.input, { height: 70, paddingTop: 16, textAlignVertical: 'top' }]}
             />
 
             <Label optional>Barcode</Label>
@@ -467,7 +467,7 @@ const styles = StyleSheet.create({
   },
   label: { marginTop: 20, marginBottom: 8, marginLeft: 4 },
   input: {
-    height: 56,
+    height: 50,
     borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,
@@ -483,7 +483,7 @@ const styles = StyleSheet.create({
   priceInput: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
   priceText: { flex: 1, height: '100%', fontFamily: fonts.bold, fontSize: 22, color: colors.ink },
   barcode: {
-    height: 56,
+    height: 50,
     paddingHorizontal: 16,
     borderRadius: 22,
     borderWidth: 2,

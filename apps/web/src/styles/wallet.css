@@ -776,7 +776,7 @@
 }
 
 .w-nameyourself-row input:focus {
-  box-shadow: 0 0 0 4px rgba(212, 101, 88, 0.25);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 25%, transparent);
 }
 
 /* Welcome */
@@ -1279,7 +1279,7 @@
 }
 
 .w-find:focus-within {
-  box-shadow: 0 0 0 4px rgba(212, 101, 88, 0.25);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 25%, transparent);
 }
 
 .w-find input {
@@ -1459,7 +1459,7 @@ button.w-person {
 }
 
 .w-note:focus {
-  box-shadow: 0 0 0 4px rgba(212, 101, 88, 0.25);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 25%, transparent);
 }
 
 .w-keypad {
@@ -1892,7 +1892,7 @@ button.w-person {
 }
 
 .w-session-open {
-  background: rgba(70, 135, 139, 0.16);
+  background: color-mix(in srgb, var(--teal) 16%, transparent);
 }
 
 .w-rules {
@@ -2920,4 +2920,917 @@ button.w-person {
     border: 2px solid #fff;
     border-radius: 50%;
   }
+}
+
+/* Opened inside X or Instagram: the way out to a browser that holds passkeys. */
+.w-inapp {
+  display: grid;
+  gap: 0.35rem;
+  margin: 1rem 0 0.25rem;
+  padding: 1rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--coral-soft);
+  color: var(--ink);
+  text-align: left;
+}
+
+.w-inapp strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
+.w-inapp span {
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.w-inapp-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.5rem;
+}
+
+.w-inapp .textlink {
+  padding: 0.25rem 0.1rem;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+/*
+ * Send, in one sheet over Home (as in the app): it rises from the bottom on a phone, sits as a
+ * card on a wide screen, and resizes to each step so Home's balance shows behind it at the end.
+ */
+
+.w-sheet-scrim {
+  position: fixed;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  cursor: default;
+  z-index: 40;
+  background: color-mix(in srgb, var(--ink) 32%, transparent);
+  animation: w-fade 0.3s ease both;
+}
+
+.w-sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 41;
+  width: min(100%, 30rem);
+  max-height: calc(100dvh - 1.5rem);
+  overflow: auto;
+  padding: 0 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
+  border: 2px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 2.1rem 2.1rem 0 0;
+  background: var(--paper);
+  transform: translateX(-50%);
+  animation: w-sheet-up 0.5s var(--spring) both;
+  overscroll-behavior: contain;
+}
+
+.w-sheet-out.w-sheet {
+  animation: w-sheet-down 0.26s ease-in both;
+}
+
+.w-sheet-out.w-sheet-scrim {
+  animation: w-fade 0.26s ease reverse both;
+}
+
+@media (min-width: 40rem) {
+  .w-sheet {
+    bottom: 1.5rem;
+    border-bottom: 2px solid var(--ink);
+    border-radius: 2.1rem;
+  }
+}
+
+@keyframes w-sheet-up {
+  from {
+    transform: translate(-50%, 100%);
+  }
+}
+
+@keyframes w-sheet-down {
+  to {
+    transform: translate(-50%, 110%);
+  }
+}
+
+@keyframes w-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.w-sheet-grab {
+  display: block;
+  width: 2.6rem;
+  height: 0.35rem;
+  margin: 0.55rem auto 0;
+  padding: 0;
+  border: 0;
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--ink) 25%, transparent);
+  cursor: pointer;
+}
+
+.w-sheet-fit {
+  transition: height 0.45s var(--spring);
+  overflow: hidden;
+}
+
+.w-sheet-fit > div {
+  padding-top: 1rem;
+}
+
+.w-sheet-step {
+  animation: w-sheet-step-in 0.3s var(--spring) both;
+}
+
+.w-sheet-step-back {
+  --from: -1.25rem;
+}
+
+@keyframes w-sheet-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--from, 1.25rem));
+  }
+}
+
+.w-sheet-h {
+  margin: 0.4rem 0 0.85rem;
+  font-size: 1.85rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.w-sheet-people {
+  margin-top: 1rem;
+}
+
+.w-sheet-list {
+  max-height: 18rem;
+  overflow: auto;
+}
+
+.w-sheet-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.w-sheet-who {
+  display: grid;
+  min-width: 0;
+}
+
+.w-sheet-who strong,
+.w-sheet-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.w-sheet-who small {
+  color: var(--muted);
+}
+
+.w-sheet-amount {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.w-sheet-amount .w-note {
+  justify-self: center;
+  width: min(100%, 16rem);
+}
+
+.w-sheet-pills {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.w-sheet-pill {
+  padding: 0.35rem 0.8rem;
+  border-radius: 999px;
+  background: var(--sunken);
+  color: var(--on-tint);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.w-sheet-pill-teal {
+  background: var(--teal-soft);
+  color: var(--ink);
+}
+
+.w-sheet-pill-over {
+  background: var(--coral-soft);
+  color: var(--danger);
+}
+
+/* The route: you, Reni's dotted arc, them. */
+
+.w-arc {
+  position: relative;
+  height: 8.25rem;
+  margin-top: 1.1rem;
+}
+
+.w-arc-line {
+  position: absolute;
+  inset: 0 auto auto 0;
+}
+
+.w-arc-flying .w-arc-line path {
+  animation: w-march 0.42s linear infinite;
+}
+
+@keyframes w-march {
+  to {
+    stroke-dashoffset: -14;
+  }
+}
+
+.w-arc-face {
+  position: absolute;
+  top: 42px;
+  display: grid;
+  justify-items: center;
+  gap: 0.25rem;
+  width: 68px;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.w-arc-face small {
+  max-width: 6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.w-arc-you {
+  left: -4px;
+}
+
+.w-arc-them {
+  right: -4px;
+}
+
+.w-arc-them-face {
+  position: relative;
+}
+
+.w-arc-landed .w-arc-them-face {
+  animation: w-gulp 0.5s var(--spring);
+}
+
+@keyframes w-gulp {
+  50% {
+    transform: scale(1.12);
+  }
+}
+
+.w-arc-tick {
+  position: absolute;
+  right: -4px;
+  bottom: -2px;
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  background: var(--positive);
+  color: #fff;
+  opacity: 0;
+  transform: scale(0);
+}
+
+.w-arc-landed .w-arc-tick {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.8, 0.5, 1) 0.18s,
+    opacity 0.2s 0.18s;
+}
+
+.w-arc-reni {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 70px;
+  height: 70px;
+  pointer-events: none;
+}
+
+.w-arc-waiting .w-arc-reni-art {
+  animation: w-hover 2.6s ease-in-out infinite;
+}
+
+@keyframes w-hover {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.w-sheet-sum {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.w-sheet-sum strong {
+  font-size: 3rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+
+.w-sheet-sum span {
+  color: var(--on-tint);
+}
+
+.w-facts {
+  margin: 1.1rem 0 1rem;
+  padding: 0.35rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--surface);
+}
+
+.w-fact {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.55rem 0;
+}
+
+.w-fact dt {
+  color: var(--muted);
+}
+
+.w-fact dd {
+  display: grid;
+  justify-items: end;
+  margin: 0;
+  min-width: 0;
+  font-weight: 700;
+  text-align: right;
+}
+
+.w-fact dd > span {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.w-fact dd svg {
+  color: var(--coral);
+}
+
+.w-fact small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.w-sheet-problem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0 0 0.75rem;
+  padding: 0.75rem;
+  border-radius: 1rem;
+  background: var(--coral-soft);
+  color: var(--danger);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Slide to send. */
+
+.w-slide {
+  position: relative;
+  height: 68px;
+  border-radius: 34px;
+  background: var(--ink);
+  overflow: hidden;
+  user-select: none;
+  touch-action: none;
+}
+
+.w-slide-off {
+  opacity: 0.4;
+}
+
+.w-slide-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 34px;
+  background: var(--coral);
+  transition: width 0.45s var(--spring);
+}
+
+.w-slide-words {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-left: 56px;
+  color: #fff;
+  font-weight: 700;
+  pointer-events: none;
+}
+
+.w-slide-busy .w-slide-words {
+  padding: 0 56px 0 0;
+}
+
+.w-slide-chevrons {
+  display: flex;
+  margin-left: 0.4rem;
+}
+
+.w-slide-chevrons svg {
+  margin-left: -0.35rem;
+  animation: w-chevron 1.3s ease-in-out infinite;
+  opacity: 0.35;
+}
+
+.w-slide-chevrons svg:nth-child(2) {
+  animation-delay: 0.14s;
+}
+
+.w-slide-chevrons svg:nth-child(3) {
+  animation-delay: 0.28s;
+}
+
+@keyframes w-chevron {
+  30% {
+    opacity: 1;
+  }
+}
+
+.w-slide-knob {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: grab;
+  transition: transform 0.45s var(--spring);
+}
+
+.w-slide-drag .w-slide-knob,
+.w-slide-drag .w-slide-fill {
+  transition: none;
+}
+
+.w-slide-drag .w-slide-knob {
+  cursor: grabbing;
+}
+
+.w-slide-knob:focus-visible {
+  outline: 3px solid var(--coral-soft);
+  outline-offset: 2px;
+}
+
+.w-slide-nudge {
+  animation: w-nudge 0.7s var(--spring);
+}
+
+@keyframes w-nudge {
+  30% {
+    translate: 2.25rem 0;
+  }
+}
+
+.w-slide-spin {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--sunken);
+  border-top-color: var(--ink);
+  border-radius: 50%;
+  animation: w-spin 0.8s linear infinite;
+}
+
+@keyframes w-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* Sent: the same sheet, settled low. */
+
+.w-sheet-sent {
+  display: grid;
+  justify-items: center;
+  gap: 0.35rem;
+  text-align: center;
+}
+
+.w-sheet-sent h2 {
+  margin: 0.4rem 0 0;
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+}
+
+.w-sheet-sent p {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.w-sheet-sent .pill {
+  width: 100%;
+  margin-top: 1.1rem;
+}
+
+.w-sheet-sent .textlink {
+  margin-top: 0.5rem;
+}
+
+.w-sheet-cheer {
+  position: relative;
+  animation: w-cheer 0.7s cubic-bezier(0.34, 1.6, 0.5, 1) both;
+}
+
+@keyframes w-cheer {
+  from {
+    transform: translateY(1.5rem) scale(0.7);
+    opacity: 0;
+  }
+}
+
+.w-spark {
+  position: absolute;
+  animation: w-pop 0.6s cubic-bezier(0.34, 1.8, 0.5, 1) both;
+}
+
+.w-spark-1 {
+  left: -2.5rem;
+  top: 1rem;
+  animation-delay: 0.1s;
+}
+
+.w-spark-2 {
+  right: -2.75rem;
+  top: 0;
+  animation-delay: 0.25s;
+}
+
+.w-spark-3 {
+  right: -1.5rem;
+  bottom: 1.5rem;
+  animation-delay: 0.4s;
+}
+
+@keyframes w-pop {
+  from {
+    opacity: 0;
+    transform: scale(0) rotate(-30deg);
+  }
+}
+
+.w-sheet-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-top: 0.65rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.w-bob {
+  animation: w-hover 2.6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-sheet,
+  .w-sheet-scrim,
+  .w-sheet-step,
+  .w-sheet-cheer,
+  .w-spark,
+  .w-arc-reni-art,
+  .w-bob,
+  .w-slide-chevrons svg,
+  .w-arc-line path {
+    animation: none;
+  }
+  .w-sheet-fit,
+  .w-slide-knob,
+  .w-slide-fill {
+    transition: none;
+  }
+}
+
+/* Private notes: sealed for the two people in a payment. */
+
+.w-note-private {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--muted);
+  cursor: text;
+}
+
+.w-note-private:focus-within {
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 25%, transparent);
+}
+
+.w-note-private input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  font-weight: 600;
+  outline: none;
+}
+
+.w-entry-sub svg {
+  display: inline-block;
+  margin-right: 0.25rem;
+  vertical-align: -1px;
+}
+
+.w-fact dd .w-fact-lock svg {
+  display: block;
+  color: var(--ink);
+}
+
+.w-receipt-note {
+  align-items: flex-start;
+}
+
+.w-receipt-note dt {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.w-receipt-note dd {
+  display: grid;
+  justify-items: end;
+  gap: 0.15rem;
+  max-width: 65%;
+  font-size: 1.05rem;
+}
+
+.w-receipt-note small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.w-notes-locked {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0;
+  padding: 0.75rem 0.75rem 0.75rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--tint-sand);
+}
+
+.w-notes-locked-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+
+.w-notes-locked-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.w-notes-locked-text small {
+  color: var(--on-tint);
+}
+
+.w-notes-locked-btn {
+  flex: none;
+  height: 2.5rem;
+  padding: 0 1.1rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* From another chain (Aurora Intents). */
+
+.w-add-chain {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.9rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.3s var(--spring);
+}
+
+.w-add-chain:active {
+  transform: scale(0.98);
+}
+
+.w-add-chain > span {
+  display: grid;
+  flex: 1;
+}
+
+.w-add-chain small {
+  color: var(--muted);
+}
+
+.w-chains {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.6rem;
+  margin: 1.1rem 0 0.75rem;
+}
+
+.w-chain {
+  display: grid;
+  justify-items: center;
+  gap: 0.45rem;
+  padding: 0.8rem 0.25rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.3rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.25s,
+    transform 0.3s var(--spring);
+}
+
+.w-chain:active {
+  transform: scale(0.96);
+}
+
+.w-chain[aria-selected="true"] {
+  background: var(--ink);
+  color: #fff;
+}
+
+.w-chain-disc {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #8fa2e8;
+  color: var(--ink);
+  font-size: 1.25rem;
+  font-weight: 800;
+}
+
+.w-chain-sol .w-chain-disc {
+  background: #b7a3ee;
+}
+
+.w-chain-tron .w-chain-disc {
+  background: #e89a8f;
+}
+
+.w-chain-btc .w-chain-disc {
+  background: #f2c26b;
+}
+
+.w-chain-soon {
+  margin-top: 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.75rem;
+  background: var(--surface);
+}
+
+.w-chain-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding: 1.25rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.75rem;
+  background: var(--surface);
+  animation: w-fade 0.3s ease both;
+}
+
+.w-chain-card small {
+  margin-top: 0.4rem;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.w-chain-card code {
+  max-width: 100%;
+  font: 600 0.95rem var(--font);
+  letter-spacing: 0.02em;
+  text-align: center;
+  word-break: break-all;
+}
+
+.w-chain-card .pill {
+  width: 100%;
+  margin-top: 0.5rem;
+}
+
+.w-chain-dot {
+  flex: none;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.w-chain-dot-arrived {
+  background: var(--positive);
+}
+
+.w-chain-dot-failed {
+  background: var(--danger);
+}
+
+button.w-add-chain {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Paid for a stall order: where it is at the counter, and the stamp it earned. */
+.w-moment-order {
+  display: grid;
+  gap: 3rem;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.w-moment-reward {
+  padding: 0.35rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--coral-soft);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.w-review-reward > :last-child {
+  color: var(--coral-deep);
 }

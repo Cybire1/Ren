@@ -29,6 +29,8 @@ import { tokenLogs } from '../tempo/logs.js'
 
 const events = kit.watchEvents
 const tokens: Address[] = acceptedTokens.map((t) => t.address)
+/** The tokens, and on Monad the KovaCard contract: card taps record which charge each one paid. */
+const watched = kit.watchAddresses
 const LOG_RANGE = kit.logRange
 
 /** About 15 minutes of blocks: a fresh deployment still sees every charge that could be open. */
@@ -93,13 +95,14 @@ export async function handleLogs(logs: Log[]): Promise<number> {
   let recorded = 0
   for (const [hash, txLogs] of byTx) {
     const rows: (typeof schema.transfers.$inferInsert)[] = []
-    let paysACharge = false
+    // The kit reads the whole transaction: a card tap's memo sits on the card contract's log.
+    const paysACharge = kit
+      .memos(txLogs)
+      .some((memo) => decodeMemo(memo as Hex)?.kind === 'payment')
     for (const token of tokens) {
       const tokenLogs = txLogs.filter((log) => isAddressEqual(log.address, token))
       if (tokenLogs.length === 0) continue
-      if (kit.memos(tokenLogs).some((memo) => decodeMemo(memo as Hex)?.kind === 'payment'))
-        paysACharge = true
-      for (const transfer of kit.indexTransfers(tokenLogs, token)) {
+      for (const transfer of kit.indexTransfers(txLogs, token)) {
         const log = tokenLogs.find((l) => l.logIndex === transfer.logIndex)
         if (!log || log.blockNumber === null) continue
         rows.push({
@@ -170,7 +173,7 @@ export async function catchUp(fromBlock: bigint, toBlock: bigint): Promise<numbe
           ? shops.length
             ? tokenLogs({ to: shops, fromBlock: from, toBlock: to })
             : Promise.resolve([] as Log[])
-          : publicClient.getLogs({ address: tokens, events, fromBlock: from, toBlock: to }),
+          : publicClient.getLogs({ address: watched, events, fromBlock: from, toBlock: to }),
       ),
     )
     for (const logs of batches) recorded += await handleLogs(logs as Log[])

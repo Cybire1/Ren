@@ -5,7 +5,8 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { chainName, network } from '@/lib/config'
+import * as WebBrowser from 'expo-web-browser'
+import { chainName, isTestnet, network, onTempo, webUrl } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
 import { rateLabel, ratesLive } from '@/lib/rates'
@@ -19,7 +20,7 @@ import { dockClearance } from '@/ui/Dock'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
 import { CurrencySheet } from '@/ui/ProfileForm'
-import { Txt } from '@/ui/primitives'
+import { Sticker, Txt } from '@/ui/primitives'
 
 /**
  * You, as a Kova pass: an identity card with your face, your address and your code, torn
@@ -71,7 +72,7 @@ export default function Profile() {
       <View style={styles.pass}>
         <View style={styles.passTop}>
           <View style={styles.ring}>
-            <Avatar name={profile.name} id={profile.address} size={64} />
+            <Avatar name={profile.name} id={profile.address} size={54} />
           </View>
           <View style={{ flex: 1 }}>
             <Txt weight="bold" size={22} color={colors.white} numberOfLines={1} style={{ letterSpacing: -0.4 }}>
@@ -115,7 +116,7 @@ export default function Profile() {
             </Pressable>
           </View>
           <Pressable accessibilityRole="button" accessibilityLabel="Show my Ren code" onPress={() => router.push('/receive')} style={styles.qr}>
-            <QRCode value={link} size={76} color={colors.ink} backgroundColor={colors.surface} ecl="L" />
+            <QRCode value={link} size={68} color={colors.ink} backgroundColor={colors.surface} ecl="L" />
           </Pressable>
         </View>
       </View>
@@ -127,6 +128,45 @@ export default function Profile() {
         <Stat value={formatUsd(stats.moved).replace(/\.\d+$/, '')} label="Moved" />
       </View>
 
+      {/* Ramp's off-ramp runs on the web, where the same passkey opens this wallet. Monad mainnet
+          only: Ramp sells AUSD on Monad, and on testnet there's nothing to cash out. */}
+      {onTempo || isTestnet ? null : (
+      <Sticker
+        radius={24}
+        accessibilityLabel="Cash out to your bank or card"
+        onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet/cash-out`)}
+        style={{ height: 62, marginTop: 14 }}
+      >
+        <View style={styles.cashOut}>
+          <View style={{ flex: 1 }}>
+            <Txt weight="semi" size={16}>
+              Cash out
+            </Txt>
+            <Txt size={13} color={colors.muted}>
+              To your bank or card, with Ramp Network
+            </Txt>
+          </View>
+          <Icon name="arrow" size={20} />
+        </View>
+      </Sticker>
+      )}
+
+      {/* Paying from a phone with no data: a small pocket spent by dialling Ren's USSD code. */}
+      <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 62, marginTop: 14 }}>
+        <View style={[styles.cashOut, { gap: 14 }]}>
+          <Icon name="keypad" size={22} />
+          <View style={{ flex: 1 }}>
+            <Txt weight="semi" size={16}>
+              Pay by USSD
+            </Txt>
+            <Txt size={13} color={colors.muted}>
+              From any phone, even with no data
+            </Txt>
+          </View>
+          <Icon name="arrow" size={20} />
+        </View>
+      </Sticker>
+
       <MoneyCard
         currency={profile.currency}
         onChange={(next) => {
@@ -134,7 +174,26 @@ export default function Profile() {
           void setCurrency(next)
         }}
       />
-      <KeysCard />
+      {profile.demo ? (
+        <View style={styles.keys}>
+          <View style={styles.keysTop}>
+            <View style={styles.keyIcon}>
+              <Icon name="info" size={19} color={colors.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt weight="bold" size={17}>
+                You’re in the demo account
+              </Txt>
+              <Txt size={14} color={colors.muted} style={{ marginTop: 2, lineHeight: 20 }}>
+                A shared test wallet with test dollars, on {chainName} testnet. Your own Ren wallet is a passkey: remove
+                this one and choose “Create my wallet”.
+              </Txt>
+            </View>
+          </View>
+        </View>
+      ) : (
+        <KeysCard />
+      )}
 
       <View style={{ marginTop: 26, alignItems: 'center' }}>
         {confirmRemove ? (
@@ -143,7 +202,9 @@ export default function Profile() {
               Remove this wallet from the phone?
             </Txt>
             <Txt size={14} color={colors.muted} style={{ marginTop: 4, lineHeight: 20 }}>
-              {stall.owned
+              {profile.demo
+                ? 'It’s the shared demo account: sign in again with its username and password whenever you like.'
+                : stall.owned
                 ? `Your money stays in the wallet, and ${stall.owned.name} keeps paying into it. Your passkey brings it back here any time: choose “I already have Ren”.`
                 : 'Your money stays in the wallet. Your passkey brings it back here, or on any phone, any time: choose “I already have Ren”.'}
             </Txt>
@@ -335,9 +396,10 @@ function KeysCard() {
 }
 
 const styles = StyleSheet.create({
+  cashOut: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18 },
   pass: { marginTop: 16, borderRadius: 28, backgroundColor: colors.ink },
   passTop: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, paddingBottom: 16 },
-  ring: { borderRadius: 36, borderWidth: 3, borderColor: colors.yellow, padding: 2 },
+  ring: { borderRadius: 31, borderWidth: 3, borderColor: colors.yellow, padding: 2 },
   network: {
     height: 20,
     paddingHorizontal: 8,
@@ -398,7 +460,7 @@ const styles = StyleSheet.create({
   provenance: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   keys: { marginTop: 12, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, padding: 16 },
   keysTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  keyIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  keyIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   session: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -426,5 +488,5 @@ const styles = StyleSheet.create({
   rule: { height: 28, paddingHorizontal: 10, borderRadius: 14, borderWidth: 1.5, borderColor: colors.ink, justifyContent: 'center' },
   backup: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12 },
   confirm: { alignSelf: 'stretch', borderRadius: 22, borderWidth: 2, borderColor: colors.ink, padding: 16, backgroundColor: colors.surface },
-  small: { flex: 1, height: 44, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  small: { flex: 1, height: 40, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
 })

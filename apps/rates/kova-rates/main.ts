@@ -29,16 +29,22 @@ import {
 } from '@chainlink/cre-sdk'
 import { encodeAbiParameters, parseAbiParameters, toHex } from 'viem'
 
-type Config = {
+type Shared = {
   /** Six-field cron, seconds first. */
   schedule: string
-  /** KovaRates on Monad. */
-  receiver: `0x${string}`
   chainSelectorName: string
   gasLimit: string
   /** Largest disagreement between the two sources that still counts, as a fraction. */
   maxSpread: number
 }
+
+/**
+ * Two closed shapes. `production` writes to KovaRates through the forwarder; `local-simulation`
+ * runs the same fetches and consensus, then stops before any report or write (no receiver at all).
+ */
+type Config =
+  | (Shared & { mode: 'production'; receiver: `0x${string}` })
+  | (Shared & { mode: 'local-simulation'; receiver?: never })
 
 /** The currencies Kova shows, besides dollars. */
 const CODES = ['NGN', 'KES', 'EUR', 'GBP', 'MXN'] as const
@@ -89,6 +95,12 @@ function publish(runtime: Runtime<Config>, _payload: CronPayload): string {
   const values = CODES.map((code) => rates[code])
   runtime.log(`rates at ${asOf}: ${CODES.map((code, i) => `${code} ${Number(values[i]) / SCALE}`).join(', ')}`)
 
+  // Local simulation ends here: no report, no client, nothing that could write.
+  if (config.mode === 'local-simulation') return `local-simulation: ${values.filter((v) => v > 0n).length} rates agreed`
+  if (config.mode !== 'production') throw new Error(`unknown mode ${(config as { mode: unknown }).mode}`)
+  if (!/^0x[0-9a-fA-F]{40}$/.test(config.receiver) || /^0x0{40}$/.test(config.receiver))
+    throw new Error('receiver must be KovaRates’ address')
+
   const payload = encodeAbiParameters(parseAbiParameters('uint64 asOf, bytes3[] codes, uint256[] perUsdE8'), [asOf, codes, values])
   const report = runtime.report(prepareReportRequest(payload)).result()
 
@@ -98,7 +110,9 @@ function publish(runtime: Runtime<Config>, _payload: CronPayload): string {
     .writeReport(runtime, { receiver: config.receiver, report, gasConfig: { gasLimit: config.gasLimit } })
     .result()
   if (written.txStatus !== TxStatus.SUCCESS) throw new Error(`writing the rates failed: ${written.errorMessage ?? written.txStatus}`)
-  const hash = written.txHash ? toHex(written.txHash) : 'unknown'
+  // A success with no transaction is not a success.
+  if (!written.txHash || written.txHash.length === 0) throw new Error('the write reported success without a transaction')
+  const hash = toHex(written.txHash)
   runtime.log(`published to ${config.receiver} in ${hash}`)
   return hash
 }

@@ -126,9 +126,26 @@ export default function TerminalSetup() {
                 }}
               />
             </View>
-          ) : null}
+          ) : (
+            // No dashboard, no code: a shop opens straight from a Kova wallet, with this phone as its till.
+            <View style={styles.own}>
+              <Txt weight="semi" size={17}>
+                No shop yet?
+              </Txt>
+              <Txt size={14} color={colors.muted} style={{ marginTop: 2, marginBottom: 12, lineHeight: 20 }}>
+                {profile
+                  ? 'Open one from your wallet in a minute. Payments land in your wallet, and this phone becomes the till.'
+                  : 'Make a Ren wallet first: your shop’s money lands in it. Then open your shop from Home.'}
+              </Txt>
+              <PillButton
+                label={profile ? 'Open my own shop' : 'Make my wallet'}
+                icon={profile ? 'stall' : 'arrow'}
+                onPress={() => router.push(profile ? '/open-stall' : '/setup')}
+              />
+            </View>
+          )}
           <Txt weight="bold" size={32} style={{ letterSpacing: -1, lineHeight: 36 }}>
-            {stall.owned ? 'Or pair with another shop' : 'Pair this phone with your shop'}
+            Or pair with a shop
           </Txt>
           <Txt size={16} color={colors.muted} style={{ marginTop: 8, lineHeight: 23 }}>
             In your Ren dashboard, tap Add a terminal. Type the code it shows, or scan it.
@@ -157,7 +174,7 @@ export default function TerminalSetup() {
             }}
             autoCapitalize="characters"
             autoCorrect={false}
-            autoFocus={!params.code && !stall.owned}
+            autoFocus={false}
             maxLength={LENGTH + 2}
             style={styles.hidden}
           />
@@ -223,7 +240,7 @@ const styles = StyleSheet.create({
   boxes: { flexDirection: 'row', gap: 8, marginTop: 26 },
   box: {
     flex: 1,
-    height: 64,
+    height: 56,
     borderRadius: 18,
     borderWidth: 2,
     borderColor: 'rgba(16,35,63,0.18)',
@@ -246,7 +263,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   name: {
-    height: 56,
+    height: 50,
     borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,

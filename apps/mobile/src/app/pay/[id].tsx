@@ -2,14 +2,17 @@ import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native'
-import { type Checkout, getCheckout } from '@/lib/api'
+import { type Checkout, getCheckout, type OrderStatus } from '@/lib/api'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/money'
 import { useSessionCovers } from '@/lib/session'
 import { colors } from '@/lib/theme'
 import { type Entry, useWallet } from '@/lib/wallet'
+import { useWatchedOrder, watchOrder } from '@/lib/watch'
 import { Image } from 'expo-image'
 import { Avatar, ShopBadge } from '@/ui/art'
+import { Icon } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
+import { OrderProgress, progressCopy } from '@/ui/OrderProgress'
 import { PaidScene } from '@/ui/PaidScene'
 import { Stage as ReniStage } from '@/ui/Stage'
 import { Chip, Header, PillButton, Rise, RoundButton, Screen, Sticker, TextLink, Txt } from '@/ui/primitives'
@@ -17,8 +20,12 @@ import { Chip, Header, PillButton, Rise, RoundButton, Screen, Sticker, TextLink,
 type Stage = 'loading' | 'review' | 'paying' | 'paid' | 'problem'
 
 /** Paying a shop: see exactly what and to whom, approve (Face ID, unless the wallet is already open), and it's done. */
+/** Development only: a dev link's charge is paid once per app run. */
+let devPaid = false
+
 export default function PayCharge() {
-  const { id } = useLocalSearchParams<{ id: string }>()
+  // autopay is development-only: it presses Pay by itself, so a film can capture the real flow.
+  const { id, autopay } = useLocalSearchParams<{ id: string; autopay?: string }>()
   const { profile, balance, payCheckout } = useWallet()
   const [stage, setStage] = useState<Stage>('loading')
   const [checkout, setCheckout] = useState<Checkout | null>(null)
@@ -26,6 +33,8 @@ export default function PayCharge() {
   const [problem, setProblem] = useState<string | null>(null)
   // Whether an open signing session will approve this without Face ID.
   const covered = useSessionCovers(checkout ? BigInt(checkout.amount_base) : 0n)
+  // Once paid, a stall order is followed here: its progress stands in for the payment's stats.
+  const tracked = useWatchedOrder(stage === 'paid' ? checkout?.id : undefined)
 
   useEffect(() => {
     getCheckout(id)
@@ -55,6 +64,8 @@ export default function PayCharge() {
     try {
       const done = await payCheckout(checkout)
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+      // A stall order: follow it until the counter marks it ready, wherever the buyer goes next.
+      watchOrder(checkout)
       setEntry(done)
       setStage('paid')
     } catch (error) {
@@ -66,6 +77,18 @@ export default function PayCharge() {
       }
     }
   }
+
+
+  useEffect(() => {
+    if (!__DEV__ || autopay !== '1' || stage !== 'review' || devPaid) return
+    const timer = setTimeout(() => {
+      if (devPaid) return
+      devPaid = true
+      void pay()
+    }, 2600)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autopay, stage])
 
   if (stage === 'loading')
     return (
@@ -95,6 +118,9 @@ export default function PayCharge() {
 
   const amount = BigInt(checkout.amount_base)
   const short = balance !== null && balance < amount
+  const reward = checkout.order?.reward ?? null
+  // A full stamp card can make the whole order free: it's still approved, for $0, so it has a receipt.
+  const free = amount === 0n && reward !== null
 
   if (stage === 'paid' && entry)
     return (
@@ -106,14 +132,23 @@ export default function PayCharge() {
           </Txt>
           <Chip label="Paid" dot={colors.tealLight} />
         </View>
-        <PaidScene amount={formatUsd(amount)} height={330} />
-        <Rise style={styles.paidCopy}>
-          <Txt weight="bold" size={64} style={{ letterSpacing: -2 }}>
-            Paid!
+        <PaidScene amount={free ? 'Free' : formatUsd(amount)} height={330} />
+        <Rise style={[styles.paidCopy, tracked && { marginBottom: 14 }]}>
+          <Txt weight="bold" size={tracked ? 52 : 64} style={{ letterSpacing: -2 }}>
+            {free ? 'It’s free!' : 'Paid!'}
           </Txt>
-          <Txt weight="medium" size={22} style={{ textAlign: 'center' }}>
-            {checkout.trip ? `${formatUsd(amount)} for ${checkout.trip.title}` : `${formatUsd(amount)} to ${checkout.order?.stall?.name ?? checkout.merchant_name}`}
+          <Txt weight="medium" size={tracked ? 19 : 22} style={{ textAlign: 'center' }}>
+            {checkout.trip
+              ? `${formatUsd(amount)} for ${checkout.trip.title}`
+              : free && reward
+                ? `${reward.name} from ${checkout.order?.stall?.name ?? checkout.merchant_name}, on your stamp card`
+                : `${formatUsd(amount)} to ${checkout.order?.stall?.name ?? checkout.merchant_name}`}
           </Txt>
+          {reward && !free ? (
+            <Txt size={15} color={colors.onTint} style={{ textAlign: 'center' }}>
+              {reward.name} was free with your stamp card
+            </Txt>
+          ) : null}
           {checkout.trip ? (
             <Txt size={15} color={colors.onTint} style={{ textAlign: 'center' }}>
               {checkout.trip.share === 'You' ? 'Ren is booking it now.' : `${checkout.trip.booked_by}’s trip gets booked once it’s all paid.`}
@@ -126,13 +161,17 @@ export default function PayCharge() {
           ) : null}
         </Rise>
         <View style={{ paddingHorizontal: 20 }}>
-          <Sticker radius={26}>
-            <View style={styles.stats}>
-              <Stat label="Took" value={entry.ms ? `${(entry.ms / 1000).toFixed(1)} seconds` : '—'} />
-              <Stat label="Fee" value="$0.00" />
-              <Stat label="Left" value={balance === null ? '—' : formatUsd(balance)} />
-            </View>
-          </Sticker>
+          {tracked ? (
+            <Tracker status={tracked.status} table={tracked.table} />
+          ) : (
+            <Sticker radius={26}>
+              <View style={styles.stats}>
+                <Stat label="Took" value={entry.ms ? `${(entry.ms / 1000).toFixed(1)} seconds` : '—'} />
+                <Stat label="Fee" value="$0.00" />
+                <Stat label="Left" value={balance === null ? '—' : formatUsd(balance)} />
+              </View>
+            </Sticker>
+          )}
         </View>
         <View style={[styles.footer, { gap: 14 }]}>
           <PillButton
@@ -160,7 +199,9 @@ export default function PayCharge() {
         : `${trip.booked_by} asked you to pay for their ${trip.kind === 'flight' ? 'flight' : 'stay'}`
     : askedBy
       ? `${askedBy} asked you to pay for their order at`
-      : 'You’re paying'
+      : free
+        ? 'It’s on the house at'
+        : 'You’re paying'
   return (
     <Screen bg={colors.tealSoft}>
       <Header backIcon="close" title="Confirm" onBack={() => router.replace('/(tabs)')} />
@@ -186,9 +227,17 @@ export default function PayCharge() {
           </Txt>
         ) : null}
         <Txt weight="bold" size={order ? 60 : 72} style={styles.amount} adjustsFontSizeToFit numberOfLines={1}>
-          {formatUsd(amount)}
+          {free ? 'Free' : formatUsd(amount)}
         </Txt>
-        {profile && profile.currency !== 'USD' ? (
+        {reward ? (
+          <View style={styles.stampTag}>
+            <Icon name="sparkle" size={15} />
+            <Txt weight="semi" size={14}>
+              {free ? 'Free with your stamp card' : `${reward.name} free with your stamp card`}
+            </Txt>
+          </View>
+        ) : null}
+        {profile && profile.currency !== 'USD' && !free ? (
           <Txt size={16} color={colors.onTint}>
             about {formatLocal(baseToNumber(amount), profile.currency)}
           </Txt>
@@ -208,6 +257,24 @@ export default function PayCharge() {
                 </Txt>
               </View>
             ))}
+            {reward ? (
+              <View style={styles.orderLine}>
+                <View style={{ width: 30 }}>
+                  <Icon name="sparkle" size={16} color={colors.tealDeep} />
+                </View>
+                <Txt weight="semi" size={15} color={colors.tealDeep} style={{ flex: 1 }} numberOfLines={1}>
+                  Stamp card: {reward.name}
+                </Txt>
+                <Txt weight="semi" size={15} color={colors.tealDeep}>
+                  −${Number(reward.amount).toFixed(2)}
+                </Txt>
+              </View>
+            ) : null}
+            {order.table ? (
+              <Txt size={13} color={colors.onTint} style={{ marginTop: 4 }}>
+                Brought to table {order.table}
+              </Txt>
+            ) : null}
             {order.lines.length > shown.length ? (
               <Txt size={13} color={colors.muted}>
                 and {order.lines.length - shown.length} more
@@ -251,8 +318,12 @@ export default function PayCharge() {
           <PillButton label="Add money" icon="plus" onPress={() => router.push('/add-money')} />
         ) : (
           <>
-            <PillButton label={`Pay ${formatUsd(amount)}`} icon={covered ? 'bolt' : 'face'} loading={stage === 'paying'} onPress={pay} />
-            {covered ? (
+            <PillButton label={free ? 'Get it free' : `Pay ${formatUsd(amount)}`} icon={covered ? 'bolt' : 'face'} loading={stage === 'paying'} onPress={pay} />
+            {free ? (
+              <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
+                {covered ? 'Nothing to pay. Your wallet is open, so no Face ID either.' : 'Nothing to pay. Face ID confirms it’s your card.'}
+              </Txt>
+            ) : covered ? (
               <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
                 Your wallet is open, so this one needs no Face ID.
               </Txt>
@@ -261,6 +332,35 @@ export default function PayCharge() {
         )}
       </View>
     </Screen>
+  )
+}
+
+/** The buyer's buzzer: where the order is at the counter, live. */
+function Tracker({ status, table }: { status: OrderStatus; table: string | null }) {
+  const copy = progressCopy(status, table)
+  return (
+    <Sticker radius={26}>
+      <View style={styles.trackerHead}>
+        <View style={{ flex: 1 }}>
+          <Txt weight="bold" size={17}>
+            {copy.title}
+          </Txt>
+          <Txt size={13} color={colors.muted} style={{ lineHeight: 18 }}>
+            {copy.body}
+          </Txt>
+        </View>
+        {table ? (
+          <View style={styles.tableTag}>
+            <Txt weight="bold" size={13} color={colors.white}>
+              Table {table}
+            </Txt>
+          </View>
+        ) : null}
+      </View>
+      <View style={{ paddingHorizontal: 10, paddingBottom: 14 }}>
+        <OrderProgress status={status} />
+      </View>
+    </Sticker>
   )
 }
 
@@ -316,4 +416,18 @@ const styles = StyleSheet.create({
   paidTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingTop: 8 },
   paidCopy: { alignItems: 'center', marginTop: 4, marginBottom: 18, paddingHorizontal: 24 },
   stats: { flexDirection: 'row', paddingVertical: 12, paddingHorizontal: 8 },
+  stampTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    height: 32,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+    marginTop: 6,
+  },
+  trackerHead: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, paddingBottom: 12 },
+  tableTag: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.coral, borderWidth: 2, borderColor: colors.ink, justifyContent: 'center' },
 })

@@ -43,6 +43,12 @@ export const colors = {
   danger: '#D2334B',
 } as const
 
+/**
+ * The whole app is drawn a step smaller than the sizes written in each screen: text by 8%,
+ * icons by 12%. One place to tune how dense Ren feels.
+ */
+export const density = { text: 0.92, icon: 0.88 } as const
+
 /** Manrope: a calm, open grotesk with even figures, so amounts read cleanly. */
 export const fonts = {
   regular: 'Manrope_400Regular',

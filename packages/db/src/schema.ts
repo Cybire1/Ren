@@ -76,7 +76,10 @@ export const merchants = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [uniqueIndex('merchants_slug_idx').on(t.slug), index('merchants_owner_idx').on(t.ownerAddress)],
+  (t) => [
+    uniqueIndex('merchants_slug_idx').on(t.slug),
+    index('merchants_owner_idx').on(t.ownerAddress),
+  ],
 )
 
 export const terminals = pgTable(
@@ -467,6 +470,37 @@ export const testDollarClaims = pgTable('test_dollar_claims', {
   txHash: text('tx_hash'),
 })
 
+/**
+ * Each wallet's note key: the public half of an X25519 key its passkey derives, signed by the
+ * wallet so a sender can check it came from the wallet and not from Kova.
+ */
+export const noteKeys = pgTable('note_keys', {
+  /** Lowercase. */
+  address: address('address').primaryKey(),
+  /** base64url, 32 bytes. */
+  publicKey: text('public_key').notNull(),
+  signature: text('signature').notNull(),
+  createdAt: createdAt(),
+  updatedAt: updatedAt(),
+})
+
+/**
+ * Private notes on sends ("for dinner"), sealed on the sender's device for the receiver and the
+ * sender. Kova stores ciphertext only, keyed by the transaction that carried the money.
+ */
+export const paymentNotes = pgTable('payment_notes', {
+  txHash: text('tx_hash').primaryKey(),
+  /** Lowercase. */
+  fromAddress: address('from_address').notNull(),
+  toAddress: address('to_address').notNull(),
+  /** The EIP-3009 nonce of the transfer, part of what the note is bound to. */
+  authNonce: text('auth_nonce').notNull(),
+  sealed: jsonb('sealed')
+    .$type<{ v: 1; e: string; n: string; to: string; from: string }>()
+    .notNull(),
+  createdAt: createdAt(),
+})
+
 export const auditLogs = pgTable(
   'audit_logs',
   {
@@ -521,6 +555,10 @@ export const catalogItems = pgTable(
     /** EAN or UPC, digits only, as printed under the bars. */
     barcode: text('barcode'),
     soldOut: boolean('sold_out').notNull().default(false),
+    /** How many are left, counted down by every paid sale, online or at the till. Null: not counted. */
+    stock: integer('stock'),
+    /** A shelf to group it under on the till and the stall: "Breads", "Drinks". */
+    category: text('category'),
     position: integer('position').notNull().default(0),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: createdAt(),
@@ -547,6 +585,10 @@ export const stalls = pgTable(
     tagline: text('tagline'),
     coverImageId: uuid('cover_image_id').references(() => images.id),
     open: boolean('open').notNull().default(true),
+    /** Tables with their own QR code: an order from one says which table to bring it to. Null: counter only. */
+    tableCount: integer('table_count'),
+    /** The stamp card: after this many paid orders, the next order's cheapest item is free. Null: off. */
+    loyaltyEvery: integer('loyalty_every'),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -570,6 +612,16 @@ export const stallItems = pgTable(
 )
 
 export const orderSource = pgEnum('order_source', ['stall', 'till'])
+
+/** A full stamp card spent on an order: one of its items, free. */
+export interface OrderReward {
+  item_id: string
+  name: string
+  /** Dollars taken off, as a decimal string. */
+  amount: string
+  /** Stamps the card took. */
+  stamps: number
+}
 
 export interface OrderLine {
   item_id: string
@@ -602,9 +654,19 @@ export const orders = pgTable(
     note: text('note'),
     /** The buyer sent the link to someone else to pay. */
     payForMe: boolean('pay_for_me').notNull().default(false),
+    /** The table it was ordered from, from the table's QR code: "3". Null: the counter. */
+    table: text('table'),
+    /** The wallet that said it would pay: the stamp card it earns on, and the only one that may pay a reward. */
+    payerAddress: text('payer_address'),
+    /** A stamp card spent on this order. */
+    reward: jsonb('reward').$type<OrderReward>(),
     /** What the note needs the counter to notice, like "allergy". Set by Jev after checkout. */
     flags: jsonb('flags').$type<string[]>(),
     collectedAt: timestamp('collected_at', { withTimezone: true }),
+    /** Where the order is at the counter: new, preparing, ready, collected or cancelled. */
+    status: text('status').notNull().default('new'),
+    /** The stock this order took, once it was paid: so a payment seen twice counts down once. */
+    stockTakenAt: timestamp('stock_taken_at', { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
@@ -617,7 +679,14 @@ export const orders = pgTable(
 // --- Kova Travel ---------------------------------------------------------------------------
 
 export const tripKind = pgEnum('trip_kind', ['flight', 'stay'])
-export const tripStatus = pgEnum('trip_status', ['awaiting_payment', 'booking', 'booked', 'failed', 'expired', 'canceled'])
+export const tripStatus = pgEnum('trip_status', [
+  'awaiting_payment',
+  'booking',
+  'booked',
+  'failed',
+  'expired',
+  'canceled',
+])
 
 /** What the traveller and anyone paying for the trip see: never the supplier's raw payload. */
 export interface TripSummary {
@@ -628,7 +697,16 @@ export interface TripSummary {
   /** Airline or hotel chain, and its logo or photo. */
   provider: { name: string; image: string | null }
   /** Flights: one entry per slice. Stays: check-in and check-out. */
-  legs: { from: string; to: string; departs: string; arrives: string; carrier: string | null; flight: string | null; stops: number; duration: string | null }[]
+  legs: {
+    from: string
+    to: string
+    departs: string
+    arrives: string
+    carrier: string | null
+    flight: string | null
+    stops: number
+    duration: string | null
+  }[]
   /** Stays: room and board, and the cancellation terms in words. */
   room?: { name: string; board: string; cancellation: string }
   /** Extras added to a flight, in words ("1 checked bag", "Seat 14A"). */
@@ -708,5 +786,158 @@ export const tripShares = pgTable(
     label: text('label').notNull(),
     createdAt: createdAt(),
   },
-  (t) => [uniqueIndex('trip_shares_intent_idx').on(t.intentId), index('trip_shares_trip_idx').on(t.tripId)],
+  (t) => [
+    uniqueIndex('trip_shares_intent_idx').on(t.intentId),
+    index('trip_shares_trip_idx').on(t.tripId),
+  ],
+)
+
+/**
+ * A USSD pocket: a small dollar balance a wallet sets aside to pay from any phone, even one with
+ * no data, by dialling Kova's USSD code. USSD can't carry a passkey, so the pocket has its own key,
+ * which Kova holds encrypted and signs with when the owner enters their PIN. The owner's main
+ * wallet stays theirs alone: they choose what goes in (up to a cap) and can take it back any time.
+ */
+export const ussdPockets = pgTable(
+  'ussd_pockets',
+  {
+    id: id(),
+    /** The Kova wallet that owns and funds the pocket. Lowercase. */
+    ownerAddress: address('owner_address').notNull(),
+    /** E.164, verified by a code sent to it. */
+    phone: text('phone').notNull(),
+    /** The pocket's own address on Monad. Lowercase. */
+    pocketAddress: address('pocket_address').notNull(),
+    /** The pocket's private key, AES-256-GCM under KOVA_POCKET_MASTER_KEY: iv.tag.ciphertext, base64url. */
+    sealedKey: text('sealed_key').notNull(),
+    /** scrypt: salt.hash, base64url. */
+    pinHash: text('pin_hash').notNull(),
+    /** The most the pocket may hold, and the most it may spend in a day, in base units. */
+    cap: amount('cap').notNull(),
+    failedPins: integer('failed_pins').notNull().default(0),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
+    /** The newest owner signature accepted, in unix seconds: an older one can't be replayed. */
+    lastSignedAt: bigint('last_signed_at', { mode: 'number' }).notNull().default(0),
+    /** pending until the phone's code is entered; closed when the owner turns it off. */
+    status: text('status').notNull().default('pending'),
+    /** The code sent to the phone, scrypt-hashed, and when it stops working. */
+    codeHash: text('code_hash'),
+    codeExpiresAt: timestamp('code_expires_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('ussd_pockets_owner_idx').on(t.ownerAddress),
+    index('ussd_pockets_phone_idx').on(t.phone),
+    uniqueIndex('ussd_pockets_address_idx').on(t.pocketAddress),
+  ],
+)
+
+/** Each payment out of a pocket, one per USSD session, so a resent final step never pays twice. */
+export const ussdSpends = pgTable(
+  'ussd_spends',
+  {
+    id: id(),
+    pocketId: uuid('pocket_id')
+      .notNull()
+      .references(() => ussdPockets.id),
+    /** The USSD session that made it, or "app:<id>" when the owner takes money back. */
+    sessionId: text('session_id').notNull(),
+    /** till, phone, or withdraw. */
+    kind: text('kind').notNull(),
+    /** Lowercase. */
+    toAddress: address('to_address').notNull(),
+    /** Who it went to, for the receipt: a shop's name or a phone number. */
+    toLabel: text('to_label').notNull(),
+    amount: amount('amount').notNull(),
+    intentId: uuid('intent_id').references(() => paymentIntents.id),
+    /** pending, paid or failed. */
+    status: text('status').notNull().default('pending'),
+    txHash: text('tx_hash'),
+    reference: text('reference').notNull(),
+    failure: text('failure'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('ussd_spends_session_idx').on(t.sessionId),
+    index('ussd_spends_pocket_idx').on(t.pocketId, t.createdAt),
+  ],
+)
+
+/** Short codes a till shows beside its QR, so a phone with no camera or data can pay that charge. */
+export const ussdTillCodes = pgTable(
+  'ussd_till_codes',
+  {
+    code: text('code').primaryKey(),
+    intentId: uuid('intent_id')
+      .notNull()
+      .references(() => paymentIntents.id),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('ussd_till_codes_intent_idx').on(t.intentId)],
+)
+
+/**
+ * Kova Cards: NFC chips whose own key spends from a wallet through the KovaCard contract on
+ * Monad. The chain holds who owns a card, its daily limit and whether it is frozen; this holds
+ * what Kova checks before it cosigns a tap: the PIN, and a freeze that takes effect before the
+ * chain has heard of it.
+ */
+export const kovaCards = pgTable(
+  'kova_cards',
+  {
+    /** The card's own address (its key never leaves the chip). Lowercase. */
+    address: address('address').primaryKey(),
+    network: network('network').notNull(),
+    /** The wallet it spends from. Lowercase. */
+    holderAddress: address('holder_address').notNull(),
+    label: text('label').notNull().default('Kova Card'),
+    lastFour: text('last_four').notNull(),
+    /** scrypt: salt.hash, base64url. Checked by Kova at the till, never stored on the phone. */
+    pinHash: text('pin_hash').notNull(),
+    failedPins: integer('failed_pins').notNull().default(0),
+    lockedUntil: timestamp('locked_until', { withTimezone: true }),
+    /** Taps at or under this many base units need no PIN, like contactless cards. */
+    noPinLimit: amount('no_pin_limit').notNull(),
+    frozen: boolean('frozen').notNull().default(false),
+    /** active, or unlinked for good. */
+    status: text('status').notNull().default('active'),
+    linkTxHash: text('link_tx_hash'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('kova_cards_holder_idx').on(t.holderAddress)],
+)
+
+/**
+ * One tap at a till: the payment Kova prepared for the card to sign, and what came of it. A tap
+ * pays its charge at most once, whatever the till retries.
+ */
+export const cardTaps = pgTable(
+  'card_taps',
+  {
+    id: id(),
+    cardAddress: address('card_address')
+      .notNull()
+      .references(() => kovaCards.address),
+    intentId: uuid('intent_id')
+      .notNull()
+      .references(() => paymentIntents.id),
+    terminalId: uuid('terminal_id').references(() => terminals.id),
+    amount: amount('amount').notNull(),
+    payTo: address('pay_to').notNull(),
+    memo: text('memo').notNull(),
+    /** Unix seconds after which neither signature is any use. */
+    deadline: bigint('deadline', { mode: 'number' }).notNull(),
+    pinRequired: boolean('pin_required').notNull(),
+    /** prepared, paid or failed. */
+    status: text('status').notNull().default('prepared'),
+    txHash: text('tx_hash'),
+    failure: text('failure'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('card_taps_card_idx').on(t.cardAddress, t.createdAt), index('card_taps_intent_idx').on(t.intentId)],
 )

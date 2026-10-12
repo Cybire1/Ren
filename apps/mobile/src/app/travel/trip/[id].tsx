@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
   center: { alignItems: 'center', justifyContent: 'center', paddingVertical: 40 },
   test: { flexDirection: 'row', gap: 8, alignItems: 'center', padding: 10, paddingHorizontal: 12, borderRadius: 16, backgroundColor: colors.coralSoft, marginBottom: 12 },
   status: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 4 },
-  provider: { width: 60, height: 60, borderRadius: 18, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.ink },
+  provider: { width: 52, height: 52, borderRadius: 16, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.ink },
   total: { marginTop: 16, marginBottom: 14, padding: 16, borderRadius: 24, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.ink, gap: 2 },
   share: { marginBottom: 10, padding: 14, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface },
   shareDone: { backgroundColor: colors.tealSoft },

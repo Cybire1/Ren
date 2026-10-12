@@ -191,6 +191,13 @@ export interface Checkout {
     note: string | null
     pay_for_me: boolean
     stall: { id: string; name: string; slug: string } | null
+    /** Where it is at the counter, for the buyer's "it's ready" moment. */
+    id?: string
+    status?: OrderStatus
+    /** The table it's brought to; null at the counter. */
+    table?: string | null
+    /** A full stamp card spent on it: the item that came free. */
+    reward?: OrderReward | null
   } | null
 }
 
@@ -254,6 +261,10 @@ export interface Stall {
   open: boolean
   cover_url: string | null
   cover_image_id: string | null
+  /** Tables with their own QR code (the stall link with ?table=N). Null: counter only. */
+  table_count: number | null
+  /** Paid orders that fill the stamp card; the next order's cheapest item is free. Null: no card. */
+  loyalty_every: number | null
   item_ids?: string[]
   created_at: string
 }
@@ -275,6 +286,25 @@ export interface OrderLine {
   quantity: number
 }
 
+export type OrderStatus = 'new' | 'preparing' | 'ready' | 'collected' | 'cancelled'
+
+export interface OrderReward {
+  item_id: string
+  name: string
+  /** Dollars taken off. */
+  amount: string
+  /** Stamps the card took. */
+  stamps: number
+}
+
+/** A wallet's stamp card at a stall: GET /v1/public/stalls/:slug/stamps. */
+export interface StampCard {
+  every: number | null
+  stamps: number
+  /** Full: the next order's cheapest item is free. */
+  ready: boolean
+}
+
 export interface Order {
   id: string
   source: 'stall' | 'till'
@@ -284,6 +314,11 @@ export interface Order {
   customer_name: string | null
   note: string | null
   pay_for_me: boolean
+  /** The table to bring it to. Null: the counter. */
+  table: string | null
+  reward: OrderReward | null
+  flags?: string[]
+  status: OrderStatus
   collected_at: string | null
   created_at: string
   amount?: string

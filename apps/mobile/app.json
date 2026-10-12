@@ -9,12 +9,18 @@
     "backgroundColor": "#E8F7EF",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": false,
+      "supportsTablet": true,
       "bundleIdentifier": "xyz.kova.pay.monad",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "NSFaceIDUsageDescription": "Use Face ID to approve payments and unlock your Ren wallet.",
-        "NFCReaderUsageDescription": "Hold a Ren Card near the top of your iPhone to take a payment."
+        "NFCReaderUsageDescription": "Ren reads Ren Cards to link them to your wallet and to take card payments at your till.",
+        "UISupportedInterfaceOrientations~ipad": [
+          "UIInterfaceOrientationLandscapeLeft",
+          "UIInterfaceOrientationLandscapeRight",
+          "UIInterfaceOrientationPortrait",
+          "UIInterfaceOrientationPortraitUpsideDown"
+        ]
       },
       "associatedDomains": [
         "webcredentials:mykova.app",
@@ -22,13 +28,16 @@
         "webcredentials:web-monad.up.railway.app",
         "applinks:web-monad.up.railway.app"
       ],
-      "appleTeamId": "5N8DU2A9WH"
+      "appleTeamId": "R38YN743Q6"
     },
     "android": {
       "package": "xyz.kova.pay.monad",
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "android.permission.NFC"
+        "android.permission.NFC",
+        "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.CAMERA"
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/icon-foreground.png",
@@ -47,9 +56,11 @@
       [
         "react-native-nfc-manager",
         {
-          "nfcPermission": "Hold a Ren Card near the top of your iPhone to take a payment.",
+          "nfcPermission": "Ren reads Ren Cards to link them to your wallet and to take card payments at your till.",
+          "includeNdefEntitlement": false,
           "selectIdentifiers": [
-            "F04B4F564131"
+            "A0000009490148614C6F",
+            "481199130E9F01"
           ]
         }
       ],
@@ -83,6 +94,15 @@
     "experiments": {
       "typedRoutes": true
     },
-    "icon": "./assets/brand/icon.png"
+    "icon": "./assets/brand/icon.png",
+    "extra": {
+      "router": {
+        "root": "./src/app"
+      },
+      "eas": {
+        "projectId": "5ba42917-2a21-4f53-ac1f-cc3ab2c1f0e1"
+      }
+    },
+    "owner": "shaibuafeez"
   }
 }

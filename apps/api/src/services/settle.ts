@@ -7,6 +7,7 @@ import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { encodeId } from '../ids.js'
 import { findIntentByMemo, type PaymentIntent } from './intents.js'
+import { takeStock } from './orders.js'
 import { onIntentPaid } from './travel.js'
 
 export interface SettleResult {
@@ -69,6 +70,9 @@ export async function settleFromReceipt(
   // The last share of a Kova Travel trip books it. Outside the transaction: booking calls Duffel.
   if (status === 'paid')
     void onIntentPaid(intent.id).catch((error) => console.error('[travel] after payment', error))
+  // Counting down a shop's stock for what it sold. Outside the transaction: a sale never waits on it.
+  if (status === 'paid')
+    void takeStock(intent.id).catch((error) => console.error('[stock] after payment', error))
 
   return { status, paymentId }
 
@@ -161,7 +165,7 @@ function isUniqueViolation(error: unknown): boolean {
 
 /**
  * The intent a receipt claims to pay: the Kova payment memo it carries (a `transferWithMemo` on
- * Tempo, an authorization's nonce on Monad).
+ * Tempo; an authorization's nonce or a Kova Card tap on Monad).
  */
 async function findIntentForReceipt(
   receipt: TransactionReceipt,

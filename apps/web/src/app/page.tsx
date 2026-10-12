@@ -17,6 +17,8 @@ const Coin = () => <span className="lp-coin" aria-hidden="true" />
 
 export default async function Landing() {
   const signedIn = Boolean(await getSession())
+  // Live on mainnet is Ren on Monad's claim; a Tempo build is on Tempo's test network.
+  const mainnet = !onTempo && process.env.KOVA_NETWORK === 'mainnet'
   return (
     <div className="lp">
       <header className="lp-nav">
@@ -44,7 +46,7 @@ export default async function Landing() {
         <div className="lp-hero-copy">
           <p className="lp-live">
             <span className="lp-live-dot" aria-hidden="true" />
-            Live on {chainName} testnet
+            Live on {chainName} {mainnet ? 'mainnet' : 'testnet'}
           </p>
           <h1 className="lp-title" aria-label="Tap. Paid. Anywhere.">
             <span className="lp-word" style={{ '--i': 0 } as React.CSSProperties}>
@@ -61,8 +63,9 @@ export default async function Landing() {
             </span>
           </h1>
           <p className="lp-lead">
-            Ren turns any phone into a till for digital dollars. Your customer taps or scans, and the money settles on {chainName} in about a second, straight to your own
-            wallet. No card machine, no card fees, no waiting days to get paid.
+            Ren turns any phone into a till for digital dollars. Your customer taps or scans, and
+            the money settles on {chainName} in about a second, straight to your own wallet. No card
+            machine, no card fees, no waiting days to get paid.
           </p>
           <div className="lp-ctas">
             <Pill href="/wallet/shop?go=open" icon="arrow" tone="coral">
@@ -88,7 +91,9 @@ export default async function Landing() {
               <dd>In your own wallet</dd>
             </div>
           </dl>
-          <p className="lp-fine">Test dollars on {chainName}’s test network, at real speed.</p>
+          {mainnet ? null : (
+            <p className="lp-fine">Test dollars on {chainName}’s test network, at real speed.</p>
+          )}
         </div>
 
         <div className="lp-hero-stage">
@@ -106,29 +111,35 @@ export default async function Landing() {
           <h2>Your phone is the card machine</h2>
           <ul>
             <li>
-              <Icon name="terminal" size={18} /> Pair any phone with a one-time code. Staff phones get a key that can only take payments.
+              <Icon name="terminal" size={18} /> Pair any phone with a one-time code. Staff phones
+              get a key that can only take payments.
             </li>
             <li>
-              <Icon name="list" size={18} /> Every payment lands live on your dashboard, with the on-chain proof one click away.
+              <Icon name="list" size={18} /> Every payment lands live on your dashboard, with the
+              on-chain proof one click away.
             </li>
             <li>
-              <Icon name="shield" size={18} /> Money settles to your own address. Ren never holds it, so there’s nothing to withdraw.
+              <Icon name="shield" size={18} /> Money settles to your own address. Ren never holds
+              it, so there’s nothing to withdraw.
             </li>
           </ul>
           <Art name="scene-paid-terminal" size={290} className="lp-panel-art" />
         </article>
         <article className="lp-panel lp-panel-coral" id="people">
           <p className="lp-panel-kicker">Ren Pay, for people</p>
-          <h2>Pay a shop in Lagos with dollars from London</h2>
+          <h2>Pay a shop in Singapore with dollars from London</h2>
           <ul>
             <li>
-              <Icon name="tap" size={18} /> Tap to pay at the counter, confirmed with Face ID. Your key never leaves your phone.
+              <Icon name="tap" size={18} /> Tap to pay at the counter, confirmed with Face ID. Your
+              key never leaves your phone.
             </li>
             <li>
-              <Icon name="send" size={18} /> Send money to anyone, anywhere, in seconds, for a fraction of a cent.
+              <Icon name="send" size={18} /> Send money to anyone, anywhere, in seconds, for a
+              fraction of a cent.
             </li>
             <li>
-              <Icon name="globe" size={18} /> See every amount in your own currency: dollars, euros, pounds or naira.
+              <Icon name="globe" size={18} /> See every amount in your own currency: dollars, euros
+              or pounds.
             </li>
           </ul>
           <div className="lp-flight">
@@ -151,11 +162,11 @@ export default async function Landing() {
           <span>
             <Art name="coin-gbp" size={44} /> £9.88
           </span>
-          <span>
-            <Art name="coin-ngn" size={44} /> ₦17,188
-          </span>
         </div>
-        <small>At Ren’s published reference rates. Payments always settle in dollars ({onTempo ? 'USDC' : 'AUSD, Agora’s dollar'}).</small>
+        <small>
+          At Ren’s published reference rates. Payments always settle in dollars (
+          {onTempo ? 'USDC' : 'AUSD, Agora’s dollar'}).
+        </small>
       </section>
 
       {/* Developers -------------------------------------------------------------------------- */}
@@ -164,8 +175,9 @@ export default async function Landing() {
           <p className="lp-panel-kicker">For developers</p>
           <h2>One POST to charge. A signed webhook when it’s paid.</h2>
           <p>
-            Take Ren payments on your own site or till software. Create a charge, show its code, and hear about it the moment it settles. Retries are safe with an
-            Idempotency-Key, and every payment is matched on-chain, so there’s nothing to reconcile by hand.
+            Take Ren payments on your own site or till software. Create a charge, show its code, and
+            hear about it the moment it settles. Retries are safe with an Idempotency-Key, and every
+            payment is matched on-chain, so there’s nothing to reconcile by hand.
           </p>
           <Pill href="/wallet/shop?go=open" icon="code" tone="paper">
             Get API keys
@@ -173,18 +185,23 @@ export default async function Landing() {
         </div>
         <pre className="lp-code" aria-label="Example: create a charge">
           <code>
-            <span className="c-dim">$</span> curl <span className="c-str">https://api.ren…/v1/payment_intents</span> \{'\n'}
-            {'    '}-H <span className="c-str">"Authorization: Bearer $KOVA_SECRET_KEY"</span> \{'\n'}
-            {'    '}-d <span className="c-str">{`'{"amount":"12.50","reference":"Order 1042"}'`}</span>
+            <span className="c-dim">$</span> curl{' '}
+            <span className="c-str">https://api.ren…/v1/payment_intents</span> \{'\n'}
+            {'    '}-H <span className="c-str">"Authorization: Bearer $KOVA_SECRET_KEY"</span> \
+            {'\n'}
+            {'    '}-d{' '}
+            <span className="c-str">{`'{"amount":"12.50","reference":"Order 1042"}'`}</span>
             {'\n\n'}
             {'{'}
             {'\n'}
             {'  '}
-            <span className="c-key">"id"</span>: <span className="c-str">"pi_06gd1ajtn5yr71g1tdwpvk9fqm"</span>,{'\n'}
+            <span className="c-key">"id"</span>:{' '}
+            <span className="c-str">"pi_06gd1ajtn5yr71g1tdwpvk9fqm"</span>,{'\n'}
             {'  '}
             <span className="c-key">"amount"</span>: <span className="c-str">"12.50"</span>,{'\n'}
             {'  '}
-            <span className="c-key">"status"</span>: <span className="c-str">"requires_payment"</span>,{'\n'}
+            <span className="c-key">"status"</span>:{' '}
+            <span className="c-str">"requires_payment"</span>,{'\n'}
             {'  '}
             <span className="c-key">"pay_to"</span>: <span className="c-str">"0x44e3…7e41"</span>
             {'\n'}
@@ -194,7 +211,8 @@ export default async function Landing() {
             {'\n'}
             <span className="c-key">Kova-Signature</span>: t=1790208020,v1=9e56…{'\n'}
             {'{ '}
-            <span className="c-key">"type"</span>: <span className="c-ok">"payment_intent.paid"</span>
+            <span className="c-key">"type"</span>:{' '}
+            <span className="c-ok">"payment_intent.paid"</span>
             {' }'}
           </code>
         </pre>
@@ -207,17 +225,26 @@ export default async function Landing() {
           <div>
             <Icon name="shield" size={24} />
             <h3>Settles to you, directly</h3>
-            <p>Payments move from your customer’s wallet to yours. There’s no Ren balance in between, and nothing to freeze.</p>
+            <p>
+              Payments move from your customer’s wallet to yours. There’s no Ren balance in between,
+              and nothing to freeze.
+            </p>
           </div>
           <div>
             <Icon name="key" size={24} />
             <h3>Keys stay on phones</h3>
-            <p>A Ren Pay wallet key lives in the phone’s secure chip behind Face ID. It never touches a server.</p>
+            <p>
+              A Ren Pay wallet key lives in the phone’s secure chip behind Face ID. It never touches
+              a server.
+            </p>
           </div>
           <div>
             <Icon name="check" size={24} />
             <h3>Checked on-chain</h3>
-            <p>Every payment carries a memo tying it to its charge, and Ren verifies it on {chainName} before anything says Paid.</p>
+            <p>
+              Every payment carries a memo tying it to its charge, and Ren verifies it on{' '}
+              {chainName} before anything says Paid.
+            </p>
           </div>
         </div>
       </section>
@@ -226,7 +253,10 @@ export default async function Landing() {
       <section className="lp-close">
         <Art name="reni-peek" size={220} className="lp-close-peek" />
         <h2>Your counter is ready when you are</h2>
-        <p>Open a shop in a minute. Pair your phone. Take your first payment before your coffee goes cold.</p>
+        <p>
+          Open a shop in a minute. Pair your phone. Take your first payment before your coffee goes
+          cold.
+        </p>
         <div className="lp-ctas lp-ctas-center">
           <Pill href="/wallet/shop?go=open" icon="arrow">
             Open a shop
@@ -241,7 +271,10 @@ export default async function Landing() {
 
       <footer className="lp-foot">
         <Brand />
-        <p>Tap. Paid. Anywhere. Built on {chainName}. A test network preview: no real money moves.</p>
+        <p>
+          Tap. Paid. Anywhere. Built on {chainName}.
+          {mainnet ? '' : ' A test network preview with test dollars.'}
+        </p>
         <nav aria-label="Footer">
           <Link href="/wallet">Open Ren</Link>
           <Link href="/wallet/shop?go=open">Open a shop</Link>

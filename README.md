@@ -226,4 +226,4 @@ pnpm --filter @kova/api test
 
 ## License
 
-[Apache-2.0](LICENSE).
+[MIT](LICENSE).

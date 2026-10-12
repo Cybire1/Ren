@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useEffect, useMemo, useState } from 'react'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -18,11 +18,12 @@ import {
 } from 'react-native'
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { getCheckout, getPublicStall, orderFromStall, type PlacedOrder, type PublicStall, payLinkFor } from '@/lib/api'
+import { getCheckout, getPublicStall, getStampCard, orderFromStall, type PlacedOrder, type PublicStall, payLinkFor, type StampCard } from '@/lib/api'
+import { tableFrom } from '@/lib/links'
 import { type DisplayCurrency, formatLocal } from '@/lib/money'
 import { colors, fonts } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import { Reni } from '@/ui/art'
+import { Coin, Reni } from '@/ui/art'
 import { Awning } from '@/ui/Awning'
 import { Icon } from '@/ui/Icon'
 import { Stage as ReniStage } from '@/ui/Stage'
@@ -33,12 +34,26 @@ import { chainName } from '@/lib/config'
 type Basket = Record<string, number>
 
 /**
- * A stall, as a buyer sees it in Kova Pay: the sign, what's for sale with prices in your own
+ * A stall, as a buyer sees it in Ren Pay: the sign, what's for sale with prices in your own
  * currency, a basket, and two ways to pay: now with Face ID, or by sending the bill to
  * someone who'll pay it from wherever they are.
  */
+/** Development only: a dev link's bag fills once per app run, however often the screen mounts. */
+let devBagFilled = false
+let devOrderPlaced = false
+
 export default function StallFront() {
-  const { slug } = useLocalSearchParams<{ slug: string }>()
+  // bag, note and checkout are development-only: a dev link fills the bag and places the order, so a
+  // film can capture every real screen of buying without anyone tapping.
+  const { slug, bag, note: devNote, checkout, table: tableParam } = useLocalSearchParams<{
+    slug: string
+    bag?: string
+    note?: string
+    checkout?: string
+    /** From a table's own QR code: the order is brought to this table. */
+    table?: string
+  }>()
+  const table = tableFrom(tableParam)
   const { width } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const { profile } = useWallet()
@@ -46,6 +61,8 @@ export default function StallFront() {
   const [problem, setProblem] = useState<string | null>(null)
   const [basket, setBasket] = useState<Basket>({})
   const [open, setOpen] = useState(false)
+  const [card, setCard] = useState<StampCard | null>(null)
+  const payer = profile?.address
 
   useEffect(() => {
     getPublicStall(slug)
@@ -53,13 +70,44 @@ export default function StallFront() {
       .catch((error: Error) => setProblem(/no such/i.test(error.message) ? 'This stall isn’t here. It may have closed for good.' : error.message))
   }, [slug])
 
+  useEffect(() => {
+    if (!__DEV__ || !bag || !stall || devBagFilled) return
+    devBagFilled = true
+    const next: Basket = {}
+    for (const part of bag.split(';')) {
+      const [name, qty = '1'] = part.split('*')
+      const item = stall.items.find((i) => i.name === name)
+      if (item) next[item.id] = Number(qty)
+    }
+    setBasket(next)
+    setTimeout(() => setOpen(true), 1200)
+  }, [bag, stall])
+
+  // The wallet is the stamp card: read it whenever the stall comes into view, so a stamp just
+  // earned shows on the way back from paying.
+  const loyalty = stall?.loyalty_every ?? null
+  useFocusEffect(
+    useCallback(() => {
+      if (!loyalty || !payer) return
+      getStampCard(slug, payer)
+        .then(setCard)
+        .catch(() => {})
+    }, [slug, payer, loyalty]),
+  )
+
   const currency = profile?.currency ?? 'USD'
   const lines = useMemo(
     () => (stall?.items ?? []).flatMap((item) => (basket[item.id] ? [{ item, quantity: basket[item.id] as number }] : [])),
     [stall, basket],
   )
   const count = lines.reduce((n, l) => n + l.quantity, 0)
-  const total = lines.reduce((sum, l) => sum + Math.round(Number(l.item.price) * 100) * l.quantity, 0) / 100
+  const subtotal = lines.reduce((sum, l) => sum + Math.round(Number(l.item.price) * 100) * l.quantity, 0) / 100
+  // A full card: the cheapest item on this order is free, as Kova will price it.
+  const free =
+    card?.ready && card.every && lines.length
+      ? lines.reduce((a, b) => (Number(b.item.price) < Number(a.item.price) ? b : a)).item
+      : null
+  const total = Math.max(0, Math.round((subtotal - (free ? Number(free.price) : 0)) * 100) / 100)
   const set = (id: string, quantity: number) => setBasket((b) => ({ ...b, [id]: Math.max(0, Math.min(99, quantity)) }))
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'))
 
@@ -104,6 +152,13 @@ export default function StallFront() {
             </Txt>
           ) : null}
           <View style={styles.chips}>
+            {table ? (
+              <View style={[styles.chip, styles.tableChip]} accessibilityLabel={`Ordering for table ${table}`}>
+                <Txt weight="bold" size={13} color={colors.white}>
+                  Table {table}
+                </Txt>
+              </View>
+            ) : null}
             <View style={[styles.chip, { backgroundColor: stall.open ? colors.tealSoft : colors.sunken }]}>
               <View style={[styles.dot, { backgroundColor: stall.open ? colors.teal : colors.muted }]} />
               <Txt weight="semi" size={13}>
@@ -132,6 +187,8 @@ export default function StallFront() {
           )}
         </View>
 
+        {card?.every && payer ? <StampCardFace card={card} free={free?.name ?? null} /> : null}
+
         {stall.items.length === 0 ? (
           <View style={styles.center}>
             <Reni pose="sleep" size={140} />
@@ -146,7 +203,7 @@ export default function StallFront() {
               const local = about(item.price, currency)
               return (
                 <View key={item.id} style={[styles.item, qty > 0 && styles.itemIn, item.sold_out && { opacity: 0.55 }]}>
-                  <ItemFace item={item} size={76} radius={20} />
+                  <ItemFace item={item} size={64} radius={17} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Txt weight="semi" size={17} numberOfLines={2}>
                       {item.name}
@@ -222,7 +279,7 @@ export default function StallFront() {
               View basket
             </Txt>
             <Txt weight="bold" size={17} color={colors.white}>
-              {dollars(total)}
+              {free && total === 0 ? 'Free' : dollars(total)}
             </Txt>
           </Pressable>
         </Animated.View>
@@ -232,9 +289,16 @@ export default function StallFront() {
         visible={open}
         stall={stall}
         lines={lines}
+        subtotal={subtotal}
         total={total}
+        free={free}
+        card={card}
+        table={table}
+        payer={payer}
         currency={currency}
         defaultName={profile?.name.split(' ')[0] ?? ''}
+        defaultNote={__DEV__ ? (devNote ?? '') : ''}
+        autoPlace={__DEV__ && checkout === '1'}
         onQty={set}
         onClose={() => setOpen(false)}
         onPaid={() => setBasket({})}
@@ -247,9 +311,16 @@ function BasketSheet({
   visible,
   stall,
   lines,
+  subtotal,
   total,
+  free,
+  card,
+  table,
+  payer,
   currency,
   defaultName,
+  defaultNote,
+  autoPlace,
   onQty,
   onClose,
   onPaid,
@@ -257,16 +328,27 @@ function BasketSheet({
   visible: boolean
   stall: PublicStall
   lines: { item: PublicStall['items'][number]; quantity: number }[]
+  subtotal: number
+  /** After the stamp card's free item. */
   total: number
+  /** The item a full stamp card makes free on this order. */
+  free: PublicStall['items'][number] | null
+  card: StampCard | null
+  table: string | undefined
+  /** This wallet: it pays, so it earns the stamp. */
+  payer: string | undefined
   currency: DisplayCurrency
   defaultName: string
+  defaultNote: string
+  /** Development only: place the order by itself, for a film. */
+  autoPlace: boolean
   onQty: (id: string, quantity: number) => void
   onClose: () => void
   onPaid: () => void
 }) {
   const insets = useSafeAreaInsets()
   const [name, setName] = useState(defaultName)
-  const [note, setNote] = useState('')
+  const [note, setNote] = useState(defaultNote)
   const [busy, setBusy] = useState<'pay' | 'ask' | null>(null)
   const [problem, setProblem] = useState<string | null>(null)
   const [asked, setAsked] = useState<PlacedOrder | null>(null)
@@ -284,13 +366,16 @@ function BasketSheet({
         customer_name: name.trim() || undefined,
         note: note.trim() || undefined,
         pay_for_me: payForMe,
+        table,
+        // Paying yourself earns the stamp, and spends a full card. Someone else paying doesn't.
+        payer: payForMe ? undefined : payer,
       })
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       if (payForMe) setAsked(placed)
       else {
         onClose()
         onPaid()
-        router.push({ pathname: '/pay/[id]', params: { id: placed.checkout.id } })
+        router.push({ pathname: '/pay/[id]', params: { id: placed.checkout.id, ...(autoPlace ? { autopay: '1' } : {}) } })
       }
     } catch (error) {
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error)
@@ -299,6 +384,17 @@ function BasketSheet({
       setBusy(null)
     }
   }
+
+  useEffect(() => {
+    if (!autoPlace || !visible || lines.length === 0 || devOrderPlaced) return
+    const timer = setTimeout(() => {
+      if (devOrderPlaced) return
+      devOrderPlaced = true
+      void place(false)
+    }, 2600)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlace, visible, lines.length])
 
   const dismiss = () => {
     if (asked) {
@@ -323,6 +419,7 @@ function BasketSheet({
               </Txt>
               <Txt size={14} color={colors.muted}>
                 from {stall.name}
+                {table ? `, brought to table ${table}` : ''}
               </Txt>
               <View style={styles.basket}>
                 {lines.map((l, i) => (
@@ -336,15 +433,35 @@ function BasketSheet({
                     </Txt>
                   </View>
                 ))}
+                {free ? (
+                  <View style={[styles.basketLine, styles.freeLine]}>
+                    <View style={styles.freeStamp}>
+                      <Icon name="sparkle" size={15} />
+                    </View>
+                    <Txt weight="semi" size={15} color={colors.tealDeep} style={{ flex: 1 }} numberOfLines={2}>
+                      Stamp card: {free.name} free
+                    </Txt>
+                    <Txt weight="semi" size={15} color={colors.tealDeep}>
+                      −{dollars(free.price)}
+                    </Txt>
+                  </View>
+                ) : null}
                 <View style={styles.totalRow}>
-                  <Txt weight="semi" size={16}>
-                    Total
-                  </Txt>
+                  <View>
+                    <Txt weight="semi" size={16}>
+                      Total
+                    </Txt>
+                    {free ? (
+                      <Txt size={13} color={colors.muted} style={{ textDecorationLine: 'line-through' }}>
+                        {dollars(subtotal)}
+                      </Txt>
+                    ) : null}
+                  </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     <Txt weight="bold" size={22}>
-                      {dollars(total)}
+                      {free && total === 0 ? 'Free' : dollars(total)}
                     </Txt>
-                    {currency !== 'USD' ? (
+                    {currency !== 'USD' && total > 0 ? (
                       <Txt size={13} color={colors.muted}>
                         about {formatLocal(total, currency)}
                       </Txt>
@@ -356,26 +473,86 @@ function BasketSheet({
               <Txt weight="semi" size={14} color={colors.muted} style={styles.label}>
                 Your name <Txt size={13} color="#8C9799">so they know it’s yours</Txt>
               </Txt>
-              <TextInput value={name} onChangeText={setName} maxLength={60} placeholder="Tunde" placeholderTextColor="#8C9799" style={styles.input} />
+              <TextInput value={name} onChangeText={setName} maxLength={60} placeholder="Sam" placeholderTextColor="#8C9799" style={styles.input} />
               <Txt weight="semi" size={14} color={colors.muted} style={styles.label}>
                 A note <Txt size={13} color="#8C9799">optional</Txt>
               </Txt>
-              <TextInput value={note} onChangeText={setNote} maxLength={200} placeholder="No sugar, please" placeholderTextColor="#8C9799" style={styles.input} />
+              <TextInput value={note} onChangeText={setNote} maxLength={200} placeholder="Gift-wrap it, please" placeholderTextColor="#8C9799" style={styles.input} />
 
               {problem ? (
                 <Txt weight="medium" size={14} color={colors.danger} style={{ marginTop: 12, textAlign: 'center' }}>
                   {problem}
                 </Txt>
               ) : null}
+              {card?.every && !free ? (
+                <Txt size={13} color={colors.muted} style={{ marginTop: 12, marginLeft: 4 }}>
+                  Paying for this earns a stamp: {Math.min(card.stamps + 1, card.every)} of {card.every}.
+                </Txt>
+              ) : null}
               <View style={{ gap: 10, marginTop: 16 }}>
-                <PillButton label={`Pay ${dollars(total)}`} icon="face" loading={busy === 'pay'} disabled={busy !== null || !stall.open} onPress={() => void place(false)} />
+                <PillButton
+                  label={free && total === 0 ? 'Get it free' : `Pay ${dollars(total)}`}
+                  icon="face"
+                  loading={busy === 'pay'}
+                  disabled={busy !== null || !stall.open}
+                  onPress={() => void place(false)}
+                />
                 <PillButton label="Ask someone else to pay" icon="send" tone="white" loading={busy === 'ask'} disabled={busy !== null || !stall.open} onPress={() => void place(true)} />
               </View>
+              {free ? (
+                <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 10 }}>
+                  The free {free.name} counts when you pay from your own wallet.
+                </Txt>
+              ) : null}
             </ScrollView>
           )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
+  )
+}
+
+/**
+ * The stamp card, and there's nothing to sign up for: the wallet that pays is the card. A coin
+ * for each paid order, and the last circle is the free one.
+ */
+function StampCardFace({ card, free }: { card: StampCard; free: string | null }) {
+  const every = card.every ?? 0
+  const left = every - card.stamps
+  const line = card.ready
+    ? free
+      ? `Your card is full. The ${free} on this order is free.`
+      : 'Your card is full. The cheapest item on this order is free.'
+    : card.stamps === 0
+      ? `Pay with Ren and collect a stamp. After ${every}, the cheapest item on your next order is free.`
+      : `${card.stamps} of ${every} stamps. ${left === 1 ? 'One more' : `${left} more`} and the next one has something free.`
+  return (
+    <View style={[styles.stampCard, card.ready && { backgroundColor: colors.coralSoft }]}>
+      <View style={styles.stampHead}>
+        <View style={{ flex: 1 }}>
+          <Txt weight="bold" size={17}>
+            {card.ready ? 'Something’s on the house' : 'Your stamp card'}
+          </Txt>
+          <Txt size={13} color={colors.onTint} style={{ marginTop: 2, lineHeight: 18 }}>
+            {line}
+          </Txt>
+        </View>
+        <Reni pose={card.ready ? 'cheer' : 'wave'} size={card.ready ? 62 : 54} />
+      </View>
+      <View style={styles.stamps} accessibilityLabel={`${card.stamps} of ${every} stamps`}>
+        {Array.from({ length: every }, (_, i) => i + 1).map((n) => (
+          <View key={n} style={[styles.stamp, n <= card.stamps ? styles.stampOn : null]}>
+            {n <= card.stamps ? <Coin size={22} /> : null}
+          </View>
+        ))}
+        <View style={[styles.stamp, styles.stampFree, card.ready && { backgroundColor: colors.coral }]}>
+          <Icon name="sparkle" size={14} color={card.ready ? colors.white : colors.ink} />
+        </View>
+      </View>
+      <Txt size={12} color={colors.onTint} style={{ marginTop: 10 }}>
+        No sign-up. Your Ren wallet is the card.
+      </Txt>
+    </View>
   )
 }
 
@@ -459,22 +636,41 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   chip: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  tableChip: { backgroundColor: colors.coral, borderWidth: 2, borderColor: colors.ink },
+  stampCard: { marginHorizontal: 20, marginTop: 16, padding: 14, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealSoft },
+  stampHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stamps: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  stamp: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stampOn: { borderStyle: 'solid', backgroundColor: colors.white },
+  stampFree: { borderStyle: 'solid', backgroundColor: colors.white },
+  freeLine: { borderTopWidth: 1, borderColor: colors.sunken },
+  freeStamp: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    padding: 10,
-    paddingRight: 12,
-    borderRadius: 26,
+    gap: 12,
+    padding: 8,
+    paddingRight: 10,
+    borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,
   },
   itemIn: { backgroundColor: colors.white },
-  add: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.coral, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  add: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.coral, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   barWrap: { position: 'absolute', left: 20, right: 20 },
-  bar: { height: 64, borderRadius: 32, backgroundColor: colors.ink, flexDirection: 'row', alignItems: 'center', gap: 14, paddingLeft: 8, paddingRight: 24 },
-  barCount: { width: 48, height: 48, borderRadius: 24, backgroundColor: colors.coral, alignItems: 'center', justifyContent: 'center' },
+  bar: { height: 56, borderRadius: 28, backgroundColor: colors.ink, flexDirection: 'row', alignItems: 'center', gap: 14, paddingLeft: 8, paddingRight: 24 },
+  barCount: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.coral, alignItems: 'center', justifyContent: 'center' },
   backdrop: { flex: 1, backgroundColor: 'rgba(16,35,63,0.32)' },
   sheet: { maxHeight: '88%', backgroundColor: colors.paper, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 20, paddingTop: 10 },
   grip: { alignSelf: 'center', width: 40, height: 5, borderRadius: 3, backgroundColor: 'rgba(16,35,63,0.16)' },
@@ -484,7 +680,7 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderTopWidth: 2, borderColor: colors.ink },
   label: { marginTop: 16, marginBottom: 8, marginLeft: 4 },
   input: {
-    height: 52,
+    height: 46,
     borderRadius: 20,
     borderWidth: 2,
     borderColor: colors.ink,

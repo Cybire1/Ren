@@ -26,8 +26,11 @@ const merchant = privateKeyToAccount(generatePrivateKey())
 let watcher: WatcherHandle | undefined
 let merchantId: string
 
+// On-chain: it needs a relayer with testnet MON and AUSD (pnpm setup:dev). Without one, it skips.
+const relayer = Boolean(walletClient)
+
 beforeAll(async () => {
-  if (!walletClient) throw new Error('no relayer configured: run `pnpm setup:dev` first')
+  if (!relayer) return
   merchantId = uuidv7()
   await db.insert(schema.merchants).values({
     id: merchantId,
@@ -45,7 +48,7 @@ afterAll(async () => {
   await watcher?.stop()
 })
 
-describe('chain watcher', () => {
+describe.skipIf(!relayer)('chain watcher (on Monad testnet; needs a funded relayer)', () => {
   it('settles a payment Kova never submitted, and indexes it for wallets', async () => {
     const intentId = uuidv7()
     const memo = encodeMemo({ kind: 'payment', id: intentId })

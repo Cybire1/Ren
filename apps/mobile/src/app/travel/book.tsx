@@ -366,10 +366,10 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
   chip: { height: 36, paddingHorizontal: 12, borderRadius: 18, borderWidth: 2, borderColor: colors.ink, justifyContent: 'center' },
   chipOn: { backgroundColor: colors.ink },
-  gender: { flex: 1, alignItems: 'center', height: 50 },
+  gender: { flex: 1, alignItems: 'center', height: 44 },
   twoCol: { flexDirection: 'row', gap: 8 },
   input: {
-    height: 50,
+    height: 44,
     borderRadius: 18,
     borderWidth: 2,
     borderColor: colors.ink,

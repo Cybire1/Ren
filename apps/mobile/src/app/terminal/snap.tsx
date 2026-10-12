@@ -97,7 +97,7 @@ export default function SnapMenu() {
             </Txt>
             <Txt size={15} color={colors.muted} style={{ textAlign: 'center', marginTop: 6, lineHeight: 22 }}>
               {stage === 'reading'
-                ? 'Picking out every item and price. Prices in naira, euros or pounds become dollars at Ren’s reference rate.'
+                ? 'Picking out every item and price. Prices in euros, pounds or any other money become dollars at Ren’s reference rate.'
                 : 'A menu, a chalkboard or a printed price list. You check every line before anything goes on your stall.'}
             </Txt>
             {problem ? (

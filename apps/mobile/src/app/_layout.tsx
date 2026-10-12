@@ -20,6 +20,7 @@ import { TravelProvider } from '@/lib/travel'
 import { TerminalProvider } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { useWallet, WalletProvider } from '@/lib/wallet'
+import { OrderWatcher } from '@/lib/watch'
 
 void SplashScreen.preventAutoHideAsync()
 
@@ -49,12 +50,21 @@ function ArrivalWatcher() {
     if (!arrival || mode !== 'pay') return
     router.push({
       pathname: '/received',
-      params: { amount: arrival.amount.toString(), name: arrival.name, hash: arrival.hash },
+      params: { amount: arrival.amount.toString(), name: arrival.name, hash: arrival.hash, ...(arrival.note ? { note: arrival.note } : {}) },
     })
     clearArrival()
   }, [arrival, clearArrival, mode])
   return null
 }
+
+/** Send is one sheet over Home, sized to each step, so the balance stays in view behind it. */
+const sendSheet = {
+  presentation: 'formSheet',
+  sheetAllowedDetents: 'fitToContents',
+  sheetGrabberVisible: true,
+  sheetCornerRadius: 34,
+  contentStyle: { backgroundColor: colors.paper },
+} as const
 
 export default function RootLayout() {
   const [loaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold })
@@ -77,16 +87,22 @@ export default function RootLayout() {
                 <TravelProvider>
                 <StatusBar style="dark" />
                 <ArrivalWatcher />
+                <OrderWatcher />
                 <DevLaunch />
                 <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
                   <Stack.Screen name="index" options={{ animation: 'none' }} />
                   <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
                   <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="received" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+                  <Stack.Screen name="ready/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
                   <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
                   <Stack.Screen name="open-stall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="card/link" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="card/pin" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="send/index" options={sendSheet} />
+                  <Stack.Screen name="send/[to]" options={sendSheet} />
                 </Stack>
                 </TravelProvider>
               </StallProvider>

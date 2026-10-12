@@ -47,8 +47,11 @@ async function newCharge(amount: string): Promise<Checkout> {
   return getCheckout(baseUrl, (created.body as unknown as { id: string }).id)
 }
 
+// On-chain: it needs a relayer with testnet MON and AUSD (pnpm setup:dev). Without one, it skips.
+const relayer = Boolean(feePayerAddress)
+
 beforeAll(async () => {
-  if (!feePayerAddress) throw new Error('no relayer configured: run `pnpm setup:dev` first')
+  if (!relayer) return
 
   merchantAddress = privateKeyToAccount(generatePrivateKey()).address
   const merchantId = uuidv7()
@@ -84,7 +87,7 @@ afterAll(() => {
   server?.close()
 })
 
-describe('payment flow', () => {
+describe.skipIf(!relayer)('payment flow (on Monad testnet; needs a funded relayer)', () => {
   it('pays a charge from a signature alone: Kova submits it and pays the gas', async () => {
     const checkout = await newCharge('4.50')
     expect(checkout.status).toBe('requires_payment')

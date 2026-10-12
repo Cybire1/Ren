@@ -9,6 +9,8 @@ contract KovaRatesTest is Test {
     address forwarder = makeAddr("forwarder");
 
     function setUp() public {
+        // Monad's clock in October 2026: reports are dated against it.
+        vm.warp(1_800_000_000);
         rates = new KovaRates(forwarder);
     }
 
@@ -37,6 +39,18 @@ contract KovaRatesTest is Test {
         (bytes3[] memory codes, uint256[] memory perUsd,) = rates.allRates();
         assertEq(codes.length, 2);
         assertEq(perUsd[1], 0.92e8);
+    }
+
+    function test_refusesAReportDatedInTheFuture() public {
+        vm.startPrank(forwarder);
+        // A few seconds ahead is the DON's clock against Monad's: fine.
+        rates.onReport("", report(1_800_000_060, two("NGN", "EUR"), pair(1_375e8, 0.92e8)));
+        // A day ahead would freeze the rate until then: refused.
+        vm.expectRevert(abi.encodeWithSelector(KovaRates.FutureReport.selector, uint64(1_800_086_400), uint256(1_800_000_000)));
+        rates.onReport("", report(1_800_086_400, two("NGN", "EUR"), pair(1_500e8, 0.99e8)));
+        vm.stopPrank();
+        (uint256 ngn,) = rates.rateOf("NGN");
+        assertEq(ngn, 1_375e8);
     }
 
     function test_refusesAnyoneButTheForwarder() public {

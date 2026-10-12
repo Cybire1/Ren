@@ -1,18 +1,21 @@
 import { createPasskeyWithPrfOutput, getPasskeyPrfOutput, isMeraError } from '@category-labs/mera'
+import { hkdf } from '@noble/hashes/hkdf.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { type Address, getAddress, isAddress, isAddressEqual, type LocalAccount } from 'viem'
-import type { Checkout } from './api'
+import { type Address, getAddress, hexToBytes, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
+import { type Checkout, demoSignIn } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
-import { chainKey, passkeyDomain } from './config'
+import { chainKey, notesTravel, passkeyDomain } from './config'
 import { openSigningSession } from './keys'
 import { type DisplayCurrency, formatUsd } from './money'
 import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
 import { endSession, sessionAccount, spend, startSession } from './session'
 import { load, remove, save } from './storage'
 import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vault'
+import { ensureNoteKey, myNoteKeys, readNote, theirNoteKey } from './notes'
 
 /**
  * The wallet is a passkey. Creating it takes one Face ID: the passkey, which iCloud Keychain
@@ -26,6 +29,10 @@ import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vaul
  */
 
 const PRF = chainKey('prf.v1')
+/** Development only: a wallet made without the passkey sheet keeps its key here, so it still signs after a reload. */
+const DEV_PRF = 'kova.dev.prf'
+/** The App Review demo account's secret, which stands where a passkey's PRF output would. */
+const DEMO_PRF = 'kova.demo.prf.v1'
 const PROFILE = 'kova.profile.v1'
 // History, balance and the block cursor belong to one chain, so each chain's build keeps its own.
 const ACTIVITY = chainKey('activity.v1')
@@ -46,6 +53,8 @@ export interface Profile {
   createdAt?: number
   /** The passkey this wallet comes from, so Kova asks for that one and no other. */
   passkey?: { credentialId: string; transports?: readonly string[] }
+  /** The App Review demo account: opened with a username and password, on testnet only. */
+  demo?: boolean
 }
 
 export type EntryKind = 'paid' | 'sent' | 'received' | 'added'
@@ -61,6 +70,8 @@ export interface Entry {
   txHash?: string
   ms?: number
   at: number
+  /** `detail` is a private note: readable by both of you, or (when they had no note key) by you alone. */
+  private?: 'both' | 'you'
 }
 
 export interface Contact {
@@ -77,6 +88,8 @@ export interface Arrival {
   name: string
   address: Address
   hash: string
+  /** Their private note, opened on this phone. */
+  note?: string
 }
 
 type Status = 'loading' | 'none' | 'ready'
@@ -98,6 +111,11 @@ interface Wallet {
    * all it has, and it ends with the app.
    */
   createForDev?: (name: string, currency: DisplayCurrency) => Promise<void>
+  /**
+   * Opens the App Review demo account (testnet): Kova checks the username and password and gives
+   * back the wallet's secret, which this phone keeps instead of a passkey's.
+   */
+  signInDemo: (username: string, password: string) => Promise<void>
   /** Brings a wallet back from its passkey, on this phone or a new one. The name may be empty. */
   restore: () => Promise<Profile>
   setName: (name: string) => Promise<void>
@@ -105,6 +123,8 @@ interface Wallet {
   addMoney: () => Promise<void>
   payCheckout: (checkout: Checkout) => Promise<Entry>
   send: (to: Contact, amount: bigint, note?: string) => Promise<Entry>
+  /** Whether a private note to them can be read by them (they've published a note key). */
+  noteReaches: (address: Address) => Promise<boolean>
   rememberContact: (contact: Contact) => Promise<void>
   /** Your own name for someone. It replaces their address everywhere, past payments included. */
   renameContact: (address: Address, name: string) => Promise<void>
@@ -113,6 +133,12 @@ interface Wallet {
    * ownership, which the web checks the same way. It moves no money.
    */
   signMessage: (message: string) => Promise<`0x${string}`>
+  /**
+   * Signs EIP-712 typed data as this wallet (the open session, or Face ID): the Kova Card's link,
+   * limit, freeze and unlink approvals, and the permit that lets a linked card spend. Each says
+   * exactly what it allows; none moves money by itself.
+   */
+  signTypedData: (typedData: TypedDataDefinition) => Promise<`0x${string}`>
   signOut: () => Promise<void>
 }
 
@@ -152,6 +178,11 @@ async function begin(prf: Uint8Array, expected?: Address): Promise<LocalAccount>
     throw new Error('That passkey belongs to a different Ren wallet.')
   }
   startSession(session, account)
+  // So people can send this wallet private notes. Quiet: a note key is a nicety, not a payment.
+  if (notesTravel)
+    void ensureNoteKey(account).catch((error) => {
+      if (__DEV__) console.log('[notes] key not published', error instanceof Error ? error.message : error)
+    })
   return account
 }
 
@@ -268,6 +299,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (stopped) return
         await save(CURSOR, head.toString())
         for (const t of transfers) {
+          const note = t.note ? await readNote(t.note, { from: t.from, to: profile.address, value: t.amount }) : null
           const refund = t.kind === 'refund'
           const name = t.faucet ? 'Test dollars' : refund ? 'Refund' : (nameFor(t.from) ?? `${t.from.slice(0, 6)}…${t.from.slice(-4)}`)
           await record({
@@ -275,12 +307,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             kind: t.faucet ? 'added' : 'received',
             amount: t.amount.toString(),
             name,
-            detail: t.faucet ? TEST_DOLLARS_DETAIL : refund ? 'Money back from a booking' : 'Arrived',
+            detail: note ?? (t.faucet ? TEST_DOLLARS_DETAIL : refund ? 'Money back from a booking' : 'Arrived'),
             address: t.from,
             txHash: t.hash,
             at: Date.now(),
+            ...(note ? { private: 'both' as const } : {}),
           })
-          if (!t.faucet) setArrival({ amount: t.amount, name, address: t.from, hash: t.hash })
+          if (!t.faucet) setArrival({ amount: t.amount, name, address: t.from, hash: t.hash, ...(note ? { note } : {}) })
         }
         if (transfers.length) void refresh()
       } catch (error) {
@@ -318,6 +351,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       if (!profile) throw new Error('No wallet on this phone')
       const open = sessionAccount(amount)
       if (open) return open
+      if (profile.demo) {
+        // A shared test wallet: its secret came from a password, so a passkey would add nothing.
+        const demo = await SecureStore.getItemAsync(DEMO_PRF).catch(() => null)
+        if (!demo) throw new Error('Sign in to the demo account again.')
+        return begin(base64urlnopad.decode(demo), profile.address)
+      }
+      if (__DEV__ && !profile.protected) {
+        const dev = await SecureStore.getItemAsync(DEV_PRF).catch(() => null)
+        if (dev) return begin(base64urlnopad.decode(dev), profile.address)
+      }
       const stored = await SecureStore.getItemAsync(PRF, {
         requireAuthentication: true,
         authenticationPrompt: amount > 0n ? `Approve ${formatUsd(amount)}` : 'Open your wallet',
@@ -484,19 +527,29 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const send = useCallback(
     async (to: Contact, amount: bigint, note?: string) => {
-      const account = await unlock(amount)
-      const { hash, ms } = await sendMoney(account, to.address, amount)
+      const text = note?.trim()
+      // Sealed for them and for you; if they have no note key yet, for you alone. Notes travel with
+      // a Monad send, sealed against its authorization; on Tempo a note stays on this phone.
+      const sealable = Boolean(text) && notesTravel
+      const [account, mine, theirs] = await Promise.all([
+        unlock(amount),
+        sealable ? myNoteKeys() : null,
+        sealable ? theirNoteKey(to.address) : null,
+      ])
+      const sealing = sealable && text && mine ? { text, mine: mine.publicKey, theirs } : undefined
+      const { hash, ms } = await sendMoney(account, to.address, amount, sealing)
       spend(amount)
       const entry: Entry = {
         id: newId(),
         kind: 'sent',
         amount: amount.toString(),
         name: to.name,
-        detail: note || 'Sent',
+        detail: text || 'Sent',
         address: to.address,
         txHash: hash,
         ms,
         at: Date.now(),
+        ...(sealing ? { private: sealing.theirs ? ('both' as const) : ('you' as const) } : {}),
       }
       await record(entry)
       await rememberContact(to)
@@ -510,6 +563,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     // The passkey itself stays in iCloud Keychain: it can bring this wallet back at any time.
     endSession()
     await SecureStore.deleteItemAsync(PRF)
+    await SecureStore.deleteItemAsync(DEV_PRF).catch(() => {})
+    await SecureStore.deleteItemAsync(DEMO_PRF).catch(() => {})
     await forgetVaultSecret()
     await remove(PROFILE, ACTIVITY, CONTACTS, CURSOR, BALANCE)
     setProfile(null)
@@ -520,14 +575,50 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const signMessage = useCallback(async (message: string) => (await unlock(0n)).signMessage({ message }), [unlock])
+  const signTypedData = useCallback(
+    async (typedData: TypedDataDefinition) => (await unlock(0n)).signTypedData(typedData),
+    [unlock],
+  )
 
   const createForDev = useCallback(async (name: string, currency: DisplayCurrency) => {
     if (!__DEV__) throw new Error('Development only')
-    const account = await begin(crypto.getRandomValues(new Uint8Array(32)))
+    const entropy = crypto.getRandomValues(new Uint8Array(32))
+    await SecureStore.setItemAsync(DEV_PRF, base64urlnopad.encode(entropy))
+    // A stand-in for the passkey's second secret, so private notes work on a simulator too.
+    await keepVaultSecret(crypto.getRandomValues(new Uint8Array(32)))
+    const account = await begin(entropy)
     const next: Profile = { name: name.trim(), address: account.address, currency, protected: false, createdAt: Date.now() }
     await save(PROFILE, next)
     setProfile(next)
     setBalance(0n)
+    setStatus('ready')
+  }, [])
+
+  const signInDemo = useCallback(async (username: string, password: string) => {
+    const account = await demoSignIn(username, password)
+    const entropy = hexToBytes(account.secret)
+    await SecureStore.setItemAsync(DEMO_PRF, base64urlnopad.encode(entropy), {
+      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+    })
+    // The vault and note keys come from the secret too, so every phone signed in sees the same ones.
+    await keepVaultSecret(hkdf(sha256, entropy, undefined, 'kova.demo.vault.v1', 32))
+    const opened = await begin(entropy, undefined)
+    const contacts = account.contacts.filter((c) => isAddress(c.address)) as Contact[]
+    setSavedContacts(contacts)
+    await save(CONTACTS, contacts)
+    await remove(ACTIVITY, CURSOR, BALANCE)
+    setActivity([])
+    const next: Profile = {
+      name: account.name,
+      address: opened.address,
+      currency: (account.currency as DisplayCurrency) || 'USD',
+      protected: false,
+      demo: true,
+      createdAt: Date.now(),
+    }
+    await save(PROFILE, next)
+    setProfile(next)
+    setBalance(null)
     setStatus('ready')
   }, [])
 
@@ -542,15 +633,18 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     refresh,
     create,
     ...(__DEV__ ? { createForDev } : {}),
+    signInDemo,
     restore,
     setName,
     setCurrency,
     addMoney,
     payCheckout,
     send,
+    noteReaches: async (address: Address) => notesTravel && (await theirNoteKey(address)) !== null,
     rememberContact,
     renameContact,
     signMessage,
+    signTypedData,
     signOut,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>

@@ -2,7 +2,7 @@ import { getNetwork as monadNetwork, getToken as monadToken } from '@kova/monad'
 import { getNetwork as tempoNetwork, getToken as tempoToken } from '@kova/tempo'
 
 /**
- * Kova is one app on two chains. A build runs on one, picked by EXPO_PUBLIC_KOVA_CHAIN: Tempo
+ * Ren is one app on two chains. A build runs on one, picked by EXPO_PUBLIC_KOVA_CHAIN: Tempo
  * (the default) or Monad. Everything that differs sits in `chain.ts` and here; screens only ever
  * ask for `chainName`, `settlementToken` and `explorerName` when they need to say it.
  */
@@ -11,25 +11,36 @@ export const chain: ChainName = process.env.EXPO_PUBLIC_KOVA_CHAIN === 'monad' ?
 export const onTempo = chain === 'tempo'
 
 /**
- * Where this build points: Kova's deployment for its chain, unless the variables say otherwise
+ * Where this build points: Ren's deployment for its chain, unless the variables say otherwise
  * (a local API, say; on a physical phone use your Mac's LAN address, since `localhost` is the
- * phone). Each chain has its own variables, so one untracked `.env` can serve both builds.
+ * phone). Each chain has its own variables, so one untracked `.env` can serve both builds. The
+ * Monad build points at Monad mainnet; EXPO_PUBLIC_KOVA_MONAD_API_URL=https://api-monad.up.railway.app
+ * with EXPO_PUBLIC_KOVA_NETWORK=testnet runs it on the free testnet.
  */
 export const apiUrl = onTempo
   ? (process.env.EXPO_PUBLIC_KOVA_TEMPO_API_URL ?? 'https://api-tempo.up.railway.app')
-  : (process.env.EXPO_PUBLIC_KOVA_MONAD_API_URL ?? 'https://api-monad.up.railway.app')
+  : (process.env.EXPO_PUBLIC_KOVA_MONAD_API_URL ?? 'https://api-monad-mainnet.up.railway.app')
 export const webUrl = onTempo
   ? (process.env.EXPO_PUBLIC_KOVA_TEMPO_WEB_URL ?? 'https://tempo.mykova.app')
   : (process.env.EXPO_PUBLIC_KOVA_MONAD_WEB_URL ?? 'https://mykova.app')
 
+/**
+ * Tempo builds run on testnet (free test dollars) unless EXPO_PUBLIC_KOVA_NETWORK=mainnet; Monad
+ * builds run on mainnet unless EXPO_PUBLIC_KOVA_NETWORK=testnet.
+ */
 export type NetworkId = 'mainnet' | 'testnet'
+const networkSetting = process.env.EXPO_PUBLIC_KOVA_NETWORK
 export const networkId: NetworkId =
-  process.env.EXPO_PUBLIC_KOVA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'
+  networkSetting === 'mainnet' || networkSetting === 'testnet'
+    ? networkSetting
+    : onTempo
+      ? 'testnet'
+      : 'mainnet'
 export const network = onTempo ? tempoNetwork(networkId) : monadNetwork(networkId)
 export const isTestnet = networkId === 'testnet'
 
 /**
- * The domain Kova Pay's passkeys belong to: iOS shows it when you make or use one, and a wallet
+ * The domain Ren's passkeys belong to: iOS shows it when you make or use one, and a wallet
  * is bound to it for good. mykova.app serves the Apple association file that vouches for the app.
  * Both builds use it, so one passkey opens the same wallet address on Tempo and on Monad.
  */
@@ -42,12 +53,25 @@ export const chainName = onTempo ? 'Tempo' : 'Monad'
 export const explorerName = onTempo ? 'Tempo Explorer' : 'Monadscan'
 
 /**
- * The dollar Kova settles in: USDC on Tempo (USDC.e on mainnet, AlphaUSD standing in on testnet,
+ * Deposits from other chains (Aurora Intents, app/from-chain.tsx). Monad only, and off until it
+ * can work end to end: it needs mainnet, a working Monad route and AUSD as a destination, which
+ * NEAR Intents doesn't offer yet. EXPO_PUBLIC_KOVA_CHAIN_DEPOSITS=1 shows it on a Monad build.
+ */
+export const chainDeposits = !onTempo && process.env.EXPO_PUBLIC_KOVA_CHAIN_DEPOSITS === '1'
+
+/**
+ * The dollar Ren settles in: USDC on Tempo (USDC.e on mainnet, AlphaUSD standing in on testnet,
  * whose faucet doesn't hand out USDC.e), AUSD, Agora's dollar, on Monad.
  */
 export const settlementToken = onTempo
   ? tempoToken(networkId, 'USDC')
   : monadToken(networkId, 'AUSD')
+
+/**
+ * Private notes travel with a send, sealed against its EIP-3009 authorization (notes-core.ts). A
+ * Monad send has one; a Tempo transfer doesn't, so on Tempo a note stays on the sender's phone.
+ */
+export const notesTravel = !onTempo
 
 /** Local keys that belong to one chain (history, balance, cursor) carry its name. */
 export const chainKey = (name: string) => `kova.${chain}.${name}`

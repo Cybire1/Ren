@@ -13,6 +13,7 @@ import { relayAuthorization } from '../relay.js'
 import { type PaymentIntent, serializeIntent } from '../services/intents.js'
 import { ordersForIntents } from '../services/orders.js'
 import { confirmTransaction, settleFromReceipt } from '../services/settle.js'
+import { rewardRefusal } from '../services/stamps.js'
 import { tripForCheckout } from '../services/travel.js'
 
 /**
@@ -101,15 +102,22 @@ export const checkoutRoutes = new Hono()
       // What was ordered, when this charge came from a stall or a till sale.
       order: order
         ? {
+            id: order.id,
             lines: order.lines,
             customer_name: order.customer_name,
             note: order.note,
             pay_for_me: order.pay_for_me,
             stall: order.stall,
+            // Where it is at the counter, so the buyer's phone can say "ready" instead of a buzzer.
+            status: order.status,
+            table: order.table,
+            reward: order.reward,
           }
         : null,
       // The flight or hotel, when this charge is a share of a Kova Travel trip.
       trip,
+      // Who paid, once it's paid: public on Monad anyway, and how a receipt finds the payer's stamp card.
+      payment: intent.status === 'paid' ? await paymentOf(intent) : null,
     })
   })
   /**
@@ -149,8 +157,14 @@ export const checkoutRoutes = new Hono()
       throw new KovaError('invalid_request', 'This approval pays someone else.')
     if (authorization.value !== intent.amount)
       throw new KovaError('invalid_request', 'This approval is for a different amount.')
+    // A stamp-card reward is the card owner's alone, and a card pays for one reward.
+    const refusal = await rewardRefusal(intent, authorization.from)
+    if (refusal) throw refusal
 
-    const { receipt, ms } = await relayAuthorization(token as never, authorization, signature)
+    // A charge a stamp card made free is still paid, for $0, so it has its receipt on-chain.
+    const { receipt, ms } = await relayAuthorization(token as never, authorization, signature, {
+      zero: intent.amount === 0n,
+    })
     await settleFromReceipt(receipt)
     const settled = await load(c.req.param('id'))
     return c.json({

@@ -124,7 +124,7 @@ export default function OpenStall() {
           <TextInput
             value={tagline}
             onChangeText={setTagline}
-            placeholder="Fresh bread and coffee, Lekki Phase 1"
+            placeholder="Fresh bread and coffee, round the corner"
             placeholderTextColor="#8C9799"
             maxLength={120}
             editable={!step}
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
   reni: { position: 'absolute', right: 18 },
   label: { marginTop: 20, marginBottom: 8, marginLeft: 4 },
   input: {
-    height: 56,
+    height: 50,
     borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.ink,

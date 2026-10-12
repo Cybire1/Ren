@@ -103,13 +103,14 @@ export function BalanceCard({
           </View>
         ) : (
           <>
-            <Txt weight="heavy" size={30} style={[styles.sign, { marginTop: size * 0.2 }]} importantForAccessibility="no" accessibilityElementsHidden>
+            <Txt weight="heavy" size={30} exact style={[styles.sign, { marginTop: size * 0.2 }]} importantForAccessibility="no" accessibilityElementsHidden>
               $
             </Txt>
             <Odometer value={whole} size={size} label={`Available, ${usd}`} />
             <Txt
               weight="heavy"
               size={30}
+              exact
               color={colors.onTint}
               style={[styles.cents, { marginTop: size * 0.2 }]}
               importantForAccessibility="no"
@@ -187,13 +188,13 @@ export function ReadyCard() {
         ) : null}
       </View>
       <View style={[styles.amount, { marginTop: 2 }]} accessible accessibilityLabel="Available, $0.00">
-        <Txt weight="heavy" size={30} style={[styles.sign, { marginTop: 14 }]}>
+        <Txt weight="heavy" size={30} exact style={[styles.sign, { marginTop: 14 }]}>
           $
         </Txt>
-        <Txt weight="heavy" size={68} style={{ lineHeight: 79, letterSpacing: -2.4 }}>
+        <Txt weight="heavy" size={68} exact style={{ lineHeight: 79, letterSpacing: -2.4 }}>
           0
         </Txt>
-        <Txt weight="heavy" size={30} color={colors.onTint} style={[styles.cents, { marginTop: 14 }]}>
+        <Txt weight="heavy" size={30} exact color={colors.onTint} style={[styles.cents, { marginTop: 14 }]}>
           .00
         </Txt>
       </View>

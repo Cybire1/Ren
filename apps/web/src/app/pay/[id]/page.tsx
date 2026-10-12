@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
-import { Art, Brand, Pill } from '@/components/brand'
+import { Art, Brand, Icon, Pill } from '@/components/brand'
 import { Notice } from '@/components/notice'
-import { WalletPay } from '@/components/wallet-pay'
-import { WatchPaid } from '@/components/watch-paid'
+import { PaidReceipt } from '@/components/paid-receipt'
+import { PayFlow } from '@/components/pay-flow'
 import { type Checkout, kovaPublic } from '@/lib/api'
 import { usd } from '@/lib/format'
 
@@ -34,21 +34,7 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
         <header className="topbar">
           <Brand />
         </header>
-        <section className="paid" aria-live="polite">
-          <div className="receipt" style={{ marginTop: '3.5rem' }}>
-            <Art name="scene-paid-terminal" size={304} priority />
-            <div className="receipt-text">
-              <small>PAID</small>
-              <strong>{usd(c.amount)}</strong>
-            </div>
-            <Art name="reni-cheer" size={88} className="reni-cheer" priority />
-          </div>
-          <h1>Paid to {c.merchant_name}</h1>
-          <p>
-            {usd(c.amount)}
-            {c.reference ? ` for ${c.reference}` : ''}. You can close this page.
-          </p>
-        </section>
+        <PaidReceipt checkout={c} />
       </main>
     )
 
@@ -65,45 +51,71 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
         <Brand />
       </header>
 
-      <section className="card payee">
-        <Art name="badge-shop" size={84} priority />
-        <p className="await-label" style={{ marginTop: '0.5rem' }}>
-          {c.order?.pay_for_me && c.order.customer_name
-            ? `${c.order.customer_name} asked you to pay for their order at ${c.order.stall?.name ?? c.merchant_name}`
-            : c.order?.stall
-              ? `Your order from ${c.order.stall.name}`
-              : `Pay ${c.merchant_name}`}
-        </p>
-        <p className="await-amount">{usd(c.amount)}</p>
-        {c.order ? (
-          <ul className="pay-lines">
-            {c.order.lines.map((l) => (
-              <li key={l.item_id}>
-                <span>
-                  {l.quantity > 1 ? `${l.quantity} × ` : ''}
-                  {l.name}
-                </span>
-                <span>{usd(Number(l.unit_price) * l.quantity)}</span>
-              </li>
-            ))}
-            {c.order.note ? <li className="pay-note">“{c.order.note}”</li> : null}
-          </ul>
-        ) : c.reference ? (
-          <p className="await-label">{c.reference}</p>
-        ) : null}
-        <Pill href={`kova://pay/${c.id}`} icon="tap" tone="coral" wide>
-          Pay with the Ren app
-        </Pill>
-        {/* The same wallet in the browser, opened with the app's passkey (or made here in a moment). */}
-        <Pill href={`/wallet/pay/${c.id}`} icon="arrow" tone="light" wide className="pay-kova-web">
-          Pay with my Ren wallet
-        </Pill>
-      </section>
-
-      <WalletPay checkout={c} testnet={c.network === 'testnet'} privyAppId={process.env.PRIVY_APP_ID ?? null} />
-
-      <p className="fineprint">Tap. Paid. Anywhere.</p>
-      <WatchPaid id={c.id} />
+      <PayFlow
+        checkout={c}
+        testnet={c.network === 'testnet'}
+        privyAppId={process.env.PRIVY_APP_ID ?? null}
+      >
+        <section className="card payee">
+          <Art name="badge-shop" size={84} priority />
+          <p className="await-label" style={{ marginTop: '0.5rem' }}>
+            {c.order?.pay_for_me && c.order.customer_name
+              ? `${c.order.customer_name} asked you to pay for their order at ${c.order.stall?.name ?? c.merchant_name}`
+              : c.order?.stall
+                ? `Your order from ${c.order.stall.name}`
+                : `Pay ${c.merchant_name}`}
+          </p>
+          <p className="await-amount">{usd(c.amount)}</p>
+          {c.order?.table ? (
+            <span className="chip chip-table">
+              <Icon name="stall" size={14} /> Table {c.order.table}
+            </span>
+          ) : null}
+          {c.order ? (
+            <ul className="pay-lines">
+              {c.order.lines.map((l) => (
+                <li key={l.item_id}>
+                  <span>
+                    {l.quantity > 1 ? `${l.quantity} × ` : ''}
+                    {l.name}
+                  </span>
+                  <span>{usd(Number(l.unit_price) * l.quantity)}</span>
+                </li>
+              ))}
+              {c.order.reward ? (
+                <li className="pay-reward">
+                  <span>Free with your stamp card</span>
+                  <span>−{usd(c.order.reward.amount)}</span>
+                </li>
+              ) : null}
+              {c.order.note ? <li className="pay-note">“{c.order.note}”</li> : null}
+            </ul>
+          ) : c.reference ? (
+            <p className="await-label">{c.reference}</p>
+          ) : null}
+          {c.order?.reward ? (
+            <p className="pay-reward-help">
+              {Number(c.amount) === 0
+                ? 'It’s on the house. You still approve it, so you get a receipt.'
+                : 'Your stamp card took it off.'}{' '}
+              Pay with the wallet that holds the card.
+            </p>
+          ) : null}
+          <Pill href={`kova://pay/${c.id}`} icon="tap" tone="coral" wide>
+            Pay with the Ren app
+          </Pill>
+          {/* The same wallet in the browser, opened with the app's passkey (or made here in a moment). */}
+          <Pill
+            href={`/wallet/pay/${c.id}`}
+            icon="arrow"
+            tone="light"
+            wide
+            className="pay-kova-web"
+          >
+            Pay with my Ren wallet
+          </Pill>
+        </section>
+      </PayFlow>
     </main>
   )
 }

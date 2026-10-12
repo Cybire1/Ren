@@ -45,6 +45,9 @@ const itemBody = z.object({
   barcode: barcode.nullish(),
   image_id: z.string().nullish(),
   sold_out: z.boolean().optional(),
+  /** How many are left; null stops counting. */
+  stock: z.number().int().min(0).max(1_000_000).nullish(),
+  category: z.string().trim().max(40).nullish(),
   /** Also put it on these stalls. */
   stall_ids: z.array(z.string()).max(20).optional(),
 })
@@ -69,7 +72,10 @@ async function ownImage(merchantId: string, id: string | null | undefined) {
   if (id === undefined) return undefined
   const uuid = decodeId('image', id)
   const image = uuid
-    ? await db.query.images.findFirst({ columns: { id: true }, where: and(eq(schema.images.id, uuid), eq(schema.images.merchantId, merchantId)) })
+    ? await db.query.images.findFirst({
+        columns: { id: true },
+        where: and(eq(schema.images.id, uuid), eq(schema.images.merchantId, merchantId)),
+      })
     : undefined
   if (!image) throw notFound('image', id)
   return image.id
@@ -79,7 +85,11 @@ async function findItem(merchantId: string, id: string) {
   const uuid = decodeId('catalogItem', id)
   const item = uuid
     ? await db.query.catalogItems.findFirst({
-        where: and(eq(schema.catalogItems.id, uuid), eq(schema.catalogItems.merchantId, merchantId), isNull(schema.catalogItems.archivedAt)),
+        where: and(
+          eq(schema.catalogItems.id, uuid),
+          eq(schema.catalogItems.merchantId, merchantId),
+          isNull(schema.catalogItems.archivedAt),
+        ),
       })
     : undefined
   if (!item) throw notFound('item', id)
@@ -98,7 +108,10 @@ function barcodeTaken(error: unknown): never {
 export const catalogRoutes = new Hono()
   .get('/catalog/items', requireApiKey, async (c) => {
     const rows = await db.query.catalogItems.findMany({
-      where: and(eq(schema.catalogItems.merchantId, c.get('merchant').id), isNull(schema.catalogItems.archivedAt)),
+      where: and(
+        eq(schema.catalogItems.merchantId, c.get('merchant').id),
+        isNull(schema.catalogItems.archivedAt),
+      ),
       orderBy: [asc(schema.catalogItems.position), asc(schema.catalogItems.createdAt)],
     })
     const origin = publicOrigin(c)
@@ -107,7 +120,8 @@ export const catalogRoutes = new Hono()
 
   .post('/catalog/items', requireApiKey, requireMerchantKey, async (c) => {
     const parsed = itemBody.safeParse(await c.req.json().catch(() => ({})))
-    if (!parsed.success) throw new KovaError('invalid_request', parsed.error.issues[0]?.message ?? 'Invalid item')
+    if (!parsed.success)
+      throw new KovaError('invalid_request', parsed.error.issues[0]?.message ?? 'Invalid item')
     const merchant = c.get('merchant')
     const body = parsed.data
     const imageId = await ownImage(merchant.id, body.image_id)
@@ -122,7 +136,8 @@ export const catalogRoutes = new Hono()
         columns: { id: true },
         where: and(eq(schema.stalls.merchantId, merchant.id), inArray(schema.stalls.id, stallIds)),
       })
-      if (owned.length !== new Set(stallIds).size) throw new KovaError('invalid_request', 'Unknown stall')
+      if (owned.length !== new Set(stallIds).size)
+        throw new KovaError('invalid_request', 'Unknown stall')
     }
 
     const item = await db
@@ -141,7 +156,9 @@ export const catalogRoutes = new Hono()
             price: parseAmount(body.price),
             imageId: imageId ?? null,
             barcode: body.barcode ?? null,
-            soldOut: body.sold_out ?? false,
+            soldOut: body.stock === 0 ? true : (body.sold_out ?? false),
+            stock: body.stock ?? null,
+            category: body.category || null,
             position: (last?.position ?? 0) + 1,
           })
           .returning()
@@ -151,7 +168,9 @@ export const catalogRoutes = new Hono()
             .select({ position: max(schema.stallItems.position) })
             .from(schema.stallItems)
             .where(eq(schema.stallItems.stallId, stallId))
-          await tx.insert(schema.stallItems).values({ stallId, itemId: row.id, position: (end?.position ?? 0) + 1 })
+          await tx
+            .insert(schema.stallItems)
+            .values({ stallId, itemId: row.id, position: (end?.position ?? 0) + 1 })
         }
         return row
       })
@@ -160,8 +179,12 @@ export const catalogRoutes = new Hono()
   })
 
   .patch('/catalog/items/:id', requireApiKey, requireMerchantKey, async (c) => {
-    const parsed = itemBody.omit({ stall_ids: true }).partial().safeParse(await c.req.json().catch(() => ({})))
-    if (!parsed.success) throw new KovaError('invalid_request', parsed.error.issues[0]?.message ?? 'Invalid item')
+    const parsed = itemBody
+      .omit({ stall_ids: true })
+      .partial()
+      .safeParse(await c.req.json().catch(() => ({})))
+    if (!parsed.success)
+      throw new KovaError('invalid_request', parsed.error.issues[0]?.message ?? 'Invalid item')
     const merchant = c.get('merchant')
     const item = await findItem(merchant.id, c.req.param('id'))
     const body = parsed.data
@@ -175,6 +198,14 @@ export const catalogRoutes = new Hono()
         ...(body.barcode !== undefined ? { barcode: body.barcode ?? null } : {}),
         ...(imageId !== undefined ? { imageId } : {}),
         ...(body.sold_out !== undefined ? { soldOut: body.sold_out } : {}),
+        ...(body.category !== undefined ? { category: body.category || null } : {}),
+        // Counting stock decides sold out: none left is sold out, a restock is back on sale.
+        ...(body.stock !== undefined
+          ? {
+              stock: body.stock ?? null,
+              ...(body.stock === null ? {} : { soldOut: body.stock === 0 }),
+            }
+          : {}),
         updatedAt: new Date(),
       })
       .where(eq(schema.catalogItems.id, item.id))
@@ -187,7 +218,10 @@ export const catalogRoutes = new Hono()
   .delete('/catalog/items/:id', requireApiKey, requireMerchantKey, async (c) => {
     const item = await findItem(c.get('merchant').id, c.req.param('id'))
     await db.transaction(async (tx) => {
-      await tx.update(schema.catalogItems).set({ archivedAt: new Date() }).where(eq(schema.catalogItems.id, item.id))
+      await tx
+        .update(schema.catalogItems)
+        .set({ archivedAt: new Date() })
+        .where(eq(schema.catalogItems.id, item.id))
       await tx.delete(schema.stallItems).where(eq(schema.stallItems.itemId, item.id))
     })
     return c.json({ object: 'catalog_item', id: encodeId('catalogItem', item.id), deleted: true })
@@ -218,12 +252,23 @@ export const catalogRoutes = new Hono()
    * by shared words first, so Jev only compares likely ones.
    */
   .post('/catalog/similar', requireApiKey, async (c) => {
-    const parsed = z.object({ name: z.string().trim().min(1).max(120) }).safeParse(await c.req.json().catch(() => ({})))
+    const parsed = z
+      .object({ name: z.string().trim().min(1).max(120) })
+      .safeParse(await c.req.json().catch(() => ({})))
     if (!parsed.success) throw new KovaError('invalid_request', 'Expected { name }')
-    const words = (text: string) => new Set(text.toLowerCase().split(/[^a-z0-9]+/).filter((w) => w.length > 1))
+    const words = (text: string) =>
+      new Set(
+        text
+          .toLowerCase()
+          .split(/[^a-z0-9]+/)
+          .filter((w) => w.length > 1),
+      )
     const wanted = words(parsed.data.name)
     const rows = await db.query.catalogItems.findMany({
-      where: and(eq(schema.catalogItems.merchantId, c.get('merchant').id), isNull(schema.catalogItems.archivedAt)),
+      where: and(
+        eq(schema.catalogItems.merchantId, c.get('merchant').id),
+        isNull(schema.catalogItems.archivedAt),
+      ),
     })
     const candidates = rows
       .map((r) => ({ r, shared: [...words(r.name)].filter((w) => wanted.has(w)).length }))
@@ -237,34 +282,66 @@ export const catalogRoutes = new Hono()
       {
         same: {
           type: 'choice',
-          instructions: 'Is `new_product` the same product (same brand, kind and size) as one of these the shop already sells? If it is a different product, choose none.',
-          criteria: { none: 'None of these: it is a different product', ...Object.fromEntries(candidates.map((r) => [encodeId('catalogItem', r.id), r.name])) },
+          instructions:
+            'Is `new_product` the same product (same brand, kind and size) as one of these the shop already sells? If it is a different product, choose none.',
+          criteria: {
+            none: 'None of these: it is a different product',
+            ...Object.fromEntries(candidates.map((r) => [encodeId('catalogItem', r.id), r.name])),
+          },
         },
       },
     )
     const choice = answers?.same?.choice
-    const match = choice && choice !== 'none' && (answers?.same?.confidence ?? 0) >= 0.6 ? candidates.find((r) => encodeId('catalogItem', r.id) === choice) : undefined
-    return c.json({ object: 'similar', item: match ? serializeItem(match, publicOrigin(c)) : null, confidence: answers?.same?.confidence ?? null })
+    const match =
+      choice && choice !== 'none' && (answers?.same?.confidence ?? 0) >= 0.6
+        ? candidates.find((r) => encodeId('catalogItem', r.id) === choice)
+        : undefined
+    return c.json({
+      object: 'similar',
+      item: match ? serializeItem(match, publicOrigin(c)) : null,
+      confidence: answers?.same?.confidence ?? null,
+    })
   })
 
   /** Upload a photo (raw JPEG, PNG or WebP bytes). Returns its id for an item or a stall cover. */
   .post('/images', requireApiKey, requireMerchantKey, async (c) => {
     const bytes = new Uint8Array(await c.req.arrayBuffer())
-    if (bytes.length === 0) throw new KovaError('invalid_request', 'Send the image bytes as the request body')
-    if (bytes.length > MAX_IMAGE_BYTES) throw new KovaError('invalid_request', 'Images up to 1.5 MB. Resize it first.')
+    if (bytes.length === 0)
+      throw new KovaError('invalid_request', 'Send the image bytes as the request body')
+    if (bytes.length > MAX_IMAGE_BYTES)
+      throw new KovaError('invalid_request', 'Images up to 1.5 MB. Resize it first.')
     const contentType = sniffImage(bytes)
     if (!contentType) throw new KovaError('invalid_request', 'Send a JPEG, PNG or WebP image')
     const id = uuidv7()
-    await db.insert(schema.images).values({ id, merchantId: c.get('merchant').id, contentType, bytes: Buffer.from(bytes), size: bytes.length })
-    return c.json({ object: 'image', id: encodeId('image', id), url: imageUrl(publicOrigin(c), id), size: bytes.length }, 201)
+    await db
+      .insert(schema.images)
+      .values({
+        id,
+        merchantId: c.get('merchant').id,
+        contentType,
+        bytes: Buffer.from(bytes),
+        size: bytes.length,
+      })
+    return c.json(
+      {
+        object: 'image',
+        id: encodeId('image', id),
+        url: imageUrl(publicOrigin(c), id),
+        size: bytes.length,
+      },
+      201,
+    )
   })
 
   /** Snap your menu: a photo in, suggested items out. Nothing is saved until the seller confirms. */
   .post('/catalog/import', requireApiKey, requireMerchantKey, async (c) => {
-    if (!menuImportReady()) throw new KovaError('invalid_request', 'Menu import is not set up on this server yet.')
+    if (!menuImportReady())
+      throw new KovaError('invalid_request', 'Menu import is not set up on this server yet.')
     const parsed = importBody.safeParse(await c.req.json().catch(() => ({})))
-    if (!parsed.success) throw new KovaError('invalid_request', 'Expected { image: base64, media_type }')
-    if (!allowRead(c.get('merchant').id)) throw new KovaError('rate_limited', 'That’s a lot of menus for one hour. Try again later.')
+    if (!parsed.success)
+      throw new KovaError('invalid_request', 'Expected { image: base64, media_type }')
+    if (!allowRead(c.get('merchant').id))
+      throw new KovaError('rate_limited', 'That’s a lot of menus for one hour. Try again later.')
     const result = await readMenu({ data: parsed.data.image, mediaType: parsed.data.media_type })
     return c.json({ object: 'menu', ...result })
   })
@@ -272,7 +349,9 @@ export const catalogRoutes = new Hono()
   /** Public: an uploaded photo. Ids never change their bytes, so browsers keep them for a year. */
   .get('/public/images/:id', async (c) => {
     const uuid = decodeId('image', c.req.param('id'))
-    const image = uuid ? await db.query.images.findFirst({ where: eq(schema.images.id, uuid) }) : undefined
+    const image = uuid
+      ? await db.query.images.findFirst({ where: eq(schema.images.id, uuid) })
+      : undefined
     if (!image) throw notFound('image', c.req.param('id'))
     return new Response(new Uint8Array(image.bytes), {
       headers: {

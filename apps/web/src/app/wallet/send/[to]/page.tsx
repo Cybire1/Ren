@@ -1,11 +1,12 @@
 import { Suspense } from 'react'
-import { SendFlow } from '@/components/wallet/send'
+import { SendSheet } from '@/components/wallet/send'
 
+/** Send to someone already known (a person, or a Ren link): the same sheet, starting at the amount. */
 export default async function SendToPage(props: { params: Promise<{ to: string }> }) {
   const { to } = await props.params
   return (
     <Suspense>
-      <SendFlow to={to} />
+      <SendSheet to={to} />
     </Suspense>
   )
 }

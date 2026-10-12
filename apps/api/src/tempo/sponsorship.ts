@@ -7,6 +7,7 @@ import { acceptedTokens } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { findIntentByMemo } from '../services/intents.js'
+import { rewardRefusal } from '../services/stamps.js'
 
 /** A transaction as the relay hands it to `validate`: its calls plus the sender. */
 export interface FillRequest {
@@ -43,7 +44,9 @@ function takeSend(from: Address): boolean {
  * and then either:
  *
  * - **a charge**: the memo is an open Kova charge's, and the amount, token and recipient are
- *   exactly that charge's; or
+ *   exactly that charge's. A charge a stamp card made free is paid for $0, so it still has its
+ *   receipt on-chain: the only transfer of nothing Kova pays for, and only from the card's owner;
+ *   or
  * - **a send between people**: no Kova memo at all (a charge can only be paid through its own
  *   check above), within a daily number of sponsored sends per wallet.
  *
@@ -78,10 +81,10 @@ export async function shouldSponsor(
     return { sponsor: false, reason: 'undecodable call' }
   }
   const [to, amount, memo] = args as [Address, bigint, Hex | undefined]
-  if (amount <= 0n) return { sponsor: false, reason: 'nothing to send' }
 
   const kova = memo ? decodeMemo(memo) : null
   if (!kova) {
+    if (amount <= 0n) return { sponsor: false, reason: 'nothing to send' }
     if (!request.from) return { sponsor: false, reason: 'no sender' }
     if (!takeSend(request.from)) return { sponsor: false, reason: 'daily sponsored sends used up' }
     return { sponsor: true, kind: 'send' }
@@ -99,6 +102,9 @@ export async function shouldSponsor(
     return { sponsor: false, reason: 'recipient does not match the charge' }
   if (!isAddressEqual(call.to, intent.tokenAddress as Address))
     return { sponsor: false, reason: 'token does not match the charge' }
+  // A stamp-card reward is the card owner's alone, and a card pays for one reward.
+  const refusal = await rewardRefusal(intent, request.from)
+  if (refusal) return { sponsor: false, reason: refusal.message }
 
   // A frozen or revoked credential (a Kova Card, a session key) must not spend, even though the
   // chain would also stop it: refusing here means Kova never pays for a doomed transaction.

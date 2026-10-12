@@ -75,7 +75,49 @@ const schema = z.object({
   KOVA_TRAVEL_SETTLEMENT_ADDRESS: z.string().optional(),
   /** Jev, TypeSafe's decision model: spending categories, order-note flags, duplicate items, offer matching. */
   TYPESAFE_API_KEY: z.string().optional(),
+  /** Aurora Intents (NEAR Intents): deposits from other chains, landing on Monad. Key from studio.aurora.dev. */
+  AURORA_INTENTS_KEY: z.string().optional(),
+  /** What deposits arrive as on Monad: a symbol Aurora resolves, or an asset id when the symbol is ambiguous. */
+  AURORA_DESTINATION_ASSET: z.string().default('AUSD'),
+  /** Ramp Network: card and bank top-ups (and cash-out), buying AUSD on Monad. Key from partner@ramp.network. */
+  RAMP_HOST_API_KEY: z.string().optional(),
   JEV_MODEL: z.string().optional(),
+  /**
+   * USSD pockets: pay from any phone by dialling a code. The master key seals each pocket's own
+   * key at rest (32 bytes, hex); in production it belongs in a KMS. Without it, USSD is off.
+   */
+  KOVA_POCKET_MASTER_KEY: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/)
+    .optional(),
+  /** The secret path segment Africa's Talking calls back on: /v1/ussd/<secret>. */
+  KOVA_USSD_CALLBACK_SECRET: z.string().min(16).optional(),
+  /** The code people dial, as the app shows it. */
+  KOVA_USSD_CODE: z.string().default('*384*25891#'),
+  /** Africa's Talking: USSD sessions and SMS receipts. Username "sandbox" uses their simulator. */
+  AT_USERNAME: z.string().optional(),
+  AT_API_KEY: z.string().optional(),
+  /** An approved sender name for SMS; unset uses Africa's Talking's default. */
+  AT_SENDER_ID: z.string().optional(),
+  /**
+   * The App Review demo account (testnet only): a username and password that open one shared
+   * test wallet whose 32-byte secret stands in for a passkey. Unset, there is no demo account.
+   */
+  KOVA_DEMO_USERNAME: z.string().min(3).optional(),
+  KOVA_DEMO_PASSWORD: z.string().min(8).optional(),
+  KOVA_DEMO_SECRET: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{64}$/)
+    .optional(),
+  /**
+   * Kova Card: the key that cosigns every tap after Kova's checks (PIN, freeze). It can only
+   * refuse payments, never make one: each also needs the card's own signature. Without it, cards
+   * are off. Rotate with KovaCard.setCosigner.
+   */
+  KOVA_CARD_COSIGNER_KEY: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{64}$/)
+    .optional(),
 })
 
 export type Config = z.infer<typeof schema>

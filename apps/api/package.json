@@ -15,7 +15,8 @@
     "pay:open": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/pay-open.ts",
     "perf": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/profile.ts",
     "pay:checkout": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/pay-checkout.ts",
-    "menu:read": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/read-menu.ts"
+    "menu:read": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/read-menu.ts",
+    "mainnet:check": "tsx --env-file=.env.mainnet src/scripts/mainnet-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
@@ -24,6 +25,8 @@
     "@kova/db": "workspace:*",
     "@kova/monad": "workspace:*",
     "@kova/tempo": "workspace:*",
+    "@scure/bip32": "2.4.0",
+    "@scure/bip39": "2.4.0",
     "drizzle-orm": "0.45.2",
     "hono": "4.13.8",
     "ox": "0.14.45",

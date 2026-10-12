@@ -21,6 +21,9 @@ export function setDeviceKey(key: string | null) {
   keys.device = key
 }
 
+/** The device key this phone takes payments with, if it is a till. */
+export const currentDeviceKey = () => keys.device
+
 /** The shop owner's key, set when this phone opened the shop. */
 export function setOwnerKey(key: string | null) {
   keys.owner = key
@@ -52,6 +55,19 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
   return body as T
 }
 
+// --- App Review demo account ---------------------------------------------------------------
+
+export interface DemoAccount {
+  secret: `0x${string}`
+  name: string
+  currency: string
+  contacts: { address: string; name: string }[]
+}
+
+/** Testnet only: the demo account's username and password, for its wallet's secret. */
+export const demoSignIn = (username: string, password: string) =>
+  request<DemoAccount>('/v1/demo/sign_in', { method: 'POST', body: JSON.stringify({ username, password }) })
+
 // --- payer ---------------------------------------------------------------------------------
 
 export interface OrderLine {
@@ -75,11 +91,18 @@ export interface Checkout {
   expires_at: string
   /** What was ordered, when this charge came from a stall or a till sale. */
   order?: {
+    id?: string
     lines: OrderLine[]
     customer_name: string | null
     note: string | null
     pay_for_me: boolean
     stall: { id: string; name: string; slug: string } | null
+    /** Where it is at the counter, so the buyer's phone can say when it's ready. */
+    status?: OrderStatus
+    /** The table it's brought to. Null: collected at the counter. */
+    table?: string | null
+    /** A full stamp card spent on this order. */
+    reward?: StampReward | null
   } | null
   /** The flight or hotel, when this charge is a share of a Kova Travel trip. */
   trip?: {
@@ -113,6 +136,9 @@ export interface CatalogItem {
   image_id: string | null
   barcode: string | null
   sold_out: boolean
+  /** How many are left, or null when the shop doesn't count. */
+  stock: number | null
+  category: string | null
   created_at: string
 }
 
@@ -125,6 +151,10 @@ export interface Stall {
   cover_url: string | null
   cover_image_id: string | null
   item_ids?: string[]
+  /** Tables with their own QR code (the stall link with ?table=N). Null: counter only. */
+  table_count?: number | null
+  /** Paid orders that fill the stamp card; the next order's cheapest item is free. Null: no card. */
+  loyalty_every?: number | null
   created_at: string
 }
 
@@ -138,9 +168,28 @@ export interface PublicStall extends Stall {
   items: Omit<CatalogItem, 'barcode' | 'image_id'>[]
 }
 
+/** The item a full stamp card made free. */
+export interface StampReward {
+  item_id: string
+  name: string
+  amount: string
+  stamps: number
+}
+
+export interface StampCard {
+  object: 'stamp_card'
+  /** Paid orders that fill the card. Null: this stall has no card. */
+  every: number | null
+  stamps: number
+  /** Full: the next order's cheapest item is free. */
+  ready: boolean
+}
+
 export interface PlacedOrder {
   id: string
   checkout: { id: string; amount: string; status: Checkout['status']; expires_at: string; link: string }
+  /** Set when the payer's stamp card was full: this item is free, and the charge is lower (it can be $0). */
+  reward?: StampReward | null
 }
 
 export const getPublicStall = (slug: string) => request<PublicStall>(`/v1/public/stalls/${encodeURIComponent(slug)}`)
@@ -148,8 +197,21 @@ export const getPublicStall = (slug: string) => request<PublicStall>(`/v1/public
 /** Order from a stall. The server prices every line; the result is a charge to pay, or to send on. */
 export const orderFromStall = (
   slug: string,
-  order: { items: { id: string; quantity: number }[]; customer_name?: string; note?: string; pay_for_me?: boolean },
+  order: {
+    items: { id: string; quantity: number }[]
+    customer_name?: string
+    note?: string
+    pay_for_me?: boolean
+    /** The table it's ordered from, from the table's QR code. */
+    table?: string
+    /** The wallet that will pay: it earns the stamp, and spends a full card. */
+    payer?: string
+  },
 ) => request<PlacedOrder>(`/v1/public/stalls/${encodeURIComponent(slug)}/orders`, { method: 'POST', body: JSON.stringify(order) })
+
+/** A wallet's stamp card at a stall. The wallet that pays is the card: there's nothing to sign up for. */
+export const getStampCard = (slug: string, payer: string) =>
+  request<StampCard>(`/v1/public/stalls/${encodeURIComponent(slug)}/stamps?payer=${encodeURIComponent(payer)}`)
 
 // --- shop: taking payments (device key) ----------------------------------------------------
 
@@ -196,6 +258,8 @@ export const getSummary = () => {
 export const listCharges = (limit = 25) =>
   request<{ data: PaymentIntent[] }>(`/v1/payment_intents?limit=${limit}`, { auth: 'device' }).then((r) => r.data)
 
+export type OrderStatus = 'new' | 'preparing' | 'ready' | 'collected' | 'cancelled'
+
 export interface Order {
   id: string
   source: 'stall' | 'till'
@@ -205,8 +269,14 @@ export interface Order {
   customer_name: string | null
   note: string | null
   pay_for_me: boolean
+  /** The table to bring it to. Null: collected at the counter. */
+  table?: string | null
+  /** A full stamp card spent on this order: the item that was free. */
+  reward?: StampReward | null
   /** What the counter must notice in the note, like "allergy" (read by Jev). */
   flags?: string[]
+  /** Where it is at the counter. */
+  status: OrderStatus
   collected_at: string | null
   created_at: string
   amount?: string
@@ -217,6 +287,10 @@ export interface Order {
 /** Stall orders, newest first. open: paid and not handed over yet; unpaid: still waiting for payment. */
 export const listOrders = (status: 'all' | 'open' | 'collected' | 'unpaid' = 'all', limit = 50) =>
   request<{ data: Order[] }>(`/v1/orders?status=${status}&source=stall&limit=${limit}`, { auth: 'device' }).then((r) => r.data)
+
+/** Moves an order along the counter: new, preparing, ready, collected or cancelled. */
+export const setOrderStatus = (id: string, status: OrderStatus) =>
+  request<Order>(`/v1/orders/${id}/status`, { method: 'POST', auth: 'device', body: JSON.stringify({ status }) })
 
 /** Handed over, or back to waiting to undo a mistap. */
 export const collectOrder = (id: string, collected = true) =>
@@ -287,6 +361,13 @@ export const openShop = (name: string, settlementAddress: string, owner?: { mess
     body: JSON.stringify({ name, settlement_address: settlementAddress, ...(owner ? { owner } : {}) }),
   })
 
+/** Signs a wallet in to the shop it owns (its newest, if several): a session key for this phone. */
+export const signInToShop = (message: string, signature: string) =>
+  request<{ key: string; merchant: { id: string; name: string } }>('/v1/sign_in', {
+    method: 'POST',
+    body: JSON.stringify({ message, signature, newest: true }),
+  })
+
 /** Who signs in to the shop this phone owns: its owner's wallet, or nobody's yet. */
 export const getOwnedShop = () => request<{ id: string; name: string; owner_address: string | null }>('/v1/account', { auth: 'owner' })
 
@@ -308,7 +389,7 @@ export const getStall = (id: string) => request<StallDetail>(`/v1/stalls/${id}`,
 export const createStall = (stall: { name: string; tagline?: string | null }) =>
   request<Stall>('/v1/stalls', { method: 'POST', auth: 'owner', body: JSON.stringify(stall) })
 
-export const updateStall = (id: string, patch: Partial<{ name: string; tagline: string | null; open: boolean; item_ids: string[] }>) =>
+export const updateStall = (id: string, patch: Partial<{ name: string; tagline: string | null; open: boolean; item_ids: string[]; table_count: number | null; loyalty_every: number | null }>) =>
   request<Stall>(`/v1/stalls/${id}`, { method: 'PATCH', auth: 'owner', body: JSON.stringify(patch) })
 
 export interface ItemInput {
@@ -318,6 +399,9 @@ export interface ItemInput {
   barcode?: string | null
   image_id?: string | null
   sold_out?: boolean
+  /** How many are left; null stops counting. */
+  stock?: number | null
+  category?: string | null
 }
 
 export const createItem = (item: ItemInput & { stall_ids?: string[] }) =>
@@ -618,6 +702,9 @@ export const payLinkFor = (id: string) => `${webUrl}/pay/${id}`
 
 /** A stall's own page. Its QR on a table or a poster opens the stall in Kova Pay or any browser. */
 export const stallLinkFor = (slug: string) => `${webUrl}/s/${slug}`
+
+/** One table's own code: the stall link that remembers the table, so the order is brought to it. */
+export const tableLinkFor = (slug: string, table: string) => `${stallLinkFor(slug)}?table=${encodeURIComponent(table)}`
 
 /** The printable table poster, on the web. */
 export const posterLinkFor = (slug: string) => `${webUrl}/s/${slug}/poster`

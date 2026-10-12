@@ -2,6 +2,7 @@ import { router } from 'expo-router'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
+import { Icon } from './Icon'
 import type { Entry } from '@/lib/wallet'
 import { AddBadge, Avatar, ShopBadge } from './art'
 import { Landing } from './motion'
@@ -34,19 +35,22 @@ export function EntryRow({ entry, inset, fresh }: { entry: Entry; inset?: boolea
         style={({ pressed }) => [styles.row, inset && styles.inset, pressed && { opacity: 0.6 }]}
       >
         {entry.kind === 'paid' ? (
-          <ShopBadge size={44} />
+          <ShopBadge size={38} />
         ) : entry.kind === 'added' ? (
-          <AddBadge size={44} />
+          <AddBadge size={38} />
         ) : (
-          <Avatar name={entry.name} id={entry.address} size={44} />
+          <Avatar name={entry.name} id={entry.address} size={38} />
         )}
         <View style={{ flex: 1 }}>
           <Txt weight="semi" size={16} numberOfLines={1}>
             {entry.name}
           </Txt>
-          <Txt size={13} color={colors.muted} numberOfLines={1}>
-            {entry.detail}, {when(entry.at)}
-          </Txt>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            {entry.private ? <Icon name="lock" size={12} color={colors.muted} /> : null}
+            <Txt size={13} color={colors.muted} numberOfLines={1} style={{ flexShrink: 1 }}>
+              {entry.detail}, {when(entry.at)}
+            </Txt>
+          </View>
         </View>
         <Txt weight={inset ? 'heavy' : 'semi'} size={16} color={incoming ? colors.positive : colors.ink}>
           {signed(entry)}

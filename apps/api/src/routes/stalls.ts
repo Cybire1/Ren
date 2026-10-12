@@ -13,6 +13,7 @@ import { serializeItem, serializeStall, slugify } from '../services/catalog.js'
 import { encodeCheckoutLink } from '../services/links.js'
 import { placeOrder, serializeOrder } from '../services/orders.js'
 import { publicOrigin } from '../services/origin.js'
+import { stampCard } from '../services/stamps.js'
 
 /**
  * Stalls: a shop's pocket storefronts. The shop manages them with its key; anyone can open one
@@ -26,7 +27,13 @@ const stallBody = z.object({
   cover_image_id: z.string().nullish(),
   /** The items it shows, in order. Replaces the list. */
   item_ids: z.array(z.string()).max(200).optional(),
+  /** Tables with their own QR code. Null: counter only. */
+  table_count: z.number().int().min(1).max(200).nullish(),
+  /** Paid orders that fill the stamp card. Null: no card. */
+  loyalty_every: z.number().int().min(2).max(20).nullish(),
 })
+
+const payerAddress = z.string().regex(/^0x[0-9a-fA-F]{40}$/, 'Expected a wallet address')
 
 const orderBody = z.object({
   items: z
@@ -37,6 +44,10 @@ const orderBody = z.object({
   note: z.string().trim().max(200).optional(),
   /** Send the payment link to someone else to pay (it stays payable for a day). */
   pay_for_me: z.boolean().optional(),
+  /** The table it's ordered from, from the table's QR code. */
+  table: z.string().trim().regex(/^[\w -]{1,12}$/, 'Invalid table').optional(),
+  /** The wallet that will pay: it earns a stamp, and spends a full card. */
+  payer: payerAddress.optional(),
 })
 
 /** Public checkouts create charges: rate-limit them per address so nobody floods a shop. */
@@ -146,6 +157,8 @@ export const stallRoutes = new Hono()
           tagline: body.tagline ?? null,
           open: body.open ?? true,
           coverImageId: coverImageId ?? null,
+          tableCount: body.table_count ?? null,
+          loyaltyEvery: body.loyalty_every ?? null,
         })
         .returning()
       if (!row) throw new KovaError('internal', 'Could not open the stall')
@@ -182,6 +195,8 @@ export const stallRoutes = new Hono()
           ...(body.name !== undefined ? { name: body.name } : {}),
           ...(body.tagline !== undefined ? { tagline: body.tagline ?? null } : {}),
           ...(body.open !== undefined ? { open: body.open } : {}),
+          ...(body.table_count !== undefined ? { tableCount: body.table_count ?? null } : {}),
+          ...(body.loyalty_every !== undefined ? { loyaltyEvery: body.loyalty_every ?? null } : {}),
           ...(coverImageId !== undefined ? { coverImageId } : {}),
           updatedAt: new Date(),
         })
@@ -248,6 +263,8 @@ export const stallRoutes = new Hono()
       customerName: parsed.data.customer_name,
       note: parsed.data.note,
       payForMe: parsed.data.pay_for_me,
+      table: parsed.data.table,
+      payer: parsed.data.payer,
     })
     return c.json(
       {
@@ -262,4 +279,14 @@ export const stallRoutes = new Hono()
       },
       201,
     )
+  })
+
+  /** Public: a wallet's stamp card at a stall. The wallet that pays is the card: no sign-up. */
+  .get('/public/stalls/:slug/stamps', async (c) => {
+    const payer = payerAddress.safeParse(c.req.query('payer'))
+    if (!payer.success) throw new KovaError('invalid_request', 'Expected ?payer=<wallet address>')
+    const stall = await db.query.stalls.findFirst({ where: and(eq(schema.stalls.slug, c.req.param('slug')), isNull(schema.stalls.archivedAt)) })
+    if (!stall) throw notFound('stall', c.req.param('slug'))
+    const card = await stampCard(stall, payer.data)
+    return c.json({ object: 'stamp_card', ...(card ?? { every: null, stamps: 0, ready: false }) })
   })

@@ -16,8 +16,8 @@ import { formatAmount } from '@kova/tempo'
 import { eq } from 'drizzle-orm'
 import { formatEther } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { generateApiKey } from '../auth.js'
 import { Actions } from 'viem/tempo'
+import { generateApiKey } from '../auth.js'
 import {
   balanceOf,
   kit,
@@ -76,13 +76,21 @@ async function main() {
       args: [relayer.address],
     })
     if (dollars === 0n && mon > 0n && walletClient) {
-      await walletClient.writeContractSync({
-        address: AUSD_TESTNET_FAUCET,
-        abi: faucetAbi,
-        functionName: 'requestFunds',
-        args: [relayer.address],
-      })
-      console.log("  asked Agora's faucet for test AUSD")
+      try {
+        await walletClient.writeContractSync({
+          address: AUSD_TESTNET_FAUCET,
+          abi: faucetAbi,
+          functionName: 'requestFunds',
+          args: [relayer.address],
+        })
+        console.log("  asked Agora's faucet for test AUSD")
+      } catch {
+        // Agora's faucet runs dry (it reverts with InsufficientFunds). Everything else still works;
+        // test dollars and refunds need AUSD sent to the relayer by hand.
+        console.log(
+          `  Agora's faucet gave nothing (it may be empty): send test AUSD to ${relayer.address} for test dollars`,
+        )
+      }
     }
     const funded = await publicClient.readContract({
       address: ausd.address,

@@ -39,6 +39,7 @@ export function tempoKit(networkId: NetworkId): ChainKit {
       getAbiItem({ abi: Abis.tip20, name: 'Transfer' }),
       getAbiItem({ abi: Abis.tip20, name: 'TransferWithMemo' }),
     ] as never,
+    watchAddresses: supportedTokens(networkId).map((t) => t.address),
     indexTransfers: (logs, token) => decodeIndexedTransfers(logs as never, token),
     memos: (logs) => memosIn(logs as never),
     verifyPayment: (receipt, expected) =>

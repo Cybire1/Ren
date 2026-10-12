@@ -1,12 +1,14 @@
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native'
+import { isTestnet } from '@/lib/config'
 import { type DisplayCurrency, guessCurrency } from '@/lib/money'
+import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { KeyScene } from '@/ui/art'
 import { Bob } from '@/ui/motion'
-import { Header, PillButton, Rise, Screen, Txt } from '@/ui/primitives'
+import { Header, PillButton, Rise, Screen, TextLink, Txt } from '@/ui/primitives'
 import { ProfileForm } from '@/ui/ProfileForm'
 
 /**
@@ -15,6 +17,7 @@ import { ProfileForm } from '@/ui/ProfileForm'
  */
 export default function Restore() {
   const { restore, setName, setCurrency, balance } = useWallet()
+  const stall = useStall()
   const [step, setStep] = useState<'passkey' | 'name'>('passkey')
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
@@ -26,6 +29,8 @@ export default function Restore() {
     setProblem(null)
     try {
       const profile = await restore()
+      // A shop this wallet owns comes back too, in the background: the wallet opens either way.
+      void stall.recover().catch(() => {})
       if (profile.name) router.replace('/(tabs)')
       else setStep('name')
     } catch (error) {
@@ -86,6 +91,11 @@ export default function Restore() {
       </Rise>
       <View style={styles.footer}>
         <PillButton label="Use my passkey" icon="face" loading={busy} onPress={usePasskey} />
+        {isTestnet ? (
+          <View style={{ alignItems: 'center', marginTop: 14 }}>
+            <TextLink label="Sign in with a demo account" onPress={() => router.push('/demo')} />
+          </View>
+        ) : null}
       </View>
     </Screen>
   )

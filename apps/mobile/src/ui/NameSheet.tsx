@@ -96,8 +96,8 @@ const styles = StyleSheet.create({
   face: { alignSelf: 'center', marginTop: 18 },
   input: {
     marginTop: 22,
-    height: 60,
-    borderRadius: 30,
+    height: 52,
+    borderRadius: 26,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,

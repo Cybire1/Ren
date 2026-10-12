@@ -32,6 +32,9 @@ cre login
 cd contracts && forge install foundry-rs/forge-std --no-git && forge test
 forge script script/Deploy.s.sol --rpc-url monad_testnet --private-key $CRE_ETH_PRIVATE_KEY --broadcast
 
+# A dry run first: the real fetches and consensus, stopping before any report or write
+cre workflow simulate kova-rates --target local-simulation --non-interactive --trigger-index 0
+
 # Put the deployed address in kova-rates/config.*.json as "receiver", then from apps/rates:
 cd kova-rates && bun install && cd ..
 cre workflow simulate kova-rates --target staging-settings --broadcast

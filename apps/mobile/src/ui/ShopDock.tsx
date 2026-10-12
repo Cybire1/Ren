@@ -16,7 +16,7 @@ const tabs: Record<string, { label: string; icon: NavIconName | 'shop' }> = {
   shop: { label: 'Shop', icon: 'shop' },
 }
 
-const H = 68
+const H = 58
 
 /**
  * The shop side's dock: the wallet's floating ink pill, with Charge where the wallet keeps Pay.
@@ -56,7 +56,7 @@ export function ShopDock({ state, navigation }: BottomTabBarProps) {
         <View style={[styles.tab, focused && styles.tabOn]}>
           {tab.icon === 'shop' ? (
             <View style={[styles.badgeRing, { borderColor: focused ? colors.yellow : 'rgba(255,255,255,0.45)' }]}>
-              <ShopBadge size={focused ? 32 : 30} />
+              <ShopBadge size={focused ? 28 : 26} />
             </View>
           ) : (
             <NavIcon name={tab.icon} active={focused} size={26} color={focused ? colors.ink : 'rgba(255,255,255,0.66)'} />
@@ -127,9 +127,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
   },
   slot: { flex: 1, height: H, alignItems: 'center', justifyContent: 'center' },
-  tab: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' },
+  tab: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' },
   tabOn: { backgroundColor: colors.surface },
-  badgeRing: { borderRadius: 20, borderWidth: 2, padding: 1 },
+  badgeRing: { borderRadius: 18, borderWidth: 2, padding: 1 },
   count: {
     position: 'absolute',
     top: 6,
@@ -145,16 +145,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   charge: {
-    height: 52,
+    height: 44,
     marginHorizontal: 6,
-    paddingHorizontal: 18,
-    borderRadius: 26,
+    paddingHorizontal: 16,
+    borderRadius: 22,
     backgroundColor: colors.coral,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 7,
   },
-  chargeOn: { borderWidth: 2, borderColor: colors.white, paddingHorizontal: 16 },
+  chargeOn: { borderWidth: 2, borderColor: colors.white, paddingHorizontal: 14 },
 })
 
 /** Space to leave under scrolling content so the last row clears the dock. */

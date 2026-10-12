@@ -14,6 +14,7 @@ import {
   type StallDetail,
   setOwnerKey,
   shopChallenge,
+  signInToShop,
 } from './api'
 import { confirmWithFace } from './auth'
 import { useTerminal } from './terminal'
@@ -47,6 +48,11 @@ interface StallState {
   /** Shows a change at once; the server's answer replaces it on the next refresh. */
   patch: (next: StallDetail) => void
   open: (input: { name: string; tagline?: string; phone: string; settleTo: string }, onStep?: (step: OpenStep) => void) => Promise<void>
+  /**
+   * Brings back the shop this wallet owns, on a phone that doesn't hold its key: signs in with the
+   * wallet, keeps a lasting owner key, and makes this phone its till. False if it owns none.
+   */
+  recover: () => Promise<boolean>
   /** The owner key, after Face ID, to sign in to the Kova dashboard with. */
   revealKey: () => Promise<string | null>
   /** Whether the wallet's passkey signs in to this shop on the web. Null until known. */
@@ -64,7 +70,8 @@ export function useStall(): StallState {
   return value
 }
 
-type Saved = Owned & { key: string }
+/** The shop this phone holds, with the lowercase address of the wallet that owns it (unknown for shops saved before phones kept it). */
+type Saved = Owned & { key: string; owner?: string }
 
 async function save(saved: Saved) {
   await SecureStore.setItemAsync(STORE, JSON.stringify(saved), { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY })
@@ -78,6 +85,11 @@ export function StallProvider({ children }: { children: ReactNode }) {
   const [stall, setStall] = useState<StallDetail | null>(null)
   const saved = useRef<Saved | null>(null)
   const [ownerLinked, setOwnerLinked] = useState<boolean | null>(null)
+  // Which wallet the saved shop belongs to. Another wallet signed in on this phone neither sees
+  // nor runs it; the owner's comes back with the owner.
+  const [holder, setHolder] = useState<string | null>(null)
+  const me = wallet.profile?.address?.toLowerCase()
+  const mine = owned !== null && (holder === null || holder === me)
 
   useEffect(() => {
     void (async () => {
@@ -85,7 +97,7 @@ export function StallProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const value = JSON.parse(raw) as Saved
         saved.current = value
-        setOwnerKey(value.key)
+        setHolder(value.owner ?? null)
         setOwned({ merchantId: value.merchantId, name: value.name, stallId: value.stallId })
       }
       setReady(true)
@@ -95,8 +107,14 @@ export function StallProvider({ children }: { children: ReactNode }) {
   const remember = useCallback(async (next: Saved) => {
     saved.current = next
     await save(next)
+    setHolder(next.owner ?? null)
     setOwned({ merchantId: next.merchantId, name: next.name, stallId: next.stallId })
   }, [])
+
+  // Owner requests carry the shop's key only while its owner's wallet is the one signed in.
+  useEffect(() => {
+    setOwnerKey(mine ? (saved.current?.key ?? null) : null)
+  }, [mine, owned?.merchantId])
 
   const refresh = useCallback(async () => {
     const current = saved.current
@@ -126,13 +144,13 @@ export function StallProvider({ children }: { children: ReactNode }) {
 
   // Load the stall once the key is in, and again whenever the app comes back to the front.
   useEffect(() => {
-    if (!owned) return
+    if (!owned || !mine) return
     const load = () => void refresh().catch(() => {})
     load()
     const sub = AppState.addEventListener('change', (state) => state === 'active' && load())
     return () => sub.remove()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [owned?.merchantId])
+  }, [owned?.merchantId, mine])
 
   // The owner key was revoked from the dashboard: this phone no longer runs the shop.
   useEffect(() => {
@@ -140,6 +158,7 @@ export function StallProvider({ children }: { children: ReactNode }) {
       saved.current = null
       setOwnerKey(null)
       setOwned(null)
+      setHolder(null)
       setStall(null)
       void SecureStore.deleteItemAsync(STORE)
     })
@@ -148,12 +167,24 @@ export function StallProvider({ children }: { children: ReactNode }) {
 
   const open = useCallback<StallState['open']>(
     async ({ name, tagline, phone, settleTo }, onStep) => {
+      const address = wallet.profile?.address
       let current = saved.current
+      // A shop saved before phones kept its owner: ask Kova whose it is.
+      if (current && !current.owner) {
+        setOwnerKey(current.key)
+        const owner = (await getOwnedShop().catch(() => null))?.owner_address?.toLowerCase()
+        if (owner) {
+          current = { ...current, owner }
+          await remember(current)
+        }
+      }
+      // A shop another wallet opened on this phone stays theirs: this wallet opens its own.
+      if (current?.owner && current.owner !== address?.toLowerCase()) current = null
       if (!current) {
         onStep?.('shop')
         // The wallet opening the shop owns it, so its passkey signs in to the same shop on the
         // web. One Face ID, or none if the wallet is already open.
-        const me = wallet.profile?.address
+        const me = address
         if (!me) throw new Error('Open your wallet first.')
         const challenge = await shopChallenge(me, 'open_shop')
         const signature = await wallet.signMessage(challenge.message)
@@ -162,7 +193,7 @@ export function StallProvider({ children }: { children: ReactNode }) {
         setOwnerKey(shop.key)
         const lasting = await createOwnerKey('Ren app')
         setOwnerKey(lasting.secret)
-        current = { merchantId: shop.id, name: shop.name, stallId: null, key: lasting.secret }
+        current = { merchantId: shop.id, name: shop.name, stallId: null, key: lasting.secret, owner: me.toLowerCase() }
         await remember(current)
       }
       if (!current.stallId) {
@@ -184,33 +215,77 @@ export function StallProvider({ children }: { children: ReactNode }) {
     [remember, refresh, terminal, wallet],
   )
 
-  // Whether this wallet already signs in to the shop on the web.
-  const me = wallet.profile?.address
+  const recover = useCallback<StallState['recover']>(async () => {
+    const me = wallet.profile?.address
+    if (!me) return false
+    if (saved.current?.owner === me.toLowerCase()) return true
+    const challenge = await shopChallenge(me, 'sign_in')
+    const signature = await wallet.signMessage(challenge.message)
+    let session: Awaited<ReturnType<typeof signInToShop>>
+    try {
+      session = await signInToShop(challenge.message, signature)
+    } catch (error) {
+      if (error instanceof Error && /no shop/i.test(error.message)) return false
+      throw error
+    }
+    // The session lapses in a month; the phone keeps a lasting owner key of its own, as when opening.
+    setOwnerKey(session.key)
+    const lasting = await createOwnerKey('Ren app')
+    setOwnerKey(lasting.secret)
+    await remember({
+      merchantId: session.merchant.id,
+      name: session.merchant.name,
+      stallId: null,
+      key: lasting.secret,
+      owner: me.toLowerCase(),
+    })
+    await refresh()
+    if (terminal.paired?.merchantId !== session.merchant.id) {
+      if (terminal.paired) await terminal.unpair()
+      const { code } = await createPairing()
+      await terminal.pair(code, 'This phone')
+    }
+    return true
+  }, [remember, refresh, terminal, wallet])
+
+  // Whether this wallet already signs in to the shop on the web. A shop saved before phones kept
+  // its owner learns it here, and disappears if it belongs to another wallet.
   useEffect(() => {
-    if (!owned || !me) return
+    if (!owned || !me || !mine) return
     let live = true
     getOwnedShop()
-      .then((shop) => live && setOwnerLinked(shop.owner_address?.toLowerCase() === me.toLowerCase()))
+      .then((shop) => {
+        if (!live) return
+        const owner = shop.owner_address?.toLowerCase() ?? null
+        if (owner && saved.current && !saved.current.owner) void remember({ ...saved.current, owner })
+        setOwnerLinked(owner === me)
+      })
       .catch(() => {})
     return () => {
       live = false
     }
-  }, [owned, me])
+  }, [owned, me, mine, remember])
 
   const linkOwner = useCallback(async () => {
     if (!me) throw new Error('Open your wallet first.')
     const challenge = await shopChallenge(me, 'own_shop')
     const signature = await wallet.signMessage(challenge.message)
     const shop = await linkShopOwner(challenge.message, signature)
-    setOwnerLinked(shop.owner_address?.toLowerCase() === me.toLowerCase())
-  }, [me, wallet])
+    if (saved.current) await remember({ ...saved.current, owner: me })
+    setOwnerLinked(shop.owner_address?.toLowerCase() === me)
+  }, [me, wallet, remember])
 
   const revealKey = useCallback(async () => {
-    if (!saved.current) return null
+    if (!saved.current || !mine) return null
     if (!(await confirmWithFace('Copy your shop key'))) return null
     return saved.current.key
-  }, [])
+  }, [mine])
 
-  const complete = Boolean(owned?.stallId) && terminal.paired?.merchantId === owned?.merchantId
-  return <Ctx.Provider value={{ ready, owned, complete, stall, refresh, patch: setStall, open, revealKey, ownerLinked, linkOwner }}>{children}</Ctx.Provider>
+  const shown = mine ? owned : null
+  const complete = Boolean(shown?.stallId) && terminal.paired?.merchantId === shown?.merchantId
+  return (
+    <Ctx.Provider value={{ ready, owned: shown, complete, stall: mine ? stall : null, refresh, patch: setStall, open, recover, revealKey, ownerLinked, linkOwner }}>
+      {children}
+    </Ctx.Provider>
+  )
 }

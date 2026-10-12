@@ -1,10 +1,11 @@
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import * as WebBrowser from 'expo-web-browser'
+import { useLocalSearchParams } from 'expo-router'
 import { useState } from 'react'
 import { Linking, Pressable, ScrollView, Share, StyleSheet, useWindowDimensions, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
-import { posterLinkFor, stallLinkFor } from '@/lib/api'
+import { posterLinkFor, stallLinkFor, tableLinkFor } from '@/lib/api'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
 import { Reni } from '@/ui/art'
@@ -16,12 +17,15 @@ const coin = require('../../../assets/art/coin-usd.png')
 
 /**
  * The stall's code, big enough to scan across a counter, with the other ways to spread it:
- * the link, WhatsApp, and a poster to print for the table.
+ * the link, WhatsApp, and a poster to print for the table. A stall with tables has a code for
+ * each one too, so an order says which table to bring it to.
  */
 export default function ShareStall() {
   const { width } = useWindowDimensions()
   const { stall } = useStall()
+  const params = useLocalSearchParams<{ table?: string }>()
   const [copied, setCopied] = useState(false)
+  const [picked, setPicked] = useState<number>(() => Number(params.table) || 0)
 
   if (!stall)
     return (
@@ -33,25 +37,65 @@ export default function ShareStall() {
       </Screen>
     )
 
-  const link = stallLinkFor(stall.slug)
-  const message = `Order from ${stall.name} and pay in dollars with Ren: ${link}`
+  const tables = stall.table_count ?? 0
+  // 0 is the counter's code; 1 to N, a table's.
+  const table = picked > 0 && picked <= tables ? String(picked) : null
+  const link = table ? tableLinkFor(stall.slug, table) : stallLinkFor(stall.slug)
+  const message = table
+    ? `Table ${table} at ${stall.name}: scan to order and we’ll bring it over. ${link}`
+    : `Order from ${stall.name} and pay in dollars with Ren: ${link}`
   const card = Math.min(width - 48, 340)
   const qr = card - 84
 
   return (
     <Screen bg={colors.paper} edges={['bottom']}>
       <View style={{ paddingTop: 8 }}>
-        <Header title="Share your stall" backIcon="close" />
+        <Header title={tables ? 'Your codes' : 'Share your stall'} backIcon="close" />
       </View>
+      {tables ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.picker} style={{ flexGrow: 0 }}>
+          {Array.from({ length: tables + 1 }, (_, n) => n).map((i) => {
+            const on = i === (table ? picked : 0)
+            return (
+              <Pressable
+                key={i}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={i ? `Table ${i}` : 'Counter'}
+                onPress={() => {
+                  void Haptics.selectionAsync()
+                  setPicked(i)
+                  setCopied(false)
+                }}
+                style={[styles.pick, on && styles.pickOn]}
+              >
+                <Txt weight="semi" size={14} color={on ? colors.white : colors.ink}>
+                  {i ? `Table ${i}` : 'Counter'}
+                </Txt>
+              </Pressable>
+            )
+          })}
+        </ScrollView>
+      ) : null}
       <ScrollView contentContainerStyle={styles.body}>
         <View style={[styles.card, { width: card }]}>
           <Awning width={card} height={54} stripe={card / 11} tone={stall.open ? 'coral' : 'teal'} />
+          {table ? (
+            <View style={styles.tableBadge}>
+              <Txt weight="semi" size={10} color={colors.white} style={{ letterSpacing: 0.6 }}>
+                TABLE
+              </Txt>
+              <Txt weight="bold" size={22} color={colors.white} style={{ lineHeight: 24 }}>
+                {table}
+              </Txt>
+            </View>
+          ) : null}
           <View style={styles.cardBody}>
             <Txt weight="bold" size={24} style={{ textAlign: 'center', letterSpacing: -0.6 }} numberOfLines={2}>
               {stall.name}
             </Txt>
             <Txt size={14} color={colors.muted} style={{ textAlign: 'center', marginTop: 2 }}>
-              Scan to order. Pay in dollars.
+              {table ? 'Scan to order. We bring it to your table.' : 'Scan to order. Pay in dollars.'}
             </Txt>
             <View style={styles.qr}>
               <QRCode value={link} size={qr} color={colors.ink} backgroundColor={colors.white} ecl="H" logo={coin} logoSize={qr * 0.2} logoBackgroundColor={colors.white} logoMargin={4} logoBorderRadius={qr} />
@@ -90,7 +134,7 @@ export default function ShareStall() {
             onPress={() => void Linking.openURL(`https://wa.me/?text=${encodeURIComponent(message)}`)}
           />
           <Action icon="share" label="Share another way" tone={colors.surface} onPress={() => void Share.share({ message })} />
-          <Action icon="print" label="Print a table poster" tone={colors.tealSoft} onPress={() => void WebBrowser.openBrowserAsync(posterLinkFor(stall.slug))} />
+          <Action icon="print" label={table ? 'Print the stall poster' : 'Print a table poster'} tone={colors.tealSoft} onPress={() => void WebBrowser.openBrowserAsync(posterLinkFor(stall.slug))} />
         </View>
       </ScrollView>
     </Screen>
@@ -118,6 +162,23 @@ function Action({ icon, label, tone, onPress }: { icon: IconName; label: string;
 
 const styles = StyleSheet.create({
   body: { alignItems: 'center', paddingHorizontal: 24, paddingBottom: 24, paddingTop: 8 },
+  picker: { gap: 8, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 10 },
+  pick: { height: 36, paddingHorizontal: 14, borderRadius: 18, borderWidth: 2, borderColor: colors.ink, justifyContent: 'center' },
+  pickOn: { backgroundColor: colors.ink },
+  tableBadge: {
+    position: 'absolute',
+    top: 16,
+    right: 16,
+    minWidth: 54,
+    height: 54,
+    paddingHorizontal: 6,
+    borderRadius: 27,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   card: { borderRadius: 30, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, overflow: 'hidden' },
   cardBody: { paddingHorizontal: 20, paddingTop: 10, paddingBottom: 22, alignItems: 'center' },
   qr: { marginTop: 16, padding: 12, borderRadius: 22, backgroundColor: colors.white, borderWidth: 2, borderColor: colors.ink },
@@ -134,9 +195,9 @@ const styles = StyleSheet.create({
   },
   actions: { alignSelf: 'stretch', gap: 10, marginTop: 18 },
   action: {
-    height: 58,
+    height: 52,
     paddingHorizontal: 18,
-    borderRadius: 29,
+    borderRadius: 26,
     borderWidth: 2,
     borderColor: colors.ink,
     flexDirection: 'row',

@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { collectOrder, listOrders, type Order } from './api'
+import { collectOrder, listOrders, type Order, type OrderStatus, setOrderStatus } from './api'
 import { useTerminal } from './terminal'
 
 /**
@@ -20,6 +20,8 @@ interface OrdersState {
   fresh: Order | null
   dismissFresh: () => void
   collect: (order: Order, collected?: boolean) => Promise<void>
+  /** Moves an order along the counter: preparing, ready, collected, cancelled. */
+  advance: (order: Order, status: OrderStatus) => Promise<void>
   refresh: () => Promise<void>
 }
 
@@ -43,11 +45,17 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   const seen = useRef<Set<string> | null>(null)
   /** Handed over on this phone and not yet confirmed by the server: a poll must not undo it. */
   const pending = useRef(new Map<string, string | null>())
+  /** Moved along on this phone and not yet confirmed: Ready must not flicker back to New. */
+  const moving = useRef(new Map<string, OrderStatus>())
 
   const refresh = useCallback(async () => {
     const list = await listOrders('all', 60).catch(() => null)
     if (!list) return
-    const merged = list.map((o) => (pending.current.has(o.id) ? { ...o, collected_at: pending.current.get(o.id) ?? null } : o))
+    const merged = list.map((o) => {
+      const status = moving.current.get(o.id)
+      const moved = status ? { ...o, status } : o
+      return pending.current.has(o.id) ? { ...moved, collected_at: pending.current.get(o.id) ?? null } : moved
+    })
     const paidNow = merged.filter(isPaid)
     if (seen.current) {
       const arrived = paidNow.filter((o) => !seen.current?.has(o.id) && !o.collected_at)
@@ -82,18 +90,38 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  const advance = useCallback(
+    async (order: Order, status: OrderStatus) => {
+      if (status === 'collected') return collect(order, true)
+      setOrders((list) => list.map((o) => (o.id === order.id ? { ...o, status } : o)))
+      setFresh((f) => (f?.id === order.id ? null : f))
+      void Haptics.selectionAsync()
+      moving.current.set(order.id, status)
+      try {
+        await setOrderStatus(order.id, status)
+      } catch {
+        moving.current.delete(order.id)
+        await refresh()
+      } finally {
+        moving.current.delete(order.id)
+      }
+    },
+    [collect, refresh],
+  )
+
   const value = useMemo<OrdersState>(
     () => ({
       ready,
-      toHand: orders.filter((o) => isPaid(o) && !o.collected_at),
+      toHand: orders.filter((o) => isPaid(o) && !o.collected_at && o.status !== 'cancelled'),
       waiting: orders.filter(isWaiting),
       done: orders.filter((o) => o.collected_at),
       fresh,
       dismissFresh: () => setFresh(null),
       collect,
+      advance,
       refresh,
     }),
-    [ready, orders, fresh, collect, refresh],
+    [ready, orders, fresh, collect, advance, refresh],
   )
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

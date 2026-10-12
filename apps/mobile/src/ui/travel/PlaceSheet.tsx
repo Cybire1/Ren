@@ -44,7 +44,7 @@ export function PlaceSheet({ visible, title, onClose, onPick }: { visible: boole
         <TextInput
           value={query}
           onChangeText={setQuery}
-          placeholder="City or airport, like Lagos or LHR"
+          placeholder="City or airport, like Lisbon or LHR"
           placeholderTextColor="#8C9799"
           autoFocus
           autoCorrect={false}
@@ -90,15 +90,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
-    height: 54,
+    height: 48,
     marginTop: 8,
     paddingHorizontal: 16,
-    borderRadius: 27,
+    borderRadius: 24,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,
   },
   input: { flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 16 },
-  badge: { width: 52, height: 36, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  badge: { width: 46, height: 32, borderRadius: 12, backgroundColor: colors.surface, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
 })

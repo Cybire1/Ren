@@ -1,5 +1,5 @@
 import { schema } from '@kova/db'
-import { parseSignedAuthorization } from '@kova/monad'
+import { noteKeyMessage, parseSealedNote, parseSignedAuthorization } from '@kova/monad'
 import { decodeMemo, formatAmount, vaultMessage } from '@kova/tempo'
 import { and, asc, eq, gt, inArray, lt, or } from 'drizzle-orm'
 import { Hono } from 'hono'
@@ -18,7 +18,9 @@ import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
 import { clientIp as ip, limit } from '../limits.js'
 import { relayAuthorization } from '../relay.js'
+import { depositAddress, depositsTo, isSource, SOURCES } from '../services/deposits.js'
 import { giveTestDollars } from '../services/faucet.js'
+import { cashOutFor, topUpFor } from '../services/ramp.js'
 import { walletHistory } from '../tempo/history.js'
 import { indexedThrough } from '../workers/watcher.js'
 
@@ -30,6 +32,11 @@ import { indexedThrough } from '../workers/watcher.js'
  *   the gas. On Tempo, sends go through the fee-payer relay (/rpc/relay) instead.
  * - GET /wallets/:address/transfers lists what moved in or out, from Kova's index of the chain.
  * - POST /faucet sends test dollars, five a day for each wallet, on testnet only.
+ * - GET and PUT /wallets/:address/note-key publish the key a wallet's private notes are sealed to.
+ * - GET /wallets/:address/deposit-sources, POST /wallets/:address/deposit-address and GET
+ *   /wallets/:address/deposits bring dollars in from other chains (Aurora Intents, mainnet only).
+ * - GET /wallets/:address/cash-out gives the off-ramp settings for the web's cash-out page.
+ * - GET /wallets/:address/top-up gives a card or bank top-up link (Ramp Network, mainnet only).
  * - GET and PUT /vaults/:id keep a wallet's encrypted backup (name, currency, contacts). Kova
  *   stores ciphertext it can't read; only the vault's own key, from the same passkey, replaces it.
  */
@@ -64,7 +71,22 @@ async function shopsPaid(rows: TransferRow[]): Promise<Shops> {
   return new Map(intents.map((i) => [i.id, { name: i.name, reference: i.reference }]))
 }
 
-function serializeTransfer(row: TransferRow, shops: Shops = new Map()) {
+type Notes = Map<
+  string,
+  { sealed: (typeof schema.paymentNotes.$inferSelect)['sealed']; auth_nonce: string }
+>
+
+async function notesFor(rows: TransferRow[]): Promise<Notes> {
+  const hashes = [...new Set(rows.map((r) => r.txHash))]
+  if (hashes.length === 0) return new Map()
+  const found = await db
+    .select()
+    .from(schema.paymentNotes)
+    .where(inArray(schema.paymentNotes.txHash, hashes))
+  return new Map(found.map((n) => [n.txHash, { sealed: n.sealed, auth_nonce: n.authNonce }]))
+}
+
+function serializeTransfer(row: TransferRow, shops: Shops = new Map(), notes: Notes = new Map()) {
   const memo = row.nonce ? decodeMemo(row.nonce as Hex) : null
   const token = kit.tokenByAddress(row.tokenAddress as Address)
   return {
@@ -91,12 +113,25 @@ function serializeTransfer(row: TransferRow, shops: Shops = new Map()) {
       (kit.faucets.some((f) => f.toLowerCase() === row.fromAddress) ||
         row.fromAddress === feePayerAddress?.toLowerCase()),
     explorer_url: kit.explorerTxUrl(row.txHash as Hex),
+    /** The sender's private note, sealed for the two of them: Ren can't read it. */
+    note: notes.get(row.txHash) ?? null,
   }
 }
 
 const faucetBody = z.object({
   address: z.string().refine((v) => isAddress(v), `Not a ${kit.name} address`),
 })
+
+const noteKeyBody = z.object({
+  public_key: z.string().regex(/^[A-Za-z0-9_-]{43}$/),
+  signature: z.string().regex(/^0x[0-9a-fA-F]{130}$/),
+})
+
+function walletAddress(c: { req: { param: (name: string) => string } }): Address {
+  const address = c.req.param('address')
+  if (!isAddress(address)) throw new KovaError('invalid_request', `Not a ${kit.name} address.`)
+  return getAddress(address)
+}
 
 const vaultBody = z.object({
   ciphertext: z
@@ -117,8 +152,12 @@ function vaultId(c: { req: { param: (name: string) => string } }): Address {
 export const walletRoutes = new Hono()
   .post('/transfers', async (c) => {
     if (onTempo) throw new KovaError('not_found', 'On Tempo, send through Ren’s relay.')
-    const signed = parseSignedAuthorization(await c.req.json().catch(() => null))
+    const body = (await c.req.json().catch(() => null)) as Record<string, unknown> | null
+    const signed = parseSignedAuthorization(body)
     if (!signed) throw new KovaError('invalid_request', 'Expected a signed transfer authorization.')
+    const note = body?.note === undefined || body.note === null ? null : parseSealedNote(body.note)
+    if (body?.note && !note)
+      throw new KovaError('invalid_request', 'That note isn’t sealed the way Ren expects.')
     const { authorization, signature } = signed
     const token = kit.tokenByAddress(signed.token)
     if (!token) throw new KovaError('invalid_request', 'Ren only sends the dollars it settles in.')
@@ -139,6 +178,22 @@ export const walletRoutes = new Hono()
     limit(`send-ip:${ip(c)}`, 60, 600_000, 'That’s a lot of sends from here. Try again shortly.')
 
     const { receipt, ms } = await relayAuthorization(token as never, authorization, signature)
+    if (note) {
+      // The money has moved whatever happens here; a note that fails to save is only a note.
+      await db
+        .insert(schema.paymentNotes)
+        .values({
+          txHash: receipt.transactionHash,
+          fromAddress: authorization.from.toLowerCase(),
+          toAddress: authorization.to.toLowerCase(),
+          authNonce: authorization.nonce,
+          sealed: note,
+        })
+        .onConflictDoNothing()
+        .catch((error) =>
+          console.error('[notes] not saved', error instanceof Error ? error.message : error),
+        )
+    }
     return c.json({
       object: 'transfer',
       tx_hash: receipt.transactionHash,
@@ -160,10 +215,10 @@ export const walletRoutes = new Hono()
     // Tempo: read this wallet's own transfers from the chain (its test dollars are too busy to index whole).
     if (onTempo) {
       const history = await walletHistory(getAddress(address), BigInt(afterText), direction)
-      const shops = await shopsPaid(history.rows)
+      const [shops, notes] = await Promise.all([shopsPaid(history.rows), notesFor(history.rows)])
       return c.json({
         object: 'list',
-        data: history.rows.map((row) => serializeTransfer(row, shops)),
+        data: history.rows.map((row) => serializeTransfer(row, shops, notes)),
         indexed_through: history.through.toString(),
         has_more: history.hasMore,
       })
@@ -194,13 +249,103 @@ export const walletRoutes = new Hono()
     const last = rows.at(-1)
     const cursor =
       rows.length === page && last ? last.blockNumber - 1n : (through ?? BigInt(afterText))
-    const shops = await shopsPaid(rows)
+    const [shops, notes] = await Promise.all([shopsPaid(rows), notesFor(rows)])
     return c.json({
       object: 'list',
-      data: rows.map((row) => serializeTransfer(row, shops)),
+      data: rows.map((row) => serializeTransfer(row, shops, notes)),
       indexed_through: cursor.toString(),
       has_more: rows.length === page,
     })
+  })
+  .get('/wallets/:address/note-key', async (c) => {
+    const address = walletAddress(c)
+    const key = await db.query.noteKeys.findFirst({
+      where: eq(schema.noteKeys.address, address.toLowerCase()),
+    })
+    if (!key) throw notFound('note key', address)
+    return c.json({
+      object: 'note_key',
+      address,
+      public_key: key.publicKey,
+      signature: key.signature,
+    })
+  })
+  .put('/wallets/:address/note-key', async (c) => {
+    const address = walletAddress(c)
+    const parsed = noteKeyBody.safeParse(await c.req.json().catch(() => ({})))
+    if (!parsed.success)
+      throw new KovaError('invalid_request', 'Expected { public_key, signature }.')
+    const { public_key, signature } = parsed.data
+    const signer = await recoverMessageAddress({
+      message: noteKeyMessage(address, public_key),
+      signature: signature as Hex,
+    }).catch(() => null)
+    if (!signer || !isAddressEqual(signer, address))
+      throw new KovaError('forbidden', 'Only the wallet itself can publish its note key.')
+    limit(
+      `note-key:${address.toLowerCase()}`,
+      20,
+      3_600_000,
+      'That’s a lot of new keys in an hour. Try again later.',
+    )
+    await db
+      .insert(schema.noteKeys)
+      .values({ address: address.toLowerCase(), publicKey: public_key, signature })
+      .onConflictDoUpdate({
+        target: schema.noteKeys.address,
+        set: { publicKey: public_key, signature, updatedAt: new Date() },
+      })
+    return c.json({ object: 'note_key', address, public_key })
+  })
+  .get('/wallets/:address/top-up', (c) => {
+    const wallet = walletAddress(c)
+    const currency = (c.req.query('currency') ?? 'USD').toUpperCase()
+    const dollars = Number(c.req.query('amount') ?? '')
+    const returnTo = c.req.query('return_to')
+    // Only Ren's own pages and app may be where Ramp sends people back.
+    const safeReturn =
+      returnTo && /^(https:\/\/mykova\.app\/|kova:\/\/)/.test(returnTo) ? returnTo : undefined
+    return c.json({
+      object: 'top_up',
+      ...topUpFor(wallet, currency, Number.isFinite(dollars) ? dollars : undefined, safeReturn),
+    })
+  })
+  .get('/wallets/:address/cash-out', (c) => {
+    const wallet = walletAddress(c)
+    const currency = (c.req.query('currency') ?? 'USD').toUpperCase()
+    return c.json({ object: 'cash_out', ...cashOutFor(wallet, currency) })
+  })
+  .get('/wallets/:address/deposit-sources', (c) => {
+    walletAddress(c)
+    return c.json({
+      object: 'deposit_sources',
+      // Aurora Intents delivers to Monad; Ren on Tempo doesn't take other chains' dollars yet.
+      live: !onTempo && config.KOVA_NETWORK === 'mainnet' && Boolean(config.AURORA_INTENTS_KEY),
+      network: config.KOVA_NETWORK,
+      arrives_as: config.AURORA_DESTINATION_ASSET,
+      sources: Object.entries(SOURCES).map(([id, s]) => ({ id, ...s })),
+    })
+  })
+  .post('/wallets/:address/deposit-address', async (c) => {
+    const wallet = walletAddress(c)
+    const { source } = (await c.req.json().catch(() => ({}))) as { source?: unknown }
+    if (!isSource(source))
+      throw new KovaError('invalid_request', `source is one of ${Object.keys(SOURCES).join(', ')}.`)
+    limit(
+      `deposit-address-ip:${ip(c)}`,
+      60,
+      3_600_000,
+      'That’s a lot of addresses from here. Try again later.',
+    )
+    return c.json({ object: 'deposit_address', ...(await depositAddress(wallet, source)) })
+  })
+  .get('/wallets/:address/deposits', async (c) => {
+    walletAddress(c)
+    const address = c.req.query('address')
+    if (!address || address.length > 128)
+      throw new KovaError('invalid_request', 'address is a deposit address from this wallet.')
+    limit(`deposits-ip:${ip(c)}`, 600, 3_600_000, 'Checking a lot from here. Try again shortly.')
+    return c.json({ object: 'list', data: await depositsTo(address) })
   })
   .get('/vaults/:id', async (c) => {
     const id = vaultId(c)

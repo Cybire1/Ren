@@ -1853,7 +1853,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
 .stack-form input:not([type="checkbox"]):focus,
 .setting-form input:not([type="checkbox"]):focus,
 .keyfield input:focus {
-  box-shadow: 0 0 0 4px rgba(212, 101, 88, 0.25);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 25%, transparent);
 }
 
 .mono-input {
@@ -1900,7 +1900,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
 .checkline.warn {
   padding: 0.75rem 0.9rem;
   border-radius: 1rem;
-  background: rgba(212, 101, 88, 0.12);
+  background: color-mix(in srgb, var(--coral) 12%, transparent);
   font-size: 0.875rem;
 }
 

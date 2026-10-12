@@ -64,6 +64,48 @@
       "when": 1790502897700,
       "tag": "0008_daily_test_dollars",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1790845156798,
+      "tag": "0009_private_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1791620389049,
+      "tag": "0010_ussd_pockets",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1791624725992,
+      "tag": "0011_pos_stock_status",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1791626617073,
+      "tag": "0012_kova_cards",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1791717576501,
+      "tag": "0013_reconcile_cards_ussd_pos",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791786696095,
+      "tag": "0014_tables_and_stamps",
+      "breakpoints": true
     }
   ]
 }

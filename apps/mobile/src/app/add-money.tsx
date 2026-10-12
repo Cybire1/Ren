@@ -1,24 +1,43 @@
 import * as Haptics from 'expo-haptics'
+import * as WebBrowser from 'expo-web-browser'
 import { router } from 'expo-router'
 import { useState } from 'react'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
-import { chainName, isTestnet, settlementToken } from '@/lib/config'
+import { topUpLink } from '@/lib/chain'
+import { chainDeposits, chainName, isTestnet, onTempo, settlementToken } from '@/lib/config'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
+import { Icon } from '@/ui/Icon'
 import { CoinRain } from '@/ui/motion'
 import { Stage } from '@/ui/Stage'
 import { Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /**
- * Adding money. On testnet, Kova sends $5 of test dollars a day from its own testnet treasury. On mainnet this is where
- * card and bank on-ramps go; Kova itself never holds or converts the money (D-012).
+ * Adding money. On testnet, Ren sends $5 of test dollars a day from its own testnet treasury. On mainnet this is where
+ * card and bank on-ramps go; Ren itself never holds or converts the money (D-012).
  */
 export default function AddMoney() {
-  const { addMoney, balance } = useWallet()
+  const { addMoney, balance, profile, refresh } = useWallet()
   const { width } = useWindowDimensions()
   const [stage, setStage] = useState<'ready' | 'adding' | 'done' | 'problem'>('ready')
   const [problem, setProblem] = useState<string | null>(null)
+
+  const [cardNote, setCardNote] = useState<string | null>(null)
+
+  /** Ramp's hosted checkout, in the in-app browser; it sends AUSD on Monad to this wallet. */
+  const cardOrBank = async () => {
+    if (!profile) return
+    void Haptics.selectionAsync()
+    try {
+      const top = await topUpLink(profile.address, profile.currency, 'kova://add-money')
+      if (!top.live || !top.url) return setCardNote('Opens on Monad mainnet: buys AUSD straight into this wallet')
+      await WebBrowser.openBrowserAsync(top.url)
+      void refresh()
+    } catch (error) {
+      setCardNote(error instanceof Error ? error.message : 'Ren didn’t answer. Try again.')
+    }
+  }
 
   const add = async () => {
     setStage('adding')
@@ -35,10 +54,10 @@ export default function AddMoney() {
   return (
     <Screen bg={colors.tealLight}>
       <Header title="Add money" backIcon="close" />
-      <View style={{ height: 300 }}>
+      <View style={{ height: stage === 'done' ? 300 : 210 }}>
         {stage === 'adding' || stage === 'done' ? <CoinRain width={width} height={300} /> : null}
-        <View style={{ position: 'absolute', left: width / 2 - 95, top: 90 }}>
-          <Stage pose={stage === 'done' ? 'cheer' : 'catch'} size={190} />
+        <View style={{ position: 'absolute', left: width / 2 - (stage === 'done' ? 95 : 75), top: stage === 'done' ? 90 : 40 }}>
+          <Stage pose={stage === 'done' ? 'cheer' : 'catch'} size={stage === 'done' ? 190 : 150} />
         </View>
       </View>
       <Rise style={styles.copy}>
@@ -57,7 +76,7 @@ export default function AddMoney() {
               Free test dollars
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Ren is running on {chainName}’s test network. It sends you $5 of test dollars a day to try every payment for real, and pays every fee.
+              Ren is on {chainName}’s test network: $5 of test dollars a day to try every payment for real. Ren pays every fee.
             </Txt>
           </>
         ) : (
@@ -66,7 +85,9 @@ export default function AddMoney() {
               Add money
             </Txt>
             <Txt size={17} color={colors.onTint} style={styles.body}>
-              Card and bank top-ups are coming to Ren. For now, send {settlementToken.symbol} on {chainName} to your address.
+              {onTempo
+                ? `Card and bank top-ups are coming to Ren. For now, send ${settlementToken.symbol} on ${chainName} to your address.`
+                : 'Bring dollars from any chain, or send AUSD on Monad to your address. Card and bank top-ups are coming.'}
             </Txt>
           </>
         )}
@@ -76,25 +97,47 @@ export default function AddMoney() {
           </Txt>
         ) : null}
       </Rise>
-      {stage !== 'done' && isTestnet ? (
+      {/* Card or bank (Ramp) buys AUSD on Monad mainnet, and deposits from other chains land as AUSD:
+          both are Monad's. On testnet, or on Tempo, they would be a dead end. */}
+      {stage !== 'done' && !onTempo && (!isTestnet || chainDeposits) ? (
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
-          <Sticker radius={24} style={{ height: 70 }}>
+          {isTestnet ? null : (
+          <Sticker radius={24} onPress={() => void cardOrBank()} accessibilityLabel="Card or bank" style={{ height: 66, marginBottom: 12 }}>
             <View style={styles.row}>
-              <Txt size={15} color={colors.muted}>
-                Amount
-              </Txt>
-              <Txt weight="semi" size={15}>
-                $5, once a day
-              </Txt>
+              <View style={{ flex: 1 }}>
+                <Txt weight="semi" size={16}>
+                  Card or bank
+                </Txt>
+                <Txt size={13} color={colors.muted}>
+                  {cardNote ?? 'Card, Apple Pay or bank, with Ramp Network'}
+                </Txt>
+              </View>
+              <Icon name="card" size={20} />
             </View>
           </Sticker>
+          )}
+          {chainDeposits ? (
+          <Sticker radius={24} onPress={() => router.push('/from-chain')} accessibilityLabel="From another chain" style={{ height: 66 }}>
+            <View style={styles.row}>
+              <View style={{ flex: 1 }}>
+                <Txt weight="semi" size={16}>
+                  From another chain
+                </Txt>
+                <Txt size={13} color={colors.muted}>
+                  USDC, USDT, ETH, SOL or BTC, from 30+ chains
+                </Txt>
+              </View>
+              <Icon name="arrow" size={20} />
+            </View>
+          </Sticker>
+          ) : null}
         </View>
       ) : null}
       <View style={styles.footer}>
         {stage === 'done' ? (
           <PillButton label="Back to home" icon="home" onPress={() => router.back()} />
         ) : isTestnet ? (
-          <PillButton label="Add test dollars" icon="plus" loading={stage === 'adding'} onPress={add} />
+          <PillButton label="Add $5 test dollars" icon="plus" loading={stage === 'adding'} onPress={add} />
         ) : (
           <PillButton label="Show my address" icon="receive" onPress={() => router.replace('/receive')} />
         )}

@@ -1,6 +1,7 @@
 import { getNetwork, getToken, type NetworkId, tokenByAddress } from '@kova/tempo'
 import { type Address, type Hex, http, type LocalAccount } from 'viem'
 import { Actions, createClient, withRelay } from 'viem/tempo'
+import type { NoteToSeal } from './chain-monad'
 
 /**
  * Money on Tempo, from the browser, as the app moves it (apps/mobile src/lib/chain-tempo.ts).
@@ -84,6 +85,10 @@ export async function sendMoney(
   account: LocalAccount,
   to: Address,
   amount: bigint,
+  // A private note is sealed to an EIP-3009 authorization (Monad). Tempo's send goes straight
+  // through the fee-payer relay with nothing for a note to bind to yet, so the wallet doesn't
+  // offer one on Tempo (components/wallet/send.tsx).
+  _note?: NoteToSeal,
 ): Promise<Moved> {
   const started = performance.now()
   try {
@@ -165,5 +170,5 @@ export async function addTestDollars(network: NetworkId, address: Address): Prom
   return balanceOf(network, address)
 }
 
-export type { IndexedTransfer } from './chain-monad'
+export type { IndexedTransfer, NoteToSeal } from './chain-monad'
 export { transfersAfter } from './chain-monad'

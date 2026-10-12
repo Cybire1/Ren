@@ -16,7 +16,7 @@ import { SESSION_LIMIT, TAP_LIMIT, useSessionState } from '@/lib/wallet/session'
 import { ScreenHead } from './activity'
 import { short, useWallet } from './provider'
 import { CopyButton, QR } from './ui'
-import { chainName } from '@/lib/chain'
+import { chainName, onTempo } from '@/lib/chain'
 
 /** "$50", for limits that are always whole dollars. */
 const whole = (base: bigint) => formatUsd(base).replace(/\.00$/, '')
@@ -83,6 +83,18 @@ export function Profile() {
           <strong>{formatUsd(moved)}</strong> Moved
         </span>
       </div>
+
+      {/* Mainnet only: on testnet there's nothing real to cash out. Ramp pays out AUSD on Monad,
+          so there's no cash-out on Tempo yet. */}
+      {network === 'mainnet' && !onTempo ? (
+        <Link href="/wallet/cash-out" className="w-add-chain">
+          <span>
+            <strong>Cash out</strong>
+            <small>To your bank or card, with Ramp Network</small>
+          </span>
+          <Icon name="out" size={18} />
+        </Link>
+      ) : null}
 
       <section className="w-money">
         <div>

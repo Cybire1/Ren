@@ -1,6 +1,8 @@
 # The Kova API: builds only the API and the packages it depends on from the pnpm workspace.
 FROM node:22-slim AS build
 RUN corepack enable
+# The image builds the shared packages it needs in its own step, not on install.
+ENV KOVA_SKIP_PACKAGE_BUILD=1
 WORKDIR /repo
 COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
 COPY apps/api/package.json apps/api/

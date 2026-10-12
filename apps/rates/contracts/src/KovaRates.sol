@@ -21,7 +21,8 @@ interface IReceiver is IERC165 {
 /// A report is abi.encode(uint64 asOf, bytes3[] codes, uint256[] perUsdE8): how many units of
 /// each currency one US dollar buys, scaled by 1e8, as of a unix time. A zero means the sources
 /// disagreed for that currency, and the last good rate stands. An older report never overwrites a
-/// newer rate, so a delayed or replayed report can't move a price backwards.
+/// newer rate, so a delayed or replayed report can't move a price backwards; a report dated in the
+/// future is refused, so a bad clock can't freeze a rate until then.
 contract KovaRates is IReceiver {
     struct Rate {
         uint192 perUsdE8;
@@ -42,6 +43,10 @@ contract KovaRates is IReceiver {
     error NotForwarder(address sender);
     error NotOwner(address sender);
     error MalformedReport();
+    error FutureReport(uint64 asOf, uint256 blockTime);
+
+    /// @notice How far a report's time may run ahead of the block: the DON's clock and Monad's differ by seconds.
+    uint256 public constant MAX_CLOCK_SKEW = 5 minutes;
 
     constructor(address forwarder_) {
         owner = msg.sender;
@@ -55,6 +60,7 @@ contract KovaRates is IReceiver {
         if (msg.sender != forwarder) revert NotForwarder(msg.sender);
         (uint64 asOf, bytes3[] memory codes, uint256[] memory values) = abi.decode(report, (uint64, bytes3[], uint256[]));
         if (codes.length != values.length) revert MalformedReport();
+        if (asOf > block.timestamp + MAX_CLOCK_SKEW) revert FutureReport(asOf, block.timestamp);
 
         uint256 updated;
         for (uint256 i; i < codes.length; ++i) {

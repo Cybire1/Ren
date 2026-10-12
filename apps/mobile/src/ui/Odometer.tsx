@@ -19,6 +19,7 @@ type Weight = keyof typeof fonts
  * Whole dollars that roll into place like the counter on a till: one column of figures per
  * digit, each rolling to its figure, the leftmost first. When the amount changes, each column
  * rolls from the figure it showed. Screen readers hear `label` once; the columns are hidden.
+ * Figures are drawn at exactly `size` (not the app's text density): every cell is measured from it.
  */
 export function Odometer({
   value,
@@ -52,6 +53,7 @@ export function Odometer({
             key={key}
             weight={weight}
             size={size}
+            exact
             color={color}
             style={{ lineHeight: line, height: line, marginRight: -size * 0.02 }}
             importantForAccessibility="no"
@@ -100,7 +102,7 @@ function Column({
     >
       <Animated.View style={strip}>
         {FIGURES.map((f) => (
-          <Txt key={f} weight={weight} size={size} color={color} style={{ height: line, lineHeight: line }}>
+          <Txt key={f} weight={weight} size={size} exact color={color} style={{ height: line, lineHeight: line }}>
             {f}
           </Txt>
         ))}

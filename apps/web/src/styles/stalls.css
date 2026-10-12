@@ -2182,3 +2182,770 @@
   border: 2px solid var(--ink);
   background: var(--surface);
 }
+
+/* --- Tables and the stamp card ------------------------------------------------------------ */
+
+.chip-table {
+  gap: 0.35rem;
+  background: var(--ink);
+  color: #fff;
+}
+
+/* The stamp card: a paper loyalty card, Reni peeking over its edge. */
+.stamps {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem 1.25rem 1.35rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.6rem;
+  background: var(--card);
+  text-align: left;
+}
+
+.stamps[data-ready] {
+  background: var(--coral-soft);
+}
+
+.stamps-reni {
+  position: absolute;
+  top: -37px;
+  right: 1.25rem;
+  pointer-events: none;
+}
+
+.stamps-reni img {
+  display: block;
+}
+
+.stamps .stamps-head {
+  display: grid;
+  gap: 0.25rem;
+  padding-right: 4.5rem;
+}
+
+.stamps .stamps-kicker {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--coral-deep);
+}
+
+.stamps[data-ready] .stamps-kicker {
+  color: var(--ink);
+}
+
+.stamps h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.stamps .stamps-line {
+  max-width: 34rem;
+  color: var(--ink-2);
+  font-size: 0.9375rem;
+  font-weight: 500;
+}
+
+.stamps-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stamp {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 2.6rem;
+  height: 2.6rem;
+  border: 2px dashed color-mix(in srgb, var(--ink) 35%, transparent);
+  border-radius: 50%;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.stamp[data-on] {
+  border: 2px solid var(--ink);
+  background: var(--coral);
+  transform: rotate(-8deg);
+}
+
+.stamp[data-on]:nth-child(even) {
+  transform: rotate(6deg);
+}
+
+.stamp[data-fresh] {
+  animation: stamp-in 0.7s var(--spring) 0.5s both;
+}
+
+@keyframes stamp-in {
+  0% {
+    opacity: 0;
+    transform: scale(1.9) rotate(-20deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.92) rotate(-6deg);
+  }
+  100% {
+    transform: scale(1) rotate(-8deg);
+  }
+}
+
+.stamp-free {
+  gap: 0;
+  border: 2px solid var(--ink);
+  border-radius: 1rem;
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 0.625rem;
+  line-height: 1;
+}
+
+.stamp-free svg {
+  margin-bottom: -0.35rem;
+}
+
+.stamp-free[data-on] {
+  background: var(--ink);
+  color: #fff;
+  transform: none;
+  animation: breathe-soft 2.4s var(--spring) infinite;
+}
+
+@keyframes breathe-soft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.08);
+  }
+}
+
+.store-stamps {
+  max-width: 72rem;
+  margin: 3.5rem auto 0;
+  padding: 0 1rem;
+}
+
+@media (min-width: 900px) {
+  .store-stamps .stamps {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1.4rem 1.75rem;
+  }
+  .store-stamps .stamps-row {
+    justify-content: flex-end;
+    max-width: calc(var(--stamps) * 3.05rem);
+  }
+  .store-stamps .stamps-reni {
+    right: 2.5rem;
+  }
+}
+
+/* The bag, with a full card and a table. */
+.bag-free {
+  color: var(--coral-deep);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.basket-reward {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-top: 1.25rem;
+  padding: 0.75rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.1rem;
+  background: var(--coral-soft);
+  font-size: 0.9375rem;
+}
+
+.basket-reward > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+}
+
+.basket-reward em {
+  font-style: normal;
+  font-weight: 800;
+}
+
+.basket-reward-stamp {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--coral);
+  transform: rotate(-8deg);
+}
+
+.basket-table {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin: 0.4rem 0 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+/* The pay page, for a table order and a free item. */
+.payee .chip-table {
+  margin-top: 0.5rem;
+}
+
+.pay-lines .pay-reward {
+  font-weight: 750;
+  color: var(--coral-deep);
+}
+
+.pay-reward-help {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.paid-reward {
+  display: grid;
+  margin-top: 1rem;
+  padding: 0.7rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.1rem;
+  background: var(--coral-soft);
+}
+
+.paid .paid-reward {
+  color: var(--ink);
+}
+
+.paid-order {
+  display: grid;
+  gap: 3rem;
+  width: 100%;
+  margin-top: 1.75rem;
+}
+
+/* After paying: where the order is, and the moment it's ready. */
+.ready {
+  display: grid;
+  gap: 1.1rem;
+  width: 100%;
+  padding: 1.25rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.75rem;
+  background: var(--surface);
+  text-align: left;
+}
+
+.ready-head {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.ready .ready-kicker {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--teal-deep);
+}
+
+.ready h2 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.ready p {
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.ready[data-ready] {
+  background: var(--coral);
+  animation: ready-pop 0.7s var(--spring);
+}
+
+@keyframes ready-pop {
+  0% {
+    transform: scale(0.94);
+  }
+  55% {
+    transform: scale(1.03);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.ready-moment {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.2rem;
+  padding: 0.25rem 0 0.5rem;
+  text-align: center;
+}
+
+.ready-moment h2 {
+  font-size: clamp(1.9rem, 8vw, 2.5rem);
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.ready-moment .ready-kicker {
+  color: var(--ink);
+}
+
+.ready .ready-where {
+  margin-top: 0.35rem;
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.ready-reni {
+  animation: hop-in 1s var(--spring) both;
+}
+
+.ready[data-moment] .ready-reni {
+  animation: hop-in 1s var(--spring) both, bounce 1.4s var(--spring) 1s 3;
+}
+
+@keyframes hop-in {
+  0% {
+    opacity: 0;
+    transform: translateY(1.5rem) scale(0.6);
+  }
+  60% {
+    opacity: 1;
+    transform: translateY(-0.5rem) scale(1.05);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  100% {
+    transform: none;
+  }
+  40% {
+    transform: translateY(-0.7rem);
+  }
+}
+
+.ready-spark {
+  position: absolute;
+  animation: ready-twinkle 1.8s ease-in-out infinite;
+}
+
+.ready-spark-a {
+  top: 0.5rem;
+  left: 18%;
+}
+
+.ready-spark-b {
+  top: 3.5rem;
+  right: 18%;
+  animation-delay: 0.6s;
+}
+
+@keyframes ready-twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.8) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1) rotate(20deg);
+  }
+}
+
+.ready-track {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ready-track li {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* The line between steps, drawn from each step to the one before. */
+.ready-track li + li::before {
+  content: "";
+  position: absolute;
+  top: calc(0.75rem - 1px);
+  right: calc(50% + 0.85rem);
+  width: calc(100% - 1.7rem);
+  height: 2px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+}
+
+.ready-track li[data-state="done"] + li::before {
+  background: var(--ink);
+}
+
+.ready-dot {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border: 2px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  border-radius: 50%;
+  background: var(--surface);
+}
+
+.ready-track li[data-state] {
+  color: var(--ink);
+}
+
+.ready-track li[data-state="done"] .ready-dot {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #fff;
+}
+
+.ready-track li[data-state="now"] .ready-dot {
+  border-color: var(--ink);
+  background: var(--coral);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--coral) 25%, transparent);
+}
+
+.ready[data-ready] .ready-dot {
+  background: var(--coral-soft);
+}
+
+.ready[data-ready] .ready-track li[data-state="done"] .ready-dot {
+  background: var(--ink);
+}
+
+.ready[data-ready] .ready-track li[data-state="now"] .ready-dot {
+  background: #fff;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.4);
+}
+
+.ready[data-ready] .ready-track li {
+  color: var(--ink);
+}
+
+.ready-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  padding-top: 0.9rem;
+  border-top: 1px dashed var(--hairline);
+}
+
+.ready-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+}
+
+.ready-live .dot {
+  animation: breathe 2.4s var(--spring) infinite;
+}
+
+.ready-alerts {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--teal-deep);
+}
+
+.ready-cancelled {
+  justify-items: center;
+  text-align: center;
+}
+
+.asked .ready {
+  margin-top: 1.25rem;
+}
+
+/* The dashboard: a table, a free item, and the order the buyer's phone was told about. */
+.order-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.1rem 0 0.15rem;
+}
+
+.order-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  height: 1.6rem;
+  padding: 0 0.6rem;
+  border-radius: 999px;
+  background: var(--sunken);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.order-tag-table {
+  background: var(--ink);
+  color: #fff;
+}
+
+.order-tag-stamp {
+  background: var(--coral-soft);
+}
+
+.order-tag-ready {
+  background: var(--teal-soft);
+}
+
+.order-acts {
+  display: flex;
+  flex: none;
+  gap: 0.35rem;
+}
+
+.mini-coral {
+  background: var(--coral);
+  color: var(--ink);
+}
+
+/* The stall editor's settings: tables and the stamp card. */
+.setting-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.setting-head p {
+  max-width: 38rem;
+  margin-top: 0.3rem;
+  color: var(--muted);
+  font-size: 0.9375rem;
+}
+
+.setting-head .switch {
+  flex: none;
+  margin-top: 0.15rem;
+}
+
+.setting-body {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1.1rem;
+}
+
+.setting-count {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 0.5rem 0.5rem 1.1rem;
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1.5px var(--hairline);
+}
+
+.setting-count .field-label {
+  color: var(--ink);
+  font-size: 0.9375rem;
+  font-weight: 700;
+}
+
+.setting-count .stepper > span {
+  min-width: 2rem;
+}
+
+.setting-count .stepper button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.setting-tables {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.setting-tables li {
+  display: grid;
+  place-items: center;
+  min-width: 2.4rem;
+  height: 2.4rem;
+  padding: 0 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 0.8rem;
+  background: var(--surface);
+  font-weight: 800;
+  font-size: 0.875rem;
+}
+
+.setting-tables .setting-tables-more {
+  border-style: dashed;
+  color: var(--muted);
+}
+
+.setting-preview {
+  display: grid;
+  gap: 3.1rem;
+}
+
+.setting-off {
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+/* Table cards: a small tent card per table, four to an A4 page. */
+.table-sheets {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  width: min(210mm, 100%);
+}
+
+@media (max-width: 520px) {
+  .table-sheets {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.table-card {
+  display: flex;
+  flex-direction: column;
+  aspect-ratio: 105 / 148.5;
+  border: 2px solid var(--ink);
+  background: var(--card);
+  overflow: hidden;
+  break-inside: avoid;
+}
+
+.table-card > svg {
+  flex: none;
+  display: block;
+}
+
+.table-card-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4% 9% 6%;
+  text-align: center;
+}
+
+.table-card-shop {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-card-number {
+  display: grid;
+  margin-top: 0.25rem;
+  font-size: clamp(3rem, 9vw, 4.4rem);
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  line-height: 0.9;
+}
+
+.table-card-number small {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--coral-deep);
+}
+
+.table-card-qr {
+  position: relative;
+  width: 58%;
+  margin-top: 6%;
+  padding: 5%;
+  border: 2.5px solid var(--ink);
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.table-card-coin {
+  border-width: 2px;
+}
+
+.table-card-ask {
+  margin-top: 6%;
+  padding: 0.4em 1em;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.table-card-small {
+  max-width: 18em;
+  margin-top: 4%;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.table-card-foot {
+  margin-top: auto;
+}
+
+@media print {
+  .table-sheets {
+    width: 210mm;
+    gap: 0;
+  }
+  .table-card {
+    width: 105mm;
+    height: 148.5mm;
+    aspect-ratio: auto;
+    border: 0.5px dashed #9aa09f;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+}

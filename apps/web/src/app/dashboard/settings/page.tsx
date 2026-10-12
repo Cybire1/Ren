@@ -41,7 +41,7 @@ export default async function SettingsPage() {
             </div>
             <div>
               <dt>Mode</dt>
-              <dd>{merchant.livemode ? 'Live: real dollars' : 'Test: test dollars, nothing real moves'}</dd>
+              <dd>{merchant.livemode ? 'Live: payments settle in dollars' : 'Test: test dollars only'}</dd>
             </div>
             <div>
               <dt>Settles in</dt>

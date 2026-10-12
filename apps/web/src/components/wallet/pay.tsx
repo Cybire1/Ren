@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { getAddress } from 'viem'
 import { Art, Icon } from '@/components/brand'
+import { OrderReady } from '@/components/order-ready'
+import { StampsAfterPay } from '@/components/stamp-card'
+import type { Checkout } from '@/lib/api'
+import { rememberPayer } from '@/lib/payer'
 import type { ChargeToPay } from '@/lib/wallet/chain'
 import { parseScanned } from '@/lib/wallet/links'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/wallet/money'
@@ -174,10 +178,13 @@ type Stage =
   | { at: 'paid'; ms: number; hash: string }
   | { at: 'problem'; message: string }
 
+/** A charge as Kova shows it to the payer, with the stall order behind it. */
+type Charge = Omit<ChargeToPay, 'order'> & { status: string; order?: Checkout['order'] }
+
 /** Paying a shop's charge from this wallet: what it's for, then paid in about a second. */
 export function PayCharge({ id }: { id: string }) {
   const { balance, payCheckout, profile, rates } = useWallet()
-  const [charge, setCharge] = useState<ChargeToPay | null>(null)
+  const [charge, setCharge] = useState<Charge | null>(null)
   const [stage, setStage] = useState<Stage>({ at: 'loading' })
 
   useEffect(() => {
@@ -185,10 +192,7 @@ export function PayCharge({ id }: { id: string }) {
     fetch(`/api/checkout/${encodeURIComponent(id)}`, { cache: 'no-store' })
       .then(async (r) => {
         if (!r.ok) throw new Error()
-        return (await r.json()) as ChargeToPay & {
-          status: string
-          order?: { lines?: { item_id: string; name: string; quantity: number }[] } | null
-        }
+        return (await r.json()) as Charge
       })
       .then((c) => {
         if (!live) return
@@ -234,6 +238,7 @@ export function PayCharge({ id }: { id: string }) {
   const amount = BigInt(charge.amount_base)
   const place = charge.order?.stall?.name ?? charge.merchant_name
   const short_ = balance !== null && amount > balance
+  const order = charge.order
 
   if (stage.at === 'paid')
     return (
@@ -243,6 +248,7 @@ export function PayCharge({ id }: { id: string }) {
         <p className="w-moment-big">
           {formatUsd(amount)} to {place}
         </p>
+        {order?.reward ? <p className="w-moment-reward">One {order.reward.name} free with your stamp card</p> : null}
         <div className="w-stats w-stats-moment">
           <span>
             <strong>{(stage.ms / 1000).toFixed(1)}s</strong> Took
@@ -254,6 +260,12 @@ export function PayCharge({ id }: { id: string }) {
             <strong>{balance === null ? '…' : formatUsd(balance)}</strong> Left
           </span>
         </div>
+        {order?.stall && order.status && !order.pay_for_me ? (
+          <div className="w-moment-order">
+            <OrderReady checkoutId={charge.id} order={order} shop={order.stall.name} />
+            <StampsAfterPay slug={order.stall.slug} shop={order.stall.name} usedReward={Boolean(order.reward)} />
+          </div>
+        ) : null}
         <div className="w-moment-actions">
           <Link href="/wallet" className="pill pill-block" data-tone="ink">
             <span className="pill-label">Done</span>
@@ -268,9 +280,7 @@ export function PayCharge({ id }: { id: string }) {
       </div>
     )
 
-  const lines =
-    (charge as { order?: { lines?: { item_id: string; name: string; quantity: number }[] } | null })
-      .order?.lines ?? []
+  const lines = order?.lines ?? []
   return (
     <div className="w-screen">
       <ScreenHead title="" back="/wallet/pay" />
@@ -306,6 +316,18 @@ export function PayCharge({ id }: { id: string }) {
                 <strong>{charge.reference}</strong>
               </div>
             ) : null}
+            {order?.table ? (
+              <div className="w-review-row">
+                <span>Table</span>
+                <strong>{order.table}, they’ll bring it over</strong>
+              </div>
+            ) : null}
+            {order?.reward ? (
+              <div className="w-review-row w-review-reward">
+                <span>Stamp card</span>
+                <strong>One {order.reward.name} free</strong>
+              </div>
+            ) : null}
             <div className="w-review-row">
               <span>From</span>
               <strong>Your wallet, {balance === null ? '…' : formatUsd(balance)}</strong>
@@ -316,7 +338,11 @@ export function PayCharge({ id }: { id: string }) {
             </div>
           </div>
           {stage.at === 'problem' ? (
-            <p className="form-error">{stage.message} Nothing was paid.</p>
+            <p className="form-error">
+              {stage.message}
+              {/* A timeout may still land: then the message says so, and we don't claim otherwise. */}
+              {/went through/i.test(stage.message) ? '' : ' Nothing was paid.'}
+            </p>
           ) : null}
           {short_ ? (
             <>
@@ -340,6 +366,8 @@ export function PayCharge({ id }: { id: string }) {
                 setStage({ at: 'paying' })
                 try {
                   const moved = await payCheckout(charge)
+                  // This wallet is the stamp card at the shop.
+                  if (profile) rememberPayer(profile.address)
                   setStage({ at: 'paid', ms: moved.ms, hash: moved.hash })
                 } catch (e) {
                   const message = e instanceof Error ? e.message : 'Ren couldn’t pay it.'
