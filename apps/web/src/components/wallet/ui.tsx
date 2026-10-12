@@ -4,6 +4,7 @@ import Link from 'next/link'
 import QRCode from 'qrcode'
 import { useEffect, useState } from 'react'
 import { Art, type ArtName, Icon } from '@/components/brand'
+import { Odometer } from '@/components/odometer'
 import {
   baseToNumber,
   currencyInfo,
@@ -13,7 +14,7 @@ import {
   type Key,
   type Rates,
 } from '@/lib/wallet/money'
-import { type Entry, useWallet } from './provider'
+import { type Entry, isUnnamed, useWallet } from './provider'
 
 /** FNV-1a over the lowercased address, as the app picks faces: the same person looks the same everywhere. */
 function hash(text: string) {
@@ -71,11 +72,12 @@ export function signed(entry: Entry) {
 }
 
 /** One line of money: who, what, when, and how much, signed by direction. */
-export function EntryRow({ entry }: { entry: Entry }) {
+export function EntryRow({ entry, rank }: { entry: Entry; rank?: number }) {
   return (
     <Link
       href={`/wallet/activity/${encodeURIComponent(entry.id)}`}
-      className="w-entry"
+      className={`w-entry${isFresh(entry) ? ' w-entry-fresh' : ''}`}
+      data-rank={rank}
       aria-label={`${verbs[entry.kind]} ${formatUsd(BigInt(entry.amount))}, ${entry.name}`}
     >
       <EntryBadge entry={entry} />
@@ -90,36 +92,52 @@ export function EntryRow({ entry }: { entry: Entry }) {
   )
 }
 
+/** The tap mark's three waves, drawn large and faint behind money, or pulsing on Pay. */
+export function Waves({ className, size = 200 }: { className?: string; size?: number }) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 200 200" aria-hidden="true">
+      <path d="M92.6 74.3 A40 40 0 0 1 92.6 125.7" />
+      <path d="M115.6 55 A70 70 0 0 1 115.6 145" />
+      <path d="M138.6 35.7 A100 100 0 0 1 138.6 164.3" />
+    </svg>
+  )
+}
+
+/** Money that came in a moment ago: it gets a chip on the balance and a glow in Recent. */
+export const FRESH_FOR = 120_000
+export const isFresh = (entry: Entry) => incoming(entry) && Date.now() - entry.at < FRESH_FOR
+
 /**
- * The balance, first thing on Home: dollars as the headline, the sign and cents set small and
- * raised like a price tag, the local amount as a chip, and one tap to hide it all.
+ * The balance, first thing on Home: dollars as the headline, rolling into place like a till's
+ * wheels, the sign and cents set small and raised like a price tag, and one tap to hide it all.
+ * Money that just landed says so on the card. With nothing in the wallet yet, the card is the
+ * first step instead: one button to add test dollars, and Kovi waiting to catch them.
  */
-export function BalanceCard() {
-  const { balance, profile, rates, hideBalance, setHideBalance } = useWallet()
+export function BalanceCard({ fresh, empty }: { fresh?: Entry | null; empty?: boolean }) {
+  const { balance, profile, rates, hideBalance, setHideBalance, network } = useWallet()
   const usd = balance === null ? null : formatUsd(balance)
   const [whole, cents] =
     usd === null ? ['—', ''] : [usd.slice(1, usd.lastIndexOf('.')), usd.slice(usd.lastIndexOf('.'))]
   const currency = profile?.currency ?? 'USD'
+  const testnet = network === 'testnet'
   return (
     <section
-      className="w-balance"
+      className={`w-balance${empty ? ' w-balance-empty' : ''}`}
       aria-label={hideBalance ? 'Balance hidden' : `Available ${usd ?? 'loading'}`}
     >
-      <svg
-        className="w-balance-rings"
-        width="220"
-        height="220"
-        viewBox="-110 -110 220 220"
-        aria-hidden="true"
-      >
-        {[104, 78, 52, 26].map((r) => (
-          <circle key={r} r={r} fill="none" stroke="var(--teal-deep)" strokeWidth="2" />
-        ))}
-      </svg>
-      <span className="w-balance-coins" aria-hidden="true">
-        <Art name="coin-usd" size={50} className="w-coin w-coin-front" />
-        <Art name="coin-eur" size={40} className="w-coin w-coin-back" />
-      </span>
+      <Waves className="w-balance-waves" size={220} />
+      {empty ? (
+        <span className="w-balance-kovi" aria-hidden="true">
+          <Art name="sparkle-8" size={18} className="w-sparkle w-sparkle-a" />
+          <Art name="sparkle-4" size={14} className="w-sparkle w-sparkle-b" />
+          <Art name="kovi-catch" size={124} className="w-kovi-catch" />
+        </span>
+      ) : (
+        <span className="w-balance-coins" aria-hidden="true">
+          <Art name="coin-usd" size={50} className="w-coin w-coin-front" />
+          <Art name="coin-eur" size={40} className="w-coin w-coin-back" />
+        </span>
+      )}
       <div className="w-balance-top">
         <button
           type="button"
@@ -129,9 +147,15 @@ export function BalanceCard() {
         >
           Available <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={18} />
         </button>
-        <Link href="/wallet/add" className="w-balance-add">
-          <Icon name="plus" size={16} /> Add
-        </Link>
+        {empty ? (
+          testnet ? (
+            <span className="w-chip">Test dollars</span>
+          ) : null
+        ) : (
+          <Link href="/wallet/add" className="w-balance-add">
+            <Icon name="plus" size={16} /> Add
+          </Link>
+        )}
       </div>
       <p className="w-balance-amount">
         {hideBalance ? (
@@ -139,18 +163,54 @@ export function BalanceCard() {
         ) : (
           <>
             <span className="w-balance-sign">$</span>
-            <span className="w-balance-whole">{whole}</span>
+            {usd === null ? (
+              <span className="w-balance-wait" aria-hidden="true" />
+            ) : (
+              <Odometer value={whole} className="w-balance-whole" />
+            )}
             <span className="w-balance-cents">{cents}</span>
           </>
         )}
       </p>
-      <div className="w-balance-chips">
-        {balance !== null && currency !== 'USD' ? (
-          <span className="w-chip">
-            {hideBalance ? '≈ ••••' : `≈ ${formatLocal(baseToNumber(balance), currency, rates)}`}
-          </span>
-        ) : null}
-      </div>
+      {empty ? (
+        <>
+          <p className="w-balance-ready">Your wallet is ready.</p>
+          <Link href="/wallet/add" className="w-balance-cta">
+            {testnet ? 'Add $5, free' : 'Add money'}
+            <span className="w-balance-cta-cap">
+              <Icon name="plus" size={16} />
+            </span>
+          </Link>
+        </>
+      ) : (
+        <div className="w-balance-chips">
+          {fresh && !hideBalance ? (
+            <span className="w-chip w-chip-landed" key={fresh.id}>
+              <Icon name="down" size={14} />
+              <span>
+                {formatUsd(BigInt(fresh.amount), { sign: true })}{' '}
+                {fresh.kind === 'added'
+                  ? testnet
+                    ? 'test dollars'
+                    : 'added'
+                  : `from ${isUnnamed(fresh.name) ? 'someone' : fresh.name.split(' ')[0]}`}
+                <span className="w-chip-when">, just now</span>
+              </span>
+            </span>
+          ) : (
+            <>
+              {testnet ? <span className="w-chip">Test dollars</span> : null}
+              {balance !== null && currency !== 'USD' ? (
+                <span className="w-chip">
+                  {hideBalance
+                    ? '≈ ••••'
+                    : `≈ ${formatLocal(baseToNumber(balance), currency, rates)}`}
+                </span>
+              ) : null}
+            </>
+          )}
+        </div>
+      )}
     </section>
   )
 }

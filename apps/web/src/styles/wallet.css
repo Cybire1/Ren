@@ -2089,8 +2089,11 @@ button.w-person {
   display: none;
 }
 
-@media (max-width: 1023px) {
-  .w-home-side .w-entries > :nth-child(n + 4) {
+/* Recent shows three on a phone and six beside the wallet on a desk. */
+@media (max-width: 1199px) {
+  .w-entries [data-rank="3"],
+  .w-entries [data-rank="4"],
+  .w-entries [data-rank="5"] {
     display: none;
   }
 }
@@ -2274,5 +2277,647 @@ button.w-person {
 
   .w-main:has(> .w-welcome-name) {
     padding-top: 3rem;
+  }
+}
+
+/*
+ * Polish: the outlined cards and buttons sit on a solid ink shadow and press into it, the
+ * balance is ink on green (white small text fails contrast there), its dollars roll in, money
+ * that just landed gets a chip and a glow, and Pay's waves breathe.
+ */
+
+.w-balance,
+.w-pay,
+.w-tile,
+.w-shopcard,
+.w-notice,
+.w-balance-add,
+.w-balance-cta {
+  box-shadow: 0 4px 0 var(--ink);
+  transition:
+    transform 0.25s var(--spring),
+    box-shadow 0.25s var(--spring);
+}
+
+.w-balance-add,
+.w-balance-cta {
+  box-shadow: 0 3px 0 var(--ink);
+}
+
+@media (hover: hover) {
+  .w-pay:hover,
+  .w-tile:hover,
+  .w-shopcard:hover,
+  .w-notice:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 0 var(--ink);
+  }
+
+  .w-balance-add:hover,
+  .w-balance-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 0 var(--ink);
+  }
+}
+
+.w-pay:active,
+.w-tile:active,
+.w-shopcard:active,
+.w-notice:active,
+.w-balance-add:active,
+.w-balance-cta:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.w-pay {
+  border: 2px solid var(--ink);
+}
+
+.w-hello-face {
+  display: block;
+  flex: none;
+  width: 2.875rem;
+  height: 2.875rem;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--coral-soft);
+}
+
+.w-hello-face .w-face {
+  width: 100%;
+  height: 100%;
+}
+
+.w-hello-text strong {
+  font-weight: 800;
+}
+
+.w-hello-date,
+.w-hello-greet {
+  display: none;
+}
+
+.w-hello-bell {
+  width: 2.875rem;
+  height: 2.875rem;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.w-hello-bell:hover {
+  background: #fff;
+}
+
+.w-balance {
+  color: var(--ink);
+}
+
+.w-balance-label {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.w-balance-sign,
+.w-balance-cents {
+  color: var(--ink-2);
+  font-weight: 800;
+}
+
+.w-balance-whole.odo {
+  display: inline-flex;
+  font-size: clamp(2.6rem, 11vw, 3.4rem);
+  line-height: 1;
+}
+
+.w-balance-whole .odo-digit,
+.w-balance-whole .odo-sep {
+  height: 1.05em;
+}
+
+.w-balance-whole .odo-reel > span {
+  height: 1.05em;
+  line-height: 1.05;
+}
+
+.w-balance-whole .odo-digit {
+  margin-right: -0.045em;
+}
+
+.w-balance-whole .odo-reel > span {
+  letter-spacing: 0;
+}
+
+.w-balance-waves {
+  position: absolute;
+  right: -78px;
+  top: -40px;
+  opacity: 0.16;
+  pointer-events: none;
+}
+
+.w-balance-waves path {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 11;
+  stroke-linecap: round;
+}
+
+.w-chip {
+  height: 1.85rem;
+  box-sizing: border-box;
+  gap: 0.35rem;
+  border: 2px solid var(--ink);
+  background: var(--on-teal);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.w-chip-landed {
+  animation: landed 0.7s var(--spring) both;
+}
+
+@keyframes landed {
+  from {
+    opacity: 0;
+    transform: translateY(-12px) scale(0.96);
+  }
+}
+
+.w-coin-front {
+  animation: coin-float 5s ease-in-out infinite;
+}
+
+.w-coin-back {
+  animation: coin-float-back 5s ease-in-out -2s infinite;
+}
+
+@keyframes coin-float {
+  50% {
+    transform: translateY(-4px) rotate(-14deg);
+  }
+}
+
+@keyframes coin-float-back {
+  50% {
+    transform: translateY(-4px) rotate(12deg);
+  }
+}
+
+/* A wallet with nothing in it yet: the card is the first step. */
+
+.w-balance-empty {
+  min-height: 14.5rem;
+}
+
+.w-balance-ready {
+  position: relative;
+  margin-top: 0.4rem;
+  font-weight: 800;
+}
+
+.w-balance-cta {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 3rem;
+  margin-top: 0.9rem;
+  padding: 0 0.3rem 0 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.w-balance-cta-cap {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--coral);
+}
+
+.w-balance-kovi {
+  position: absolute;
+  right: 0.25rem;
+  bottom: 0.25rem;
+  width: 124px;
+  height: 124px;
+  pointer-events: none;
+}
+
+.w-kovi-catch {
+  animation: kovi-bob 4.5s ease-in-out infinite;
+}
+
+@keyframes kovi-bob {
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.w-sparkle {
+  position: absolute;
+  animation: twinkle 2.8s ease-in-out infinite;
+}
+
+.w-sparkle-a {
+  left: -0.75rem;
+  top: -0.5rem;
+}
+
+.w-sparkle-b {
+  right: 0.5rem;
+  top: -1.25rem;
+  animation-delay: -1.4s;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* Pay: the tap mark's waves pulse outward, one after another. */
+
+.w-pay-waves {
+  position: absolute;
+  right: -30px;
+  top: 34px;
+  pointer-events: none;
+}
+
+.w-pay-waves path {
+  fill: none;
+  stroke: var(--coral);
+  stroke-width: 12;
+  stroke-linecap: round;
+  animation: wave 2.6s ease-in-out infinite;
+}
+
+.w-pay-waves path:nth-child(2) {
+  animation-delay: 0.25s;
+}
+
+.w-pay-waves path:nth-child(3) {
+  animation-delay: 0.5s;
+}
+
+@keyframes wave {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  35% {
+    opacity: 1;
+  }
+}
+
+.w-pay-sub {
+  margin-top: 0.3rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.w-tile-disc {
+  color: var(--ink);
+}
+
+/* Recent: an outlined card, grouped by day, and the payment that just landed glows. */
+
+.w-entries {
+  padding: 0.25rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: #fff;
+}
+
+.w-entries .w-entry {
+  margin: 0 -0.5rem;
+  padding: 0.6rem 0.5rem;
+}
+
+.w-entries .w-entry + .w-entry {
+  border-top: 2px solid var(--sunken);
+  border-radius: 0;
+}
+
+.w-day {
+  margin: 0.7rem 0 0.15rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.w-entry-name {
+  font-weight: 800;
+}
+
+.w-entry-amount {
+  font-weight: 800;
+}
+
+.w-entry-fresh {
+  border-radius: 0.9rem;
+  animation:
+    landed 0.7s var(--spring) both,
+    fresh-glow 2.2s ease-out 0.3s both;
+}
+
+@keyframes fresh-glow {
+  from {
+    background-color: var(--teal-soft);
+  }
+  to {
+    background-color: transparent;
+  }
+}
+
+/* First steps */
+
+.w-steps-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: #fff;
+  overflow: hidden;
+}
+
+.w-steps-list li + li {
+  border-top: 2px solid var(--sunken);
+}
+
+.w-step {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.w-step:hover {
+  background: var(--surface);
+}
+
+.w-step-next,
+.w-step-next:hover {
+  background: var(--coral-tint);
+}
+
+.w-step-n {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--paper);
+  font-weight: 800;
+}
+
+.w-step-next .w-step-n {
+  background: var(--coral);
+}
+
+.w-step-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.3;
+}
+
+.w-step-text strong {
+  font-weight: 800;
+}
+
+.w-step-text span {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.w-step-next .w-step-text span {
+  color: var(--ink-2);
+}
+
+.w-step-go {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  box-sizing: border-box;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #fff;
+}
+
+.w-steps + .w-shopcard {
+  margin-top: 1.25rem;
+}
+
+/* On a desk: the greeting becomes the page's heading, and Recent sits inside the side panel. */
+
+@media (min-width: 1024px) {
+  .w-hello-small {
+    display: none;
+  }
+
+  .w-hello-date,
+  .w-hello-greet {
+    display: inline;
+  }
+
+  .w-hello-date {
+    font-weight: 700;
+  }
+
+  .w-hello-text strong {
+    font-size: 2rem;
+    letter-spacing: -0.035em;
+    line-height: 1.15;
+  }
+
+  .w-hello-face {
+    display: none;
+  }
+}
+
+@media (min-width: 1200px) {
+  .w-home-side .w-entries,
+  .w-home-side .w-steps-list {
+    padding: 0;
+    border: 0;
+    background: none;
+  }
+
+  .w-home-side .w-steps-list .w-step {
+    border-radius: 1rem;
+  }
+
+  .w-home-side .w-entries .w-entry {
+    margin: 0 -0.6rem;
+    padding: 0.6rem;
+    border-radius: 1rem;
+  }
+
+  .w-home-side .w-entries .w-entry:hover {
+    opacity: 1;
+    background: var(--paper);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-chip-landed,
+  .w-entry-fresh,
+  .w-coin-front,
+  .w-coin-back,
+  .w-kovi-catch,
+  .w-sparkle,
+  .w-pay-waves path {
+    animation: none;
+  }
+}
+
+.w-hello-text strong .w-hello-greet {
+  color: inherit;
+  font-size: inherit;
+}
+
+.w-chip {
+  white-space: nowrap;
+}
+
+.w-chip-when {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .w-chip-when {
+    display: inline;
+  }
+}
+
+/* While the balance loads: a soft bar where the dollars will roll in, not a dash. */
+.w-balance-wait {
+  display: block;
+  width: 7.5rem;
+  height: 2.6rem;
+  margin: 0.35rem 0 0.25rem 0.2rem;
+  border-radius: 0.8rem;
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  animation: wait-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes wait-pulse {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-balance-wait {
+    animation: none;
+  }
+}
+
+.w-dock-foot {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .w-dock-foot {
+    display: grid;
+    gap: 0.5rem;
+    margin-top: auto;
+  }
+
+  .w-dock-shop {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.6rem;
+    border-radius: 1.25rem;
+    background: var(--ink-2);
+    color: #fff;
+    text-decoration: none;
+    transition: background-color 0.2s;
+  }
+
+  .w-dock-shop:hover {
+    background: color-mix(in srgb, var(--ink-2) 80%, #fff);
+  }
+
+  .w-dock-shop > span,
+  .w-dock-me > span {
+    display: grid;
+    flex: 1;
+    min-width: 0;
+    line-height: 1.3;
+  }
+
+  .w-dock-shop strong,
+  .w-dock-me strong {
+    overflow: hidden;
+    font-size: 0.875rem;
+    font-weight: 800;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .w-dock-shop small,
+  .w-dock-me small {
+    color: var(--on-ink);
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .w-dock-shop > svg {
+    flex: none;
+    color: var(--on-ink);
+  }
+
+  .w-dock-me {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.4rem 0.5rem;
+    border-radius: 1rem;
+    color: #fff;
+    text-decoration: none;
+  }
+
+  .w-dock-me:hover {
+    background: rgba(255, 255, 255, 0.07);
+  }
+
+  .w-dock-me .w-face {
+    box-sizing: border-box;
+    border: 2px solid #fff;
+    border-radius: 50%;
   }
 }

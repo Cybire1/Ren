@@ -2,8 +2,11 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Brand, Icon, type IconName, LogoMark, Wordmark } from '@/components/brand'
+import { Art, Brand, Icon, type IconName, LogoMark, Wordmark } from '@/components/brand'
+import { chainName } from '@/lib/chain'
+import { formatUsd, toBase } from '@/lib/wallet/money'
 import { useWallet } from './provider'
+import { Avatar } from './ui'
 import { Welcome } from './welcome'
 
 /**
@@ -73,7 +76,47 @@ function Dock({ path }: { path: string }) {
         <span>Pay</span>
       </Link>
       {after.map(tab)}
+      <DockFoot />
     </nav>
+  )
+}
+
+/** On a desk, the sidebar ends with your shop's day and who you are. */
+function DockFoot() {
+  const { profile, shop, knownShop, network } = useWallet()
+  if (!profile) return null
+  const name = shop?.name ?? knownShop
+  const today = shop?.today
+  const line = shop
+    ? today && today.count > 0
+      ? `${formatUsd(toBase(today.total))} today`
+      : 'No sales yet today'
+    : name
+      ? 'Your passkey signs you in'
+      : 'Take payments into this wallet'
+  return (
+    <div className="w-dock-foot">
+      <Link
+        href={shop ? '/dashboard' : name ? '/wallet/shop?go=signin' : '/wallet/shop?go=open'}
+        className="w-dock-shop"
+      >
+        <Art name="badge-shop" size={38} />
+        <span>
+          <strong>{name ?? 'Open a shop'}</strong>
+          <small>{line}</small>
+        </span>
+        <Icon name="chevron" size={16} />
+      </Link>
+      <Link href="/wallet/profile" className="w-dock-me">
+        <Avatar name={profile.name} id={profile.address} size={34} />
+        <span>
+          <strong>{profile.name ? profile.name.split(' ')[0] : 'You'}</strong>
+          <small>
+            {chainName} {network === 'testnet' ? 'testnet' : ''}
+          </small>
+        </span>
+      </Link>
+    </div>
   )
 }
 

@@ -6,38 +6,96 @@ import { Awning } from '@/components/awning'
 import { Art, Icon } from '@/components/brand'
 import { formatUsd, toBase } from '@/lib/wallet/money'
 import { isUnnamed, useWallet } from './provider'
-import { ActionTile, Avatar, BalanceCard, EntryRow } from './ui'
+import { ActionTile, Avatar, BalanceCard, EntryRow, isFresh, Waves } from './ui'
 import { chainName, onTempo } from '@/lib/chain'
+
+const greetingFor = (hour: number) =>
+  hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
+
+/** Today, Yesterday, or the date: the headings Recent is grouped under. */
+function dayOf(at: number) {
+  const d = new Date(at)
+  const today = new Date()
+  if (d.toDateString() === today.toDateString()) return 'Today'
+  if (d.toDateString() === new Date(today.getTime() - 86_400_000).toDateString()) return 'Yesterday'
+  return d.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' })
+}
 
 /**
  * Home is for paying, and you should never have to look for your money: the app's Home. The
- * balance opens the screen on a solid teal card (money at rest is teal across Kova), Pay sits
+ * balance opens the screen on a solid green card (money at rest is green across Ren), Pay sits
  * right beneath it with Send and Request beside it, and the people you pay are one tap away.
+ * Money that just landed shows on the card and glows in Recent. A wallet with nothing in it
+ * yet gets the first steps instead.
  */
 export function Home() {
   const { profile, balance, activity, contacts, network } = useWallet()
   if (!profile) return null
   const empty = balance === 0n
+  const firstRun = empty && activity.length === 0
+  const now = new Date()
+  const greeting = greetingFor(now.getHours())
+  const newest = activity[0]
+  const fresh = newest && isFresh(newest) ? newest : null
+
+  const hello = (
+    <div className="w-hello">
+      <Link href="/wallet/profile" className="w-hello-face" aria-label="Your profile">
+        <Avatar name={profile.name} id={profile.address} size={44} />
+      </Link>
+      <div className="w-hello-text">
+        <span className="w-hello-small">{greeting}</span>
+        <span className="w-hello-date">
+          {now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
+        </span>
+        <strong>
+          <span className="w-hello-greet">{greeting}, </span>
+          {profile.name ? profile.name.split(' ')[0] : 'there'}
+        </strong>
+      </div>
+      <Link href="/wallet/activity" className="round w-hello-bell" aria-label="Activity">
+        <Icon name="bell" size={20} />
+      </Link>
+    </div>
+  )
+
+  if (firstRun)
+    return (
+      <div className="w-screen w-home">
+        <div className="w-home-main">
+          {hello}
+          {profile.name ? null : <NameYourself />}
+          <BalanceCard empty />
+        </div>
+        <div className="w-home-side">
+          <FirstSteps />
+          <ShopCard />
+        </div>
+      </div>
+    )
+
+  const recent: React.ReactNode[] = []
+  let lastDay = ''
+  for (const [rank, entry] of activity.slice(0, 6).entries()) {
+    const day = dayOf(entry.at)
+    if (day !== lastDay)
+      recent.push(
+        <p key={`day-${entry.id}`} className="w-day" data-rank={rank}>
+          {day}
+        </p>,
+      )
+    lastDay = day
+    recent.push(<EntryRow key={entry.id} entry={entry} rank={rank} />)
+  }
 
   return (
     <div className="w-screen w-home">
       <div className="w-home-main">
-        <div className="w-hello">
-          <Link href="/wallet/profile" aria-label="Your profile">
-            <Avatar name={profile.name} id={profile.address} size={44} />
-          </Link>
-          <div className="w-hello-text">
-            <span>Hello</span>
-            <strong>{profile.name ? profile.name.split(' ')[0] : 'there'}</strong>
-          </div>
-          <Link href="/wallet/activity" className="round" aria-label="Activity">
-            <Icon name="bell" size={20} />
-          </Link>
-        </div>
+        {hello}
 
         {profile.name ? null : <NameYourself />}
 
-        <BalanceCard />
+        <BalanceCard fresh={fresh} />
 
         <div className="w-hero">
           <Link href="/wallet/pay" className="w-pay" aria-label="Pay. Scan a code or pay a link">
@@ -49,17 +107,7 @@ export function Home() {
                 <Icon name="tap" size={22} />
               </span>
             </span>
-            <svg
-              className="w-pay-waves"
-              width="92"
-              height="92"
-              viewBox="-46 -46 92 92"
-              aria-hidden="true"
-            >
-              <circle r="40" fill="none" stroke="#fff" strokeOpacity="0.12" strokeWidth="2" />
-              <circle r="26" fill="none" stroke="#fff" strokeOpacity="0.18" strokeWidth="2" />
-              <circle r="12" fill="none" stroke="#fff" strokeOpacity="0.26" strokeWidth="2" />
-            </svg>
+            <Waves className="w-pay-waves" size={124} />
             <span>
               <span className="w-pay-label">Pay</span>
               <span className="w-pay-sub">Scan a code or pay a link</span>
@@ -80,7 +128,7 @@ export function Home() {
             </span>
             <span className="w-notice-text">
               <strong>
-                {network === 'testnet' ? 'Add test dollars to start' : 'Add money to start paying'}
+                {network === 'testnet' ? 'Add test dollars' : 'Add money to keep paying'}
               </strong>
               <span>
                 {network === 'testnet'
@@ -94,7 +142,14 @@ export function Home() {
       </div>
 
       <div className="w-home-side">
-        <h2 className="w-section">Send again</h2>
+        <div className="w-section-row">
+          <h2 className="w-section">Send again</h2>
+          {contacts.length > 0 ? (
+            <Link href="/wallet/send" className="w-see-all">
+              All people
+            </Link>
+          ) : null}
+        </div>
         <div className="w-people">
           <Link href="/wallet/send" className="w-person" aria-label="Pay someone new">
             <span className="w-person-new">
@@ -126,14 +181,53 @@ export function Home() {
         {activity.length === 0 ? (
           <p className="w-quiet">Your payments show up here the moment they land.</p>
         ) : (
-          <div className="w-entries">
-            {activity.slice(0, 6).map((entry) => (
-              <EntryRow key={entry.id} entry={entry} />
-            ))}
+          <div className="w-entries" data-more={activity.length > 3 ? 'true' : undefined}>
+            {recent}
           </div>
         )}
       </div>
     </div>
+  )
+}
+
+/** A new wallet's first three things, each one tap from here. */
+function FirstSteps() {
+  const { network } = useWallet()
+  const testnet = network === 'testnet'
+  const steps = [
+    {
+      href: '/wallet/add',
+      title: testnet ? 'Add test dollars' : 'Add money',
+      sub: testnet
+        ? `$5 a day, free on ${chainName} testnet`
+        : `Send ${onTempo ? 'USDC' : 'AUSD'} on ${chainName} to your address`,
+    },
+    { href: '/wallet/pay', title: 'Pay a shop', sub: 'Scan its code or open its link' },
+    { href: '/wallet/send', title: 'Send to a friend', sub: 'By name or link. Ren covers the fee' },
+  ]
+  return (
+    <section className="w-steps" aria-label="Three things to try">
+      <div className="w-section-row">
+        <h2 className="w-section">Three things to try</h2>
+        <span className="w-see-all">0 of 3 done</span>
+      </div>
+      <ol className="w-steps-list">
+        {steps.map((step, i) => (
+          <li key={step.href}>
+            <Link href={step.href} className={`w-step${i === 0 ? ' w-step-next' : ''}`}>
+              <span className="w-step-n">{i + 1}</span>
+              <span className="w-step-text">
+                <strong>{step.title}</strong>
+                <span>{step.sub}</span>
+              </span>
+              <span className="w-step-go">
+                <Icon name="chevron" size={16} />
+              </span>
+            </Link>
+          </li>
+        ))}
+      </ol>
+    </section>
   )
 }
 
