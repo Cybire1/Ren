@@ -19,6 +19,7 @@ import { TravelProvider } from '@/lib/travel'
 import { TerminalProvider } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { useWallet, WalletProvider } from '@/lib/wallet'
+import { OrderWatcher } from '@/lib/watch'
 
 void SplashScreen.preventAutoHideAsync()
 
@@ -85,12 +86,14 @@ export default function RootLayout() {
                 <TravelProvider>
                 <StatusBar style="dark" />
                 <ArrivalWatcher />
+                <OrderWatcher />
                 <DevLaunch />
                 <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
                   <Stack.Screen name="index" options={{ animation: 'none' }} />
                   <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
                   <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="received" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
+                  <Stack.Screen name="ready/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
                   <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
                   <Stack.Screen name="open-stall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="card/link" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />

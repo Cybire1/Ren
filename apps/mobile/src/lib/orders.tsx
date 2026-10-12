@@ -45,11 +45,17 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
   const seen = useRef<Set<string> | null>(null)
   /** Handed over on this phone and not yet confirmed by the server: a poll must not undo it. */
   const pending = useRef(new Map<string, string | null>())
+  /** Moved along on this phone and not yet confirmed: Ready must not flicker back to New. */
+  const moving = useRef(new Map<string, OrderStatus>())
 
   const refresh = useCallback(async () => {
     const list = await listOrders('all', 60).catch(() => null)
     if (!list) return
-    const merged = list.map((o) => (pending.current.has(o.id) ? { ...o, collected_at: pending.current.get(o.id) ?? null } : o))
+    const merged = list.map((o) => {
+      const status = moving.current.get(o.id)
+      const moved = status ? { ...o, status } : o
+      return pending.current.has(o.id) ? { ...moved, collected_at: pending.current.get(o.id) ?? null } : moved
+    })
     const paidNow = merged.filter(isPaid)
     if (seen.current) {
       const arrived = paidNow.filter((o) => !seen.current?.has(o.id) && !o.collected_at)
@@ -90,7 +96,15 @@ export function OrdersProvider({ children }: { children: ReactNode }) {
       setOrders((list) => list.map((o) => (o.id === order.id ? { ...o, status } : o)))
       setFresh((f) => (f?.id === order.id ? null : f))
       void Haptics.selectionAsync()
-      await setOrderStatus(order.id, status).catch(() => refresh())
+      moving.current.set(order.id, status)
+      try {
+        await setOrderStatus(order.id, status)
+      } catch {
+        moving.current.delete(order.id)
+        await refresh()
+      } finally {
+        moving.current.delete(order.id)
+      }
     },
     [collect, refresh],
   )

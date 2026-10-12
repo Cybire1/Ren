@@ -22,7 +22,7 @@ export default function Scan() {
     handled.current = true
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
     if (scanned.kind === 'charge') router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
-    else if (scanned.kind === 'stall') router.replace({ pathname: '/s/[slug]', params: { slug: scanned.slug } })
+    else if (scanned.kind === 'stall') router.replace({ pathname: '/s/[slug]', params: { slug: scanned.slug, ...(scanned.table ? { table: scanned.table } : {}) } })
     else if (scanned.kind === 'pair') router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
     else
       router.replace({

@@ -1,7 +1,7 @@
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
-import { router, useLocalSearchParams } from 'expo-router'
-import { useEffect, useMemo, useState } from 'react'
+import { router, useFocusEffect, useLocalSearchParams } from 'expo-router'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -18,11 +18,12 @@ import {
 } from 'react-native'
 import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import { getCheckout, getPublicStall, orderFromStall, type PlacedOrder, type PublicStall, payLinkFor } from '@/lib/api'
+import { getCheckout, getPublicStall, getStampCard, orderFromStall, type PlacedOrder, type PublicStall, payLinkFor, type StampCard } from '@/lib/api'
+import { tableFrom } from '@/lib/links'
 import { type DisplayCurrency, formatLocal } from '@/lib/money'
 import { colors, fonts } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import { Kovi } from '@/ui/art'
+import { Coin, Kovi } from '@/ui/art'
 import { Awning } from '@/ui/Awning'
 import { Icon } from '@/ui/Icon'
 import { Stage as KoviStage } from '@/ui/Stage'
@@ -43,7 +44,15 @@ let devOrderPlaced = false
 export default function StallFront() {
   // bag, note and checkout are development-only: a dev link fills the bag and places the order, so a
   // film can capture every real screen of buying without anyone tapping.
-  const { slug, bag, note: devNote, checkout } = useLocalSearchParams<{ slug: string; bag?: string; note?: string; checkout?: string }>()
+  const { slug, bag, note: devNote, checkout, table: tableParam } = useLocalSearchParams<{
+    slug: string
+    bag?: string
+    note?: string
+    checkout?: string
+    /** From a table's own QR code: the order is brought to this table. */
+    table?: string
+  }>()
+  const table = tableFrom(tableParam)
   const { width } = useWindowDimensions()
   const insets = useSafeAreaInsets()
   const { profile } = useWallet()
@@ -51,6 +60,8 @@ export default function StallFront() {
   const [problem, setProblem] = useState<string | null>(null)
   const [basket, setBasket] = useState<Basket>({})
   const [open, setOpen] = useState(false)
+  const [card, setCard] = useState<StampCard | null>(null)
+  const payer = profile?.address
 
   useEffect(() => {
     getPublicStall(slug)
@@ -71,13 +82,31 @@ export default function StallFront() {
     setTimeout(() => setOpen(true), 1200)
   }, [bag, stall])
 
+  // The wallet is the stamp card: read it whenever the stall comes into view, so a stamp just
+  // earned shows on the way back from paying.
+  const loyalty = stall?.loyalty_every ?? null
+  useFocusEffect(
+    useCallback(() => {
+      if (!loyalty || !payer) return
+      getStampCard(slug, payer)
+        .then(setCard)
+        .catch(() => {})
+    }, [slug, payer, loyalty]),
+  )
+
   const currency = profile?.currency ?? 'USD'
   const lines = useMemo(
     () => (stall?.items ?? []).flatMap((item) => (basket[item.id] ? [{ item, quantity: basket[item.id] as number }] : [])),
     [stall, basket],
   )
   const count = lines.reduce((n, l) => n + l.quantity, 0)
-  const total = lines.reduce((sum, l) => sum + Math.round(Number(l.item.price) * 100) * l.quantity, 0) / 100
+  const subtotal = lines.reduce((sum, l) => sum + Math.round(Number(l.item.price) * 100) * l.quantity, 0) / 100
+  // A full card: the cheapest item on this order is free, as Kova will price it.
+  const free =
+    card?.ready && card.every && lines.length
+      ? lines.reduce((a, b) => (Number(b.item.price) < Number(a.item.price) ? b : a)).item
+      : null
+  const total = Math.max(0, Math.round((subtotal - (free ? Number(free.price) : 0)) * 100) / 100)
   const set = (id: string, quantity: number) => setBasket((b) => ({ ...b, [id]: Math.max(0, Math.min(99, quantity)) }))
   const close = () => (router.canGoBack() ? router.back() : router.replace('/'))
 
@@ -122,6 +151,13 @@ export default function StallFront() {
             </Txt>
           ) : null}
           <View style={styles.chips}>
+            {table ? (
+              <View style={[styles.chip, styles.tableChip]} accessibilityLabel={`Ordering for table ${table}`}>
+                <Txt weight="bold" size={13} color={colors.white}>
+                  Table {table}
+                </Txt>
+              </View>
+            ) : null}
             <View style={[styles.chip, { backgroundColor: stall.open ? colors.tealSoft : colors.sunken }]}>
               <View style={[styles.dot, { backgroundColor: stall.open ? colors.teal : colors.muted }]} />
               <Txt weight="semi" size={13}>
@@ -149,6 +185,8 @@ export default function StallFront() {
             </Txt>
           )}
         </View>
+
+        {card?.every && payer ? <StampCardFace card={card} free={free?.name ?? null} /> : null}
 
         {stall.items.length === 0 ? (
           <View style={styles.center}>
@@ -240,7 +278,7 @@ export default function StallFront() {
               View basket
             </Txt>
             <Txt weight="bold" size={17} color={colors.white}>
-              {dollars(total)}
+              {free && total === 0 ? 'Free' : dollars(total)}
             </Txt>
           </Pressable>
         </Animated.View>
@@ -250,7 +288,12 @@ export default function StallFront() {
         visible={open}
         stall={stall}
         lines={lines}
+        subtotal={subtotal}
         total={total}
+        free={free}
+        card={card}
+        table={table}
+        payer={payer}
         currency={currency}
         defaultName={profile?.name.split(' ')[0] ?? ''}
         defaultNote={__DEV__ ? (devNote ?? '') : ''}
@@ -267,7 +310,12 @@ function BasketSheet({
   visible,
   stall,
   lines,
+  subtotal,
   total,
+  free,
+  card,
+  table,
+  payer,
   currency,
   defaultName,
   defaultNote,
@@ -279,7 +327,15 @@ function BasketSheet({
   visible: boolean
   stall: PublicStall
   lines: { item: PublicStall['items'][number]; quantity: number }[]
+  subtotal: number
+  /** After the stamp card's free item. */
   total: number
+  /** The item a full stamp card makes free on this order. */
+  free: PublicStall['items'][number] | null
+  card: StampCard | null
+  table: string | undefined
+  /** This wallet: it pays, so it earns the stamp. */
+  payer: string | undefined
   currency: DisplayCurrency
   defaultName: string
   defaultNote: string
@@ -309,6 +365,9 @@ function BasketSheet({
         customer_name: name.trim() || undefined,
         note: note.trim() || undefined,
         pay_for_me: payForMe,
+        table,
+        // Paying yourself earns the stamp, and spends a full card. Someone else paying doesn't.
+        payer: payForMe ? undefined : payer,
       })
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       if (payForMe) setAsked(placed)
@@ -359,6 +418,7 @@ function BasketSheet({
               </Txt>
               <Txt size={14} color={colors.muted}>
                 from {stall.name}
+                {table ? `, brought to table ${table}` : ''}
               </Txt>
               <View style={styles.basket}>
                 {lines.map((l, i) => (
@@ -372,15 +432,35 @@ function BasketSheet({
                     </Txt>
                   </View>
                 ))}
+                {free ? (
+                  <View style={[styles.basketLine, styles.freeLine]}>
+                    <View style={styles.freeStamp}>
+                      <Icon name="sparkle" size={15} />
+                    </View>
+                    <Txt weight="semi" size={15} color={colors.tealDeep} style={{ flex: 1 }} numberOfLines={2}>
+                      Stamp card: {free.name} free
+                    </Txt>
+                    <Txt weight="semi" size={15} color={colors.tealDeep}>
+                      −{dollars(free.price)}
+                    </Txt>
+                  </View>
+                ) : null}
                 <View style={styles.totalRow}>
-                  <Txt weight="semi" size={16}>
-                    Total
-                  </Txt>
+                  <View>
+                    <Txt weight="semi" size={16}>
+                      Total
+                    </Txt>
+                    {free ? (
+                      <Txt size={13} color={colors.muted} style={{ textDecorationLine: 'line-through' }}>
+                        {dollars(subtotal)}
+                      </Txt>
+                    ) : null}
+                  </View>
                   <View style={{ alignItems: 'flex-end' }}>
                     <Txt weight="bold" size={22}>
-                      {dollars(total)}
+                      {free && total === 0 ? 'Free' : dollars(total)}
                     </Txt>
-                    {currency !== 'USD' ? (
+                    {currency !== 'USD' && total > 0 ? (
                       <Txt size={13} color={colors.muted}>
                         about {formatLocal(total, currency)}
                       </Txt>
@@ -403,15 +483,75 @@ function BasketSheet({
                   {problem}
                 </Txt>
               ) : null}
+              {card?.every && !free ? (
+                <Txt size={13} color={colors.muted} style={{ marginTop: 12, marginLeft: 4 }}>
+                  Paying for this earns a stamp: {Math.min(card.stamps + 1, card.every)} of {card.every}.
+                </Txt>
+              ) : null}
               <View style={{ gap: 10, marginTop: 16 }}>
-                <PillButton label={`Pay ${dollars(total)}`} icon="face" loading={busy === 'pay'} disabled={busy !== null || !stall.open} onPress={() => void place(false)} />
+                <PillButton
+                  label={free && total === 0 ? 'Get it free' : `Pay ${dollars(total)}`}
+                  icon="face"
+                  loading={busy === 'pay'}
+                  disabled={busy !== null || !stall.open}
+                  onPress={() => void place(false)}
+                />
                 <PillButton label="Ask someone else to pay" icon="send" tone="white" loading={busy === 'ask'} disabled={busy !== null || !stall.open} onPress={() => void place(true)} />
               </View>
+              {free ? (
+                <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 10 }}>
+                  The free {free.name} counts when you pay from your own wallet.
+                </Txt>
+              ) : null}
             </ScrollView>
           )}
         </View>
       </KeyboardAvoidingView>
     </Modal>
+  )
+}
+
+/**
+ * The stamp card, and there's nothing to sign up for: the wallet that pays is the card. A coin
+ * for each paid order, and the last circle is the free one.
+ */
+function StampCardFace({ card, free }: { card: StampCard; free: string | null }) {
+  const every = card.every ?? 0
+  const left = every - card.stamps
+  const line = card.ready
+    ? free
+      ? `Your card is full. The ${free} on this order is free.`
+      : 'Your card is full. The cheapest item on this order is free.'
+    : card.stamps === 0
+      ? `Pay with Kova and collect a stamp. After ${every}, the cheapest item on your next order is free.`
+      : `${card.stamps} of ${every} stamps. ${left === 1 ? 'One more' : `${left} more`} and the next one has something free.`
+  return (
+    <View style={[styles.stampCard, card.ready && { backgroundColor: colors.coralSoft }]}>
+      <View style={styles.stampHead}>
+        <View style={{ flex: 1 }}>
+          <Txt weight="bold" size={17}>
+            {card.ready ? 'Something’s on the house' : 'Your stamp card'}
+          </Txt>
+          <Txt size={13} color={colors.onTint} style={{ marginTop: 2, lineHeight: 18 }}>
+            {line}
+          </Txt>
+        </View>
+        <Kovi pose={card.ready ? 'cheer' : 'wave'} size={card.ready ? 62 : 54} />
+      </View>
+      <View style={styles.stamps} accessibilityLabel={`${card.stamps} of ${every} stamps`}>
+        {Array.from({ length: every }, (_, i) => i + 1).map((n) => (
+          <View key={n} style={[styles.stamp, n <= card.stamps ? styles.stampOn : null]}>
+            {n <= card.stamps ? <Coin size={22} /> : null}
+          </View>
+        ))}
+        <View style={[styles.stamp, styles.stampFree, card.ready && { backgroundColor: colors.coral }]}>
+          <Icon name="sparkle" size={14} color={card.ready ? colors.white : colors.ink} />
+        </View>
+      </View>
+      <Txt size={12} color={colors.onTint} style={{ marginTop: 10 }}>
+        No sign-up. Your Kova wallet is the card.
+      </Txt>
+    </View>
   )
 }
 
@@ -495,6 +635,25 @@ const styles = StyleSheet.create({
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   chip: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.surface, flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 8, height: 8, borderRadius: 4 },
+  tableChip: { backgroundColor: colors.coral, borderWidth: 2, borderColor: colors.ink },
+  stampCard: { marginHorizontal: 20, marginTop: 16, padding: 14, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealSoft },
+  stampHead: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  stamps: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 10 },
+  stamp: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(255,255,255,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stampOn: { borderStyle: 'solid', backgroundColor: colors.white },
+  stampFree: { borderStyle: 'solid', backgroundColor: colors.white },
+  freeLine: { borderTopWidth: 1, borderColor: colors.sunken },
+  freeStamp: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
   item: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -2,7 +2,7 @@ import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { router, useFocusEffect } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Switch, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { type CatalogItem, posterLinkFor, stallLinkFor, updateItem, updateStall } from '@/lib/api'
@@ -11,7 +11,7 @@ import { useShop } from '@/lib/shop'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
 import { Awning } from '@/ui/Awning'
-import { Kovi } from '@/ui/art'
+import { Coin, Kovi } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
@@ -36,6 +36,14 @@ function OwnerStall() {
   const [refreshing, setRefreshing] = useState(false)
   const [copied, setCopied] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
+  const saving = useRef<Partial<Record<'table_count' | 'loyalty_every', ReturnType<typeof setTimeout>>>>({})
+
+  useEffect(
+    () => () => {
+      for (const timer of Object.values(saving.current)) clearTimeout(timer)
+    },
+    [],
+  )
 
   useFocusEffect(
     useCallback(() => {
@@ -78,6 +86,21 @@ function OwnerStall() {
       void refresh()
     }
   }
+
+  /** Tables and the stamp card: shown at once, saved once the taps settle. */
+  const setting = (field: 'table_count' | 'loyalty_every', value: number | null) => {
+    setProblem(null)
+    patch({ ...stall, [field]: value })
+    clearTimeout(saving.current[field])
+    saving.current[field] = setTimeout(() => {
+      updateStall(stall.id, { [field]: value }).catch((error: Error) => {
+        setProblem(error.message || 'That didn’t save. Try again.')
+        void refresh()
+      })
+    }, 700)
+  }
+  const tables = stall.table_count ?? 0
+  const every = stall.loyalty_every ?? 0
 
   const share = async () => {
     await Share.share({ message: `Order from ${stall.name} and pay in dollars with Kova: ${link}` })
@@ -162,6 +185,90 @@ function OwnerStall() {
           {problem}
         </Txt>
       ) : null}
+
+      <View style={styles.sectionHead}>
+        <View style={{ flex: 1 }}>
+          <Txt weight="bold" size={22} style={{ letterSpacing: -0.5 }}>
+            Tables and regulars
+          </Txt>
+          <Txt size={13} color={colors.muted}>
+            Orders come to the table, and regulars get one free
+          </Txt>
+        </View>
+      </View>
+      <View style={styles.list}>
+        <View style={[styles.setting, styles.rowRule]}>
+          <View style={[styles.settingIcon, { backgroundColor: tables ? colors.coralSoft : colors.sunken }]}>
+            <Icon name="grid" size={20} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Txt weight="semi" size={16}>
+              Tables
+            </Txt>
+            <Txt size={13} color={colors.muted} style={{ lineHeight: 18 }}>
+              {tables ? `${tables} ${tables === 1 ? 'table' : 'tables'}, each with its own code. Orders show the table.` : 'Off. People collect at the counter.'}
+            </Txt>
+          </View>
+          <Dial
+            value={tables}
+            name="tables"
+            onChange={(n) => setting('table_count', n > 0 ? Math.min(200, n) : null)}
+          />
+        </View>
+        {tables ? (
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/terminal/share', params: { table: '1' } })}
+            style={[styles.snapRow, { borderTopWidth: 0 }, styles.rowRule]}
+          >
+            <View style={[styles.snapIcon, { backgroundColor: colors.coralSoft }]}>
+              <Icon name="scan" size={18} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt weight="semi" size={15}>
+                Table codes
+              </Txt>
+              <Txt size={13} color={colors.muted}>
+                Show, share or print a QR for each table
+              </Txt>
+            </View>
+            <Icon name="arrow" size={20} />
+          </Pressable>
+        ) : null}
+        <View style={styles.setting}>
+          <View style={[styles.settingIcon, { backgroundColor: every ? colors.tealSoft : colors.sunken }]}>
+            <Icon name="sparkle" size={20} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Txt weight="semi" size={16}>
+              Stamp card
+            </Txt>
+            <Txt size={13} color={colors.muted} style={{ lineHeight: 18 }}>
+              {every ? `After ${every} paid orders, the next one’s cheapest item is free.` : 'Off. Reward regulars with a free item.'}
+            </Txt>
+          </View>
+          <Dial
+            value={every}
+            name="orders per stamp card"
+            onChange={(n) => setting('loyalty_every', n < 2 ? (every ? null : 2) : Math.min(20, n))}
+          />
+        </View>
+        {every ? (
+          <View style={styles.stampPreview} accessibilityLabel={`A stamp card of ${every}, then one free`}>
+            {Array.from({ length: every }, (_, i) => i + 1).map((n) => (
+              <View key={n} style={[styles.stampDot, n <= Math.ceil(every / 2) && styles.stampDotOn]}>
+                {n <= Math.ceil(every / 2) ? <Coin size={16} /> : null}
+              </View>
+            ))}
+            <View style={[styles.stampDot, styles.stampDotFree]}>
+              <Icon name="sparkle" size={11} color={colors.white} />
+            </View>
+            <Txt size={12} color={colors.muted} style={{ marginLeft: 4 }}>
+              No sign-up: the buyer’s wallet is the card
+            </Txt>
+          </View>
+        ) : null}
+      </View>
 
       <View style={styles.sectionHead}>
         <View style={{ flex: 1 }}>
@@ -298,6 +405,27 @@ function ItemRow({ item, last, onSoldOut, currency }: { item: CatalogItem; last:
   )
 }
 
+/** Fewer, how many (or Off), more: for a setting where none means off. */
+function Dial({ value, name, onChange }: { value: number; name: string; onChange: (n: number) => void }) {
+  const step = (n: number) => {
+    void Haptics.selectionAsync()
+    onChange(n)
+  }
+  return (
+    <View style={styles.dial}>
+      <Pressable accessibilityRole="button" accessibilityLabel={`Fewer ${name}`} hitSlop={6} disabled={!value} onPress={() => step(value - 1)} style={[styles.dialKey, !value && { opacity: 0.3 }]}>
+        <Icon name="minus" size={15} strokeWidth={2.2} />
+      </Pressable>
+      <Txt weight="bold" size={value ? 15 : 13} style={{ minWidth: 28, textAlign: 'center' }} accessibilityLiveRegion="polite">
+        {value || 'Off'}
+      </Txt>
+      <Pressable accessibilityRole="button" accessibilityLabel={`More ${name}`} hitSlop={6} onPress={() => step(value + 1)} style={styles.dialKey}>
+        <Icon name="plus" size={15} strokeWidth={2.2} />
+      </Pressable>
+    </View>
+  )
+}
+
 function ShareTile({ icon, label, onPress, tone }: { icon: IconName; label: string; onPress: () => void; tone: string }) {
   return (
     <Pressable
@@ -421,6 +549,14 @@ const styles = StyleSheet.create({
   barcodeTag: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3, alignSelf: 'flex-start', paddingHorizontal: 7, height: 20, borderRadius: 10, backgroundColor: colors.sunken },
   snapRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 12, borderTopWidth: 2, borderColor: colors.sunken, backgroundColor: colors.paper },
   snapIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
+  setting: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 12 },
+  settingIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  dial: { flexDirection: 'row', alignItems: 'center', height: 36, paddingHorizontal: 1, borderRadius: 18, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white },
+  dialKey: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  stampPreview: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingBottom: 12, marginTop: -2 },
+  stampDot: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: colors.ink, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center' },
+  stampDotOn: { borderWidth: 0 },
+  stampDotFree: { borderStyle: 'solid', backgroundColor: colors.coral },
   firstItems: { alignItems: 'center', paddingHorizontal: 28, paddingTop: 12 },
   bigChoice: {
     width: 150,

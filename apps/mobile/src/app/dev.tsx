@@ -1,7 +1,7 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Image, View } from 'react-native'
-import { createItem, getCatalog, getCheckout, lookupBarcode, ringUp, uploadImage } from '@/lib/api'
+import { createItem, getCatalog, getCheckout, lookupBarcode, ringUp, updateStall, uploadImage } from '@/lib/api'
 import { finishTap, forgetDevCard, linkCard, readTap } from '@/lib/card'
 import type { DisplayCurrency } from '@/lib/money'
 import { type Mode, usePrefs } from '@/lib/prefs'
@@ -20,7 +20,7 @@ import { Txt } from '@/ui/primitives'
  * pairs this phone as a terminal, `unpair=1` forgets it, `rename=<address>:<name>` names a contact,
  * `stall=<name>&tagline=<line>` opens a stall from this wallet the way Profile does, `seed=1` fills
  * that stall with a small menu (and a barcoded drink for the till), `seed=bakery` with a bakery's, `till=keypad|items|scan` picks
- * the till's mode, and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
+ * the till's mode, `tables=6&stamps=5` gives the stall table codes and a stamp card (0 turns either off), and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
  * `card=link&limit=100&pin=4827` links the software Kova Card (`newcard=1` makes a fresh one first); `tapcard=<charge>` taps it at this till.
  * Release builds redirect home.
  */
@@ -152,6 +152,8 @@ export default function Dev() {
     stall?: string
     tagline?: string
     seed?: string
+    tables?: string
+    stamps?: string
     till?: string
     sell?: string
     payee?: string
@@ -275,6 +277,16 @@ export default function Dev() {
               image_id: photo?.id ?? null,
             })
           }
+          await stall.refresh()
+        }
+        if (params.tables || params.stamps) {
+          setStep('setting up tables and the stamp card')
+          const detail = await stall.refresh()
+          if (detail)
+            await updateStall(detail.id, {
+              ...(params.tables ? { table_count: Number(params.tables) || null } : {}),
+              ...(params.stamps ? { loyalty_every: Number(params.stamps) || null } : {}),
+            })
           await stall.refresh()
         }
         if (params.till) await save('kova.till.mode', params.till)
