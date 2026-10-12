@@ -99,6 +99,13 @@
       "when": 1791717576501,
       "tag": "0013_reconcile_cards_ussd_pos",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1791786696095,
+      "tag": "0014_tables_and_stamps",
+      "breakpoints": true
     }
   ]
 }

@@ -18,11 +18,14 @@ export interface CreateIntentInput {
   metadata?: Record<string, unknown> | undefined
   terminalId?: string | undefined
   expiresInSeconds?: number | undefined
+  /** A stamp card can make an order free: it is still paid, for $0, so it has a receipt on Monad like any other. */
+  allowZero?: boolean | undefined
 }
 
 export async function createIntent(input: CreateIntentInput): Promise<PaymentIntent> {
   const amount = parseAmount(input.amount)
-  if (amount <= 0n) throw new KovaError('invalid_request', 'amount must be greater than zero')
+  if (amount < 0n || (amount === 0n && !input.allowZero))
+    throw new KovaError('invalid_request', 'amount must be greater than zero')
 
   const token = tokenFor(input.currency)
   const id = uuidv7()

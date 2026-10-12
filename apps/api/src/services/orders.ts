@@ -7,6 +7,7 @@ import { KovaError } from '../errors.js'
 import { decodeId, encodeId } from '../ids.js'
 import { createIntent, type PaymentIntent } from './intents.js'
 import { askJev } from './jev.js'
+import { stampsAt } from './stamps.js'
 
 type Merchant = typeof schema.merchants.$inferSelect
 type Stall = typeof schema.stalls.$inferSelect
@@ -25,6 +26,10 @@ export interface PlaceOrder {
   note?: string | undefined
   payForMe?: boolean | undefined
   terminalId?: string | undefined
+  /** The table the order came from (a stall's table QR code). */
+  table?: string | undefined
+  /** The wallet that will pay: it earns the stamp, and a full card makes an item free. */
+  payer?: string | undefined
 }
 
 /** "2 × Flat white, Almond croissant", kept short enough for a receipt line. */
@@ -97,6 +102,23 @@ export async function placeOrder(
   if (total > MAX_ORDER)
     throw new KovaError('invalid_request', 'Orders over $10,000 are not supported')
 
+  // A full stamp card at this stall: the cheapest item on the order is free.
+  let reward: schema.OrderReward | null = null
+  const every = input.stall?.loyaltyEvery
+  if (every && input.payer && !input.payForMe) {
+    const stamps = await stampsAt(input.merchant.id, input.payer)
+    if (stamps >= every) {
+      const cheapest = rows.reduce((a, b) => (b.price < a.price ? b : a))
+      reward = {
+        item_id: encodeId('catalogItem', cheapest.id),
+        name: cheapest.name,
+        amount: formatAmount(cheapest.price),
+        stamps: every,
+      }
+      total -= cheapest.price
+    }
+  }
+
   const orderId = uuidv7()
   const intent = await createIntent({
     merchant: input.merchant,
@@ -106,7 +128,11 @@ export async function placeOrder(
     metadata: {
       order: encodeId('order', orderId),
       ...(input.stall ? { stall: encodeId('stall', input.stall.id) } : {}),
+      ...(input.table ? { table: input.table } : {}),
+      // A reward is for the card's owner: only this wallet may pay it.
+      ...(reward && input.payer ? { payer: input.payer, reward: reward.name } : {}),
     },
+    allowZero: Boolean(reward),
     terminalId: input.terminalId,
     // Someone asked to pay later gets a day; a buyer at the stall, half an hour.
     expiresInSeconds: input.payForMe ? 86_400 : input.source === 'stall' ? 1_800 : undefined,
@@ -124,6 +150,9 @@ export async function placeOrder(
       customerName: input.customerName?.trim() || null,
       note: input.note?.trim() || null,
       payForMe: Boolean(input.payForMe),
+      table: input.table?.trim() || null,
+      payerAddress: input.payer?.toLowerCase() ?? null,
+      reward,
     })
     .returning()
   if (!order) throw new KovaError('internal', 'Could not record the order')
@@ -171,6 +200,10 @@ export function serializeOrder(
     customer_name: order.customerName,
     note: order.note,
     pay_for_me: order.payForMe,
+    /** The table to bring it to, from the table's QR code. Null: the counter. */
+    table: order.table,
+    /** A full stamp card spent on this order: the item that was free. */
+    reward: order.reward ?? null,
     /** What the counter must notice in the note, like "allergy". */
     flags: order.flags ?? [],
     /** new, preparing, ready, collected or cancelled. */

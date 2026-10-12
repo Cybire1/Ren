@@ -12,6 +12,7 @@ import { decodeId } from '../ids.js'
 import { relayAuthorization } from '../relay.js'
 import { type PaymentIntent, serializeIntent } from '../services/intents.js'
 import { ordersForIntents } from '../services/orders.js'
+import { stampsAt } from '../services/stamps.js'
 import { confirmTransaction, settleFromReceipt } from '../services/settle.js'
 import { tripForCheckout } from '../services/travel.js'
 
@@ -79,7 +80,18 @@ export const checkoutRoutes = new Hono()
       ...serializeCheckout(intent, merchantName),
       // What was ordered, when this charge came from a stall or a till sale.
       order: order
-        ? { lines: order.lines, customer_name: order.customer_name, note: order.note, pay_for_me: order.pay_for_me, stall: order.stall }
+        ? {
+            id: order.id,
+            lines: order.lines,
+            customer_name: order.customer_name,
+            note: order.note,
+            pay_for_me: order.pay_for_me,
+            stall: order.stall,
+            // Where it is at the counter, so the buyer's phone can say "ready" instead of a buzzer.
+            status: order.status,
+            table: order.table,
+            reward: order.reward,
+          }
         : null,
       // The flight or hotel, when this charge is a share of a Kova Travel trip.
       trip,
@@ -114,6 +126,16 @@ export const checkoutRoutes = new Hono()
     if (!isAddressEqual(authorization.to, intent.payTo as Address))
       throw new KovaError('invalid_request', 'This approval pays someone else.')
     if (authorization.value !== intent.amount) throw new KovaError('invalid_request', 'This approval is for a different amount.')
+    // A stamp-card reward is the card owner's alone, and a card pays for one reward.
+    const rewardPayer = typeof intent.metadata?.payer === 'string' ? (intent.metadata.payer as Address) : null
+    if (rewardPayer) {
+      if (!isAddressEqual(rewardPayer, authorization.from))
+        throw new KovaError('invalid_request', 'This free item is on someone else’s stamp card.')
+      const order = await db.query.orders.findFirst({ where: eq(schema.orders.intentId, intent.id) })
+      const stall = order?.stallId ? await db.query.stalls.findFirst({ where: eq(schema.stalls.id, order.stallId) }) : undefined
+      if (order?.reward && (await stampsAt(intent.merchantId, rewardPayer)) < (stall?.loyaltyEvery ?? order.reward.stamps))
+        throw new KovaError('conflict', 'This stamp card was already used. Order again for the full price.')
+    }
 
     const { receipt, ms } = await relayAuthorization(token, authorization, signature)
     await settleFromReceipt(receipt)

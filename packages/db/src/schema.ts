@@ -585,6 +585,10 @@ export const stalls = pgTable(
     tagline: text('tagline'),
     coverImageId: uuid('cover_image_id').references(() => images.id),
     open: boolean('open').notNull().default(true),
+    /** Tables with their own QR code: an order from one says which table to bring it to. Null: counter only. */
+    tableCount: integer('table_count'),
+    /** The stamp card: after this many paid orders, the next order's cheapest item is free. Null: off. */
+    loyaltyEvery: integer('loyalty_every'),
     archivedAt: timestamp('archived_at', { withTimezone: true }),
     createdAt: createdAt(),
     updatedAt: updatedAt(),
@@ -608,6 +612,16 @@ export const stallItems = pgTable(
 )
 
 export const orderSource = pgEnum('order_source', ['stall', 'till'])
+
+/** A full stamp card spent on an order: one of its items, free. */
+export interface OrderReward {
+  item_id: string
+  name: string
+  /** Dollars taken off, as a decimal string. */
+  amount: string
+  /** Stamps the card took. */
+  stamps: number
+}
 
 export interface OrderLine {
   item_id: string
@@ -640,6 +654,12 @@ export const orders = pgTable(
     note: text('note'),
     /** The buyer sent the link to someone else to pay. */
     payForMe: boolean('pay_for_me').notNull().default(false),
+    /** The table it was ordered from, from the table's QR code: "3". Null: the counter. */
+    table: text('table'),
+    /** The wallet that said it would pay: the stamp card it earns on, and the only one that may pay a reward. */
+    payerAddress: text('payer_address'),
+    /** A stamp card spent on this order. */
+    reward: jsonb('reward').$type<OrderReward>(),
     /** What the note needs the counter to notice, like "allergy". Set by Jev after checkout. */
     flags: jsonb('flags').$type<string[]>(),
     collectedAt: timestamp('collected_at', { withTimezone: true }),

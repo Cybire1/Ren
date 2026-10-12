@@ -36,6 +36,10 @@ export function serializeStall(
     name: stall.name,
     tagline: stall.tagline,
     open: stall.open,
+    /** Tables with their own QR code (the stall link with ?table=N). Null: counter only. */
+    table_count: stall.tableCount,
+    /** Paid orders that fill the stamp card; the next order's cheapest item is free. Null: no card. */
+    loyalty_every: stall.loyaltyEvery,
     cover_url: imageUrl(origin, stall.coverImageId),
     cover_image_id: stall.coverImageId ? encodeId('image', stall.coverImageId) : null,
     ...(extra.item_ids ? { item_ids: extra.item_ids } : {}),
