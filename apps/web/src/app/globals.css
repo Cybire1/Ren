@@ -171,6 +171,48 @@ p {
   box-shadow: inset 0 0 0 2px var(--ink);
 }
 
+/*
+ * Depth: coral and light pills sit on a solid ink shadow, like the outlined cards, and press
+ * down into it. Ink pills stay flat; an ink shadow under ink would only look thicker.
+ */
+.pill[data-tone="coral"],
+.pill[data-tone="light"] {
+  box-shadow:
+    inset 0 0 0 2px var(--ink),
+    0 4px 0 var(--ink);
+  transition:
+    transform 0.25s var(--spring),
+    box-shadow 0.25s var(--spring),
+    background-color 0.3s var(--spring);
+}
+
+.pill[data-tone="coral"] .pill-cap {
+  box-shadow: inset 0 0 0 2px var(--ink);
+}
+
+@media (hover: hover) {
+  .pill[data-tone="coral"]:not(:disabled):hover,
+  .pill[data-tone="light"]:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 0 0 2px var(--ink),
+      0 5px 0 var(--ink);
+  }
+}
+
+.pill[data-tone="coral"]:not(:disabled):active,
+.pill[data-tone="light"]:not(:disabled):active {
+  transform: translateY(3px);
+  box-shadow:
+    inset 0 0 0 2px var(--ink),
+    0 1px 0 var(--ink);
+}
+
+.pill[data-tone="coral"]:disabled,
+.pill[data-tone="light"]:disabled {
+  box-shadow: none;
+}
+
 .pill-cap {
   display: grid;
   place-items: center;
