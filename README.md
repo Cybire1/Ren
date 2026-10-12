@@ -138,16 +138,24 @@ On Tempo Moderato, 2026-09-22:
 
 ## Why it exists
 
-Ren's pilot market is Nigeria, where bank transfers are already instant and free. So Ren is not
-pitched as cheaper or faster money. It is for the things naira rails cannot do:
+Ren is for anyone who gets paid, anywhere. A bakery in Lagos, a record shop in Brooklyn and a
+kitchen in Accra all lose a cut to card rails, wait days to be paid out, and can't easily take
+money from a customer visiting from another country. Ren settles in about a second, for a
+fraction of a cent, in dollars that hold their value, and the customer sees the price in their
+own currency.
 
-- **Holding dollars.** 25.9m Nigerians already hold stablecoins; a bank transfer cannot.
-- **Money arriving from abroad,** where Nigeria is around 60% of sub-Saharan stablecoin inflows.
-- **No merchant fee,** against 1.5% + ₦100 on card rails.
+It is not pitched as cheaper local money where local transfers are already instant and free. It
+is for what those rails cannot do:
+
+- **Holding dollars,** not a currency that loses value between sale and rent.
+- **Money from anywhere,** paid the same way by the customer next door and the one abroad.
+- **No merchant fee,** against 1.5% and more on card rails.
 - **Payments by software.** An AI agent gets the same kind of spending credential as a person:
   a limited key with a budget, a shop allowlist, and approval above a threshold.
 
-The research behind these numbers is in [`docs/market`](docs/market).
+The first pilot is in Nigeria, where 25.9m people already hold stablecoins, around 60% of
+sub-Saharan stablecoin inflows arrive, and card rails charge shops 1.5% + ₦100. The research is
+in [`docs/market`](docs/market).
 
 ## Design
 
