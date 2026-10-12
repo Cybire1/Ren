@@ -80,7 +80,7 @@ export function Home() {
     const day = dayOf(entry.at)
     if (day !== lastDay)
       recent.push(
-        <p key={`day-${entry.id}`} className="w-day" data-rank={rank}>
+        <p key={`day-${entry.id}`} className="w-recent-day" data-rank={rank}>
           {day}
         </p>,
       )
