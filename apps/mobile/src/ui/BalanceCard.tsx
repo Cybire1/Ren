@@ -1,93 +1,120 @@
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { Pressable, StyleSheet, View } from 'react-native'
-import Svg, { Circle } from 'react-native-svg'
+import Svg, { Path } from 'react-native-svg'
+import { isTestnet } from '@/lib/config'
 import { baseToNumber, type DisplayCurrency, formatLocal, formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
 import { colors } from '@/lib/theme'
-import { Coin } from './art'
+import { Coin, Kovi, Sparkle } from './art'
 import { Icon } from './Icon'
-import { Txt } from './primitives'
+import { WAVES } from './Logo'
+import { Bob, Breathe, Landing, Twinkle } from './motion'
+import { Odometer } from './Odometer'
+import { Sticker, Txt } from './primitives'
 
-/** Secondary text on teal. */
-const onTeal = '#E3FFF5'
+/** Money that has only just arrived, shown on the card for a moment: "+$12.00 from Ade, just now". */
+export type Fresh = { id: string; line: string }
+
+/** The amount's size: as large as the figures allow on a phone, smaller as the balance grows. */
+const amountSize = (figures: number) => (figures <= 4 ? 68 : figures <= 6 ? 56 : figures <= 8 ? 46 : 38)
 
 /**
- * The balance, as the first thing on Home: dollars as the headline with the sign and cents set
- * small and raised like a price tag, the local equivalent as a chip, and a
- * one-tap way to hide it all when someone is looking over your shoulder.
+ * The balance, as the first thing on Home: money at rest on a solid teal card, standing on the
+ * same hard ink shadow as everything you can press. Whole dollars roll into place like a till's
+ * counter, with the sign and cents set small and raised like a price tag. Money that has only
+ * just landed shows as a chip for a moment; otherwise the chips say what the dollars are.
  */
 export function BalanceCard({
   balance,
   currency,
+  fresh,
 }: {
   balance: bigint | null
   currency: DisplayCurrency
+  fresh?: Fresh | null
 }) {
   const { hideBalance, setHideBalance } = usePrefs()
   const usd = balance === null ? null : formatUsd(balance)
-  const [whole, cents] = usd === null ? ['—', ''] : [usd.slice(1, usd.lastIndexOf('.')), usd.slice(usd.lastIndexOf('.'))]
+  const point = usd ? usd.lastIndexOf('.') : -1
+  const whole = usd === null ? null : usd.slice(1, point)
+  const cents = usd === null ? '' : usd.slice(point)
+  const size = amountSize(whole?.length ?? 1)
+  const local = balance !== null && currency !== 'USD' ? formatLocal(baseToNumber(balance), currency) : null
 
   return (
-    <View style={styles.card} accessibilityLabel={hideBalance ? 'Balance hidden' : `Available ${usd ?? 'loading'}`}>
-      <Svg width={220} height={220} viewBox="-110 -110 220 220" style={styles.rings} pointerEvents="none">
-        {[104, 78, 52, 26].map((r) => (
-          <Circle key={r} r={r} fill="none" stroke={colors.tealDeep} strokeWidth={2} />
-        ))}
-      </Svg>
+    <Sticker lift fill={colors.teal} radius={28} style={styles.frame} innerStyle={styles.card}>
+      <Waves />
       <View style={styles.coins} pointerEvents="none">
-        <View style={{ transform: [{ rotate: '-14deg' }] }}>
-          <Coin size={50} symbol="$" />
-        </View>
-        <View style={styles.coinBack}>
-          <Coin size={40} symbol="€" />
-        </View>
+        <Bob distance={5} duration={5000} delay={900} style={styles.coinBack}>
+          <View style={{ transform: [{ rotate: '10deg' }] }}>
+            <Coin size={40} symbol="€" />
+          </View>
+        </Bob>
+        <Bob distance={5} duration={5000} style={styles.coinFront}>
+          <View style={{ transform: [{ rotate: '-6deg' }] }}>
+            <Coin size={58} symbol="$" />
+          </View>
+        </Bob>
       </View>
 
       <View style={styles.top}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={hideBalance ? 'Show balance' : 'Hide balance'}
-          hitSlop={10}
+          hitSlop={6}
           onPress={() => {
             void Haptics.selectionAsync()
             setHideBalance(!hideBalance)
           }}
           style={styles.label}
         >
-          <Txt weight="medium" size={15} color={onTeal}>
+          <Txt weight="bold" size={15}>
             Available
           </Txt>
-          <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={18} color={onTeal} />
+          <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={19} />
         </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Add money"
-          hitSlop={8}
+        <Sticker
+          lift
+          radius={22}
+          fill={colors.card}
           onPress={() => router.push('/add-money')}
-          style={({ pressed }) => [styles.add, pressed && { transform: [{ scale: 0.96 }] }]}
+          accessibilityLabel="Add money"
+          innerStyle={styles.add}
         >
-          <Icon name="plus" size={16} />
-          <Txt weight="semi" size={14}>
+          <Icon name="plus" size={17} strokeWidth={2.6} />
+          <Txt weight="heavy" size={15}>
             Add
           </Txt>
-        </Pressable>
+        </Sticker>
       </View>
 
       <View style={styles.amount}>
         {hideBalance ? (
-          <Txt weight="bold" size={44} color={colors.white} style={{ letterSpacing: 4 }}>
+          <Txt weight="heavy" size={44} accessibilityLabel="Balance hidden" style={styles.hidden}>
             ••••••
           </Txt>
-        ) : (
-          <>
-            <Txt weight="semi" size={26} color={onTeal} style={styles.sign}>
+        ) : whole === null ? (
+          <View accessible accessibilityLabel="Balance loading" style={styles.waiting}>
+            <Txt weight="heavy" size={30} style={styles.sign} importantForAccessibility="no" accessibilityElementsHidden>
               $
             </Txt>
-            <Txt weight="bold" size={54} color={colors.white} style={styles.whole} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.5}>
-              {whole}
+            <Breathe style={styles.waitBar} />
+          </View>
+        ) : (
+          <>
+            <Txt weight="heavy" size={30} style={[styles.sign, { marginTop: size * 0.2 }]} importantForAccessibility="no" accessibilityElementsHidden>
+              $
             </Txt>
-            <Txt weight="semi" size={24} color={onTeal} style={styles.cents}>
+            <Odometer value={whole} size={size} label={`Available, ${usd}`} />
+            <Txt
+              weight="heavy"
+              size={30}
+              color={colors.onTint}
+              style={[styles.cents, { marginTop: size * 0.2 }]}
+              importantForAccessibility="no"
+              accessibilityElementsHidden
+            >
               {cents}
             </Txt>
           </>
@@ -95,59 +122,170 @@ export function BalanceCard({
       </View>
 
       <View style={styles.chips}>
-        {balance !== null && currency !== 'USD' ? (
+        {fresh ? (
+          <Landing key={fresh.id} active delay={1500} rest={colors.onTeal} style={[styles.chip, styles.fresh]}>
+            <Icon name="upRight" size={15} strokeWidth={2.8} />
+            <Txt weight="heavy" size={13} numberOfLines={1}>
+              {fresh.line}
+            </Txt>
+          </Landing>
+        ) : (
+          <>
+            {local ? (
+              <View style={styles.chip}>
+                <Txt weight="bold" size={13}>
+                  {hideBalance ? '≈ ••••' : `≈ ${local}`}
+                </Txt>
+              </View>
+            ) : null}
+            {isTestnet ? (
+              <View style={styles.chip}>
+                <Txt weight="heavy" size={12}>
+                  Test dollars
+                </Txt>
+              </View>
+            ) : null}
+          </>
+        )}
+      </View>
+    </Sticker>
+  )
+}
+
+/**
+ * The balance card on a brand-new wallet: an honest $0.00, the one thing to do next, and Kovi
+ * catching the first coin.
+ */
+export function ReadyCard() {
+  return (
+    <Sticker lift fill={colors.teal} radius={28} style={styles.frame} innerStyle={[styles.card, styles.ready]}>
+      <Waves />
+      <View pointerEvents="none" style={styles.kovi}>
+        <Bob distance={6} duration={4500}>
+          <Kovi pose="catch" size={132} />
+        </Bob>
+      </View>
+      <Twinkle style={styles.sparkA}>
+        <Sparkle size={20} />
+      </Twinkle>
+      <Twinkle delay={700} style={styles.sparkB}>
+        <Sparkle size={14} fill={colors.white} />
+      </Twinkle>
+
+      <View style={styles.top}>
+        <View style={styles.label}>
+          <Txt weight="bold" size={15}>
+            Available
+          </Txt>
+        </View>
+        {isTestnet ? (
           <View style={styles.chip}>
-            <Txt weight="medium" size={13} color={colors.white}>
-              {hideBalance ? '≈ ••••' : `≈ ${formatLocal(baseToNumber(balance), currency)}`}
+            <Txt weight="heavy" size={12}>
+              Test dollars
             </Txt>
           </View>
         ) : null}
       </View>
-    </View>
+      <View style={[styles.amount, { marginTop: 2 }]} accessible accessibilityLabel="Available, $0.00">
+        <Txt weight="heavy" size={30} style={[styles.sign, { marginTop: 14 }]}>
+          $
+        </Txt>
+        <Txt weight="heavy" size={68} style={{ lineHeight: 79, letterSpacing: -2.4 }}>
+          0
+        </Txt>
+        <Txt weight="heavy" size={30} color={colors.onTint} style={[styles.cents, { marginTop: 14 }]}>
+          .00
+        </Txt>
+      </View>
+      <Txt weight="heavy" size={16} style={{ marginTop: 2 }}>
+        Your wallet is ready.
+      </Txt>
+      <View style={styles.readyRow}>
+        <Sticker
+          lift
+          radius={26}
+          fill={colors.card}
+          onPress={() => router.push('/add-money')}
+          accessibilityLabel={isTestnet ? 'Add 5 test dollars, free' : 'Add money'}
+          innerStyle={styles.readyButton}
+        >
+          <Txt weight="heavy" size={15}>
+            {isTestnet ? 'Add $5, free' : 'Add money'}
+          </Txt>
+          <View style={styles.readyDisc}>
+            <Icon name="plus" size={17} strokeWidth={2.8} />
+          </View>
+        </Sticker>
+      </View>
+    </Sticker>
+  )
+}
+
+/** The logo's tap waves, drawn faint and large off the card's top right corner. */
+function Waves() {
+  return (
+    <Svg width={200} height={200} viewBox="0 0 200 200" style={styles.waves} pointerEvents="none">
+      {WAVES.map((d) => (
+        <Path key={d} d={d} stroke={colors.ink} strokeWidth={11} strokeLinecap="round" fill="none" />
+      ))}
+    </Svg>
   )
 }
 
 const styles = StyleSheet.create({
-  card: {
-    marginTop: 16,
-    borderRadius: 30,
-    backgroundColor: colors.teal,
-    borderWidth: 2,
-    borderColor: colors.ink,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 18,
-    overflow: 'hidden',
-  },
-  rings: { position: 'absolute', right: -70, top: -70, opacity: 0.55 },
-  coins: { position: 'absolute', right: 14, bottom: 12, width: 84, height: 60 },
-  coinBack: { position: 'absolute', right: 0, top: 0, transform: [{ rotate: '12deg' }] },
-  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
-  add: {
-    height: 36,
-    paddingLeft: 10,
-    paddingRight: 14,
-    borderRadius: 18,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.ink,
+  waiting: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
+    alignItems: 'flex-start',
+    height: 66,
   },
-  amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 10, paddingRight: 70 },
-  sign: { marginTop: 8, marginRight: 2 },
-  whole: { letterSpacing: -2.2, lineHeight: 60, flexShrink: 1 },
-  cents: { marginTop: 8, marginLeft: 2 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 10, paddingRight: 84 },
+  waitBar: {
+    width: 128,
+    height: 48,
+    marginTop: 8,
+    marginLeft: 4,
+    borderRadius: 14,
+    backgroundColor: 'rgba(16, 35, 63, 0.14)',
+  },
+  frame: { marginTop: 16 },
+  card: { paddingLeft: 20, paddingRight: 14, paddingTop: 10, paddingBottom: 18 },
+  ready: { minHeight: 244 },
+  waves: { position: 'absolute', right: -58, top: -26, opacity: 0.16 },
+  coins: { position: 'absolute', right: 16, bottom: 14, width: 92, height: 104 },
+  coinFront: { position: 'absolute', right: 6, bottom: 0 },
+  coinBack: { position: 'absolute', right: 0, top: 4 },
+  top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  label: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44 },
+  add: { height: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 12, paddingRight: 16 },
+  amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8, paddingRight: 64 },
+  sign: { marginRight: 3 },
+  cents: { marginLeft: 5, letterSpacing: -0.6 },
+  hidden: { letterSpacing: 4, lineHeight: 72 },
+  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, paddingRight: 88, minHeight: 30 },
   chip: {
     height: 30,
     paddingHorizontal: 12,
     borderRadius: 15,
-    backgroundColor: colors.tealDeep,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.onTeal,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
+    gap: 6,
+  },
+  fresh: { paddingLeft: 8, maxWidth: '100%' },
+  kovi: { position: 'absolute', right: 0, bottom: 0 },
+  sparkA: { position: 'absolute', right: 128, bottom: 124 },
+  sparkB: { position: 'absolute', right: 16, bottom: 140 },
+  readyRow: { flexDirection: 'row', marginTop: 16 },
+  readyButton: { height: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 18, paddingRight: 5 },
+  readyDisc: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.coral,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 })

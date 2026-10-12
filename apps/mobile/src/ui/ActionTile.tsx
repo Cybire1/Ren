@@ -8,6 +8,7 @@ import { Sticker, Txt } from './primitives'
 /**
  * A small action tile that tells its own story: an icon in a solid disc, a dotted path, and
  * something travelling along it — the plane leaving on Send, a coin dropping in on Request.
+ * It stands on the hard ink shadow, and sinks into it when pressed.
  */
 export function ActionTile({
   kind,
@@ -22,7 +23,7 @@ export function ActionTile({
     : { fill: colors.surface, disc: colors.teal, icon: 'receive', label: 'Request', caption: 'Get paid by link' }
 
   return (
-    <Sticker fill={tone.fill} radius={26} style={{ flex: 1 }} onPress={onPress} accessibilityLabel={`${tone.label}. ${tone.caption}`}>
+    <Sticker lift fill={tone.fill} radius={22} style={{ flex: 1 }} onPress={onPress} accessibilityLabel={`${tone.label}. ${tone.caption}`}>
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox="0 0 140 96" preserveAspectRatio="xMaxYMin meet">
           {send ? (
@@ -37,9 +38,9 @@ export function ActionTile({
       </View>
       <View style={styles.body}>
         <View style={[styles.disc, { backgroundColor: tone.disc }]}>
-          <Icon name={tone.icon} size={18} color={colors.white} strokeWidth={2.2} />
+          <Icon name={tone.icon} size={18} color={colors.ink} strokeWidth={2.4} />
         </View>
-        <Txt weight="bold" size={17} style={{ letterSpacing: -0.3 }}>
+        <Txt weight="heavy" size={18} style={{ letterSpacing: -0.4 }}>
           {tone.label}
         </Txt>
       </View>

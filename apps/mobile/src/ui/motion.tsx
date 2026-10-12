@@ -2,6 +2,7 @@ import { type ReactNode, useEffect } from 'react'
 import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
 import Animated, {
   Easing,
+  interpolateColor,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
@@ -11,8 +12,10 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
+import Svg, { Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
 import { Coin, Flake, Sparkle } from './art'
+import { WAVES } from './Logo'
 
 type Point = { x: number; y: number }
 
@@ -317,6 +320,113 @@ export function PopIn({ children, delay = 0, style }: { children: ReactNode; del
   const anim = useAnimatedStyle(() => ({
     opacity: Math.min(1, v.value * 1.5),
     transform: [{ scale: v.value }, { rotate: `${(1 - v.value) * -30}deg` }],
+  }))
+  return <Animated.View style={[anim, style]}>{children}</Animated.View>
+}
+
+/**
+ * The logo's three tap waves, brightening in turn from the inside out, like a contactless reader
+ * waiting for a phone. Drawn on the mark's canvas, so they line up with the logo at any size.
+ */
+export function PulseWaves({ size, color = colors.coral, strokeWidth = 12 }: { size: number; color?: string; strokeWidth?: number }) {
+  return (
+    <View pointerEvents="none" style={{ width: size, height: size }}>
+      {WAVES.map((d, i) => (
+        <Wave key={d} d={d} order={i} size={size} color={color} strokeWidth={strokeWidth} />
+      ))}
+    </View>
+  )
+}
+
+function Wave({ d, order, size, color, strokeWidth }: { d: string; order: number; size: number; color: string; strokeWidth: number }) {
+  const reduced = useReducedMotion()
+  const v = useSharedValue(reduced ? 1 : 0.2)
+  useEffect(() => {
+    if (reduced) return
+    v.value = withDelay(
+      order * 250,
+      withRepeat(
+        withSequence(
+          withTiming(1, { duration: 900, easing: Easing.out(Easing.quad) }),
+          withTiming(0.2, { duration: 1700, easing: Easing.inOut(Easing.quad) }),
+        ),
+        -1,
+      ),
+    )
+  }, [reduced, order, v])
+  const anim = useAnimatedStyle(() => ({ opacity: v.value }))
+  return (
+    <Animated.View style={[StyleSheet.absoluteFill, anim]}>
+      <Svg width={size} height={size} viewBox="0 0 200 200">
+        <Path d={d} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" fill="none" />
+      </Svg>
+    </Animated.View>
+  )
+}
+
+/** A painted sparkle's twinkle: brightens and swells a little, then rests. */
+export function Twinkle({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: StyleProp<ViewStyle> }) {
+  const reduced = useReducedMotion()
+  const v = useSharedValue(reduced ? 1 : 0)
+  useEffect(() => {
+    if (reduced) return
+    v.value = withDelay(delay, withRepeat(withTiming(1, { duration: 1400, easing: Easing.inOut(Easing.sin) }), -1, true))
+  }, [reduced, delay, v])
+  const anim = useAnimatedStyle(() => ({
+    opacity: 0.3 + 0.7 * v.value,
+    transform: [{ scale: 0.8 + 0.3 * v.value }],
+  }))
+  return <Animated.View style={[anim, style]}>{children}</Animated.View>
+}
+
+/**
+ * Something on its way: a soft shape that breathes while it waits (the balance before it
+ * loads). Reduced motion shows it still.
+ */
+export function Breathe({ style }: { style?: StyleProp<ViewStyle> }) {
+  const reduced = useReducedMotion()
+  const v = useSharedValue(1)
+  useEffect(() => {
+    if (reduced) return
+    v.value = withRepeat(withTiming(0.45, { duration: 700, easing: Easing.inOut(Easing.sin) }), -1, true)
+  }, [reduced, v])
+  const anim = useAnimatedStyle(() => ({ opacity: v.value }))
+  return <Animated.View style={[anim, style]} />
+}
+
+/**
+ * Money that has just landed: the row drops into place, then glows mint and fades back to its
+ * card. `active` false shows it at rest, as does reduced motion.
+ */
+export function Landing({
+  children,
+  active,
+  delay = 500,
+  rest = 'rgba(255,255,255,0)',
+  style,
+}: {
+  children: ReactNode
+  active: boolean
+  delay?: number
+  /** The colour the glow fades to: the ground the row sits on. */
+  rest?: string
+  style?: StyleProp<ViewStyle>
+}) {
+  const reduced = useReducedMotion()
+  const moving = active && !reduced
+  const t = useSharedValue(moving ? 0 : 1)
+  const glow = useSharedValue(moving ? 1 : 0)
+  // Plays once, when the row first appears fresh.
+  useEffect(() => {
+    if (!moving) return
+    t.value = withDelay(delay, withTiming(1, { duration: 700, easing: Easing.bezier(0.16, 1, 0.3, 1) }))
+    glow.value = withDelay(delay + 300, withTiming(0, { duration: 1800, easing: Easing.out(Easing.quad) }))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  const anim = useAnimatedStyle(() => ({
+    opacity: t.value,
+    transform: [{ translateY: (1 - t.value) * -16 }, { scale: 0.97 + 0.03 * t.value }],
+    backgroundColor: interpolateColor(glow.value, [0, 1], [rest, colors.tealSoft]),
   }))
   return <Animated.View style={[anim, style]}>{children}</Animated.View>
 }
