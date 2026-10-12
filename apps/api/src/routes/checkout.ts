@@ -95,6 +95,8 @@ export const checkoutRoutes = new Hono()
         : null,
       // The flight or hotel, when this charge is a share of a Kova Travel trip.
       trip,
+      // Who paid, once it's paid: public on Monad anyway, and how a receipt finds the payer's stamp card.
+      payment: intent.status === 'paid' ? await paymentOf(intent) : null,
     })
   })
   /**
