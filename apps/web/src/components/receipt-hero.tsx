@@ -209,7 +209,7 @@ export function ReceiptHero() {
               />
               <text fontSize="9.5" fontWeight="800" style={{ fill: 'var(--ink)' }} letterSpacing="1.4">
                 <textPath href="#rh-ring" textLength="252" lengthAdjust="spacing">
-                  SETTLED ON MONAD • SETTLED ON MONAD •
+                  {`SETTLED ON ${chainName.toUpperCase()} • SETTLED ON ${chainName.toUpperCase()} •`}
                 </textPath>
               </text>
               <text
