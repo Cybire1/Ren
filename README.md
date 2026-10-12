@@ -49,7 +49,7 @@ and on whose behalf, plus the network fee, so nobody needs a gas token to pay fo
 
 <table>
   <tr>
-    <td width="33%"><img src="docs/screenshots/ren/web-wallet-first-run.png" alt="A new wallet: zero balance, Kovi catching a coin, and three things to try"></td>
+    <td width="33%"><img src="docs/screenshots/ren/web-wallet-first-run.png" alt="A new wallet: zero balance, Reni catching a coin, and three things to try"></td>
     <td width="33%"><img src="docs/screenshots/ren/web-wallet-phone.png" alt="Wallet home on a phone: the balance, Pay, Send, Request and your shop"></td>
     <td width="33%"><img src="docs/screenshots/ren/web-dashboard-phone.png" alt="The shop dashboard on a phone: taken today, payments, average and card fees"></td>
   </tr>
@@ -68,13 +68,13 @@ and on whose behalf, plus the network fee, so nobody needs a gas token to pay fo
 
 <table>
   <tr>
-    <td width="33%"><img src="docs/screenshots/ren/app-first-run.png" alt="The iOS app's first run: an honest $0.00, Add $5 free, and three things to try"></td>
-    <td width="33%"><img src="docs/screenshots/ren/app-shop-today.png" alt="Shop mode's Today on iOS: taken today rolled in, stat tiles and the day's chart"></td>
+    <td width="33%"><img src="docs/screenshots/ren/app-welcome.png" alt="The iOS app's welcome: the Ren wordmark, Reni flying a paper plane between two shops, and Create my wallet"></td>
+    <td width="33%"><img src="docs/screenshots/ren/app-first-run.png" alt="The iOS app's first run: an honest $0.00, Add $5 free, Reni, and three things to try"></td>
     <td width="33%" valign="top"><img src="docs/screenshots/ren/app-home-recent.png" alt="Home on iOS: your shop's day and the payments that just arrived"></td>
   </tr>
   <tr>
+    <td><sub><b>Welcome.</b> One passkey, no seed phrase.</sub></td>
     <td><sub><b>First run</b> on iOS.</sub></td>
-    <td><sub><b>Shop mode, Today.</b> The phone is the till.</sub></td>
     <td><sub><b>Home.</b> Your shop's day and who just paid you.</sub></td>
   </tr>
 </table>
@@ -104,7 +104,7 @@ sequenceDiagram
     R->>T: Sponsors the fee and submits it
     T-->>R: Included in a ~0.5 s block, and final
     R->>R: Verifies the receipt: token, amount, recipient, memo
-    R-->>S: Paid. The tape prints and Kovi hops
+    R-->>S: Paid. The tape prints and Reni hops
 ```
 
 Every payment carries the charge's id in its memo. That is how an on-chain transfer is matched to
@@ -161,7 +161,8 @@ in [`docs/market`](docs/market).
 
 Ren's look is called Soda: mint paper, green for money at rest, watermelon for paying, navy ink,
 2px ink outlines, and a solid ink shadow that buttons press into. Type is Manrope, with tabular
-figures so amounts never jump. Kovi, the coin, shows up when money moves. Every screen is built
+figures so amounts never jump. The logo is the R coin: a capital R whose bowl is a coin, sitting
+on the same ink shadow. Reni, a watermelon coin with a sprout, shows up when money moves. Every screen is built
 for a phone first and gets a real desktop layout. Text meets WCAG contrast on its background,
 and every animation stops for people who ask for reduced motion.
 
