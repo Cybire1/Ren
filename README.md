@@ -34,10 +34,11 @@ One network behind a wallet, a terminal, a card and an API.
 
 | | For | What it does |
 |---|---|---|
-| **Ren Pay** | people | A dollar wallet in your browser and on your phone. Pay a shop by scanning or tapping, send to anyone by name or link, and see every amount in dollars, euros, pounds or naira. Your passkey is the key: no seed phrase, and nothing to install on the web. |
-| **Ren Terminal** | shops | Any phone becomes the card machine. Pair it with a one-time code; staff phones get a key that can only take payments. |
+| **Ren Pay** | people | A dollar wallet in your browser and on your phone. Pay a shop by scanning or tapping, send to anyone in one sheet (who, how much in their currency, slide to send), and see every amount in your own currency. Your passkey is the key: no seed phrase, and nothing to install on the web. |
+| **Ren Terminal** | shops | Any phone becomes the card machine, and an iPad a full register: products, stock and order status. Pair a phone with a one-time code; staff phones get a key that can only take payments. |
 | **Shop dashboard** | shops | Today's takings, live. Payments print on a receipt tape the second they land, with the on-chain proof one click away. |
-| **Stalls** | shops | Your menu on a link and a QR code. People order and pay from their own phones, from anywhere. |
+| **Stalls and tables** | shops | Your menu on a link and a QR code. A table's code puts the table on the order; the buyer's phone lights up and chimes when it's ready, and a full stamp card makes an item free, paid as a $0 checkout that Ren's fee payer sponsors. |
+| **Guest checkout** | people | No wallet yet? Pay a shop with email or Google, then keep the change in a passkey wallet, moved for free. |
 | **Ren Card** | people | An NFC card that pays with a limited Tempo access key: a daily limit, an expiry, and a freeze that stops the next tap. |
 | **Developers** | builders | Payment intents, signed webhooks and secret keys, so any website or till software can take Ren payments. |
 
