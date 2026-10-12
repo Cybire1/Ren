@@ -1,0 +1,86 @@
+{
+  "note": "Real run at Ada's Bakery on Monad testnet, 2026-10-12T07:12:13.134Z (apps/api/src/scripts/table-run.ts).",
+  "slug": "adas-bakery-b7b6",
+  "table": "3",
+  "customer": "0xC088f5D966dFCBE498FAb909F688cF8E1bFc32E7",
+  "total": "$7.75",
+  "seconds": "0.76",
+  "tableOrder": {
+    "order": "ord_06gjxwh9qxwm17cnnmw55erg0g",
+    "checkout": "pi_06gjxwh9qxztvf2tm08mrhy7x0",
+    "amount": "7.75",
+    "reward": null,
+    "tx": "0x617498997c9c5d23163ded2e4d522c6e48918b3f491ebd919469a9515e5a16f2",
+    "explorer": "https://testnet.monadscan.com/tx/0x617498997c9c5d23163ded2e4d522c6e48918b3f491ebd919469a9515e5a16f2",
+    "seconds": "0.76"
+  },
+  "every": 5,
+  "stamps": [
+    {
+      "order": "ord_06gjxwh9qxwm17cnnmw55erg0g",
+      "checkout": "pi_06gjxwh9qxztvf2tm08mrhy7x0",
+      "amount": "7.75",
+      "reward": null,
+      "tx": "0x617498997c9c5d23163ded2e4d522c6e48918b3f491ebd919469a9515e5a16f2",
+      "explorer": "https://testnet.monadscan.com/tx/0x617498997c9c5d23163ded2e4d522c6e48918b3f491ebd919469a9515e5a16f2",
+      "seconds": "0.76"
+    },
+    {
+      "order": "ord_06gjxx2c5nvn95v199hxh0xa4w",
+      "checkout": "pi_06gjxx2c5nz9ndjhcxk0ahx7y4",
+      "amount": "3.25",
+      "reward": null,
+      "tx": "0x17b0d2c90e8225f73b99862e462ce5d301f03882746f5dd501e0ffb06949a775",
+      "explorer": "https://testnet.monadscan.com/tx/0x17b0d2c90e8225f73b99862e462ce5d301f03882746f5dd501e0ffb06949a775",
+      "seconds": "0.73"
+    },
+    {
+      "order": "ord_06gjxx2hpnvjv4dgpg40qem9xm",
+      "checkout": "pi_06gjxx2hpsydver0xamekt2bq0",
+      "amount": "3.25",
+      "reward": null,
+      "tx": "0x47625a67cb948001a46de574a8649db1fa56210195eed75f05cbfed25f92e66b",
+      "explorer": "https://testnet.monadscan.com/tx/0x47625a67cb948001a46de574a8649db1fa56210195eed75f05cbfed25f92e66b",
+      "seconds": "0.78"
+    },
+    {
+      "order": "ord_06gjxx2q79r07bh7mce50r7ys4",
+      "checkout": "pi_06gjxx2q7dsybcx4b4ezv2jk5c",
+      "amount": "3.25",
+      "reward": null,
+      "tx": "0x8d9611d22e88da39680ec9e5bfa3ca061a303bf5ccf93ffa449c5110d1ec24a3",
+      "explorer": "https://testnet.monadscan.com/tx/0x8d9611d22e88da39680ec9e5bfa3ca061a303bf5ccf93ffa449c5110d1ec24a3",
+      "seconds": "1.02"
+    },
+    {
+      "order": "ord_06gjxx2y7hvws56hc2m3xqkjbm",
+      "checkout": "pi_06gjxx2y7hw558jj0487s8zpd0",
+      "amount": "3.25",
+      "reward": null,
+      "tx": "0xad58b08b9abaca36e25f9fa44b4fd79cbefa43410ed4a405e5de6e5125bd3a06",
+      "explorer": "https://testnet.monadscan.com/tx/0xad58b08b9abaca36e25f9fa44b4fd79cbefa43410ed4a405e5de6e5125bd3a06",
+      "seconds": "0.81"
+    }
+  ],
+  "cardBeforeFree": {
+    "object": "stamp_card",
+    "every": 5,
+    "stamps": 5,
+    "ready": true
+  },
+  "free": {
+    "order": "ord_06gjxx37cxvpnd3mkvf8vfwtrr",
+    "checkout": "pi_06gjxx37d1t1f7jkg0h5adf8ar",
+    "amount": "0.00",
+    "reward": {
+      "name": "Croissant",
+      "amount": "3.25",
+      "stamps": 5,
+      "item_id": "itm_06gjxpt76st7s45hv2nt96fhzw"
+    },
+    "tx": "0x73001c6d1dd2d91ec4fd7be01d3c014658b64200a3979f1e206dd8e5ae5cdec0",
+    "explorer": "https://testnet.monadscan.com/tx/0x73001c6d1dd2d91ec4fd7be01d3c014658b64200a3979f1e206dd8e5ae5cdec0",
+    "seconds": "0.76"
+  },
+  "stampsAfterFree": 0
+}

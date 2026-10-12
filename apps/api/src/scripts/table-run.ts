@@ -3,17 +3,21 @@
  * then buys four more times to fill the stamp card, then gets the cheapest item free (paid for $0).
  * Every number the film shows comes from this run; it writes them to film/public/spot/run.json.
  *
- * Usage: FUNDER_KEY=0x… tsx src/scripts/table-run.ts <api> <slug> [table]
+ * Usage: FUNDER_KEY=0x… tsx src/scripts/table-run.ts <api> <slug> [table] [table|stamps|all]
+ * `table` stops after the table order, so the shop can mark it ready on camera; `stamps` then carries
+ * on with the same customer (CUSTOMER_KEY, printed by the first part).
  * Testnet only. The customer's dollars come from FUNDER_KEY, sent the way Kova Pay sends (signed, and
  * submitted by Kova); every payment after that is signed by the customer the same way, so nobody holds MON.
  */
-import { writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { networkByChainId, toSignedAuthorization, tokenByAddress, transferAuthorizationTypedData } from '@kova/monad'
 import { type Hex, parseUnits, toHex } from 'viem'
 import { generatePrivateKey, privateKeyToAccount } from 'viem/accounts'
-import { type Checkout, getCheckout, newCustomer, pay } from './customer.js'
+import { type Checkout, getCheckout, pay } from './customer.js'
 
-const [api = 'https://api-monad.up.railway.app', slug = 'adas-bakery', table = '3'] = process.argv.slice(2)
+const [api = 'https://api-monad.up.railway.app', slug = 'adas-bakery', table = '3', part = 'all'] = process.argv.slice(2)
 const funderKey = process.env.FUNDER_KEY as Hex | undefined
 if (!funderKey) throw new Error('FUNDER_KEY is required')
 
@@ -46,21 +50,25 @@ const item = (name: string) => {
   return found
 }
 
-const customer = newCustomer()
-const funder = privateKeyToAccount(funderKey)
-const token = tokenByAddress(network.id, health.settlement_token.address)
-if (!token) throw new Error('unknown settlement token')
-const send = {
-  from: funder.address,
-  to: customer.address,
-  value: parseUnits('40', 6),
-  validAfter: 0n,
-  validBefore: BigInt(Math.floor(Date.now() / 1000) + 600),
-  nonce: toHex(BigInt(generatePrivateKey()), { size: 32 }),
+const resumed = process.env.CUSTOMER_KEY as Hex | undefined
+const customerKey = resumed ?? generatePrivateKey()
+const customer = privateKeyToAccount(customerKey)
+if (!resumed) {
+  const funder = privateKeyToAccount(funderKey)
+  const token = tokenByAddress(network.id, health.settlement_token.address)
+  if (!token) throw new Error('unknown settlement token')
+  const send = {
+    from: funder.address,
+    to: customer.address,
+    value: parseUnits('40', 6),
+    validAfter: 0n,
+    validBefore: BigInt(Math.floor(Date.now() / 1000) + 600),
+    nonce: toHex(BigInt(generatePrivateKey()), { size: 32 }),
+  }
+  const sendSig = await funder.signTypedData(transferAuthorizationTypedData(token, network.chainId, send))
+  const funded = await call<{ tx_hash?: string }>('/v1/transfers', { method: 'POST', body: JSON.stringify(toSignedAuthorization(token.address, send, sendSig)) })
+  console.log(`customer ${customer.address}, funded $40 (${funded.tx_hash ?? JSON.stringify(funded)})`)
 }
-const sendSig = await funder.signTypedData(transferAuthorizationTypedData(token, network.chainId, send))
-const funded = await call<{ tx_hash?: string }>('/v1/transfers', { method: 'POST', body: JSON.stringify(toSignedAuthorization(token.address, send, sendSig)) })
-console.log(`customer ${customer.address}, funded $40 (${funded.tx_hash ?? JSON.stringify(funded)})`)
 
 async function visit(lines: [string, number][], atTable?: string) {
   const placed = await call<Placed>(`/v1/public/stalls/${slug}/orders`, {
@@ -87,7 +95,21 @@ async function visit(lines: [string, number][], atTable?: string) {
   return row
 }
 
-const first = await visit([['Flat white', 1], ['Croissant', 1]], table)
+const runFile = new URL('../../../../film/public/spot/run.json', import.meta.url)
+let first: Awaited<ReturnType<typeof visit>>
+if (part === 'stamps') {
+  first = JSON.parse(readFileSync(runFile, 'utf8')).tableOrder
+} else {
+  first = await visit([['Flat white', 1], ['Croissant', 1]], table)
+  if (part === 'table') {
+    writeFileSync(runFile, `${JSON.stringify({ slug, table, customer: customer.address, total: `$${first.amount}`, seconds: first.seconds, tableOrder: first, every: stall.loyalty_every }, null, 2)}\n`)
+    // A throwaway testnet key, kept out of the log, so the second part can carry on as the same customer.
+    const keyFile = join(tmpdir(), 'kova-table-run.key')
+    writeFileSync(keyFile, customerKey, { mode: 0o600 })
+    console.log(`customer key in ${keyFile}: CUSTOMER_KEY=$(cat ${keyFile})`)
+    process.exit(0)
+  }
+}
 const visits = [first]
 for (let i = 1; i < stall.loyalty_every; i++) visits.push(await visit([['Croissant', 1]]))
 const card = await call<{ stamps: number; ready: boolean }>(`/v1/public/stalls/${slug}/stamps?payer=${customer.address}`)
@@ -109,5 +131,5 @@ const run = {
   free,
   stampsAfterFree: after.stamps,
 }
-writeFileSync(new URL('../../../../film/public/spot/run.json', import.meta.url), `${JSON.stringify(run, null, 2)}\n`)
+writeFileSync(runFile, `${JSON.stringify(run, null, 2)}\n`)
 console.log('wrote film/public/spot/run.json')
