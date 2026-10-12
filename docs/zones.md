@@ -41,24 +41,23 @@ own zone actions (`viem/tempo`):
 
 ## Status
 
-Built, and tested end to end against a real zone node (below): a passkey wallet in Chrome moved
-$5 in, sent $2 privately, and moved $1 back out, which landed on Tempo in about two seconds.
+**Live** on the site since 2026-10-13, on Tempo's persistent testnet **Zone A** (zone 6, chain
+`4217000006`, portal `0x7069DeC4E64Fd07334A0933eDe836C17259c9B23`, RPC
+`https://rpc-zone-a.testnet.tempo.xyz`), which Tempo's protocol team offered Ren and keeps up.
+Zone A runs the earlier zones runtime (`KOVA_ZONE_RUNTIME=sandbox`): its encrypted deposit takes
+no refund address, its deposit key doesn't bind the sender, and it charges a little gas, in
+AlphaUSD from the private balance, for a move out (under a cent; the wallet keeps it back). Each
+wallet signs its own token for zone 6; there is no shared operator key.
 
-**It is off on the live site** until a testnet zone is open to Ren's users:
+Checked on the live site: a new passkey wallet moved $5 in, sent $2 privately and moved $1 out,
+which landed back on Tempo in seconds, with Ren's relay paying every deposit fee.
+`scripts/zone-e2e.ts` passes against Zone A too.
 
-- Only the ZoneFactory's owner (Tempo) can create a zone on Moderato.
-- Tempo's current preview zone accepts allowlisted accounts only (`AccountNotAllowed`).
-- The older sandbox zones (A and B) use earlier portal interfaces and need an operator key.
-
-The ask to Tempo: create a zone for Ren with access mode off and AlphaUSD enabled, with admin
-`0xFb0B74E4d0890b16DD2FA07185acD6C03D3d34AE` and sequencer
-`0x64461428cBaB83f51c348e9E7773D371CCE6f0e1`. Ren then runs it (below), or uses one Tempo runs.
-
-That call is ready as an unsigned Safe Transaction Builder proposal for the factory's owner Safe
-(`0x5FEDB95CDB5C512Fe93baf4D4F8c1b77f7767401`), written and simulated by
-`tempo-xtask create-zone --safe-address … --safe-output …`. Simulated on 2026-10-12, it created
-zone 4 with portal `0x5Ad0000000000000000000000000000000000004` (the id moves up if another zone
-is created first).
+Why not a zone of Ren's own: only the ZoneFactory's owner (Tempo) can create a zone on Moderato,
+and Tempo's newer preview zone takes allowlisted accounts only (`AccountNotAllowed`). If Ren wants
+its own zone later, the call is ready as an unsigned Safe Transaction Builder proposal for the
+factory's owner Safe (`0x5FEDB95CDB5C512Fe93baf4D4F8c1b77f7767401`), simulated on 2026-10-12 as
+zone 4 (portal `0x5Ad0000000000000000000000000000000000004`), and the steps below run it.
 
 ## Switching it on
 
@@ -75,7 +74,7 @@ KOVA_ZONE_OPERATOR=Ren     # who runs it, as the wallet names them
 
 **API:** `KOVA_ZONE_PORTAL` set to the same portal, so the fee payer sponsors deposits into it.
 
-## Going live, once Tempo has created Ren's zone
+## Running Ren's own zone, if Tempo creates one
 
 With the Safe's execution transaction hash. The keys are in `~/.ren-zone/keys.env`.
 
