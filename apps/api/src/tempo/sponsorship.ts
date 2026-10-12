@@ -8,6 +8,7 @@ import { config } from '../config.js'
 import { db } from '../db.js'
 import { findIntentByMemo } from '../services/intents.js'
 import { rewardRefusal } from '../services/stamps.js'
+import { zoneDepositProblem } from './zone-deposit.js'
 
 /** A transaction as the relay hands it to `validate`: its calls plus the sender. */
 export interface FillRequest {
@@ -20,8 +21,11 @@ export interface FillRequest {
 }
 
 export type SponsorDecision =
-  | { sponsor: true; kind: 'charge' | 'send' }
+  | { sponsor: true; kind: 'charge' | 'send' | 'private' }
   | { sponsor: false; reason: string }
+
+/** The portal of the private zone Ren pays deposits into, when one is configured. */
+const zonePortal = config.KOVA_ZONE_PORTAL ? (config.KOVA_ZONE_PORTAL as Address) : null
 
 /** Sponsored sends per wallet in the last day. In memory: a restart forgets, and that only costs Kova fees. */
 const sends = new Map<string, number[]>()
@@ -50,6 +54,9 @@ function takeSend(from: Address): boolean {
  * - **a send between people**: no Kova memo at all (a charge can only be paid through its own
  *   check above), within a daily number of sponsored sends per wallet.
  *
+ * Or, when a private zone is configured, a move into it: approve and deposit exactly one amount of
+ * an accepted dollar into that zone's portal (zone-deposit.ts), counted with sends.
+ *
  * Everything else is refused, including transactions that would otherwise be perfectly valid.
  */
 export async function shouldSponsor(
@@ -57,6 +64,26 @@ export async function shouldSponsor(
   options: { maxFee: bigint },
 ): Promise<SponsorDecision> {
   const calls = request.calls ?? (request.to ? [{ to: request.to, data: request.data }] : [])
+
+  // A sponsor pays for reverted transactions too, so cap the fee Kova can ever be charged.
+  if (request.gas && request.maxFeePerGas) {
+    const worstCase = request.gas * request.maxFeePerGas
+    if (worstCase > options.maxFee * 10n ** 12n)
+      return { sponsor: false, reason: 'tx_fee_limit_exceeded' }
+  }
+
+  if (calls.length === 2 && zonePortal) {
+    const problem = zoneDepositProblem(
+      calls,
+      request.from,
+      zonePortal,
+      acceptedTokens.map((t) => t.address),
+    )
+    if (problem) return { sponsor: false, reason: problem }
+    if (!takeSend(request.from as Address))
+      return { sponsor: false, reason: 'daily sponsored sends used up' }
+    return { sponsor: true, kind: 'private' }
+  }
   if (calls.length !== 1) return { sponsor: false, reason: 'expected exactly one call' }
 
   const call = calls[0]
@@ -66,13 +93,6 @@ export async function shouldSponsor(
   const withMemo = call.data.startsWith(TRANSFER_WITH_MEMO_SELECTOR)
   if (!withMemo && !call.data.startsWith(TRANSFER_SELECTOR))
     return { sponsor: false, reason: 'only transfers are sponsored' }
-
-  // A sponsor pays for reverted transactions too, so cap the fee Kova can ever be charged.
-  if (request.gas && request.maxFeePerGas) {
-    const worstCase = request.gas * request.maxFeePerGas
-    if (worstCase > options.maxFee * 10n ** 12n)
-      return { sponsor: false, reason: 'tx_fee_limit_exceeded' }
-  }
 
   let args: readonly unknown[]
   try {

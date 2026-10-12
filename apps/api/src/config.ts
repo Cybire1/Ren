@@ -36,6 +36,15 @@ const schema = z.object({
   /** Tempo: sends between people Kova pays the fee for, per wallet per day. Charges are unlimited. */
   KOVA_SPONSORED_SENDS_A_DAY: z.coerce.number().int().nonnegative().default(50),
   /**
+   * Tempo: the portal of the private zone (Tempo Zones) whose deposits Ren's fee payer pays for:
+   * moving dollars into your private balance, or sending them privately. Set it to the zone the
+   * web wallet uses (KOVA_ZONE_PORTAL there too). Unset, Ren pays for no zone deposits.
+   */
+  KOVA_ZONE_PORTAL: z
+    .string()
+    .regex(/^0x[0-9a-fA-F]{40}$/)
+    .optional(),
+  /**
    * Monad: KovaRates, the reference exchange rates a Chainlink CRE workflow publishes. CRE does not
    * reach Tempo, so a Tempo deployment reads the same public rate sources directly.
    */
