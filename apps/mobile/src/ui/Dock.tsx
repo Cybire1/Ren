@@ -20,7 +20,7 @@ const tabs: Record<string, { label: string; icon: NavIconName }> = {
 const H = 68
 
 /**
- * A floating ink pill. Pay is a coral capsule in the middle, one tap from anywhere and never
+ * A floating ink pill. Pay is a coral capsule in the middle, lettered in ink so it reads at a glance, one tap from anywhere and never
  * overlapping the page; the four tabs share the rest in equal slots, and the active one sits in
  * a light circle. The Profile tab is your own face. Names are read out by screen readers rather than squeezed under the icons.
  */
@@ -85,8 +85,8 @@ export function Dock({ state, navigation }: BottomTabBarProps) {
           style={({ pressed }) => [styles.pay, pressed && { transform: [{ scale: 0.95 }] }]}
           hitSlop={4}
         >
-          <NavIcon name="pay" size={22} color={colors.white} />
-          <Txt weight="bold" size={15} color={colors.white}>
+          <NavIcon name="pay" size={22} color={colors.ink} />
+          <Txt weight="heavy" size={16} color={colors.ink}>
             Pay
           </Txt>
         </Pressable>

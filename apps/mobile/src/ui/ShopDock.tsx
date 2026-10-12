@@ -102,8 +102,8 @@ export function ShopDock({ state, navigation }: BottomTabBarProps) {
           style={({ pressed }) => [styles.charge, onTill && styles.chargeOn, pressed && { transform: [{ scale: 0.95 }] }]}
           hitSlop={4}
         >
-          <NavIcon name="charge" size={22} color={colors.white} />
-          <Txt weight="bold" size={15} color={colors.white}>
+          <NavIcon name="charge" size={22} color={colors.ink} />
+          <Txt weight="heavy" size={16} color={colors.ink}>
             Charge
           </Txt>
         </Pressable>
