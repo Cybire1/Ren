@@ -145,8 +145,8 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
               <h1>{stall.name}</h1>
               {stall.tagline ? <p className="store-tagline">{stall.tagline}</p> : null}
             </div>
-            <span className="store-sign-kovi" aria-hidden="true">
-              <Art name="kovi-cheer" size={124} />
+            <span className="store-sign-reni" aria-hidden="true">
+              <Art name="reni-cheer" size={124} />
             </span>
           </div>
         )}
@@ -173,7 +173,7 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
 
       {stall.items.length === 0 ? (
         <div className="store-empty">
-          <Art name="kovi-sleep" size={140} />
+          <Art name="reni-sleep" size={140} />
           <p>Nothing on the menu yet. Check back soon.</p>
         </div>
       ) : (
@@ -320,7 +320,7 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
               <AskedToPay stall={stall} placed={asked} />
             ) : lines.length === 0 ? (
               <div className="store-drawer-empty">
-                <Art name="kovi-sleep" size={120} />
+                <Art name="reni-sleep" size={120} />
                 <h2 id="bag-title">Your bag is empty</h2>
                 <p className="sheet-lead">Tap + on anything you like.</p>
               </div>
@@ -413,7 +413,7 @@ function AskedToPay({ stall, placed }: { stall: PublicStall; placed: Placed }) {
   if (paid)
     return (
       <div className="asked">
-        <Art name="kovi-cheer" size={140} />
+        <Art name="reni-cheer" size={140} />
         <h2>It’s paid</h2>
         <p className="sheet-lead">Someone paid {usd(placed.checkout.amount)} for your order. {stall.name} has it.</p>
       </div>
@@ -423,7 +423,7 @@ function AskedToPay({ stall, placed }: { stall: PublicStall; placed: Placed }) {
   const canShare = typeof navigator !== 'undefined' && 'share' in navigator
   return (
     <div className="asked">
-      <Art name="kovi-ride" size={130} />
+      <Art name="reni-ride" size={130} />
       <h2>Send it to whoever’s paying</h2>
       <p className="sheet-lead">They can pay from anywhere, with Ren Pay or any {chainName} wallet. The link stays open for 24 hours, and this page updates when it’s paid.</p>
       <div className="field-value">

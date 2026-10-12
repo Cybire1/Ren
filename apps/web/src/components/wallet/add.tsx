@@ -24,7 +24,7 @@ export function AddMoney() {
       <div className="w-screen">
         <ScreenHead title="Add money" />
         <div className="w-empty w-empty-art">
-          <Art name="kovi-catch" size={160} />
+          <Art name="reni-catch" size={160} />
           <strong>Send {onTempo ? 'USDC' : 'AUSD'} on {chainName} to your address</strong>
           <span>
             Card and bank top-ups are coming to Ren. For now, send {onTempo ? 'USDC' : 'AUSD'} from an exchange or another
@@ -63,7 +63,7 @@ export function AddMoney() {
     <div className="w-screen">
       <ScreenHead title="Add money" />
       <div className="w-add">
-        <Art name="kovi-catch" size={150} className="w-add-art" />
+        <Art name="reni-catch" size={150} className="w-add-art" />
         <h1 className="w-title">Free test dollars</h1>
         <p className="w-lead">
           Ren is running on {chainName}’s test network. It sends you $5 of test dollars a day to try

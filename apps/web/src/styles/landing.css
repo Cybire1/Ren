@@ -195,14 +195,14 @@
 
 /* --- The receipt printer ------------------------------------------------------------------
  * Every size is in em of .rh, so the whole machine scales as one: 16px on a desk, smaller on
- * a phone. The paper feeds out of the terminal's slot, clipped at the slot line only, so Kovi
+ * a phone. The paper feeds out of the terminal's slot, clipped at the slot line only, so Reni
  * and the stamp can stand outside the paper. */
 
 .rh {
   position: relative;
   width: 36em;
   height: 48em;
-  /* Headroom for Kovi, who stands on top of a full receipt. */
+  /* Headroom for Reni, who stands on top of a full receipt. */
   margin-top: 4.8em;
   font-size: clamp(11px, 1.05vw, 15px);
 }
@@ -322,7 +322,7 @@
 
 .rh[data-phase="print"] .rh-paper,
 .rh[data-phase="stamp"] .rh-paper,
-.rh[data-phase="kovi"] .rh-paper {
+.rh[data-phase="reni"] .rh-paper {
   transform: none;
   transition: transform 2s cubic-bezier(0.45, 0.05, 0.4, 1);
 }
@@ -344,7 +344,7 @@
   height: 0.9em;
 }
 
-.rh-kovi {
+.rh-reni {
   position: absolute;
   left: 50%;
   /* Feet (934/1024 of his box) on the tips of the torn edge. */
@@ -355,8 +355,8 @@
   transform: translateX(-50%);
 }
 
-.rh[data-phase="kovi"] .rh-kovi,
-.rh[data-phase="tear"] .rh-kovi {
+.rh[data-phase="reni"] .rh-reni,
+.rh[data-phase="tear"] .rh-reni {
   animation: rh-pop 0.8s var(--spring) both;
 }
 
@@ -386,7 +386,7 @@
 }
 
 .rh[data-phase="stamp"] .rh-stamp,
-.rh[data-phase="kovi"] .rh-stamp,
+.rh[data-phase="reni"] .rh-stamp,
 .rh[data-phase="tear"] .rh-stamp {
   animation: rh-stamp 0.5s var(--spring) both;
 }
@@ -1054,7 +1054,7 @@
   transform: rotate(-6deg);
 }
 
-/* Kovi rides the dotted route between the two skylines, like the app's Send screen. */
+/* Reni rides the dotted route between the two skylines, like the app's Send screen. */
 .lp-flight {
   position: relative;
   align-self: center;
@@ -1069,7 +1069,7 @@
   height: auto;
 }
 
-.lp-flight-kovi {
+.lp-flight-reni {
   position: absolute;
   left: 50.8%;
   /* The route's highest point: y ≈ 81 on the 1026-wide image (the quadratic's peak, not its
@@ -1331,14 +1331,14 @@
 
 @media (prefers-reduced-motion: reduce) {
   .rh-coin,
-  .rh-kovi,
+  .rh-reni,
   .rh-stamp,
   .rh-feed,
   .rh-waves i,
   .lp-coin.is-beating {
     animation: none !important;
   }
-  .rh-kovi,
+  .rh-reni,
   .rh-stamp {
     opacity: 1;
   }

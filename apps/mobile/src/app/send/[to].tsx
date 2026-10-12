@@ -22,7 +22,7 @@ import { Icon } from '@/ui/Icon'
 import { Keypad } from '@/ui/Keypad'
 import { NameSheet } from '@/ui/NameSheet'
 import { Burst, Flight } from '@/ui/motion'
-import { Stage as KoviStage } from '@/ui/Stage'
+import { Stage as ReniStage } from '@/ui/Stage'
 import { Header, PillButton, Rise, Screen, Sticker, TextLink, Txt } from '@/ui/primitives'
 
 type Stage = 'amount' | 'review' | 'sending' | 'sent' | 'problem'
@@ -109,7 +109,7 @@ export default function SendTo() {
       <Screen bg={colors.paper}>
         <Header backIcon="close" onBack={() => router.replace('/(tabs)')} />
         <View style={styles.center}>
-          <KoviStage pose="cheer" size={180} />
+          <ReniStage pose="cheer" size={180} />
           <Burst
             spots={[
               { x: width / 2 - 120, y: 180, size: 26, fill: colors.white, delay: 0 },
@@ -144,7 +144,7 @@ export default function SendTo() {
       <Screen bg={colors.sunken}>
         <Header backIcon="close" onBack={() => router.replace('/(tabs)')} />
         <View style={styles.center}>
-          <KoviStage pose="oops" size={160} motion="bob" />
+          <ReniStage pose="oops" size={160} motion="bob" />
           <Txt weight="semi" size={28} style={{ marginTop: 12 }}>
             It didn’t go through
           </Txt>
@@ -168,7 +168,7 @@ export default function SendTo() {
             Send to {first}
           </Txt>
           <Txt size={16} color={colors.onTint}>
-            Kovi gets it there in seconds.
+            Reni gets it there in seconds.
           </Txt>
         </View>
         <View style={{ height: (width - 48) * sendScene.aspect, marginTop: 8 }}>

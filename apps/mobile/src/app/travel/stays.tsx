@@ -8,10 +8,10 @@ import { formatLocal } from '@/lib/money'
 import { day, nights } from '@/lib/travel'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
-import { Stage as KoviStage } from '@/ui/Stage'
+import { Stage as ReniStage } from '@/ui/Stage'
 import { Header, Screen, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
 
@@ -73,7 +73,7 @@ export default function Stays() {
       {results === null && !problem ? (
         <View style={styles.center}>
           <Bob distance={8}>
-            <Kovi pose="sleep" size={150} />
+            <Reni pose="sleep" size={150} />
           </Bob>
           <Txt weight="semi" size={20} style={{ marginTop: 10 }}>
             Finding you a room
@@ -81,7 +81,7 @@ export default function Stays() {
         </View>
       ) : problem ? (
         <View style={styles.center}>
-          <KoviStage pose="oops" size={140} motion="bob" />
+          <ReniStage pose="oops" size={140} motion="bob" />
           <Txt size={15} color={colors.muted} style={{ marginTop: 10, textAlign: 'center', lineHeight: 21 }}>
             {problem}
           </Txt>
@@ -117,7 +117,7 @@ export default function Stays() {
                 style={({ pressed }) => [styles.card, isBest && styles.cardBest, pressed && { transform: [{ scale: 0.99 }] }]}
               >
                 <View style={styles.photo}>
-                  {a.photos[0] ? <Image source={{ uri: a.photos[0] }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} /> : <Kovi pose="sleep" size={90} />}
+                  {a.photos[0] ? <Image source={{ uri: a.photos[0] }} style={StyleSheet.absoluteFill} contentFit="cover" transition={200} /> : <Reni pose="sleep" size={90} />}
                   {isBest ? (
                     <View style={styles.best}>
                       <Icon name="sparkle" size={14} />
@@ -180,7 +180,7 @@ export default function Stays() {
           }}
           ListEmptyComponent={
             <View style={[styles.center, { paddingTop: 40 }]}>
-              <KoviStage pose="oops" size={120} motion="bob" />
+              <ReniStage pose="oops" size={120} motion="bob" />
               <Txt weight="semi" size={18} style={{ marginTop: 8 }}>
                 Nothing free on those dates
               </Txt>

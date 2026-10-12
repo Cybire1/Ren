@@ -6,7 +6,7 @@ import { isTestnet } from '@/lib/config'
 import { baseToNumber, type DisplayCurrency, formatLocal, formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
 import { colors } from '@/lib/theme'
-import { Coin, Kovi, Sparkle } from './art'
+import { Coin, Reni, Sparkle } from './art'
 import { Icon } from './Icon'
 import { WAVES } from './Logo'
 import { Bob, Breathe, Landing, Twinkle } from './motion'
@@ -153,16 +153,16 @@ export function BalanceCard({
 }
 
 /**
- * The balance card on a brand-new wallet: an honest $0.00, the one thing to do next, and Kovi
+ * The balance card on a brand-new wallet: an honest $0.00, the one thing to do next, and Reni
  * catching the first coin.
  */
 export function ReadyCard() {
   return (
     <Sticker lift fill={colors.teal} radius={28} style={styles.frame} innerStyle={[styles.card, styles.ready]}>
       <Waves />
-      <View pointerEvents="none" style={styles.kovi}>
+      <View pointerEvents="none" style={styles.reni}>
         <Bob distance={6} duration={4500}>
-          <Kovi pose="catch" size={132} />
+          <Reni pose="catch" size={132} />
         </Bob>
       </View>
       <Twinkle style={styles.sparkA}>
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   fresh: { paddingLeft: 8, maxWidth: '100%' },
-  kovi: { position: 'absolute', right: 0, bottom: 0 },
+  reni: { position: 'absolute', right: 0, bottom: 0 },
   sparkA: { position: 'absolute', right: 128, bottom: 124 },
   sparkB: { position: 'absolute', right: 16, bottom: 140 },
   readyRow: { flexDirection: 'row', marginTop: 16 },

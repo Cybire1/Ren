@@ -18,7 +18,7 @@ export default async function StallPage(props: { params: Promise<{ id: string }>
     if (error instanceof ApiError && error.status === 404)
       return (
         <section className="card empty big-empty">
-          <Art name="kovi-oops" size={140} />
+          <Art name="reni-oops" size={140} />
           <h3>No such stall</h3>
           <p>It may have been closed for good.</p>
           <Link className="textlink" href="/dashboard/stalls">

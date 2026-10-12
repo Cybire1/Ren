@@ -9,10 +9,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getTrip, payLinkFor, type Trip, type TripShare } from '@/lib/api'
 import { clock, day, useTravel } from '@/lib/travel'
 import { colors } from '@/lib/theme'
-import { Flyer, Kovi } from '@/ui/art'
+import { Flyer, Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
-import { Stage as KoviStage } from '@/ui/Stage'
+import { Stage as ReniStage } from '@/ui/Stage'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
 
@@ -71,7 +71,7 @@ export default function TripScreen() {
         <View style={styles.center}>
           {problem ? (
             <>
-              <Kovi pose="oops" size={120} />
+              <Reni pose="oops" size={120} />
               <Txt size={15} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
                 {problem}
               </Txt>
@@ -98,7 +98,7 @@ export default function TripScreen() {
         {trip.status === 'awaiting_payment' ? <Paying trip={trip} /> : null}
         {trip.status === 'booking' ? (
           <View style={styles.center}>
-            <Bob distance={10}>{trip.kind === 'flight' ? <Flyer size={160} /> : <Kovi pose="key" size={150} />}</Bob>
+            <Bob distance={10}>{trip.kind === 'flight' ? <Flyer size={160} /> : <Reni pose="key" size={150} />}</Bob>
             <Txt weight="bold" size={26} style={{ marginTop: 12, letterSpacing: -0.6 }}>
               Paid. Booking it now
             </Txt>
@@ -110,7 +110,7 @@ export default function TripScreen() {
         {trip.status === 'booked' ? (trip.kind === 'flight' ? <BoardingPass trip={trip} /> : <Voucher trip={trip} />) : null}
         {trip.status === 'failed' || trip.status === 'expired' || trip.status === 'canceled' ? (
           <View style={styles.center}>
-            <KoviStage pose="oops" size={140} motion="bob" />
+            <ReniStage pose="oops" size={140} motion="bob" />
             <Txt weight="bold" size={24} style={{ marginTop: 10 }}>
               {trip.status === 'expired' ? 'The price ran out' : 'It wasn’t booked'}
             </Txt>
@@ -236,7 +236,7 @@ function BoardingPass({ trip }: { trip: Trip }) {
   return (
     <>
       <View style={styles.bookedHead}>
-        <Kovi pose="cheer" size={90} />
+        <Reni pose="cheer" size={90} />
         <View style={{ flex: 1 }}>
           <Txt weight="bold" size={26} style={{ letterSpacing: -0.8 }}>
             You’re booked
@@ -338,7 +338,7 @@ function Voucher({ trip }: { trip: Trip }) {
   return (
     <>
       <View style={styles.bookedHead}>
-        <Kovi pose="cheer" size={90} />
+        <Reni pose="cheer" size={90} />
         <View style={{ flex: 1 }}>
           <Txt weight="bold" size={26} style={{ letterSpacing: -0.8 }}>
             You’re booked

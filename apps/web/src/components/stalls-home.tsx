@@ -61,7 +61,7 @@ export function StallsHome({ stalls, initialOrders, catalogueSize }: { stalls: S
         <section className="stall-first">
           <Awning height={64} />
           <div className="stall-first-body">
-            <Art name="kovi-wave" size={150} className="stall-first-kovi" />
+            <Art name="reni-wave" size={150} className="stall-first-reni" />
             <h2>Open your first stall</h2>
             <p>A stall is your menu on a link. Share it on WhatsApp, tape its QR code to your table, and people pay from their own phones, from anywhere, in dollars.</p>
             <ol className="stall-steps">

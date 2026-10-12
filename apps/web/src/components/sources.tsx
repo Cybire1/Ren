@@ -17,7 +17,7 @@ function status(t: Terminal): { word: string; state: 'live' | 'recent' | 'idle' 
 
 /**
  * Where today's money came from: each paired phone drawn as a phone with its own takings,
- * the API as its own tile, and a place to pair another. An idle phone's Kovi is asleep.
+ * the API as its own tile, and a place to pair another. An idle phone's Reni is asleep.
  */
 export function Sources({ terminals, byTerminal, byStall, onAdd }: { terminals: Terminal[]; byTerminal: Summary['by_terminal']; byStall: Summary['by_stall']; onAdd: () => void }) {
   const online = byTerminal.find((b) => b.terminal === null)
@@ -35,7 +35,7 @@ export function Sources({ terminals, byTerminal, byStall, onAdd }: { terminals: 
             <Link key={t.id} href="/dashboard/terminals" className="phone" data-state={s.state}>
               <span className="phone-screen">
                 <span className="phone-notch" aria-hidden="true" />
-                {s.state === 'idle' ? <Art name="kovi-sleep" size={64} className="phone-kovi" /> : null}
+                {s.state === 'idle' ? <Art name="reni-sleep" size={64} className="phone-reni" /> : null}
                 <span className="phone-name">{t.name}</span>
                 <span className="phone-status">
                   <span className="phone-dot" />

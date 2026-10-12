@@ -8,7 +8,7 @@ import { createItem, type MenuImport, readMenuPhoto } from '@/lib/api'
 import { type PhotoSource, takePhoto } from '@/lib/photos'
 import { useStall } from '@/lib/stall'
 import { colors, fonts } from '@/lib/theme'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
 
@@ -89,7 +89,7 @@ export default function SnapMenu() {
         {stage === 'pick' || stage === 'reading' ? (
           <View style={styles.pick}>
             <View style={styles.frame}>
-              {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Kovi pose="key" size={170} />}
+              {photo ? <Image source={{ uri: photo }} style={StyleSheet.absoluteFill} contentFit="cover" /> : <Reni pose="key" size={170} />}
               {stage === 'reading' ? <Reading /> : null}
             </View>
             <Txt weight="bold" size={26} style={{ letterSpacing: -0.6, marginTop: 22, textAlign: 'center' }}>

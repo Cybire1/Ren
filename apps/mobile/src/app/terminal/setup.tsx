@@ -7,7 +7,7 @@ import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
 import { useWallet } from '@/lib/wallet'
 import { colors, fonts } from '@/lib/theme'
-import { Kovi, ShopBadge } from '@/ui/art'
+import { Reni, ShopBadge } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
@@ -66,8 +66,8 @@ export default function TerminalSetup() {
             <Bob>
               <ShopBadge size={132} />
             </Bob>
-            <View style={styles.pairedKovi}>
-              <Kovi pose="cheer" size={92} />
+            <View style={styles.pairedReni}>
+              <Reni pose="cheer" size={92} />
             </View>
           </View>
           <Txt weight="bold" size={32} style={{ marginTop: 18, letterSpacing: -1, textAlign: 'center' }}>
@@ -95,8 +95,8 @@ export default function TerminalSetup() {
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <View style={styles.art}>
             <ShopBadge size={96} />
-            <View style={styles.kovi}>
-              <Kovi pose="wave" size={96} />
+            <View style={styles.reni}>
+              <Reni pose="wave" size={96} />
             </View>
           </View>
           {stall.owned ? (
@@ -205,7 +205,7 @@ const styles = StyleSheet.create({
   own: { marginBottom: 26, padding: 16, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealSoft },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   pairedArt: { width: 200, height: 150, alignItems: 'center', justifyContent: 'flex-end' },
-  pairedKovi: { position: 'absolute', right: -6, top: -18 },
+  pairedReni: { position: 'absolute', right: -6, top: -18 },
   facts: {
     alignSelf: 'stretch',
     marginTop: 28,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   factRule: { borderBottomWidth: 1, borderColor: colors.sunken },
   factIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
   art: { height: 120, justifyContent: 'center', marginBottom: 12 },
-  kovi: { position: 'absolute', left: 64, top: 8 },
+  reni: { position: 'absolute', left: 64, top: 8 },
   boxes: { flexDirection: 'row', gap: 8, marginTop: 26 },
   box: {
     flex: 1,

@@ -3,7 +3,7 @@ import { colors } from '@/lib/theme'
 
 const ink = colors.ink
 
-/** A minimal paper-cut floor: a disc with a thin edge and a soft shadow where Kovi stands. */
+/** A minimal paper-cut floor: a disc with a thin edge and a soft shadow where Reni stands. */
 export function Floor({ width = 180, top = colors.surface, side = colors.sunken }: { width?: number; top?: string; side?: string }) {
   const h = width * 0.2
   const rx = width / 2 - 3

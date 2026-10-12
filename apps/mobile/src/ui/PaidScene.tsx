@@ -1,23 +1,23 @@
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { colors } from '@/lib/theme'
-import { Kovi, koviFeet, ReceiptTerminal, receipt } from './art'
+import { Reni, reniFeet, ReceiptTerminal, receipt } from './art'
 import { Burst, Hop } from './motion'
 
-/** The shared "it worked" moment: a receipt prints, Kovi cheers on top, sparkles burst. */
+/** The shared "it worked" moment: a receipt prints, Reni cheers on top, sparkles burst. */
 export function PaidScene({ amount, height = 320 }: { amount: string; height?: number }) {
   const { width } = useWindowDimensions()
   const cx = width / 2
   const terminalTop = height - 250
-  const kovi = 130
-  // Stand Kovi's feet on the receipt's top edge.
-  const koviTop = terminalTop + 250 * receipt.top - kovi * koviFeet('cheer')
+  const reni = 130
+  // Stand Reni's feet on the receipt's top edge.
+  const reniTop = terminalTop + 250 * receipt.top - reni * reniFeet('cheer')
   return (
     <View style={{ height, width }}>
       <View style={[styles.receipt, { left: cx - 120, top: terminalTop }]}>
         <ReceiptTerminal amount={amount} width={240} />
       </View>
-      <Hop style={{ position: 'absolute', left: cx - kovi / 2, top: koviTop }}>
-        <Kovi pose="cheer" size={kovi} />
+      <Hop style={{ position: 'absolute', left: cx - reni / 2, top: reniTop }}>
+        <Reni pose="cheer" size={reni} />
       </Hop>
       <Burst
         spots={[

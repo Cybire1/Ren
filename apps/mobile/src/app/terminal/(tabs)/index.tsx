@@ -24,7 +24,7 @@ import { useShop } from '@/lib/shop'
 import { useStall } from '@/lib/stall'
 import { load, save } from '@/lib/storage'
 import { colors, fonts } from '@/lib/theme'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Keypad } from '@/ui/Keypad'
 import { PillButton, Screen, Txt } from '@/ui/primitives'
@@ -348,7 +348,7 @@ function ItemsPanel({
   if (items.length === 0)
     return (
       <View style={styles.center}>
-        <Kovi pose="wave" size={120} />
+        <Reni pose="wave" size={120} />
         <Txt weight="semi" size={20} style={{ marginTop: 8 }}>
           Nothing to sell yet
         </Txt>
@@ -673,7 +673,7 @@ function NotInCatalogue({
         <View style={[styles.sheet, { paddingBottom: Math.max(insets.bottom, 16) }]}>
           <View style={styles.grip} />
           <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center', marginTop: 16 }}>
-            {s ? <ItemFace item={{ name: s.name, image_url: s.image_url }} size={72} /> : <Kovi pose="oops" size={80} />}
+            {s ? <ItemFace item={{ name: s.name, image_url: s.image_url }} size={72} /> : <Reni pose="oops" size={80} />}
             <View style={{ flex: 1 }}>
               <Txt weight="bold" size={22} style={{ letterSpacing: -0.4 }}>
                 Not in your catalogue

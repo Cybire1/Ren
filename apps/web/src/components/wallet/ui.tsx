@@ -111,7 +111,7 @@ export const isFresh = (entry: Entry) => incoming(entry) && Date.now() - entry.a
  * The balance, first thing on Home: dollars as the headline, rolling into place like a till's
  * wheels, the sign and cents set small and raised like a price tag, and one tap to hide it all.
  * Money that just landed says so on the card. With nothing in the wallet yet, the card is the
- * first step instead: one button to add test dollars, and Kovi waiting to catch them.
+ * first step instead: one button to add test dollars, and Reni waiting to catch them.
  */
 export function BalanceCard({ fresh, empty }: { fresh?: Entry | null; empty?: boolean }) {
   const { balance, profile, rates, hideBalance, setHideBalance, network } = useWallet()
@@ -127,10 +127,10 @@ export function BalanceCard({ fresh, empty }: { fresh?: Entry | null; empty?: bo
     >
       <Waves className="w-balance-waves" size={220} />
       {empty ? (
-        <span className="w-balance-kovi" aria-hidden="true">
+        <span className="w-balance-reni" aria-hidden="true">
           <Art name="sparkle-8" size={18} className="w-sparkle w-sparkle-a" />
           <Art name="sparkle-4" size={14} className="w-sparkle w-sparkle-b" />
-          <Art name="kovi-catch" size={124} className="w-kovi-catch" />
+          <Art name="reni-catch" size={124} className="w-reni-catch" />
         </span>
       ) : (
         <span className="w-balance-coins" aria-hidden="true">

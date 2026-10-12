@@ -3,12 +3,12 @@ import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors } from '@/lib/theme'
 import { Flyer, PlanetScene, welcomeScene } from '@/ui/art'
-import { LogoMark, Wordmark } from '@/ui/Logo'
+import { Wordmark } from '@/ui/Logo'
 import { Flight } from '@/ui/motion'
 import { PillButton, Rise, TextLink, Txt } from '@/ui/primitives'
 
 /**
- * The first thing anyone sees: Kovi flies money from a shop to a home, across a little
+ * The first thing anyone sees: Reni flies money from a shop to a home, across a little
  * planet, on the same dotted route the scene draws.
  */
 export default function Welcome() {
@@ -27,8 +27,7 @@ export default function Welcome() {
   return (
     <View style={styles.screen}>
       <View style={[styles.wordmark, { top: insets.top + 10 }]}>
-        <LogoMark size={40} />
-        <Wordmark height={26} />
+        <Wordmark height={36} />
       </View>
       <View style={{ position: 'absolute', top: sceneTop, left: sceneLeft }}>
         <PlanetScene width={sceneW} />

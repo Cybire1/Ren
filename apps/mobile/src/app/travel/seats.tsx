@@ -6,7 +6,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getSeatMaps, type SeatCell, type SeatMap } from '@/lib/api'
 import { useTravel } from '@/lib/travel'
 import { colors } from '@/lib/theme'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Header, PillButton, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
 
@@ -62,7 +62,7 @@ export default function Seats() {
         <ActivityIndicator color={colors.ink} style={{ marginTop: 40 }} />
       ) : !maps?.length ? (
         <View style={styles.center}>
-          <Kovi pose="oops" size={120} />
+          <Reni pose="oops" size={120} />
           <Txt weight="semi" size={18} style={{ marginTop: 8 }}>
             No seat map for this flight
           </Txt>

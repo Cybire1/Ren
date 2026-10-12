@@ -41,7 +41,7 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
               <small>PAID</small>
               <strong>{usd(c.amount)}</strong>
             </div>
-            <Art name="kovi-cheer" size={88} className="kovi-cheer" priority />
+            <Art name="reni-cheer" size={88} className="reni-cheer" priority />
           </div>
           <h1>Paid to {c.merchant_name}</h1>
           <p>

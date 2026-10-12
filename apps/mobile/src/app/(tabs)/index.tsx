@@ -17,7 +17,7 @@ import { BalanceCard, type Fresh, ReadyCard } from '@/ui/BalanceCard'
 import { dockClearance } from '@/ui/Dock'
 import { EntryRow } from '@/ui/EntryRow'
 import { Icon } from '@/ui/Icon'
-import { LogoMark } from '@/ui/Logo'
+import { TapMark } from '@/ui/Logo'
 import { PulseWaves } from '@/ui/motion'
 import { Sticker, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
@@ -29,7 +29,7 @@ const FRESH_MS = 120_000
  * Home is for paying, but you should never have to look for your money. The balance opens the
  * screen on a solid teal card, since money at rest is teal across Ren; Pay sits right beneath it,
  * Send and Request beside Pay, and what just happened is a glance below. A brand-new wallet gets
- * a first-run Home instead: an honest $0.00, Kovi, and three things to try.
+ * a first-run Home instead: an honest $0.00, Reni, and three things to try.
  */
 export default function Home() {
   const { profile, balance, activity, contacts, refresh } = useWallet()
@@ -269,7 +269,7 @@ function PayTile() {
           <Icon name="scan" strokeWidth={2.2} />
         </View>
         <View style={[styles.payIcon, { backgroundColor: colors.onTint }]}>
-          <LogoMark size={26} stem={colors.white} wave={colors.onInk} />
+          <TapMark size={26} stem={colors.white} wave={colors.onInk} />
         </View>
       </View>
       <View style={styles.payWaves} pointerEvents="none">

@@ -133,7 +133,7 @@ export default async function Landing() {
           </ul>
           <div className="lp-flight">
             <Art name="scene-send" size={352} />
-            <Art name="kovi-ride" size={104} className="lp-flight-kovi" />
+            <Art name="reni-ride" size={104} className="lp-flight-reni" />
           </div>
         </article>
       </section>
@@ -224,7 +224,7 @@ export default async function Landing() {
 
       {/* Closing ----------------------------------------------------------------------------- */}
       <section className="lp-close">
-        <Art name="kovi-peek" size={220} className="lp-close-peek" />
+        <Art name="reni-peek" size={220} className="lp-close-peek" />
         <h2>Your counter is ready when you are</h2>
         <p>Open a shop in a minute. Pair your phone. Take your first payment before your coffee goes cold.</p>
         <div className="lp-ctas lp-ctas-center">

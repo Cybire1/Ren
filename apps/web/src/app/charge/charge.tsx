@@ -134,7 +134,7 @@ export function Charge() {
                 <small>PAID</small>
                 <strong>{usd(intent.amount)}</strong>
               </div>
-              <Art name="kovi-cheer" size={88} className="kovi-cheer" />
+              <Art name="reni-cheer" size={88} className="reni-cheer" />
             </div>
             <h1>Paid</h1>
             <p>
@@ -197,7 +197,7 @@ export function Charge() {
         <main className="page page-narrow">
           {top}
           <div className="card notice" role="alert">
-            <Art name="kovi-oops" size={130} />
+            <Art name="reni-oops" size={130} />
             <h2>{error ? 'The charge didn’t start' : `This charge ${intent?.status}`}</h2>
             <p>{error ?? 'Nothing was taken. Start a new charge to try again.'}</p>
             <Pill onClick={reset} icon="refresh">

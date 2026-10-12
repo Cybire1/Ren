@@ -36,7 +36,7 @@ export function TerminalsManager({ initial }: { initial: Terminal[] }) {
 
       {terminals.length === 0 ? (
         <section className="card empty big-empty">
-          <Art name="kovi-wave" size={150} />
+          <Art name="reni-wave" size={150} />
           <h3>No terminals yet</h3>
           <p>Any phone with Ren becomes a till. Pair one with a one-time code; it gets its own key, only for taking payments.</p>
           <Pill icon="plus" tone="coral" onClick={() => setPairing(true)}>

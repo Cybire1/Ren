@@ -1661,7 +1661,7 @@
   color: var(--on-teal);
 }
 
-.store-sign-kovi {
+.store-sign-reni {
   flex: none;
   align-self: flex-end;
   margin-bottom: -0.5rem;
@@ -1672,7 +1672,7 @@
     min-height: 13rem;
     padding: 3rem 1.25rem 1.25rem;
   }
-  .store-sign-kovi {
+  .store-sign-reni {
     position: absolute;
     top: 2.25rem;
     right: 0.75rem;

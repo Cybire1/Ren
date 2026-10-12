@@ -11,7 +11,7 @@ import { useWallet } from '@/lib/wallet'
 import { Flyer } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
-import { Stage as KoviStage } from '@/ui/Stage'
+import { Stage as ReniStage } from '@/ui/Stage'
 import { Header, Screen, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
 
@@ -98,7 +98,7 @@ export default function Flights() {
         </View>
       ) : problem ? (
         <View style={styles.center}>
-          <KoviStage pose="oops" size={140} motion="bob" />
+          <ReniStage pose="oops" size={140} motion="bob" />
           <Txt weight="semi" size={20} style={{ marginTop: 10 }}>
             No fares this time
           </Txt>
@@ -124,7 +124,7 @@ export default function Flights() {
           )}
           ListEmptyComponent={
             <View style={[styles.center, { paddingTop: 40 }]}>
-              <KoviStage pose="oops" size={120} motion="bob" />
+              <ReniStage pose="oops" size={120} motion="bob" />
               <Txt weight="semi" size={18} style={{ marginTop: 8 }}>
                 {offers?.length ? 'No non-stop fares' : 'No fares on that day'}
               </Txt>

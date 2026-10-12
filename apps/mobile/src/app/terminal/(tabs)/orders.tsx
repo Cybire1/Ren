@@ -8,7 +8,7 @@ import type { Order } from '@/lib/api'
 import { useOrders } from '@/lib/orders'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
-import { Avatar, Kovi } from '@/ui/art'
+import { Avatar, Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
 import { Txt } from '@/ui/primitives'
@@ -263,7 +263,7 @@ function Empty({ filter, owner }: { filter: Filter; owner: boolean }) {
   }[filter]
   return (
     <View style={styles.empty}>
-      <Kovi pose={filter === 'hand' ? 'sleep' : 'wave'} size={130} />
+      <Reni pose={filter === 'hand' ? 'sleep' : 'wave'} size={130} />
       <Txt weight="semi" size={20} style={{ marginTop: 6 }}>
         {copy.title}
       </Txt>

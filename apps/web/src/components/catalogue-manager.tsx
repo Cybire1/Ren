@@ -61,7 +61,7 @@ export function CatalogueManager({ initial }: { initial: CatalogItem[] }) {
 
       {items.length === 0 ? (
         <section className="card empty big-empty">
-          <Art name="kovi-wave" size={140} />
+          <Art name="reni-wave" size={140} />
           <h3>Nothing for sale yet</h3>
           <p>Add what you sell once, and every stall and till uses it. The quickest start: take a photo of your menu or price board.</p>
           <div className="row-actions">

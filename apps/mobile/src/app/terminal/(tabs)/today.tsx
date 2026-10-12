@@ -6,7 +6,7 @@ import { getSummary, listCharges, type PaymentIntent, type Summary } from '@/lib
 import { formatLocal } from '@/lib/money'
 import { useShop } from '@/lib/shop'
 import { colors } from '@/lib/theme'
-import { Avatar, Kovi, KoviPeek, peekEdge, ShopBadge } from '@/ui/art'
+import { Avatar, Reni, ReniPeek, peekEdge, ShopBadge } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Landing } from '@/ui/motion'
 import { Odometer } from '@/ui/Odometer'
@@ -98,8 +98,8 @@ export default function Today() {
           </Txt>
 
           <Sticker lift fill={colors.card} radius={26} style={{ marginTop: 16 }} innerStyle={styles.hero}>
-            <View style={styles.kovi} pointerEvents="none">
-              <Kovi pose="cheer" size={92} />
+            <View style={styles.reni} pointerEvents="none">
+              <Reni pose="cheer" size={92} />
             </View>
             <Txt weight="heavy" size={15} color={colors.muted}>
               Taken today
@@ -195,8 +195,8 @@ export default function Today() {
       }}
       ListEmptyComponent={
         <View style={styles.empty}>
-          <KoviPeek width={PEEK} />
-          {/* Kovi's hands rest on the card's top edge. */}
+          <ReniPeek width={PEEK} />
+          {/* Reni's hands rest on the card's top edge. */}
           <View style={[styles.emptyCard, { marginTop: -(PEEK / 2) * (1 - peekEdge) }]}>
             <Txt weight="heavy" size={17}>
               Your first sale prints here
@@ -299,7 +299,7 @@ function DaySoFar({ paid }: { paid: PaymentIntent[] }) {
 
 const styles = StyleSheet.create({
   hero: { padding: 18, paddingBottom: 16 },
-  kovi: { position: 'absolute', right: 4, top: 6 },
+  reni: { position: 'absolute', right: 4, top: 6 },
   amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 6 },
   stats: { flexDirection: 'row', gap: 8, marginTop: 14 },
   stat: {

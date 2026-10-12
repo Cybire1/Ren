@@ -11,7 +11,7 @@ import { Image } from 'expo-image'
 import { Avatar, ShopBadge } from '@/ui/art'
 import { Bob } from '@/ui/motion'
 import { PaidScene } from '@/ui/PaidScene'
-import { Stage as KoviStage } from '@/ui/Stage'
+import { Stage as ReniStage } from '@/ui/Stage'
 import { Chip, Header, PillButton, Rise, RoundButton, Screen, Sticker, TextLink, Txt } from '@/ui/primitives'
 
 type Stage = 'loading' | 'review' | 'paying' | 'paid' | 'problem'
@@ -79,7 +79,7 @@ export default function PayCharge() {
       <Screen bg={colors.sunken}>
         <Header backIcon="close" onBack={() => router.replace('/(tabs)')} />
         <View style={styles.centered}>
-          <KoviStage pose="oops" size={160} motion="bob" />
+          <ReniStage pose="oops" size={160} motion="bob" />
           <Txt weight="semi" size={28} style={styles.title}>
             Not this time
           </Txt>

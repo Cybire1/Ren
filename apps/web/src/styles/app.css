@@ -795,7 +795,7 @@
   transform: translateX(-50%);
 }
 
-.phone-kovi {
+.phone-reni {
   position: absolute;
   right: 0.4rem;
   top: 3.4rem;
@@ -911,7 +911,7 @@
   height: 5.3rem;
 }
 
-.tape-kovi {
+.tape-reni {
   position: absolute;
   left: 50%;
   top: 0.35rem;
@@ -921,7 +921,7 @@
   transform: translateX(-50%);
 }
 
-.tape-kovi.is-hopping {
+.tape-reni.is-hopping {
   animation: hop 0.9s var(--spring);
 }
 
@@ -2125,7 +2125,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
   font-size: 0.9375rem;
 }
 
-.kovi-cheer-sm {
+.reni-cheer-sm {
   width: 4.5rem;
   top: calc(4.53% - 4.5rem * 0.912 + 0.75rem);
 }

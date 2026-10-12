@@ -20,7 +20,7 @@ const timeOf = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: 'nu
 
 /**
  * The live tape: payments print out of the slot as they land, newest on top, with a cut line
- * between the hours. Kovi keeps watch over the slot and hops when money comes in.
+ * between the hours. Reni keeps watch over the slot and hops when money comes in.
  */
 export function Tape({ intents, fresh, connected, hop }: { intents: PaymentIntent[]; fresh: Set<string>; connected: boolean; hop: number }) {
   const rows: React.ReactNode[] = []
@@ -61,7 +61,7 @@ export function Tape({ intents, fresh, connected, hop }: { intents: PaymentInten
   return (
     <section className="tape" aria-label="Live payments">
       <div className="tape-top">
-        <Art key={hop} name="kovi-peek" size={150} className={`tape-kovi${hop > 0 ? ' is-hopping' : ''}`} priority />
+        <Art key={hop} name="reni-peek" size={150} className={`tape-reni${hop > 0 ? ' is-hopping' : ''}`} priority />
         <div className="tape-slot" data-state={connected ? 'live' : 'stale'}>
           <span className="tape-led" />
           <span>{connected ? 'Live' : 'Reconnecting'}</span>

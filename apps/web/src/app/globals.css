@@ -2,7 +2,7 @@
  * Kova on the web: the same system as the app.
  *
  * Paper, teal and coral; Manrope; 2px ink outlines instead of shadows; pills with a round cap
- * for every primary action. The painted art (Kovi, the shop badge, the receipt terminal) carries
+ * for every primary action. The painted art (Reni, the shop badge, the receipt terminal) carries
  * the moments that matter: an empty state, a new terminal, a payment landing.
  */
 
@@ -816,7 +816,7 @@ p {
   }
 }
 
-/* Paid: the receipt terminal prints, Kovi cheers on top. */
+/* Paid: the receipt terminal prints, Reni cheers on top. */
 
 .paid {
   display: grid;
@@ -858,7 +858,7 @@ p {
   white-space: nowrap;
 }
 
-.kovi-cheer {
+.reni-cheer {
   position: absolute;
   left: 50%;
   /* Feet (934/1024 of his box) on the receipt's top edge (34/750 of the scene). */

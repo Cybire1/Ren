@@ -25,7 +25,7 @@ const spring = { damping: 14, stiffness: 140 }
 
 /**
  * The Kova Card. You can pick it up: it tilts under your finger and springs back. Freezing
- * frosts it over and lets the snow fall while Kovi sleeps on top; unfreezing needs your face.
+ * frosts it over and lets the snow fall while Reni sleeps on top; unfreezing needs your face.
  * Below, the limit is a meter, not a menu, and the rest are two plain rows.
  */
 export default function Card() {

@@ -134,7 +134,7 @@ export default function Travel() {
           ) : null}
         </View>
 
-        {/* Two cities and Kovi flying between them */}
+        {/* Two cities and Reni flying between them */}
         <View style={{ height: scene * sendScene.aspect, marginTop: 4 }}>
           <View style={{ position: 'absolute', left: 20, top: 0 }}>
             <CitiesScene width={scene} />

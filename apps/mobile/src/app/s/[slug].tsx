@@ -22,10 +22,10 @@ import { getCheckout, getPublicStall, orderFromStall, type PlacedOrder, type Pub
 import { type DisplayCurrency, formatLocal } from '@/lib/money'
 import { colors, fonts } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Awning } from '@/ui/Awning'
 import { Icon } from '@/ui/Icon'
-import { Stage as KoviStage } from '@/ui/Stage'
+import { Stage as ReniStage } from '@/ui/Stage'
 import { PillButton, RoundButton, Screen, Txt } from '@/ui/primitives'
 import { about, dollars, ItemFace, Stepper } from '@/ui/StallParts'
 import { chainName } from '@/lib/config'
@@ -72,7 +72,7 @@ export default function StallFront() {
         <View style={styles.center}>
           {problem ? (
             <>
-              <KoviStage pose="oops" size={150} motion="bob" />
+              <ReniStage pose="oops" size={150} motion="bob" />
               <Txt weight="semi" size={24} style={{ marginTop: 12 }}>
                 Not this time
               </Txt>
@@ -134,7 +134,7 @@ export default function StallFront() {
 
         {stall.items.length === 0 ? (
           <View style={styles.center}>
-            <Kovi pose="sleep" size={140} />
+            <Reni pose="sleep" size={140} />
             <Txt size={16} color={colors.muted}>
               Nothing on the menu yet. Check back soon.
             </Txt>
@@ -401,7 +401,7 @@ function AskedToPay({ stall, placed, onDone }: { stall: PublicStall; placed: Pla
   if (paid)
     return (
       <View style={styles.asked}>
-        <KoviStage pose="cheer" size={140} />
+        <ReniStage pose="cheer" size={140} />
         <Txt weight="bold" size={28} style={{ letterSpacing: -0.8, marginTop: 8 }}>
           It’s paid
         </Txt>
@@ -416,7 +416,7 @@ function AskedToPay({ stall, placed, onDone }: { stall: PublicStall; placed: Pla
 
   return (
     <View style={styles.asked}>
-      <Kovi pose="ride" size={120} />
+      <Reni pose="ride" size={120} />
       <Txt weight="bold" size={26} style={{ letterSpacing: -0.6, textAlign: 'center' }}>
         Send it to whoever’s paying
       </Txt>

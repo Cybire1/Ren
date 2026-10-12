@@ -49,9 +49,9 @@ export default async function PosterPage(props: { params: Promise<{ slug: string
           </div>
           <p className="poster-small">No app needed. Pay in dollars with Ren Pay or any {chainName} wallet. No card fees.</p>
           <div className="poster-foot">
-            <Art name="kovi-wave" size={104} />
+            <Art name="reni-wave" size={104} />
             <div>
-              <Wordmark height={26} />
+              <Wordmark height={32} />
               <p>{url.replace(/^https?:\/\//, '')}</p>
             </div>
           </div>

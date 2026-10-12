@@ -87,7 +87,7 @@ export function MenuImportSheet({ stallId, onClose, onAdded }: { stallId?: strin
               // biome-ignore lint/performance/noImgElement: a local preview of the chosen photo
               <img src={preview} alt="" />
             ) : (
-              <Art name="kovi-key" size={110} />
+              <Art name="reni-key" size={110} />
             )}
             <span className="menu-drop-text">
               {stage === 'reading' ? (

@@ -60,13 +60,13 @@ const RECEIPTS: Receipt[] = [
   },
 ]
 
-type Phase = 'charge' | 'print' | 'stamp' | 'kovi' | 'tear'
+type Phase = 'charge' | 'print' | 'stamp' | 'reni' | 'tear'
 
 /** When each phase starts, in ms from the start of a receipt. */
 const TIMELINE: [Phase, number][] = [
   ['print', 1100],
   ['stamp', 3200],
-  ['kovi', 3600],
+  ['reni', 3600],
   ['tear', 7600],
 ]
 const CYCLE = 8200
@@ -80,13 +80,13 @@ const COINS: { name: ArtName; currency: Currency | 'usd'; className: string }[] 
 
 /**
  * The hero's live demo: a Kova terminal takes a payment and prints the receipt, line by line.
- * The stamp lands, Kovi hops on, the receipt tears off and the next sale begins, somewhere
+ * The stamp lands, Reni hops on, the receipt tears off and the next sale begins, somewhere
  * else in the world. It pauses on request, and rests on a finished receipt for anyone who
  * prefers less motion.
  */
 export function ReceiptHero() {
   const [index, setIndex] = useState(0)
-  const [phase, setPhase] = useState<Phase>('kovi')
+  const [phase, setPhase] = useState<Phase>('reni')
   const [paused, setPaused] = useState(false)
   const [still, setStill] = useState(true)
 
@@ -127,7 +127,7 @@ export function ReceiptHero() {
             key={c.name}
             name={c.name}
             size={72}
-            className={`${c.className}${c.currency === r.coin && (phase === 'stamp' || phase === 'kovi') ? ' is-hopping' : ''}`}
+            className={`${c.className}${c.currency === r.coin && (phase === 'stamp' || phase === 'reni') ? ' is-hopping' : ''}`}
             priority
           />
         ))}
@@ -148,7 +148,7 @@ export function ReceiptHero() {
                 vectorEffect="non-scaling-stroke"
               />
             </svg>
-            <Art name="kovi-cheer" size={140} className="rh-kovi" priority />
+            <Art name="reni-cheer" size={140} className="rh-reni" priority />
 
             <div className="rh-head">
               <LogoMark size={30} />

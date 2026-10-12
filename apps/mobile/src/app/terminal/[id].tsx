@@ -7,11 +7,11 @@ import { chainName, settlementToken } from '@/lib/config'
 import { cancelCharge, getCharge, type PaymentIntent, payLinkFor } from '@/lib/api'
 import { useShop } from '@/lib/shop'
 import { colors } from '@/lib/theme'
-import { KoviPeek, peekEdge } from '@/ui/art'
+import { ReniPeek, peekEdge } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
 import { PaidScene } from '@/ui/PaidScene'
-import { Stage as KoviStage } from '@/ui/Stage'
+import { Stage as ReniStage } from '@/ui/Stage'
 import { Chip, PillButton, Rise, RoundButton, Screen, Sticker, TextLink, Txt } from '@/ui/primitives'
 
 /**
@@ -98,7 +98,7 @@ export default function CustomerDisplay() {
     return (
       <Screen bg={colors.sunken}>
         <View style={styles.center}>
-          <KoviStage pose="oops" size={150} motion="bob" />
+          <ReniStage pose="oops" size={150} motion="bob" />
           <Txt weight="semi" size={30} style={{ marginTop: 12 }}>
             {status === 'expired' ? 'Nobody paid in time' : 'This charge stopped'}
           </Txt>
@@ -141,7 +141,7 @@ export default function CustomerDisplay() {
           {price.startsWith('$') ? `in ${settlementToken.symbol}` : `$${usd} ${settlementToken.symbol}`}
           {intent?.reference ? `  ·  ${intent.reference}` : ''}
         </Txt>
-        {/* Room above the code for Kovi's head, so he never covers what's being paid for. */}
+        {/* Room above the code for Reni's head, so he never covers what's being paid for. */}
         <View style={{ marginTop: 56 }}>
           <Sticker radius={34} style={{ width: qr + 52, height: qr + 52 }}>
             <View style={styles.qr}>
@@ -149,7 +149,7 @@ export default function CustomerDisplay() {
             </View>
           </Sticker>
           <View style={styles.peek} pointerEvents="none">
-            <KoviPeek width={130} />
+            <ReniPeek width={130} />
           </View>
         </View>
         <View style={styles.how}>

@@ -1,48 +1,90 @@
 import Link from 'next/link'
 
 /**
- * Ren's brand on the web: the tap mark, the wordmark (its e is a coin) and the painted art.
- * Geometry matches the app's ui/Logo.tsx and docs/design/logo/*.svg.
+ * Ren's brand on the web: the R coin (a capital R whose bowl is a coin), the "Ren" wordmark it
+ * begins, and the painted art. Geometry matches the app's ui/Logo.tsx and docs/brand/*.svg.
  */
 
-const STEM = 'M62 46 V154'
-const WAVES = [
-  'M92.6 74.3 A40 40 0 0 1 92.6 125.7',
-  'M115.6 55 A70 70 0 0 1 115.6 145',
-  'M138.6 35.7 A100 100 0 0 1 138.6 164.3',
-]
+/** The R coin's shine, on the wordmark's grid. */
+const SHINE = 'M40.8 20.5 A17 17 0 0 1 50.4 29.3'
 
-export function LogoMark({ size = 40, stem = 'var(--ink)', wave = 'var(--coral)' }: { size?: number; stem?: string; wave?: string }) {
+/**
+ * The R coin alone: the app icon, the favicon, the coin in a QR code. The coin sits on a hard
+ * shadow like every button in Ren; below 40px the shine drops out so the R stays crisp.
+ */
+export function LogoMark({
+  size = 40,
+  ink = 'var(--ink)',
+  shadow = 'var(--ink)',
+}: {
+  size?: number
+  ink?: string
+  shadow?: string
+}) {
+  const weight = size >= 40 ? 19 : 21
   return (
     <svg width={size} height={size} viewBox="0 0 200 200" role="img" aria-label="Ren">
-      <path d={STEM} stroke={stem} strokeWidth={19} strokeLinecap="round" />
-      {WAVES.map((d) => (
-        <path key={d} d={d} stroke={wave} strokeWidth={17} strokeLinecap="round" fill="none" />
-      ))}
+      <g transform="translate(55.1 24.5) scale(1.36)">
+        <circle cx={35} cy={40} r={25} fill={shadow} />
+        <circle cx={35} cy={36.5} r={25} fill="var(--coral)" stroke={ink} strokeWidth={5} />
+        {size >= 40 ? (
+          <path d={SHINE} fill="none" stroke="#fff" strokeWidth={4.5} strokeLinecap="round" />
+        ) : null}
+        <path d="M10 19 V92" stroke={ink} strokeWidth={weight} strokeLinecap="round" fill="none" />
+        <path
+          d="M34 62 L56 92"
+          stroke={ink}
+          strokeWidth={weight}
+          strokeLinecap="round"
+          fill="none"
+        />
+      </g>
     </svg>
   )
 }
 
-export function Wordmark({ height = 24, ink = 'var(--ink)', coin = 'var(--coral-soft)' }: { height?: number; ink?: string; coin?: string }) {
-  const line = { stroke: ink, strokeWidth: 15.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' }
+/** "Ren": the R coin as its capital, then e and n in the same stroke. `height` is the full height. */
+export function Wordmark({
+  height = 28,
+  ink = 'var(--ink)',
+  shadow = 'var(--ink)',
+}: {
+  height?: number
+  ink?: string
+  shadow?: string
+}) {
+  const line = {
+    stroke: ink,
+    strokeWidth: 15.5,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    fill: 'none',
+  }
   return (
-    <svg width={(height * 184) / 78} height={height} viewBox="0 27 184 78" role="img" aria-label="Ren">
-      <path d="M8 40 V92" {...line} />
-      <path d="M8 66 Q8 40 40 41" {...line} />
-      <circle cx={80} cy={66} r={26} fill={coin} />
-      <path d="M54 66 H106 A26 26 0 1 0 98.4 84.4" {...line} />
-      <path d="M132 40 V92" {...line} />
-      <path d="M132 64 A22 22 0 0 1 176 64 V92" {...line} />
+    <svg
+      width={(height * 212) / 94}
+      height={height}
+      viewBox="0 8 212 94"
+      role="img"
+      aria-label="Ren"
+    >
+      <circle cx={35} cy={40} r={25} fill={shadow} />
+      <circle cx={35} cy={36.5} r={25} fill="var(--coral)" stroke={ink} strokeWidth={4} />
+      <path d={SHINE} fill="none" stroke="#fff" strokeWidth={4} strokeLinecap="round" />
+      <path d="M10 19 V92" {...line} />
+      <path d="M34 62 L56 92" {...line} />
+      <path d="M80 66 H132 A26 26 0 1 0 124.4 84.4" {...line} />
+      <path d="M158 40 V92" {...line} />
+      <path d="M158 64 A22 22 0 0 1 202 64 V92" {...line} />
     </svg>
   )
 }
 
-/** Mark + wordmark + what this surface is, e.g. "Merchant". */
+/** The wordmark + what this surface is, e.g. "Terminal". */
 export function Brand({ label, href = '/' }: { label?: string; href?: string }) {
   return (
     <Link href={href} className="brand" aria-label="Ren home">
-      <LogoMark size={34} />
-      <Wordmark height={20} />
+      <Wordmark height={34} />
       {label ? <span className="brand-label">{label}</span> : null}
     </Link>
   )
@@ -50,14 +92,14 @@ export function Brand({ label, href = '/' }: { label?: string; href?: string }) 
 
 /** Painted art in /public/art, with each image's height over its width. */
 const ART = {
-  'kovi-wave': 1,
-  'kovi-cheer': 1,
-  'kovi-oops': 1,
-  'kovi-catch': 1,
-  'kovi-key': 1,
-  'kovi-ride': 1,
-  'kovi-sleep': 1,
-  'kovi-peek': 0.5,
+  'reni-wave': 1,
+  'reni-cheer': 1,
+  'reni-oops': 1,
+  'reni-catch': 1,
+  'reni-key': 1,
+  'reni-ride': 1,
+  'reni-sleep': 1,
+  'reni-peek': 0.5,
   'badge-shop': 1,
   'badge-add': 1,
   'scene-paid-terminal': 750 / 720,
@@ -139,8 +181,15 @@ const glyphs = {
   out: ['M10 4H5v16h5', 'M15 8l4 4-4 4', 'M19 12H9'],
   download: ['M12 4v11', 'M7 10l5 5 5-5', 'M5 20h14'],
   chevron: ['M9.5 5.5L16 12l-6.5 6.5'],
-  eye: ['M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z', 'M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z'],
-  globe: ['M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 'M3 12h18', 'M12 3c2.5 2.7 3.5 5.7 3.5 9s-1 6.3-3.5 9c-2.5-2.7-3.5-5.7-3.5-9s1-6.3 3.5-9z'],
+  eye: [
+    'M2.5 12s3.5-6.5 9.5-6.5 9.5 6.5 9.5 6.5-3.5 6.5-9.5 6.5S2.5 12 2.5 12z',
+    'M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z',
+  ],
+  globe: [
+    'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z',
+    'M3 12h18',
+    'M12 3c2.5 2.7 3.5 5.7 3.5 9s-1 6.3-3.5 9c-2.5-2.7-3.5-5.7-3.5-9s1-6.3 3.5-9z',
+  ],
   shield: ['M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', 'M8.5 12l2.5 2.5 4.5-5'],
   send: ['M4 12l16-8-6 16-3-6z', 'M11 14l9-10'],
   menu: ['M4 7h16', 'M4 12h16', 'M4 17h16'],
@@ -148,24 +197,48 @@ const glyphs = {
   tag: ['M3.5 12.5V4.5h8l9 9-8 8z', 'M8 8.5h.01'],
   camera: ['M4 8h3l1.5-2.5h7L17 8h3v11H4z', 'M12 16.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z'],
   barcode: ['M4 6v12', 'M7 6v12', 'M10.5 6v12', 'M13 6v12', 'M16.5 6v12', 'M20 6v12'],
-  whatsapp: ['M4.5 19.5l1.2-3.6A7.5 7.5 0 1 1 8.4 18.6z', 'M9.2 9.3c.3 1.9 1.9 3.8 4 4.6l1-1 1.6.7-.4 1.6c-3.4.2-6.6-3-6.7-6.4l1.5-.5.8 1.5z'],
+  whatsapp: [
+    'M4.5 19.5l1.2-3.6A7.5 7.5 0 1 1 8.4 18.6z',
+    'M9.2 9.3c.3 1.9 1.9 3.8 4 4.6l1-1 1.6.7-.4 1.6c-3.4.2-6.6-3-6.7-6.4l1.5-.5.8 1.5z',
+  ],
   up: ['M12 19V5', 'M6 11l6-6 6 6'],
   bag: ['M5.5 8h13l-1.2 12.5H6.7z', 'M9 10V7a3 3 0 0 1 6 0v3'],
   share: ['M12 15V4', 'M8 8l4-4 4 4', 'M5 12v7h14v-7'],
   trash: ['M5 7h14', 'M9 7V5h6v2', 'M7 7l1 13h8l1-13'],
   // The wallet's glyphs, as the app draws them (apps/mobile src/ui/Icon.tsx), circles and boxes as paths.
   bell: ['M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15z', 'M10 20a2 2 0 0 0 4 0'],
-  scan: ['M4 8V6a2 2 0 0 1 2-2h2', 'M16 4h2a2 2 0 0 1 2 2v2', 'M20 16v2a2 2 0 0 1-2 2h-2', 'M8 20H6a2 2 0 0 1-2-2v-2', 'M7 12h10'],
+  scan: [
+    'M4 8V6a2 2 0 0 1 2-2h2',
+    'M16 4h2a2 2 0 0 1 2 2v2',
+    'M20 16v2a2 2 0 0 1-2 2h-2',
+    'M8 20H6a2 2 0 0 1-2-2v-2',
+    'M7 12h10',
+  ],
   receive: ['M12 4v11', 'M7 10l5 5 5-5', 'M5 20h14'],
   request: ['M12 20V9', 'M7 14l5-5 5 5', 'M5 4h14'],
   minus: ['M5 12h14'],
   clock: ['M12 3.5a8.5 8.5 0 1 0 0 17.0a8.5 8.5 0 1 0 0 -17.0z', 'M12 8v4l3 2'],
   user: ['M12 4a4 4 0 1 0 0 8a4 4 0 1 0 0 -8z', 'M4 20c1.5-4 4.5-6 8-6s6.5 2 8 6'],
-  face: ['M4 8V6a2 2 0 0 1 2-2h2', 'M16 4h2a2 2 0 0 1 2 2v2', 'M20 16v2a2 2 0 0 1-2 2h-2', 'M8 20H6a2 2 0 0 1-2-2v-2', 'M9 9.5v1', 'M15 9.5v1', 'M9 15c1.8 1.4 4.2 1.4 6 0'],
-  lock: ['M7 11h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z', 'M8 11V8a4 4 0 0 1 8 0v3'],
+  face: [
+    'M4 8V6a2 2 0 0 1 2-2h2',
+    'M16 4h2a2 2 0 0 1 2 2v2',
+    'M20 16v2a2 2 0 0 1-2 2h-2',
+    'M8 20H6a2 2 0 0 1-2-2v-2',
+    'M9 9.5v1',
+    'M15 9.5v1',
+    'M9 15c1.8 1.4 4.2 1.4 6 0',
+  ],
+  lock: [
+    'M7 11h10a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2z',
+    'M8 11V8a4 4 0 0 1 8 0v3',
+  ],
   info: ['M12 3.5a8.5 8.5 0 1 0 0 17.0a8.5 8.5 0 1 0 0 -17.0z', 'M12 11v5', 'M12 8h.01'],
   pen: ['M4 20h4L19 9l-4-4L4 16z', 'M13.5 6.5l4 4'],
-  eyeOff: ['M4 4l16 16', 'M9.9 5.7A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.2 3.9', 'M6.3 7.4C3.9 9.2 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.5 0 2.9-.4 4.1-1'],
+  eyeOff: [
+    'M4 4l16 16',
+    'M9.9 5.7A9.6 9.6 0 0 1 12 5.5c6 0 9.5 6.5 9.5 6.5a17 17 0 0 1-3.2 3.9',
+    'M6.3 7.4C3.9 9.2 2.5 12 2.5 12s3.5 6.5 9.5 6.5c1.5 0 2.9-.4 4.1-1',
+  ],
   chevronDown: ['M6.5 9.5l5.5 5.5 5.5-5.5'],
   card: ['M5 5.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z', 'M3 10h18'],
   down: ['M12 5v14', 'M6 13l6 6 6-6'],
@@ -173,9 +246,27 @@ const glyphs = {
 
 export type IconName = keyof typeof glyphs
 
-export function Icon({ name, size = 20, color = 'currentColor' }: { name: IconName; size?: number; color?: string }) {
+export function Icon({
+  name,
+  size = 20,
+  color = 'currentColor',
+}: {
+  name: IconName
+  size?: number
+  color?: string
+}) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke={color}
+      strokeWidth={2}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
       {glyphs[name].map((d) => (
         <path key={d} d={d} />
       ))}
@@ -213,7 +304,10 @@ export function Pill({
       </span>
     </>
   )
-  const props = { className: `pill${wide ? ' pill-block' : ''}${className ? ` ${className}` : ''}`, 'data-tone': tone }
+  const props = {
+    className: `pill${wide ? ' pill-block' : ''}${className ? ` ${className}` : ''}`,
+    'data-tone': tone,
+  }
   if (href)
     return href.startsWith('/') ? (
       <Link href={href} {...props}>

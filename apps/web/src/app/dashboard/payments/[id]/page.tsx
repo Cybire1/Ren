@@ -25,7 +25,7 @@ export default async function PaymentPage(props: { params: Promise<{ id: string 
     if (error instanceof ApiError && error.status === 404)
       return (
         <section className="card empty big-empty">
-          <Art name="kovi-oops" size={140} />
+          <Art name="reni-oops" size={140} />
           <h3>No such payment</h3>
           <p>It may belong to another shop, or the link is incomplete.</p>
           <Link className="textlink" href="/dashboard/payments">
@@ -167,7 +167,7 @@ export default async function PaymentPage(props: { params: Promise<{ id: string 
                       <small>PAID</small>
                       <strong>{usd(p.amount)}</strong>
                     </div>
-                    <Art name="kovi-cheer" size={72} className="kovi-cheer kovi-cheer-sm" />
+                    <Art name="reni-cheer" size={72} className="reni-cheer reni-cheer-sm" />
                   </div>
                   <p>Settled to your address{p.terminal ? ` from ${p.terminal.name}` : ''}.</p>
                 </section>

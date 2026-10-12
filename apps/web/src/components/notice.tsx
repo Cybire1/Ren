@@ -8,7 +8,7 @@ export function Notice({ title, children, action }: { title: string; children: R
         <Brand />
       </header>
       <div className="card notice" role="alert">
-        <Art name="kovi-oops" size={130} />
+        <Art name="reni-oops" size={130} />
         <h2>{title}</h2>
         {children}
         {action}

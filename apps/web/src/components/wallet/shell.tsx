@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Art, Brand, Icon, type IconName, LogoMark, Wordmark } from '@/components/brand'
+import { Art, Brand, Icon, type IconName, Wordmark } from '@/components/brand'
 import { chainName } from '@/lib/chain'
 import { formatUsd, toBase } from '@/lib/wallet/money'
 import { useWallet } from './provider'
@@ -124,8 +124,7 @@ function DockFoot() {
 export function DockBrand({ href }: { href: string }) {
   return (
     <Link href={href} className="w-dock-brand" aria-label="Ren home">
-      <LogoMark size={34} stem="#fff" />
-      <Wordmark height={20} ink="#fff" coin="var(--coral)" />
+      <Wordmark height={32} ink="#fff" shadow="#050f1f" />
     </Link>
   )
 }

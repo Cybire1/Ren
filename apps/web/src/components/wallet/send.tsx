@@ -277,7 +277,7 @@ export function SendFlow({ to }: { to: string }) {
   if (stage.at === 'sent')
     return (
       <div className="w-screen w-moment">
-        <Art name="kovi-cheer" size={170} className="w-moment-art" />
+        <Art name="reni-cheer" size={170} className="w-moment-art" />
         <h1 className="w-hero-title">Sent!</h1>
         <p className="w-moment-big">
           {formatUsd(amount)} landed with {first(name)}
@@ -300,7 +300,7 @@ export function SendFlow({ to }: { to: string }) {
   if (stage.at === 'problem')
     return (
       <div className="w-screen w-moment">
-        <Art name="kovi-oops" size={160} className="w-moment-art" />
+        <Art name="reni-oops" size={160} className="w-moment-art" />
         <h1 className="w-title">It didn’t go through</h1>
         <p className="w-lead">{stage.message} Your money hasn’t moved.</p>
         <div className="w-moment-actions">
@@ -331,7 +331,7 @@ export function SendFlow({ to }: { to: string }) {
         <div className="w-review">
           <Avatar name={name} id={address} size={72} />
           <h1 className="w-title">Send to {first(name)}</h1>
-          <p className="w-lead">Kovi gets it there in seconds.</p>
+          <p className="w-lead">Reni gets it there in seconds.</p>
           <div className="w-review-card">
             <div className="w-review-row">
               <span>You send</span>

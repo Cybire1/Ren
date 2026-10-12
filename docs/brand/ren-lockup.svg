@@ -1,17 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120" viewBox="0 0 300 120" role="img" aria-label="Ren">
-  <title>Ren</title>
-  <g transform="scale(0.6)" fill="none" stroke-linecap="round">
-    <path d="M62 46 V154" stroke="#10233F" stroke-width="19"/>
-    <path d="M92.6 74.3 A40 40 0 0 1 92.6 125.7" stroke="#FF5E7E" stroke-width="17"/>
-    <path d="M115.6 55 A70 70 0 0 1 115.6 145" stroke="#FF5E7E" stroke-width="17"/>
-    <path d="M138.6 35.7 A100 100 0 0 1 138.6 164.3" stroke="#FF5E7E" stroke-width="17"/>
-  </g>
-  <g transform="translate(130 25) scale(0.9) translate(0 -27)" fill="none" stroke="#10233F" stroke-width="15.5" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M8 40 V92"/>
-    <path d="M8 66 Q8 40 40 41"/>
-    <circle cx="80" cy="66" r="26" fill="#FFC0CC" stroke="none"/>
-    <path d="M54 66 H106 A26 26 0 1 0 98.4 84.4"/>
-    <path d="M132 40 V92"/>
-    <path d="M132 64 A22 22 0 0 1 176 64 V92"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="212" height="94" viewBox="0 8 212 94" role="img" aria-label="Ren"><title>Ren</title><circle cx="35" cy="40" r="25" fill="#10233F"/><circle cx="35" cy="36.5" r="25" fill="#FF5E7E" stroke="#10233F" stroke-width="4"/><path d="M40.8 20.5 A17 17 0 0 1 50.4 29.3" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/><g fill="none" stroke="#10233F" stroke-width="15.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10 19 V92"/><path d="M34 62 L56 92"/><path d="M80 66 H132 A26 26 0 1 0 124.4 84.4"/><path d="M158 40 V92"/><path d="M158 64 A22 22 0 0 1 202 64 V92"/></g></svg>

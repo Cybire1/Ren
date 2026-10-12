@@ -9,7 +9,7 @@ import { Stage } from '@/ui/Stage'
 import { Chip, Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
 import { chainName } from '@/lib/config'
 
-/** Money arrived: coins rain, Kovi catches them, and the amount is the headline. */
+/** Money arrived: coins rain, Reni catches them, and the amount is the headline. */
 export default function Received() {
   const params = useLocalSearchParams<{ amount: string; name: string; hash?: string }>()
   const { profile, contacts, activity } = useWallet()

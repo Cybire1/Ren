@@ -1,10 +1,10 @@
 import { StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { colors } from '@/lib/theme'
-import { KoviPeek, peekEdge } from './art'
+import { ReniPeek, peekEdge } from './art'
 import { Sticker } from './primitives'
 
-/** A QR on a white sticker, with Kovi peeking over its top edge. */
+/** A QR on a white sticker, with Reni peeking over its top edge. */
 export function CodeCard({ value, size = 220 }: { value: string; size?: number }) {
   return (
     <View style={{ alignItems: 'center', paddingTop: 44 }}>
@@ -14,7 +14,7 @@ export function CodeCard({ value, size = 220 }: { value: string; size?: number }
         </View>
       </Sticker>
       <View style={styles.peek} pointerEvents="none">
-        <KoviPeek width={PEEK} />
+        <ReniPeek width={PEEK} />
       </View>
     </View>
   )

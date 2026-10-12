@@ -92,7 +92,7 @@ export function PairSheet({
 
         {state.kind === 'paired' ? (
           <div className="sheet-done" aria-live="polite">
-            <Art name="kovi-cheer" size={150} />
+            <Art name="reni-cheer" size={150} />
             <h2 id="pair-title">{state.terminal.name} is ready</h2>
             <p className="sheet-lead">Payments it takes land on your dashboard the moment they settle.</p>
             <Pill icon="check" onClick={onClose}>
@@ -101,7 +101,7 @@ export function PairSheet({
           </div>
         ) : (
           <>
-            <Art name="kovi-wave" size={84} className="sheet-art" />
+            <Art name="reni-wave" size={84} className="sheet-art" />
             <h2 id="pair-title">Add a terminal</h2>
             <p className="sheet-lead">Any phone with Ren becomes a till for your shop.</p>
             <ol className="steps">

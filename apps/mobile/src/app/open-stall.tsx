@@ -7,13 +7,13 @@ import { type OpenStep, useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
 import { colors, fonts } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import { Kovi, koviFeet } from '@/ui/art'
+import { Reni, reniFeet } from '@/ui/art'
 import { Awning } from '@/ui/Awning'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Hop } from '@/ui/motion'
 import { PillButton, RoundButton, Screen, Txt } from '@/ui/primitives'
 
-/** Room above the sign for Kovi to stand on its roof. */
+/** Room above the sign for Reni to stand on its roof. */
 const ROOF = 92
 
 const steps: Record<OpenStep, string> = {
@@ -77,7 +77,7 @@ export default function OpenStall() {
     <Screen bg={colors.paper}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-          {/* The sign, painted as you type, with Kovi up on its roof */}
+          {/* The sign, painted as you type, with Reni up on its roof */}
           <View style={styles.signWrap}>
             <View style={styles.close}>
               <RoundButton icon="close" label="Close" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
@@ -93,8 +93,8 @@ export default function OpenStall() {
                 </Txt>
               </View>
             </View>
-            <Hop style={[styles.kovi, { top: ROOF + 1 - 96 * koviFeet('wave') }]}>
-              <Kovi pose="wave" size={96} />
+            <Hop style={[styles.reni, { top: ROOF + 1 - 96 * reniFeet('wave') }]}>
+              <Reni pose="wave" size={96} />
             </Hop>
           </View>
 
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   close: { position: 'absolute', left: 0, top: 8 },
   sign: { borderRadius: 26, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, overflow: 'hidden' },
   board: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 18, minHeight: 92, justifyContent: 'center' },
-  kovi: { position: 'absolute', right: 18 },
+  reni: { position: 'absolute', right: 18 },
   label: { marginTop: 20, marginBottom: 8, marginLeft: 4 },
   input: {
     height: 56,

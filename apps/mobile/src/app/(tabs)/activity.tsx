@@ -8,7 +8,7 @@ import { categoryInfo, useSpendingCategories } from '@/lib/categories'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { type Entry, useWallet } from '@/lib/wallet'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { dockClearance } from '@/ui/Dock'
 import { EntryRow } from '@/ui/EntryRow'
 import { Txt } from '@/ui/primitives'
@@ -240,7 +240,7 @@ export default function Activity() {
 
       {groups.length === 0 ? (
         <View style={styles.empty}>
-          <Kovi pose="wave" size={130} />
+          <Reni pose="wave" size={130} />
           <Txt weight="semi" size={20} style={{ marginTop: 8 }}>
             {activity.length === 0 ? 'Nothing here yet' : 'Nothing in this view'}
           </Txt>

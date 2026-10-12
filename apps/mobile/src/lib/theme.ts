@@ -4,7 +4,7 @@
  *
  * Every surface is flat, drawn with a 2px ink outline. What you can press stands on a hard ink
  * shadow and sinks into it when pressed; nothing is blurred. Teal is money at rest and arriving,
- * coral is paying and anything that spends, yellow is Kovi and the coins.
+ * coral is paying and anything that spends, yellow is Reni and the coins.
  */
 export const colors = {
   /** The ground every screen sits on. */
@@ -24,7 +24,7 @@ export const colors = {
   coralDeep: '#D13C5C',
   /** Coral grounds that carry ink text. */
   coralSoft: '#FFC0CC',
-  /** The coin colour: Kovi, the coins, the card chip. Soft coral, a quieter echo of the pay colour. */
+  /** The coin colour: Reni, the coins, the card chip. Soft coral, a quieter echo of the pay colour. */
   yellow: '#FFC0CC',
   blush: '#FF9DB0',
   /** Text and icons on ink or coral. */

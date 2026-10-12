@@ -58,7 +58,7 @@ export function PaidInASecond() {
         <li className="lp-stop">
           <span className="lp-clock">0.9s</span>
           <div className="lp-frame lp-tint-paper">
-            <Art name="kovi-catch" size={190} />
+            <Art name="reni-catch" size={190} />
             <span className="lp-stamp" aria-hidden="true">
               Paid
             </span>

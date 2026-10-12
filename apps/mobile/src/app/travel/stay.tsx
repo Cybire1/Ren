@@ -9,7 +9,7 @@ import { formatLocal } from '@/lib/money'
 import { day, nights, useTravel } from '@/lib/travel'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { RoundButton, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
@@ -61,7 +61,7 @@ export default function Stay() {
       <View style={[styles.center, { backgroundColor: colors.paper, paddingTop: insets.top }]}>
         {problem ? (
           <>
-            <Kovi pose="oops" size={120} />
+            <Reni pose="oops" size={120} />
             <Txt size={15} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
               {problem}
             </Txt>
@@ -95,7 +95,7 @@ export default function Stay() {
             </ScrollView>
           ) : (
             <View style={styles.center}>
-              <Kovi pose="sleep" size={120} />
+              <Reni pose="sleep" size={120} />
             </View>
           )}
           {a.photos.length > 1 ? (

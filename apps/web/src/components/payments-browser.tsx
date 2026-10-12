@@ -101,7 +101,7 @@ export function PaymentsBrowser({ initial, status, q }: { initial: IntentList; s
 
       {rows.length === 0 ? (
         <section className="card empty big-empty">
-          <Art name="kovi-sleep" size={150} />
+          <Art name="reni-sleep" size={150} />
           <h3>{q || status ? 'Nothing matches' : 'No payments yet'}</h3>
           <p>{q || status ? 'Try another filter, or clear the search.' : 'Charges you start from a terminal or this dashboard show up here the moment they’re made.'}</p>
           {q || status ? (

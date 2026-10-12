@@ -2507,7 +2507,7 @@ button.w-person {
   background: var(--coral);
 }
 
-.w-balance-kovi {
+.w-balance-reni {
   position: absolute;
   right: 0.25rem;
   bottom: 0.25rem;
@@ -2516,11 +2516,11 @@ button.w-person {
   pointer-events: none;
 }
 
-.w-kovi-catch {
-  animation: kovi-bob 4.5s ease-in-out infinite;
+.w-reni-catch {
+  animation: reni-bob 4.5s ease-in-out infinite;
 }
 
-@keyframes kovi-bob {
+@keyframes reni-bob {
   50% {
     transform: translateY(-6px);
   }
@@ -2796,7 +2796,7 @@ button.w-person {
   .w-entry-fresh,
   .w-coin-front,
   .w-coin-back,
-  .w-kovi-catch,
+  .w-reni-catch,
   .w-sparkle,
   .w-pay-waves path {
     animation: none;

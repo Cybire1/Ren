@@ -21,7 +21,7 @@ type Point = { x: number; y: number }
 
 /**
  * Carries its child along a quadratic curve from `from` to `to`, turning to face the way it
- * travels. Used for Kovi's flights: the route is the same curve the scene draws dotted.
+ * travels. Used for Reni's flights: the route is the same curve the scene draws dotted.
  * `size` is the child's box; the curve is followed by the box's centre.
  */
 export function Flight({

@@ -7,7 +7,7 @@ import { Pressable, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { parseScanned, type Scanned } from '@/lib/links'
 import { colors } from '@/lib/theme'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { PillButton, RoundButton, Txt } from '@/ui/primitives'
 
@@ -80,7 +80,7 @@ export default function Scan() {
           <View style={[styles.corner, { top: 0, right: 0, borderTopWidth: 6, borderRightWidth: 6, borderTopRightRadius: 28 }]} />
           <View style={[styles.corner, { bottom: 0, left: 0, borderBottomWidth: 6, borderLeftWidth: 6, borderBottomLeftRadius: 28 }]} />
           <View style={[styles.corner, { bottom: 0, right: 0, borderBottomWidth: 6, borderRightWidth: 6, borderBottomRightRadius: 28 }]} />
-          {permission?.granted ? null : <Kovi pose="wave" size={150} />}
+          {permission?.granted ? null : <Reni pose="wave" size={150} />}
         </View>
       </View>
 

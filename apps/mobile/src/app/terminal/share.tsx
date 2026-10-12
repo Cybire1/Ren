@@ -7,7 +7,7 @@ import QRCode from 'react-native-qrcode-svg'
 import { posterLinkFor, stallLinkFor } from '@/lib/api'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Awning } from '@/ui/Awning'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Header, Screen, Txt } from '@/ui/primitives'
@@ -28,7 +28,7 @@ export default function ShareStall() {
       <Screen bg={colors.paper}>
         <Header backIcon="close" />
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Kovi pose="oops" size={120} />
+          <Reni pose="oops" size={120} />
         </View>
       </Screen>
     )

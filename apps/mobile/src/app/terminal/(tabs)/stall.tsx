@@ -11,7 +11,7 @@ import { useShop } from '@/lib/shop'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
 import { Awning } from '@/ui/Awning'
-import { Kovi } from '@/ui/art'
+import { Reni } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
@@ -182,7 +182,7 @@ function OwnerStall() {
 
       {items.length === 0 ? (
         <View style={styles.firstItems}>
-          <Kovi pose="wave" size={120} />
+          <Reni pose="wave" size={120} />
           <Txt weight="semi" size={19} style={{ marginTop: 4, textAlign: 'center' }}>
             Put something on the counter
           </Txt>
@@ -339,7 +339,7 @@ function ShopMenu() {
         <ActivityIndicator color={colors.ink} style={{ marginTop: 30 }} />
       ) : items.length === 0 ? (
         <View style={styles.firstItems}>
-          <Kovi pose="sleep" size={120} />
+          <Reni pose="sleep" size={120} />
           <Txt size={15} color={colors.muted} style={{ textAlign: 'center' }}>
             Nothing on the menu yet.
           </Txt>
