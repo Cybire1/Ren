@@ -2973,3 +2973,24 @@ button.w-add-chain {
   text-align: left;
   cursor: pointer;
 }
+
+/* Paid for a stall order: where it is at the counter, and the stamp it earned. */
+.w-moment-order {
+  display: grid;
+  gap: 3rem;
+  width: 100%;
+  margin-top: 0.75rem;
+}
+
+.w-moment-reward {
+  padding: 0.35rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--coral-soft);
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.w-review-reward > :last-child {
+  color: var(--coral-deep);
+}

@@ -11,6 +11,7 @@ import {
   kova,
   kovaPublic,
   type Merchant,
+  type OrderStatus,
   type Stall,
   type WebhookEndpoint,
 } from '@/lib/api'
@@ -308,6 +309,8 @@ export async function updateStall(
     open?: boolean
     cover_image_id?: string | null
     item_ids?: string[]
+    table_count?: number | null
+    loyalty_every?: number | null
   },
 ): Promise<FormState & { stall?: Stall }> {
   try {
@@ -374,6 +377,19 @@ export async function lookupBarcode(code: string): Promise<FormState & { lookup?
       ok: true,
       lookup: await kova<BarcodeLookup>(`/v1/catalog/barcodes/${encodeURIComponent(code)}`),
     }
+  } catch (error) {
+    return { error: message(error) }
+  }
+}
+
+/** Moves an order along the counter. "ready" is what the buyer's phone lights up for. */
+export async function setOrderStatus(id: string, status: OrderStatus): Promise<FormState> {
+  try {
+    await kova(`/v1/orders/${encodeURIComponent(id)}/status`, {
+      method: 'POST',
+      body: JSON.stringify({ status }),
+    })
+    return { ok: true }
   } catch (error) {
     return { error: message(error) }
   }

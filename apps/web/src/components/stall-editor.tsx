@@ -9,6 +9,7 @@ import { Icon, Pill } from './brand'
 import { ItemFace } from './catalogue-manager'
 import { ItemSheet } from './item-sheet'
 import { MenuImportSheet } from './menu-import'
+import { StampCard } from './stamp-card'
 
 /**
  * One stall, end to end: its sign, what it sells and in what order, how people find it, and a
@@ -30,6 +31,9 @@ export function StallEditor({ stall: initial, catalogue: initialCatalogue }: { s
   const [qr, setQr] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [pending, start] = useTransition()
+  // Counts change a step at a time: they save once the shop stops tapping.
+  const [tables, setTables] = useState(initial.table_count ?? 6)
+  const [every, setEvery] = useState(initial.loyalty_every ?? 5)
 
   const url = origin ? `${origin}/s/${stall.slug}` : `/s/${stall.slug}`
   const byId = new Map(catalogue.map((i) => [i.id, i]))
@@ -71,6 +75,21 @@ export function StallEditor({ stall: initial, catalogue: initialCatalogue }: { s
     ;[next[i], next[j]] = [next[j] as string, next[i] as string]
     setItems(next)
   }
+
+  useEffect(() => {
+    if (!stall.table_count || tables === stall.table_count) return
+    const timer = setTimeout(() => save({ table_count: tables }, `${tables} tables`), 700)
+    return () => clearTimeout(timer)
+    // save is a fresh closure each render; the counts are what matter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tables, stall.table_count])
+
+  useEffect(() => {
+    if (!stall.loyalty_every || every === stall.loyalty_every) return
+    const timer = setTimeout(() => save({ loyalty_every: every }, `A card of ${every} stamps`), 700)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [every, stall.loyalty_every])
 
   const copy = async () => {
     await navigator.clipboard.writeText(url)
@@ -180,6 +199,102 @@ export function StallEditor({ stall: initial, catalogue: initialCatalogue }: { s
               </button>
             </div>
           </div>
+        </section>
+
+        <section className="card card-pad editor-section" aria-label="Tables">
+          <div className="setting-head">
+            <div>
+              <h2>Tables</h2>
+              <p>Each table gets its own QR code. The order says which table it’s for, and the buyer’s phone tells them when it’s ready. No buzzers.</p>
+            </div>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={Boolean(stall.table_count)}
+                onChange={(e) => save({ table_count: e.target.checked ? tables : null }, e.target.checked ? 'Table ordering on' : 'Counter only')}
+                aria-label="Order from the table"
+              />
+              <span aria-hidden="true" />
+            </label>
+          </div>
+          {stall.table_count ? (
+            <div className="setting-body">
+              <div className="setting-count">
+                <span className="field-label" id="st-tables">
+                  How many tables
+                </span>
+                <span className="stepper" role="group" aria-labelledby="st-tables">
+                  <button type="button" aria-label="One table fewer" disabled={tables <= 1} onClick={() => setTables((n) => Math.max(1, n - 1))}>
+                    −
+                  </button>
+                  <span aria-live="polite">{tables}</span>
+                  <button type="button" aria-label="One table more" disabled={tables >= 200} onClick={() => setTables((n) => Math.min(200, n + 1))}>
+                    +
+                  </button>
+                </span>
+              </div>
+              <ul className="setting-tables" aria-label="Your tables">
+                {Array.from({ length: Math.min(tables, 12) }, (_, i) => (
+                  // biome-ignore lint/suspicious/noArrayIndexKey: tables are numbered positions
+                  <li key={i}>{i + 1}</li>
+                ))}
+                {tables > 12 ? <li className="setting-tables-more">+{tables - 12}</li> : null}
+              </ul>
+              <div className="row-actions">
+                <a className="mini mini-ink" href={`/s/${stall.slug}/poster?tables=1`} target="_blank" rel="noreferrer">
+                  <Icon name="download" size={14} /> Print table cards
+                </a>
+                <a className="mini" href={`/s/${stall.slug}?table=1`} target="_blank" rel="noreferrer">
+                  <Icon name="external" size={14} /> Try table 1
+                </a>
+              </div>
+            </div>
+          ) : (
+            <p className="setting-off">Off: orders are collected at the counter.</p>
+          )}
+        </section>
+
+        <section className="card card-pad editor-section" aria-label="Stamp card">
+          <div className="setting-head">
+            <div>
+              <h2>Stamp card</h2>
+              <p>Every paid order is a stamp. When the card is full, the cheapest thing on the next order is free. No sign-up: the wallet a buyer pays with is their card.</p>
+            </div>
+            <label className="switch">
+              <input
+                type="checkbox"
+                checked={Boolean(stall.loyalty_every)}
+                onChange={(e) => save({ loyalty_every: e.target.checked ? every : null }, e.target.checked ? 'Stamp card on' : 'Stamp card off')}
+                aria-label="Stamp card"
+              />
+              <span aria-hidden="true" />
+            </label>
+          </div>
+          {stall.loyalty_every ? (
+            <div className="setting-body">
+              <div className="setting-count">
+                <span className="field-label" id="st-every">
+                  Stamps to fill it
+                </span>
+                <span className="stepper" role="group" aria-labelledby="st-every">
+                  <button type="button" aria-label="One stamp fewer" disabled={every <= 2} onClick={() => setEvery((n) => Math.max(2, n - 1))}>
+                    −
+                  </button>
+                  <span aria-live="polite">{every}</span>
+                  <button type="button" aria-label="One stamp more" disabled={every >= 20} onClick={() => setEvery((n) => Math.min(20, n + 1))}>
+                    +
+                  </button>
+                </span>
+              </div>
+              <div className="setting-preview">
+                <p className="field-label">What a regular sees</p>
+                <StampCard every={every} stamps={Math.max(1, every - 2)} ready={false} known shop={stall.name} />
+              </div>
+              <p className="field-help">The free item is still paid through Kova, at $0.00, so it shows in your payments like any order.</p>
+            </div>
+          ) : (
+            <p className="setting-off">Off: no stamps, everyone pays full price.</p>
+          )}
         </section>
 
         <section className="card card-pad editor-section" aria-label="Share it">

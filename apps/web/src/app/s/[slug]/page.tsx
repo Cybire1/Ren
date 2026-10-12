@@ -20,8 +20,8 @@ export async function generateMetadata(props: { params: Promise<{ slug: string }
     : { title: 'Stall' }
 }
 
-export default async function StallPage(props: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string }> }) {
-  const [{ slug }, { preview }] = await Promise.all([props.params, props.searchParams])
+export default async function StallPage(props: { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string; table?: string }> }) {
+  const [{ slug }, { preview, table }] = await Promise.all([props.params, props.searchParams])
   const [stall, published] = await Promise.all([
     load(slug),
     kovaPublic<{ rates: Record<string, { per_usd: number }> }>('/v1/rates').catch(() => null),
@@ -33,5 +33,7 @@ export default async function StallPage(props: { params: Promise<{ slug: string 
       </Notice>
     )
   const rates = published ? Object.fromEntries(Object.entries(published.rates).map(([code, r]) => [code, r.per_usd])) : undefined
-  return <Storefront stall={stall} preview={preview === '1'} rates={rates} />
+  // A table's QR code opens the stall with ?table=3: the order says where to bring it.
+  const at = typeof table === 'string' && /^[\w -]{1,12}$/.test(table.trim()) ? table.trim() : null
+  return <Storefront stall={stall} preview={preview === '1'} rates={rates} table={at} />
 }

@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useEffect, useState, useTransition } from 'react'
-import { markCollected } from '@/app/actions'
+import { markCollected, setOrderStatus } from '@/app/actions'
 import type { Order, Stall } from '@/lib/api'
 import { ago, usd } from '@/lib/format'
 import { Awning } from './awning'
@@ -17,7 +17,8 @@ const summary = (o: Order) => o.lines.map((l) => (l.quantity > 1 ? `${l.quantity
 
 /**
  * The stalls a shop runs, and the orders coming in from them. Orders that are paid but not yet
- * handed over sit at the top until someone taps Collected.
+ * handed over sit at the top until someone taps Collected. Ready tells the buyer's phone (it
+ * lights up and chimes), so nobody needs a buzzer; a table order says which table to bring it to.
  */
 export function StallsHome({ stalls, initialOrders, catalogueSize }: { stalls: Stall[]; initialOrders: Order[]; catalogueSize: number }) {
   const [orders, setOrders] = useState(initialOrders)
@@ -45,6 +46,13 @@ export function StallsHome({ stalls, initialOrders, catalogueSize }: { stalls: S
     setOrders((list) => list.map((x) => (x.id === o.id ? { ...x, collected_at: collected ? new Date().toISOString() : null } : x)))
     start(async () => {
       await markCollected(o.id, collected)
+    })
+  }
+
+  const ready = (o: Order) => {
+    setOrders((list) => list.map((x) => (x.id === o.id ? { ...x, status: 'ready' } : x)))
+    start(async () => {
+      await setOrderStatus(o.id, 'ready')
     })
   }
 
@@ -104,6 +112,8 @@ export function StallsHome({ stalls, initialOrders, catalogueSize }: { stalls: S
                 {s.tagline ? <p className="stall-card-line">{s.tagline}</p> : null}
                 <p className="stall-card-meta">
                   {s.item_ids?.length ?? 0} {s.item_ids?.length === 1 ? 'item' : 'items'}, at /s/{s.slug}
+                  {s.table_count ? `, ${s.table_count} ${s.table_count === 1 ? 'table' : 'tables'}` : ''}
+                  {s.loyalty_every ? `, stamp card of ${s.loyalty_every}` : ''}
                 </p>
                 <div className="stall-card-actions">
                   <Link href={`/dashboard/stalls/${s.id}`} className="mini mini-ink">
@@ -152,6 +162,21 @@ export function StallsHome({ stalls, initialOrders, catalogueSize }: { stalls: S
                     <strong>{o.customer_name ?? (o.source === 'till' ? 'At the till' : 'No name given')}</strong>
                     <span className="order-amount">{usd(o.amount ?? '0')}</span>
                   </div>
+                  {o.table || o.reward || (o.status === 'ready' && !o.collected_at) ? (
+                    <p className="order-tags">
+                      {o.table ? (
+                        <span className="order-tag order-tag-table">
+                          <Icon name="stall" size={13} /> Table {o.table}
+                        </span>
+                      ) : null}
+                      {o.reward ? <span className="order-tag order-tag-stamp">Stamp card: {o.reward.name} free</span> : null}
+                      {o.status === 'ready' && !o.collected_at ? (
+                        <span className="order-tag order-tag-ready">
+                          <Icon name="bell" size={13} /> Ready, they’ve been told
+                        </span>
+                      ) : null}
+                    </p>
+                  ) : null}
                   <p className="order-lines">{summary(o)}</p>
                   {o.note ? <p className="order-note">“{o.note}”</p> : null}
                   <div className="order-foot">
@@ -160,15 +185,22 @@ export function StallsHome({ stalls, initialOrders, catalogueSize }: { stalls: S
                       {o.pay_for_me && waiting(o) ? ', someone else is paying' : ''}
                     </span>
                     {paid(o) ? (
-                      <button type="button" className={`mini${o.collected_at ? '' : ' mini-ink'}`} onClick={() => collect(o, !o.collected_at)}>
-                        {o.collected_at ? (
-                          'Undo'
-                        ) : (
-                          <>
-                            <Icon name="check" size={14} /> Collected
-                          </>
+                      <span className="order-acts">
+                        {o.collected_at || o.status === 'ready' ? null : (
+                          <button type="button" className="mini mini-coral" onClick={() => ready(o)}>
+                            <Icon name="bell" size={14} /> Ready
+                          </button>
                         )}
-                      </button>
+                        <button type="button" className={`mini${o.collected_at ? '' : ' mini-ink'}`} onClick={() => collect(o, !o.collected_at)}>
+                          {o.collected_at ? (
+                            'Undo'
+                          ) : (
+                            <>
+                              <Icon name="check" size={14} /> Collected
+                            </>
+                          )}
+                        </button>
+                      </span>
                     ) : (
                       <span className="order-wait">Waiting to pay</span>
                     )}

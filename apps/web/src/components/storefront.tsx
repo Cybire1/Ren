@@ -2,13 +2,21 @@
 
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import type { PublicStall } from '@/lib/api'
+import type { Checkout, OrderReward, OrderStatus, PublicStall } from '@/lib/api'
 import { usd } from '@/lib/format'
 import { type Currency, inCurrency, type LiveRates, RATES } from '@/lib/rates'
 import { Awning } from './awning'
 import { Art, Icon, LogoMark, Pill } from './brand'
+import { OrderReady } from './order-ready'
+import { StampCard, useStampCard } from './stamp-card'
 
-type Placed = { id: string; checkout: { id: string; amount: string; expires_at: string } }
+type Placed = {
+  id: string
+  table?: string | null
+  status?: OrderStatus
+  reward?: OrderReward | null
+  checkout: { id: string; amount: string; expires_at: string }
+}
 
 /** A tint for a product with no photo yet, stable per name. */
 const TINTS = ['#a9c9c9', '#ebb3aa', '#f3d6d0', '#cfe3dc', '#efe0c6']
@@ -21,8 +29,11 @@ type Item = PublicStall['items'][number]
  * (the cover photo), then everything for sale as photo cards with quick add, a product view, a
  * bag that slides in, and a checkout that pays now or sends the bill to someone else. Prices
  * can show in the buyer's own currency; everything is paid in dollars.
+ *
+ * Opened from a table's QR code (?table=3), the order says which table to bring it to. With a
+ * stamp card on, the buyer sees their stamps here: the wallet that pays is the card.
  */
-export function Storefront({ stall, preview, rates }: { stall: PublicStall; preview: boolean; rates?: LiveRates }) {
+export function Storefront({ stall, preview, rates, table }: { stall: PublicStall; preview: boolean; rates?: LiveRates; table: string | null }) {
   const router = useRouter()
   const [basket, setBasket] = useState<Record<string, number>>({})
   const [currency, setCurrency] = useState<Currency>('USD')
@@ -36,13 +47,17 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
   const [error, setError] = useState<string | null>(null)
   const [asked, setAsked] = useState<Placed | null>(null)
   const [shared, setShared] = useState(false)
+  const { payer, card } = useStampCard(stall.slug, Boolean(stall.loyalty_every) && !preview)
 
   const lines = useMemo(
     () => stall.items.flatMap((item) => (basket[item.id] ? [{ item, quantity: basket[item.id] as number }] : [])),
     [stall.items, basket],
   )
   const count = lines.reduce((n, l) => n + l.quantity, 0)
-  const total = lines.reduce((sum, l) => sum + Number(l.item.price) * l.quantity, 0)
+  const subtotal = lines.reduce((sum, l) => sum + Number(l.item.price) * l.quantity, 0)
+  // A full card makes the cheapest thing in the bag free; Kova works it out again when the order is placed.
+  const free = card?.ready && lines.length ? lines.reduce((a, b) => (Number(b.item.price) < Number(a.item.price) ? b : a)).item : null
+  const total = Math.max(0, subtotal - Number(free?.price ?? 0))
   const ordering = stall.open && !preview
 
   const set = (id: string, quantity: number) => setBasket((b) => ({ ...b, [id]: Math.max(0, Math.min(99, quantity)) }))
@@ -81,6 +96,8 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
           customer_name: name.trim() || undefined,
           note: note.trim() || undefined,
           pay_for_me: payForMe,
+          table: table ?? undefined,
+          payer: payer ?? undefined,
         }),
       })
       const body = (await response.json()) as Placed & { error?: string }
@@ -159,6 +176,11 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
               {available} {available === 1 ? 'thing' : 'things'} to order
             </span>
             {stall.livemode ? null : <span className="chip">Test dollars</span>}
+            {table ? (
+              <span className="chip chip-table">
+                <Icon name="stall" size={14} /> Table {table}
+              </span>
+            ) : null}
           </div>
           <div className="store-actions">
             <button type="button" className="store-action" onClick={() => void share()}>
@@ -169,6 +191,18 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
       </section>
 
       {preview ? <p className="store-preview">Preview. Ordering is switched off here.</p> : null}
+
+      {stall.loyalty_every ? (
+        <div className="store-stamps">
+          <StampCard
+            every={stall.loyalty_every}
+            stamps={card?.stamps ?? 0}
+            ready={Boolean(card?.ready)}
+            known={Boolean(payer && card)}
+            shop={stall.name}
+          />
+        </div>
+      ) : null}
 
       {stall.items.length === 0 ? (
         <div className="store-empty">
@@ -342,7 +376,10 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
                       </span>
                       <span className="bag-line-text">
                         <strong>{l.item.name}</strong>
-                        <span>{price(Number(l.item.price) * l.quantity)}</span>
+                        <span>
+                          {price(Number(l.item.price) * l.quantity)}
+                          {free?.id === l.item.id ? <em className="bag-free"> · one free</em> : null}
+                        </span>
                       </span>
                       <span className="stepper stepper-sm">
                         <button type="button" aria-label={`One less ${l.item.name}`} onClick={() => set(l.item.id, l.quantity - 1)}>
@@ -356,10 +393,26 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
                     </li>
                   ))}
                 </ul>
+                {free ? (
+                  <p className="basket-reward">
+                    <span className="basket-reward-stamp" aria-hidden="true">
+                      <LogoMark size={18} stem="#fff" wave="var(--ink)" />
+                    </span>
+                    <span>
+                      <strong>Free with your stamp card</strong> One {free.name}
+                    </span>
+                    <em>−{usd(free.price)}</em>
+                  </p>
+                ) : null}
                 <p className="basket-total">
                   <span>Total</span>
                   <strong>{usd(total)}</strong>
                 </p>
+                {table ? (
+                  <p className="basket-table">
+                    <Icon name="stall" size={16} /> For table {table}. They’ll bring it over.
+                  </p>
+                ) : null}
                 {currency !== 'USD' ? <p className="field-help basket-approx">About {inCurrency(total, currency, rates)}. You pay in dollars.</p> : null}
                 <div className="stack-form">
                   <label className="field-label" htmlFor="buyer-name">
@@ -374,7 +427,7 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
                 {error ? <p className="form-error">{error}</p> : null}
                 <div className="basket-pay">
                   <Pill icon="tap" tone="coral" onClick={() => place(false)} disabled={!ordering || busy !== null} wide>
-                    {busy === 'pay' ? 'Opening payment' : `Pay ${usd(total)}`}
+                    {busy === 'pay' ? 'Opening payment' : total === 0 ? 'Get it free' : `Pay ${usd(total)}`}
                   </Pill>
                   <Pill icon="send" tone="light" onClick={() => place(true)} disabled={!ordering || busy !== null} wide>
                     {busy === 'ask' ? 'Making the link' : 'Ask someone else to pay'}
@@ -393,28 +446,30 @@ export function Storefront({ stall, preview, rates }: { stall: PublicStall; prev
 function AskedToPay({ stall, placed }: { stall: PublicStall; placed: Placed }) {
   const [link, setLink] = useState('')
   const [copied, setCopied] = useState(false)
-  const [paid, setPaid] = useState(false)
+  const [paid, setPaid] = useState<Checkout['order'] | false>(false)
 
   useEffect(() => {
     setLink(`${window.location.origin}/pay/${placed.checkout.id}`)
     const id = setInterval(async () => {
       const r = await fetch(`/api/checkout/${placed.checkout.id}`).catch(() => null)
       if (!r?.ok) return
-      const { status } = (await r.json()) as { status: string }
+      const { status, order } = (await r.json()) as Checkout
       if (status === 'paid') {
-        setPaid(true)
+        setPaid(order)
         clearInterval(id)
       }
     }, 2500)
     return () => clearInterval(id)
   }, [placed.checkout.id])
 
-  if (paid)
+  if (paid !== false)
     return (
       <div className="asked">
         <Art name="kovi-cheer" size={140} />
         <h2>It’s paid</h2>
         <p className="sheet-lead">Someone paid {usd(placed.checkout.amount)} for your order. {stall.name} has it.</p>
+        {/* The one who ordered is the one waiting for it: they see it get ready here. */}
+        {paid?.status ? <OrderReady checkoutId={placed.checkout.id} order={paid} shop={stall.name} /> : null}
       </div>
     )
 

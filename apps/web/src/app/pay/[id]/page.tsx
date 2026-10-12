@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Art, Brand, Pill } from '@/components/brand'
+import { Art, Brand, Icon, Pill } from '@/components/brand'
 import { Notice } from '@/components/notice'
 import { PaidReceipt } from '@/components/paid-receipt'
 import { PayFlow } from '@/components/pay-flow'
@@ -66,6 +66,11 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
                 : `Pay ${c.merchant_name}`}
           </p>
           <p className="await-amount">{usd(c.amount)}</p>
+          {c.order?.table ? (
+            <span className="chip chip-table">
+              <Icon name="stall" size={14} /> Table {c.order.table}
+            </span>
+          ) : null}
           {c.order ? (
             <ul className="pay-lines">
               {c.order.lines.map((l) => (
@@ -77,10 +82,22 @@ export default async function PayPage(context: { params: Promise<{ id: string }>
                   <span>{usd(Number(l.unit_price) * l.quantity)}</span>
                 </li>
               ))}
+              {c.order.reward ? (
+                <li className="pay-reward">
+                  <span>Free with your stamp card</span>
+                  <span>−{usd(c.order.reward.amount)}</span>
+                </li>
+              ) : null}
               {c.order.note ? <li className="pay-note">“{c.order.note}”</li> : null}
             </ul>
           ) : c.reference ? (
             <p className="await-label">{c.reference}</p>
+          ) : null}
+          {c.order?.reward ? (
+            <p className="pay-reward-help">
+              {Number(c.amount) === 0 ? 'It’s on the house. You still approve it, so you get a receipt.' : 'Your stamp card took it off.'} Pay with
+              the wallet that holds the card.
+            </p>
           ) : null}
           <Pill href={`kova://pay/${c.id}`} icon="tap" tone="coral" wide>
             Pay with the Kova app

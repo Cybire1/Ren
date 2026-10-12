@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import type { Checkout } from '@/lib/api'
 import { usd } from '@/lib/format'
+import { rememberPayer } from '@/lib/payer'
 import { returningFromPrivy } from '@/lib/privy-return'
 import { Icon } from './brand'
 import type { EmbeddedWallet } from './privy-wallet'
@@ -243,6 +244,8 @@ export function WalletPay({
       if (!response.ok)
         throw new Error(body.error ?? 'Kova couldn’t take that payment. Nothing was paid.')
       setStage({ name: 'paid' })
+      // This wallet is now the buyer's stamp card at the shop.
+      rememberPayer(address)
       const guest = wallet.info.rdns === 'privy' ? (embedded ?? devGuest) : null
       if (guest && onGuestPaid)
         onGuestPaid({

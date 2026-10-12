@@ -10,9 +10,13 @@ import { publicUrl } from '@/lib/url'
 export const dynamic = 'force-dynamic'
 export const metadata: Metadata = { title: 'Table poster' }
 
-/** An A4 poster for the stall's table: scan, order, pay. Prints edge to edge in colour. */
-export default async function PosterPage(props: { params: Promise<{ slug: string }> }) {
-  const { slug } = await props.params
+/**
+ * An A4 poster for the stall's table: scan, order, pay. Prints edge to edge in colour. With
+ * tables set up, ?tables=1 prints a card per table instead, four to a page: each one's code
+ * opens the stall with its table number, so the order says where to bring it.
+ */
+export default async function PosterPage(props: { params: Promise<{ slug: string }>; searchParams: Promise<{ tables?: string }> }) {
+  const [{ slug }, { tables }] = await Promise.all([props.params, props.searchParams])
   let stall: PublicStall
   try {
     stall = await kovaPublic<PublicStall>(`/v1/public/stalls/${encodeURIComponent(slug)}`)
@@ -26,12 +30,66 @@ export default async function PosterPage(props: { params: Promise<{ slug: string
   const url = `${await publicUrl()}/s/${stall.slug}`
   // High error correction, so the coin in the middle never stops the code scanning.
   const qr = await qrSvg(url, { type: 'svg', margin: 0, errorCorrectionLevel: 'H', color: { dark: '#0b1a1d', light: '#ffffff' } })
+  const count = stall.table_count ?? 0
+
+  if (tables === '1' && count > 0) {
+    const codes = await Promise.all(
+      Array.from({ length: count }, (_, i) =>
+        qrSvg(`${url}?table=${i + 1}`, { type: 'svg', margin: 0, errorCorrectionLevel: 'H', color: { dark: '#0b1a1d', light: '#ffffff' } }),
+      ),
+    )
+    return (
+      <div className="poster-page">
+        <div className="poster-tools">
+          <PrintButton>Print table cards</PrintButton>
+          <span>
+            {count} table {count === 1 ? 'card' : 'cards'}, four to an A4 page. Cut along the lines.
+          </span>
+          <a className="textlink" href={`/s/${stall.slug}/poster`}>
+            The big poster
+          </a>
+        </div>
+        <div className="table-sheets">
+          {codes.map((code, i) => (
+            // biome-ignore lint/suspicious/noArrayIndexKey: one card per table number
+            <article key={i} className="table-card">
+              <Awning height={40} stripe={22} />
+              <div className="table-card-body">
+                <p className="table-card-shop">{stall.name}</p>
+                <p className="table-card-number">
+                  <small>Table</small>
+                  {i + 1}
+                </p>
+                <div className="table-card-qr">
+                  {/* biome-ignore lint/security/noDangerouslySetInnerHtml: locally generated SVG */}
+                  <div className="poster-code" dangerouslySetInnerHTML={{ __html: code }} />
+                  <span className="poster-coin table-card-coin" aria-hidden="true">
+                    <LogoMark size={24} />
+                  </span>
+                </div>
+                <p className="table-card-ask">Scan to order and pay</p>
+                <p className="table-card-small">We bring it to your table. Your phone tells you when it’s ready.</p>
+                <div className="table-card-foot">
+                  <Wordmark height={14} />
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="poster-page">
       <div className="poster-tools">
         <PrintButton />
         <span>A4, portrait. Tape it where people queue.</span>
+        {count > 0 ? (
+          <a className="textlink" href={`/s/${stall.slug}/poster?tables=1`}>
+            Table cards ({count})
+          </a>
+        ) : null}
       </div>
       <article className="poster">
         <Awning height={110} stripe={44} />
