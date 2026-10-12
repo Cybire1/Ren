@@ -77,9 +77,9 @@ export function OverviewLive({
   const average = count ? Number(summary.today.total) / count : 0
 
   const steps = [
-    { done: terminals.length > 0, label: 'Pair a phone as a terminal', cta: 'Pair a phone', action: () => setPairing(true) },
-    { done: summary.all_time.count > 0, label: 'Take your first payment', cta: 'Start a charge', href: '/charge' },
-    { done: hasWebhook, label: 'Send payments to your own systems', cta: 'Add a webhook', href: '/dashboard/developers' },
+    { done: terminals.length > 0, short: 'Phone paired', cta: 'Pair a phone', action: () => setPairing(true) },
+    { done: summary.all_time.count > 0, short: 'First payment', cta: 'Start a charge', href: '/charge' },
+    { done: hasWebhook, short: 'Webhook added', cta: 'Add a webhook', href: '/dashboard/developers' },
   ]
   const next = steps.find((s) => !s.done)
   const doneCount = steps.filter((s) => s.done).length + 1
@@ -100,42 +100,60 @@ export function OverviewLive({
       </header>
 
       <section className="ov-total" aria-label="Taken today">
-        <p className="ov-label">Taken today</p>
-        <p className="ov-amount">
-          <Odometer value={whole ?? '$0'} />
-          <span className="ov-cents">
-            .<Odometer value={cents ?? '00'} />
-          </span>
-        </p>
-        <div className="ov-chips">
-          <span className="chip">
-            {count} {count === 1 ? 'payment' : 'payments'}
-          </span>
-          {count ? <span className="chip">Average {usd(average)}</span> : null}
-          {busiest ? <span className="chip">Busiest hour, {hourName(busiest.hour)}</span> : null}
-          {summary.last_paid_at ? <span className="chip">Last {ago(summary.last_paid_at)}</span> : null}
-          {summary.open_intents > 0 ? (
-            <Link href="/dashboard/payments?status=requires_payment" className="chip chip-coral">
-              {summary.open_intents} waiting
-            </Link>
-          ) : null}
+        <div className="ov-total-main">
+          <p className="ov-label">Taken today</p>
+          <p className="ov-amount">
+            <Odometer value={whole ?? '$0'} />
+            <span className="ov-cents">
+              .<Odometer value={cents ?? '00'} />
+            </span>
+          </p>
         </div>
+        <ul className="ov-stats">
+          <li>
+            <span>Payments</span>
+            <strong>{count}</strong>
+          </li>
+          <li>
+            <span>Average</span>
+            <strong>{count ? usd(average) : '—'}</strong>
+          </li>
+          <li>
+            <span>Card fees</span>
+            <strong className="ov-stat-zero">$0.00</strong>
+          </li>
+        </ul>
+        {busiest || summary.last_paid_at || summary.open_intents > 0 ? (
+          <div className="ov-chips">
+            {busiest ? <span className="chip">Busiest hour, {hourName(busiest.hour)}</span> : null}
+            {summary.last_paid_at ? <span className="chip">Last {ago(summary.last_paid_at)}</span> : null}
+            {summary.open_intents > 0 ? (
+              <Link href="/dashboard/payments?status=requires_payment" className="chip chip-coral">
+                {summary.open_intents} waiting
+              </Link>
+            ) : null}
+          </div>
+        ) : null}
       </section>
 
       {next ? (
         <section className="setup" aria-label="Get set up">
-          <div className="setup-dots" aria-hidden="true">
-            {[true, ...steps.map((s) => s.done)].map((done, i) => (
-              // biome-ignore lint/suspicious/noArrayIndexKey: fixed four steps
-              <span key={i} data-done={done ? 'true' : undefined} />
-            ))}
-          </div>
           <p>
             <strong>
-              {doneCount} of {steps.length + 1} set up.
-            </strong>{' '}
-            Next: {next.label.toLowerCase()}.
+              {doneCount} of {steps.length + 1} set up
+            </strong>
           </p>
+          <ol className="setup-steps">
+            {[{ done: true, short: 'Shop opened' }, ...steps].map((step) => (
+              <li key={step.short} data-done={step.done ? 'true' : undefined}>
+                <span className="setup-check" aria-hidden="true">
+                  {step.done ? <Icon name="check" size={12} /> : null}
+                </span>
+                {step.short}
+                <span className="sr-only">{step.done ? ', done' : ', to do'}</span>
+              </li>
+            ))}
+          </ol>
           {next.href ? (
             <Link href={next.href} className="mini mini-ink">
               {next.cta} <Icon name="arrow" size={14} />
