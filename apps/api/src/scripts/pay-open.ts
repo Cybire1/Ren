@@ -11,7 +11,7 @@ import { and, eq } from 'drizzle-orm'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { encodeId } from '../ids.js'
-import { fund, getCheckout, newCustomer, pay } from './customer.js'
+import { fund, getCheckout, newCustomer, pay } from './customer-chain.js'
 
 async function main() {
   if (config.KOVA_NETWORK !== 'testnet') throw new Error('pay:open is testnet only')
@@ -26,12 +26,19 @@ async function main() {
     process.exit(0)
   }
 
-  const customer = newCustomer()
-  await fund(api, customer.address)
   for (const intent of payable) {
-    const checkout = await getCheckout(api, encodeId('paymentIntent', intent.id))
-    const paid = await pay(api, checkout, customer)
-    console.log(`${intent.reference ?? checkout.id}: ${paid.status} in ${paid.roundTripMs}ms  ${paid.payment.explorer_url}`)
+    // A fresh customer per charge: the faucet's top-up covers one charge, not a queue of them.
+    const name = intent.reference ?? encodeId('paymentIntent', intent.id)
+    try {
+      const customer = newCustomer()
+      await fund(api, customer.address)
+      const checkout = await getCheckout(api, encodeId('paymentIntent', intent.id))
+      const paid = await pay(api, checkout, customer)
+      console.log(`${name}: ${paid.status} in ${paid.roundTripMs}ms  ${paid.payment?.explorer_url ?? ''}`)
+    } catch (error) {
+      // One charge failing (more than the faucet gives, say) doesn't stop the rest.
+      console.log(`${name}: not paid, ${error instanceof Error ? error.message.split('\n')[0] : error}`)
+    }
   }
   process.exit(0)
 }

@@ -12,14 +12,15 @@ import { config } from '../config.js'
 import { db } from '../db.js'
 import { encodeId } from '../ids.js'
 import { createIntent } from '../services/intents.js'
-import { fund, getCheckout, newCustomer, pay } from './customer.js'
+import { fund, getCheckout, newCustomer, pay } from './customer-chain.js'
 
+// Each under the faucet's $5 top-up, so one fresh customer can pay for one item.
 const basket = [
   ['Jollof + drink', '4.50'],
-  ['Suya plate', '7.25'],
+  ['Suya wrap', '4.75'],
   ['Zobo, 2', '2.00'],
   ['Puff-puff', '1.25'],
-  ['Fried rice + chicken', '9.00'],
+  ['Meat pie', '3.50'],
   ['Bottled water', '0.75'],
 ] as const
 
@@ -29,10 +30,6 @@ async function main() {
 
   const merchant = await db.query.merchants.findFirst({ where: eq(schema.merchants.slug, 'demo-merchant') })
   if (!merchant) throw new Error('run `pnpm setup:dev` first')
-
-  // The customer holds dollars and no MON: Kova's relayer pays the gas.
-  const customer = newCustomer()
-  await fund(api, customer.address)
 
   const count = Math.min(Number(process.argv[2] ?? 4), basket.length)
   for (let i = 0; i < count; i++) {
@@ -45,6 +42,10 @@ async function main() {
       break
     }
 
+    // A customer each, like a real queue at the counter. They hold dollars and no gas token:
+    // Ren's relayer pays the fee. The faucet's top-up covers one basket item.
+    const customer = newCustomer()
+    await fund(api, customer.address)
     const checkout = await getCheckout(api, encodeId('paymentIntent', intent.id))
     const paid = await pay(api, checkout, customer)
     console.log(`${reference.padEnd(24)} ${amount.padStart(6)}  ${paid.status} in ${paid.roundTripMs}ms`)
