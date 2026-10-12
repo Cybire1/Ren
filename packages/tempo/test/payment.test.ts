@@ -22,7 +22,11 @@ const INTENT = '0192f3a4-5b6c-7d8e-9f01-23456789abcd'
 function transferLog(from: Address, to: Address, amount: bigint, index: number) {
   return {
     address: TOKEN,
-    topics: encodeEventTopics({ abi: Abis.tip20, eventName: 'Transfer', args: { from, to } }),
+    // Every indexed argument is given, so each topic is a plain hash; viem's type allows null.
+    topics: encodeEventTopics({ abi: Abis.tip20, eventName: 'Transfer', args: { from, to } }) as [
+      Hex,
+      ...Hex[],
+    ],
     data: pad(`0x${amount.toString(16)}`, { size: 32 }) as Hex,
     logIndex: index,
   }
@@ -35,7 +39,7 @@ function memoLog(from: Address, to: Address, amount: bigint, memo: Hex, index: n
       abi: Abis.tip20,
       eventName: 'TransferWithMemo',
       args: { from, to, memo },
-    }),
+    }) as [Hex, ...Hex[]],
     data: pad(`0x${amount.toString(16)}`, { size: 32 }) as Hex,
     logIndex: index,
   }
