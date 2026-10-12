@@ -139,7 +139,7 @@ export const checkoutRoutes = new Hono()
         throw new KovaError('conflict', 'This stamp card was already used. Order again for the full price.')
     }
 
-    const { receipt, ms } = await relayAuthorization(token, authorization, signature)
+    const { receipt, ms } = await relayAuthorization(token, authorization, signature, { zero: intent.amount === 0n })
     await settleFromReceipt(receipt)
     const settled = await load(c.req.param('id'))
     return c.json({

@@ -43,21 +43,26 @@ export const relayReady = () => Boolean(walletClient && feePayerAccount)
 /** Authorizations being submitted right now, so a double tap or a retry submits only once. */
 const inFlight = new Map<string, Promise<Relayed>>()
 
-export function relayAuthorization(token: Token, authorization: TransferAuthorization, signature: Hex): Promise<Relayed> {
+/**
+ * `zero`: a charge a stamp card made free is still paid, for $0, so it has its receipt on Monad.
+ * Only a checkout for exactly $0 may ask for it; a plain send must move money.
+ */
+export function relayAuthorization(token: Token, authorization: TransferAuthorization, signature: Hex, options: { zero?: boolean } = {}): Promise<Relayed> {
   const key = `${token.address}:${authorization.from}:${authorization.nonce}`.toLowerCase()
   const running = inFlight.get(key)
   if (running) return running
-  const job = submit(token, authorization, signature).finally(() => inFlight.delete(key))
+  const job = submit(token, authorization, signature, options.zero ?? false).finally(() => inFlight.delete(key))
   inFlight.set(key, job)
   return job
 }
 
-async function submit(token: Token, authorization: TransferAuthorization, signature: Hex): Promise<Relayed> {
+async function submit(token: Token, authorization: TransferAuthorization, signature: Hex, zero: boolean): Promise<Relayed> {
   if (!walletClient || !feePayerAccount) throw new KovaError('chain_error', 'Payments are not switched on for this server yet.')
   const started = performance.now()
 
   const now = BigInt(Math.floor(Date.now() / 1000))
-  if (authorization.value <= 0n) throw new KovaError('invalid_request', 'A payment has to move some money.')
+  if (authorization.value < 0n || (authorization.value === 0n && !zero))
+    throw new KovaError('invalid_request', 'A payment has to move some money.')
   if (authorization.validAfter > now) throw new KovaError('invalid_request', 'This payment is not valid yet.')
   if (authorization.validBefore <= now + 5n) throw new KovaError('invalid_request', 'This approval ran out. Approve the payment again.')
 
