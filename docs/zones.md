@@ -54,6 +54,12 @@ The ask to Tempo: create a zone for Ren with access mode off and AlphaUSD enable
 `0xFb0B74E4d0890b16DD2FA07185acD6C03D3d34AE` and sequencer
 `0x64461428cBaB83f51c348e9E7773D371CCE6f0e1`. Ren then runs it (below), or uses one Tempo runs.
 
+That call is ready as an unsigned Safe Transaction Builder proposal for the factory's owner Safe
+(`0x5FEDB95CDB5C512Fe93baf4D4F8c1b77f7767401`), written and simulated by
+`tempo-xtask create-zone --safe-address … --safe-output …`. Simulated on 2026-10-12, it created
+zone 4 with portal `0x5Ad0000000000000000000000000000000000004` (the id moves up if another zone
+is created first).
+
 ## Switching it on
 
 **Web** (the switch: unset, there is no Private card):
@@ -69,11 +75,47 @@ KOVA_ZONE_OPERATOR=Ren     # who runs it, as the wallet names them
 
 **API:** `KOVA_ZONE_PORTAL` set to the same portal, so the fee payer sponsors deposits into it.
 
-**Running Ren's own zone:** once Tempo has created it, write its genesis with
-`tempo-xtask create-zone --creation-tx <hash> …` (same arguments as the creation), copy
-`genesis.json` into [`infra/zone`](../infra/zone), and deploy that folder as a Railway service with
-a volume at `/data` and `ZONE_SEQUENCER_KEY`, `ZONE_PORTAL`, `L1_RPC_URL` set. Only the redacted
-RPC is exposed; the node's own RPC stays on localhost.
+## Going live, once Tempo has created Ren's zone
+
+With the Safe's execution transaction hash. The keys are in `~/.ren-zone/keys.env`.
+
+1. **Genesis**, from the creation transaction (it reads Tempo's fork schedule, so it runs against
+   Moderato, not Anvil):
+
+   ```bash
+   cd ~/tempo-zones && ./target/debug/tempo-xtask create-zone \
+     --initial-token 0x20c0000000000000000000000000000000000001 \
+     --sequencer 0x64461428cBaB83f51c348e9E7773D371CCE6f0e1 \
+     --admin 0xFb0B74E4d0890b16DD2FA07185acD6C03D3d34AE \
+     --output ~/.ren-zone/zone --creation-tx <EXECUTION_TX_HASH>
+   cp ~/.ren-zone/zone/genesis.json ~/kova-tempo/infra/zone/
+   ```
+
+2. **The sequencer's encryption key**, without which deposits revert:
+
+   ```bash
+   set -a; source ~/.ren-zone/keys.env; set +a
+   PORTAL=$(jq -r .portal ~/.ren-zone/zone/zone.json)
+   ./target/debug/tempo-xtask set-encryption-key --l1-rpc-url https://rpc.moderato.tempo.xyz \
+     --portal "$PORTAL" --private-key "$SEQUENCER_KEY"
+   ```
+
+3. **The node**, as a Railway service `zone` built from [`infra/zone`](../infra/zone), with a volume
+   at `/data` (the only copy of the zone's ledger), variables `ZONE_SEQUENCER_KEY`, `ZONE_PORTAL`
+   and `L1_RPC_URL=wss://rpc.moderato.tempo.xyz`, and a generated domain. Only the redacted RPC
+   is exposed; the node's own RPC listens on localhost. The sequencer needs a little pathUSD on
+   Moderato for batch fees (the faucet's is plenty).
+
+4. **The switch**: the web variables above (`KOVA_ZONE_RPC_URL` is the zone service's domain,
+   `KOVA_ZONE_CHAIN_ID` is `zone.json`'s `chainId`) and the API's `KOVA_ZONE_PORTAL`.
+
+5. **Check** with `scripts/zone-e2e.ts` against Moderato and the zone (`ZONE_L1_RPC`, `ZONE_RPC`,
+   `ZONE_ID`, `ZONE_CHAIN_ID`, `ZONE_PORTAL`, `ZONE_PARENT=42431`, and a `ZONE_FUNDER_KEY` holding
+   AlphaUSD and pathUSD there), then in the wallet.
+
+Rehearsed on 2026-10-12 against a local Tempo: the proposal's calldata created the zone from the
+factory owner, and a node started with `infra/zone/start.sh`'s flags passed `zone-e2e.ts`, with
+the operator RPC on `127.0.0.1` only and the redacted RPC the one public port.
 
 ## Running it locally
 
