@@ -1,7 +1,7 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Image, View } from 'react-native'
-import { createItem, getCatalog, getCheckout, lookupBarcode, ringUp, updateStall, uploadImage } from '@/lib/api'
+import { createItem, getCatalog, getCheckout, listOrders, lookupBarcode, ringUp, setOrderStatus, updateStall, uploadImage } from '@/lib/api'
 import { finishTap, forgetDevCard, linkCard, readTap } from '@/lib/card'
 import type { DisplayCurrency } from '@/lib/money'
 import { type Mode, usePrefs } from '@/lib/prefs'
@@ -153,6 +153,8 @@ export default function Dev() {
     tagline?: string
     seed?: string
     tables?: string
+    /** Moves the newest open stall order to this status: preparing, ready, collected. */
+    order?: string
     stamps?: string
     till?: string
     sell?: string
@@ -288,6 +290,11 @@ export default function Dev() {
               ...(params.stamps ? { loyalty_every: Number(params.stamps) || null } : {}),
             })
           await stall.refresh()
+        }
+        if (params.order) {
+          setStep(`marking the newest order ${params.order}`)
+          const [newest] = await listOrders('open', 1)
+          if (newest) await setOrderStatus(newest.id, params.order as Parameters<typeof setOrderStatus>[1])
         }
         if (params.till) await save('kova.till.mode', params.till)
         if (params.sell) {
