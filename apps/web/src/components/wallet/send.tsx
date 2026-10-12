@@ -4,7 +4,8 @@ import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { getAddress, isAddress } from 'viem'
-import { Art, Icon, type IconName } from '@/components/brand'
+import { Art, Icon } from '@/components/brand'
+import { chainName, onTempo } from '@/lib/chain'
 import { parseScanned } from '@/lib/wallet/links'
 import {
   applyKey,
@@ -20,9 +21,10 @@ import {
 } from '@/lib/wallet/money'
 import { sessionCovers } from '@/lib/wallet/session'
 import { Home } from './home'
+import { PrivateScreen } from './private'
 import { type Contact, isUnnamed, short, useWallet } from './provider'
+import { Fact, Fit, SlideToSend, wait } from './sheet'
 import { Avatar, Keypad } from './ui'
-import { chainName, onTempo } from '@/lib/chain'
 
 const first = (name: string) => (isUnnamed(name) ? short(name) : (name.split(' ')[0] ?? name))
 
@@ -51,10 +53,10 @@ type Leg = 'waiting' | 'flying' | 'landed'
  * send, and the same sheet becomes the receipt. It resizes to each step, so it settles low once
  * the money has landed and your balance shows behind it, counting down.
  */
-export function SendSheet({ to }: { to?: string }) {
+export function SendSheet({ to, privately = false }: { to?: string; privately?: boolean }) {
   const router = useRouter()
   const params = useSearchParams()
-  const { contacts, balance, send, rates, liveRates, profile, noteReaches } = useWallet()
+  const { contacts, balance, send, rates, liveRates, profile, noteReaches, privacy } = useWallet()
 
   const asked = params.get('amount')
   const start: Payee | null =
@@ -118,14 +120,17 @@ export function SendSheet({ to }: { to?: string }) {
     }
   }, [typed])
   const dollars = baseToNumber(amount)
-  const over = balance !== null && amount > balance
+  // Sending privately draws on your balance on the zone's Tempo: this same balance, unless the
+  // zone hangs off a test chain.
+  const spendable = privately ? privacy.available : balance
+  const over = spendable !== null && amount > spendable
   const theirLocal = local ? formatLocal(dollars, local, rates) : null
 
   const close = useCallback(() => {
     if (busy) return
     setClosing(true)
-    setTimeout(() => router.push('/wallet'), 260)
-  }, [busy, router])
+    setTimeout(() => router.push(privately ? '/wallet/private' : '/wallet'), 260)
+  }, [busy, privately, router])
 
   // A dialog: Escape closes it, the page behind doesn't scroll.
   useEffect(() => {
@@ -158,7 +163,10 @@ export function SendSheet({ to }: { to?: string }) {
     setLeg('flying')
     const started = Date.now()
     try {
-      const moved = await send(contact, amount, note)
+      // Privately: a deposit into the private zone, addressed to them (components/wallet/private-state.ts).
+      const moved = privately
+        ? await privacy.sendPrivately({ address: payee.address, name }, amount)
+        : await send(contact, amount, note)
       // Let Reni finish the leg it is on: the flight is timed to about what the chain takes.
       await wait(Math.max(0, 1360 - (Date.now() - started)))
       setLeg('landed')
@@ -179,7 +187,7 @@ export function SendSheet({ to }: { to?: string }) {
   return (
     <>
       <div aria-hidden="true" inert>
-        <Home />
+        {privately ? <PrivateScreen /> : <Home />}
       </div>
       <button
         type="button"
@@ -191,13 +199,13 @@ export function SendSheet({ to }: { to?: string }) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={payee ? `Send to ${name}` : 'Send'}
+        aria-label={payee ? `Send ${privately ? 'privately ' : ''}to ${name}` : 'Send'}
         className={`w-sheet${closing ? ' w-sheet-out' : ''}`}
       >
         <button type="button" className="w-sheet-grab" aria-label="Close" onClick={close} />
         <Fit>
           <div key={step} className={`w-sheet-step${back ? ' w-sheet-step-back' : ''}`}>
-            {step === 'who' ? <Who onPick={pick} /> : null}
+            {step === 'who' ? <Who onPick={pick} privately={privately} /> : null}
 
             {step === 'amount' && payee ? (
               <div className="w-sheet-amount">
@@ -225,18 +233,25 @@ export function SendSheet({ to }: { to?: string }) {
                   {groupTyped(typed)}
                 </p>
                 <div className="w-sheet-pills">
+                  {privately ? (
+                    <span className="w-sheet-pill w-sheet-pill-ink">
+                      <Icon name="lock" size={13} /> Lands in their private balance
+                    </span>
+                  ) : null}
                   {theirLocal && amount > 0n ? (
                     <span className="w-sheet-pill w-sheet-pill-teal">
                       {first(name)} sees ≈ {theirLocal}
                     </span>
                   ) : null}
-                  {balance !== null ? (
+                  {spendable !== null ? (
                     <span className={`w-sheet-pill${over ? ' w-sheet-pill-over' : ''}`}>
-                      {over ? `You have ${formatUsd(balance)}` : `${formatUsd(balance)} available`}
+                      {over
+                        ? `You have ${formatUsd(spendable)}`
+                        : `${formatUsd(spendable)} available`}
                     </span>
                   ) : null}
                 </div>
-                {onTempo ? (
+                {privately ? null : onTempo ? (
                   <input
                     className="w-note"
                     value={note}
@@ -286,7 +301,11 @@ export function SendSheet({ to }: { to?: string }) {
                     <Icon name="back" size={20} />
                   </button>
                   <strong className="w-sheet-title">
-                    {busy ? `Sending to ${first(name)}` : 'Check and send'}
+                    {busy
+                      ? `Sending to ${first(name)}`
+                      : privately
+                        ? 'Check and send privately'
+                        : 'Check and send'}
                   </strong>
                 </div>
                 <ArcRoute
@@ -305,8 +324,23 @@ export function SendSheet({ to }: { to?: string }) {
                   </span>
                 </div>
                 <dl className="w-facts">
+                  {privately ? (
+                    <>
+                      <Fact label="Who knows" value={`You and ${first(name)}`} icon="lock" />
+                      <Fact
+                        label={`${chainName} sees`}
+                        value={`${formatUsd(amount)} going in`}
+                        icon="eye"
+                        hint="Not who it’s for"
+                      />
+                    </>
+                  ) : null}
                   <Fact label="Fee" value="$0.00, Ren covers it" />
-                  <Fact label="Arrives" value="In about a second" icon="bolt" />
+                  <Fact
+                    label="Arrives"
+                    value={privately ? 'In their private balance, in seconds' : 'In about a second'}
+                    icon="bolt"
+                  />
                   {local ? (
                     <Fact
                       label="Rate"
@@ -339,11 +373,15 @@ export function SendSheet({ to }: { to?: string }) {
                 ) : null}
                 {over ? (
                   <p className="form-error">
-                    You have {formatUsd(balance ?? 0n)}. Add money first, or send less.
+                    You have {formatUsd(spendable ?? 0n)}. Add money first, or send less.
                   </p>
                 ) : null}
                 <SlideToSend
-                  label={problem ? 'Slide to try again' : `Slide to send ${formatUsd(amount)}`}
+                  label={
+                    problem
+                      ? 'Slide to try again'
+                      : `Slide to send ${formatUsd(amount)}${privately ? ' privately' : ''}`
+                  }
                   busy={busy}
                   disabled={over || amount === 0n}
                   onSend={() => void go()}
@@ -359,19 +397,20 @@ export function SendSheet({ to }: { to?: string }) {
             {step === 'sent' && payee && sent ? (
               <div className="w-sheet-sent">
                 <div className="w-sheet-cheer">
-                  <Art name="reni-cheer" size={150} />
+                  <Art name={privately ? 'reni-key' : 'reni-cheer'} size={150} />
                   <Art name="sparkle-4" size={26} className="w-spark w-spark-1" />
                   <Art name="sparkle-8" size={30} className="w-spark w-spark-2" />
                   <Art name="sparkle-11" size={20} className="w-spark w-spark-3" />
                 </div>
-                <h2>Sent</h2>
+                <h2>{privately ? 'Sent privately' : 'Sent'}</h2>
                 <p>
-                  {formatUsd(amount)} landed with {first(name)}
-                  {theirLocal ? `, about ${theirLocal}` : ''}
+                  {privately
+                    ? `${formatUsd(amount)} is in ${first(name)}’s private balance. Only the two of you know.`
+                    : `${formatUsd(amount)} landed with ${first(name)}${theirLocal ? `, about ${theirLocal}` : ''}`}
                 </p>
                 <span className="w-sheet-time">
                   <Icon name="bolt" size={16} />
-                  Arrived in {(sent.ms / 1000).toFixed(2)} s on {chainName}
+                  {privately ? 'Sent' : 'Arrived'} in {(sent.ms / 1000).toFixed(2)} s on {chainName}
                 </span>
                 <button type="button" className="pill pill-block" data-tone="ink" onClick={close}>
                   <span className="pill-label">Done</span>
@@ -379,8 +418,11 @@ export function SendSheet({ to }: { to?: string }) {
                     <Icon name="check" size={18} />
                   </span>
                 </button>
-                <Link href={`/wallet/activity/${sent.hash}`} className="textlink">
-                  See receipt
+                <Link
+                  href={privately ? '/wallet/private' : `/wallet/activity/${sent.hash}`}
+                  className="textlink"
+                >
+                  {privately ? 'See private activity' : 'See receipt'}
                 </Link>
               </div>
             ) : null}
@@ -398,30 +440,14 @@ export function SendSheet({ to }: { to?: string }) {
   )
 }
 
-const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
-
-/** Holds the sheet at its content's height and animates between heights as the steps change. */
-function Fit({ children }: { children: React.ReactNode }) {
-  const inner = useRef<HTMLDivElement>(null)
-  const [height, setHeight] = useState<number | null>(null)
-  useLayoutEffect(() => {
-    const el = inner.current
-    if (!el) return
-    const measure = () => setHeight(el.offsetHeight)
-    measure()
-    const observer = new ResizeObserver(measure)
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [])
-  return (
-    <div className="w-sheet-fit" style={height === null ? undefined : { height }}>
-      <div ref={inner}>{children}</div>
-    </div>
-  )
-}
-
 /** Who to send to: one field for a name, an address or a link; your people one tap away. */
-function Who({ onPick }: { onPick: (p: Payee & { amount?: string; note?: string }) => void }) {
+function Who({
+  onPick,
+  privately = false,
+}: {
+  onPick: (p: Payee & { amount?: string; note?: string }) => void
+  privately?: boolean
+}) {
   const router = useRouter()
   const { contacts, activity } = useWallet()
   const [text, setText] = useState('')
@@ -453,7 +479,15 @@ function Who({ onPick }: { onPick: (p: Payee & { amount?: string; note?: string 
 
   return (
     <div>
-      <h2 className="w-sheet-h">Send to</h2>
+      <h2 className="w-sheet-h">
+        {privately ? (
+          <>
+            <Icon name="lock" size={20} /> Send privately to
+          </>
+        ) : (
+          'Send to'
+        )}
+      </h2>
       <form
         className="w-find"
         onSubmit={(e) => {
@@ -568,35 +602,6 @@ function Who({ onPick }: { onPick: (p: Payee & { amount?: string; note?: string 
           </div>
         </>
       ) : null}
-    </div>
-  )
-}
-
-function Fact({
-  label,
-  value,
-  hint,
-  icon,
-}: {
-  label: string
-  value: string
-  hint?: string
-  icon?: IconName
-}) {
-  return (
-    <div className="w-fact">
-      <dt>{label}</dt>
-      <dd>
-        <span>
-          {icon ? (
-            <span className={icon === 'lock' ? 'w-fact-lock' : undefined}>
-              <Icon name={icon} size={15} />
-            </span>
-          ) : null}
-          {value}
-        </span>
-        {hint ? <small>{hint}</small> : null}
-      </dd>
     </div>
   )
 }
@@ -731,111 +736,6 @@ function ArcRoute({
       <div ref={reni} className="w-arc-reni">
         <Art name="reni-ride" size={RENI} className="w-arc-reni-art" />
       </div>
-    </div>
-  )
-}
-
-const KNOB = 56
-const PAD = 6
-
-/**
- * Slide to send: the one deliberate gesture between a review and money leaving. The track fills
- * coral behind the knob; letting go short of the end springs it home. With a keyboard, the knob
- * is a button: Enter or Space sends.
- */
-function SlideToSend({
-  label,
-  busy,
-  disabled,
-  onSend,
-}: {
-  label: string
-  busy: boolean
-  disabled?: boolean
-  onSend: () => void
-}) {
-  const track = useRef<HTMLDivElement>(null)
-  const [x, setX] = useState(0)
-  const [dragging, setDragging] = useState(false)
-  const [nudge, setNudge] = useState(false)
-  const drag = useRef<{ start: number; from: number; moved: boolean } | null>(null)
-  const max = () => (track.current ? track.current.clientWidth - KNOB - PAD * 2 : 0)
-
-  useEffect(() => {
-    const el = track.current
-    setX(busy && el ? el.clientWidth - KNOB - PAD * 2 : 0)
-  }, [busy])
-
-  const commit = () => {
-    setX(max())
-    navigator.vibrate?.(20)
-    onSend()
-  }
-
-  return (
-    <div
-      ref={track}
-      className={`w-slide${disabled ? ' w-slide-off' : ''}${busy ? ' w-slide-busy' : ''}${dragging ? ' w-slide-drag' : ''}`}
-    >
-      <span className="w-slide-fill" style={{ width: x + KNOB + PAD }} />
-      <span
-        className="w-slide-words"
-        style={{ opacity: busy ? 0 : Math.max(0, 1 - x / (max() * 0.5 || 1)) }}
-      >
-        {label}
-        <span className="w-slide-chevrons" aria-hidden="true">
-          <Icon name="chevron" size={16} />
-          <Icon name="chevron" size={16} />
-          <Icon name="chevron" size={16} />
-        </span>
-      </span>
-      {busy ? <span className="w-slide-words">Sending</span> : null}
-      <button
-        type="button"
-        className={`w-slide-knob${nudge ? ' w-slide-nudge' : ''}`}
-        style={{ transform: `translateX(${x}px)` }}
-        disabled={disabled || busy}
-        aria-label={`${label}. Press Enter to send.`}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault()
-            commit()
-          }
-        }}
-        onPointerDown={(e) => {
-          if (disabled || busy) return
-          e.currentTarget.setPointerCapture(e.pointerId)
-          drag.current = { start: e.clientX, from: x, moved: false }
-          setDragging(true)
-        }}
-        onPointerMove={(e) => {
-          if (!drag.current) return
-          const dx = e.clientX - drag.current.start
-          if (Math.abs(dx) > 4) drag.current.moved = true
-          setX(Math.min(max(), Math.max(0, drag.current.from + dx)))
-        }}
-        onPointerUp={() => {
-          const d = drag.current
-          drag.current = null
-          setDragging(false)
-          if (!d) return
-          if (x >= max() * 0.86) return commit()
-          setX(0)
-          // A click instead of a slide: show which way it goes.
-          if (!d.moved) {
-            setNudge(true)
-            setTimeout(() => setNudge(false), 700)
-          }
-        }}
-        onPointerCancel={() => {
-          drag.current = null
-          setDragging(false)
-          setX(0)
-        }}
-        onClick={(e) => e.preventDefault()}
-      >
-        {busy ? <span className="w-slide-spin" /> : <Icon name="arrow" size={24} />}
-      </button>
     </div>
   )
 }

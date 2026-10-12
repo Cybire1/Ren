@@ -48,6 +48,12 @@ export function Avatar({ name, id, size = 56 }: { name: string; id?: string; siz
 }
 
 export function EntryBadge({ entry, size = 44 }: { entry: Entry; size?: number }) {
+  if (entry.zone)
+    return (
+      <span className="w-lockbadge" style={{ width: size, height: size }} aria-hidden="true">
+        <Icon name="lock" size={Math.round(size * 0.42)} />
+      </span>
+    )
   if (entry.kind === 'paid') return <Art name="badge-shop" size={size} className="w-face" />
   if (entry.kind === 'added') return <Art name="badge-add" size={size} className="w-face" />
   return <Avatar name={entry.name} id={entry.address} size={size} />

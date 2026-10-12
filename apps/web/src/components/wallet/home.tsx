@@ -4,10 +4,11 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Awning } from '@/components/awning'
 import { Art, Icon } from '@/components/brand'
+import { chainName, onTempo } from '@/lib/chain'
 import { formatUsd, toBase } from '@/lib/wallet/money'
+import { PrivateCard } from './private'
 import { isUnnamed, useWallet } from './provider'
 import { ActionTile, Avatar, BalanceCard, EntryRow, isFresh, Waves } from './ui'
-import { chainName, onTempo } from '@/lib/chain'
 
 const greetingFor = (hour: number) =>
   hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
@@ -66,6 +67,8 @@ export function Home() {
           {hello}
           {profile.name ? null : <NameYourself />}
           <BalanceCard empty />
+          {/* Dollars someone sent privately are here even when the balance above is empty. */}
+          <PrivateCard />
         </div>
         <div className="w-home-side">
           <FirstSteps />
@@ -118,6 +121,8 @@ export function Home() {
             <ActionTile kind="request" />
           </div>
         </div>
+
+        <PrivateCard />
 
         <ShopCard />
 

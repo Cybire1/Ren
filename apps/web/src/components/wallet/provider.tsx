@@ -32,6 +32,8 @@ import {
 } from '@/lib/wallet/money'
 import { fetchNoteKey, noteKeys, openNote, publishNoteKey } from '@/lib/wallet/notes'
 import { endSession, sessionAccount, spend, startSession } from '@/lib/wallet/session'
+import { lockZone, type ZoneConfig } from '@/lib/wallet/zone'
+import { isZonePortal, type PrivateValue, usePrivate } from './private-state'
 
 /**
  * Kova Pay on the web: your wallet, from your passkey, the one the Kova app uses.
@@ -71,6 +73,8 @@ export interface Entry {
   private?: 'both' | 'you'
   /** A private note this browser can't open until the passkey is used (the key lives in memory). */
   locked?: boolean
+  /** Dollars between your balance and your private balance (a Tempo Zone), not to a person. */
+  zone?: boolean
 }
 
 export interface ShopToday {
@@ -158,6 +162,8 @@ interface WalletValue {
   renameContact: (address: string, name: string) => void
   signOut: () => void
   refresh: () => Promise<void>
+  /** Your private balance on the site's Tempo Zone, when it has one (components/wallet/private.tsx). */
+  privacy: PrivateValue
 }
 
 /**
@@ -211,11 +217,14 @@ export function WalletProvider({
   network,
   shop,
   initialRates,
+  zone = null,
   children,
 }: {
   network: NetworkId
   shop: ShopToday | null
   initialRates: LiveRates | null
+  /** The private zone this site offers, if any (lib/zone-site.ts). */
+  zone?: ZoneConfig | null
   children: React.ReactNode
 }) {
   const [status, setStatus] = useState<WalletValue['status']>('loading')
@@ -415,6 +424,15 @@ export function WalletProvider({
     [backUp, profile, saved, takeVault, vaultContents],
   )
 
+  const privacy = usePrivate({
+    zone,
+    network,
+    address: profile?.address ?? null,
+    balance,
+    unlock,
+    onMoved: () => void refresh(),
+  })
+
   const noteReaches = useCallback(
     async (address: string) => (await fetchNoteKey(getAddress(address))) !== null,
     [],
@@ -566,6 +584,7 @@ export function WalletProvider({
 
   const signOut = useCallback(() => {
     endSession()
+    if (zone && profile) void lockZone(zone, profile.address)
     vaultSecret.current = null
     try {
       localStorage.removeItem(PROFILE)
@@ -576,7 +595,7 @@ export function WalletProvider({
     setSaved([])
     setNotes({})
     setStatus('none')
-  }, [])
+  }, [profile, zone])
 
   const rememberShop = useCallback(
     (name: string) => {
@@ -643,6 +662,25 @@ export function WalletProvider({
       const incoming = t.to.toLowerCase() === me
       if (!out && !incoming) continue
       indexed.add(t.tx_hash.toLowerCase())
+      // Dollars into or out of the private zone: Tempo shows the zone's portal, never who they were
+      // for. This browser knows when it sent them to someone.
+      if (isZonePortal(zone, out ? t.to : t.from)) {
+        const mine = privacy.noteFor(t.tx_hash)
+        const toThem = out && mine?.kind === 'sent'
+        entries.push({
+          id: t.id,
+          kind: out ? 'sent' : 'received',
+          amount: t.amount_base,
+          name: toThem ? (mine.name ?? 'Someone') : 'Private balance',
+          detail: toThem ? 'Sent privately' : out ? 'Moved in' : 'Moved out',
+          ...(toThem ? { private: 'both' as const, address: mine.to } : { zone: true }),
+          txHash: t.tx_hash,
+          explorer: t.explorer_url,
+          ...(mine ? { ms: mine.ms } : {}),
+          at: mine?.at ?? Date.parse(t.created_at),
+        })
+        continue
+      }
       const note = notes[t.tx_hash.toLowerCase()]
       const at = note?.at ?? Date.parse(t.created_at)
       const sealed = note ? null : openFor(t)
@@ -716,8 +754,25 @@ export function WalletProvider({
         ...(note.private ? { private: note.private } : {}),
       })
     }
+    // So does a move into the zone, or a private send.
+    for (const n of privacy.notes) {
+      if (n.kind === 'out' || indexed.has(n.hash.toLowerCase()) || Date.now() - n.at > 600_000)
+        continue
+      const toThem = n.kind === 'sent'
+      entries.push({
+        id: `${n.hash}:pending`,
+        kind: 'sent',
+        amount: n.amount,
+        name: toThem ? (n.name ?? 'Someone') : 'Private balance',
+        detail: toThem ? 'Sent privately' : 'Moved in',
+        ...(toThem ? { private: 'both' as const, address: n.to } : { zone: true }),
+        txHash: n.hash,
+        ms: n.ms,
+        at: n.at,
+      })
+    }
     return entries.sort((a, b) => b.at - a.at)
-  }, [nameFor, noteSecret, notes, openFor, profile, transfers])
+  }, [nameFor, noteSecret, notes, openFor, privacy, profile, transfers, zone])
 
   /** Everyone you've paid or been paid by, plus the people you've named, most recent first. */
   const contacts = useMemo<Contact[]>(() => {
@@ -772,8 +827,10 @@ export function WalletProvider({
       renameContact,
       signOut,
       refresh,
+      privacy,
     }),
     [
+      privacy,
       network,
       shop,
       knownShop,

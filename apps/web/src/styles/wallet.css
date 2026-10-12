@@ -3834,3 +3834,406 @@ button.w-add-chain {
 .w-review-reward > :last-child {
   color: var(--coral-deep);
 }
+
+/* Private: a balance on a Tempo Zone (components/wallet/private.tsx). Money at rest is green and
+   paying is watermelon; private is ink, behind a faint dot screen, with Reni holding the key. */
+
+.w-privcard,
+.w-private {
+  position: relative;
+  border: 2px solid var(--ink);
+  background: var(--ink);
+  color: #fff;
+  overflow: hidden;
+}
+
+.w-privcard::before,
+.w-private::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.4px);
+  background-size: 12px 12px;
+  pointer-events: none;
+}
+
+.w-privcard {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.75rem;
+  padding: 0.8rem 0.8rem 0.8rem 0.9rem;
+  border-radius: 1.6rem;
+  text-decoration: none;
+  transition: transform 0.45s var(--spring);
+}
+
+.w-privcard:active {
+  transform: scale(0.98);
+}
+
+.w-privcard-lock,
+.w-howpriv-icon,
+.w-lockbadge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ink);
+  color: var(--teal-soft);
+}
+
+.w-privcard-lock {
+  position: relative;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  background: var(--ink-2);
+}
+
+.w-privcard-text {
+  position: relative;
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.w-privcard-text small,
+.w-private-label {
+  color: var(--teal-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.w-privcard-text strong {
+  font-size: 1.3rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.w-privcard-text span {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+}
+
+.w-privcard-reni {
+  position: relative;
+  flex: none;
+  margin: -0.7rem -0.35rem -1.25rem 0;
+  transform: rotate(-6deg);
+}
+
+.w-privcard-go {
+  position: relative;
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: #fff;
+  color: var(--ink);
+}
+
+.w-private {
+  min-height: 11.75rem;
+  margin-top: 1rem;
+  padding: 1rem 1.25rem 1.1rem;
+  border-radius: 1.9rem;
+}
+
+.w-private-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.w-private-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.8125rem;
+}
+
+.w-chip.w-chip-ink {
+  border-color: rgba(255, 255, 255, 0.3);
+  background: var(--ink-2);
+  color: #fff;
+}
+
+.w-private-amount {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  margin-top: 0.7rem;
+  padding-right: 6.5rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.w-private-amount .w-balance-sign,
+.w-private-amount .w-balance-cents {
+  color: var(--teal-soft);
+}
+
+.w-private-locked {
+  position: relative;
+  display: grid;
+  justify-items: start;
+  gap: 0.55rem;
+  margin-top: 0.4rem;
+  padding-right: 6rem;
+}
+
+.w-private-dots {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 2.5rem;
+  font-weight: 800;
+  letter-spacing: 0.3rem;
+  line-height: 1.05;
+}
+
+.w-private-where {
+  position: relative;
+  margin-top: 0.75rem;
+  padding-right: 6rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.875rem;
+}
+
+.w-private-reni {
+  position: absolute;
+  right: 0.5rem;
+  bottom: -0.4rem;
+  transform: rotate(-4deg);
+  pointer-events: none;
+}
+
+.w-private-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
+
+.w-privact {
+  display: grid;
+  align-content: start;
+  justify-items: start;
+  gap: 0.15rem;
+  padding: 0.75rem 0.75rem 0.85rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+  transition:
+    transform 0.15s,
+    box-shadow 0.15s;
+}
+
+.w-privact:active {
+  transform: translateY(4px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.w-privact-coral {
+  background: var(--coral-soft);
+}
+
+.w-privact-disc {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin-bottom: 0.35rem;
+  border-radius: 50%;
+  background: var(--ink);
+  color: #fff;
+}
+
+.w-privact-coral .w-privact-disc {
+  background: var(--coral);
+}
+
+.w-privact-label {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.w-privact-sub {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  line-height: 1.25;
+}
+
+.w-privact-coral .w-privact-sub {
+  color: var(--ink-2);
+}
+
+.w-howpriv {
+  margin-top: 1.5rem;
+}
+
+.w-howpriv ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.w-howpriv li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.8rem 0.9rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.2rem;
+  background: var(--surface);
+}
+
+.w-howpriv-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.w-howpriv li > span:last-child {
+  display: grid;
+  gap: 0.15rem;
+  line-height: 1.4;
+}
+
+.w-howpriv strong {
+  font-weight: 800;
+}
+
+.w-howpriv li > span:last-child > span {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.w-lockbadge {
+  width: 44px;
+  height: 44px;
+}
+
+.w-lockbadge-out {
+  background: var(--teal);
+  color: #fff;
+}
+
+.w-privrow-pending {
+  opacity: 0.65;
+}
+
+.w-entry-amount.w-privrow-muted {
+  color: var(--muted);
+}
+
+.w-sheet-h {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.w-sheet-pill-ink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: var(--ink);
+  color: #fff;
+}
+
+/* Moving in or out: your balance, a dotted path with a coin on it, your private balance. */
+
+.w-movearc {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: 0.6rem;
+  margin: 1.25rem 0 0.25rem;
+}
+
+.w-movearc-end {
+  display: grid;
+  justify-items: center;
+  gap: 0.4rem;
+  width: 6.5rem;
+}
+
+.w-movearc-end svg {
+  box-sizing: content-box;
+  padding: 0.85rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.w-movearc-ink svg {
+  background: var(--ink);
+  color: var(--teal-soft);
+}
+
+.w-movearc-end small {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 650;
+  text-align: center;
+}
+
+.w-movearc-path {
+  position: relative;
+  height: 3.3rem;
+}
+
+.w-movearc-path::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  height: 3px;
+  background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 11px);
+  opacity: 0.55;
+  transform: translateY(-50%);
+}
+
+.w-movearc-coin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-10deg);
+}
+
+.w-movearc-busy .w-movearc-coin {
+  animation: movecoin 1.1s var(--spring) infinite;
+}
+
+@keyframes movecoin {
+  from {
+    left: 0%;
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  to {
+    left: 100%;
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .w-movearc-busy .w-movearc-coin {
+    animation: none;
+  }
+}

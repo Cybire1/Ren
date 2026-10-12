@@ -5,6 +5,7 @@ import { kovaPublic, type Merchant, type Summary } from '@/lib/api'
 import { getSession } from '@/lib/session'
 import { timeZone, tzQuery } from '@/lib/tz'
 import type { LiveRates } from '@/lib/wallet/money'
+import { zoneSite } from '@/lib/zone-site'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,6 +36,7 @@ export default async function WalletLayout({ children }: { children: React.React
       network={process.env.KOVA_NETWORK === 'mainnet' ? 'mainnet' : 'testnet'}
       shop={shop}
       initialRates={rates}
+      zone={zoneSite()}
     >
       <WalletShell>{children}</WalletShell>
     </WalletProvider>
