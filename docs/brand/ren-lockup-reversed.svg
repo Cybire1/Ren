@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="120" viewBox="0 0 300 120" role="img" aria-label="Ren">
+  <title>Ren</title>
+  <g transform="scale(0.6)" fill="none" stroke-linecap="round">
+    <path d="M62 46 V154" stroke="#FFFFFF" stroke-width="19"/>
+    <path d="M92.6 74.3 A40 40 0 0 1 92.6 125.7" stroke="#FF5E7E" stroke-width="17"/>
+    <path d="M115.6 55 A70 70 0 0 1 115.6 145" stroke="#FF5E7E" stroke-width="17"/>
+    <path d="M138.6 35.7 A100 100 0 0 1 138.6 164.3" stroke="#FF5E7E" stroke-width="17"/>
+  </g>
+  <g transform="translate(130 25) scale(0.9) translate(0 -27)" fill="none" stroke="#FFFFFF" stroke-width="15.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M8 40 V92"/>
+    <path d="M8 66 Q8 40 40 41"/>
+    <circle cx="80" cy="66" r="26" fill="#FF5E7E" stroke="none"/>
+    <path d="M54 66 H106 A26 26 0 1 0 98.4 84.4"/>
+    <path d="M132 40 V92"/>
+    <path d="M132 64 A22 22 0 0 1 176 64 V92"/>
+  </g>
+</svg>

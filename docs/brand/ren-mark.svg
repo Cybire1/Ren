@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200" role="img" aria-label="Ren">
+  <title>Ren</title>
+  <rect width="200" height="200" rx="48" fill="#E8F7EF"/>
+  <g fill="none" stroke-linecap="round">
+    <path d="M62 46 V154" stroke="#10233F" stroke-width="19"/>
+    <path d="M92.6 74.3 A40 40 0 0 1 92.6 125.7" stroke="#FF5E7E" stroke-width="17"/>
+    <path d="M115.6 55 A70 70 0 0 1 115.6 145" stroke="#FF5E7E" stroke-width="17"/>
+    <path d="M138.6 35.7 A100 100 0 0 1 138.6 164.3" stroke="#FF5E7E" stroke-width="17"/>
+  </g>
+</svg>
