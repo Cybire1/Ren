@@ -10,14 +10,23 @@ import {
   encodeFunctionData,
   type Hex,
   hexToBytes,
+  isAddressEqual,
   type LocalAccount,
   numberToBytes,
   parseAbi,
   parseAbiItem,
   type TransactionReceipt,
 } from 'viem'
-import { getBlock, getLogs, sendTransactionSync, waitForTransactionReceipt } from 'viem/actions'
-import { Abis, Actions, createClient, Store, Zone, http as zoneHttp } from 'viem/tempo'
+import {
+  estimateGas,
+  getBlock,
+  getBlockNumber,
+  getGasPrice,
+  getLogs,
+  sendTransactionSync,
+  waitForTransactionReceipt,
+} from 'viem/actions'
+import { Abis, Actions, Addresses, createClient, Store, Zone, http as zoneHttp } from 'viem/tempo'
 
 /**
  * Private dollars, on a Tempo Zone: a private chain anchored to Tempo, run by an operator, where
@@ -261,21 +270,49 @@ export async function withdraw(
   parameters: { amount: bigint; to?: Address },
 ): Promise<TransactionReceipt> {
   const client = zoneClient(access, account)
+  const request = {
+    token: access.zone.token,
+    amount: parameters.amount,
+    to: parameters.to ?? account.address,
+  }
+  // Gas in a current-runtime zone costs nothing. A sandbox zone charges it in the zone's dollar,
+  // from the same private balance, for the gas limit up front: so ask for what it needs, not
+  // viem's default ten million.
+  const fees =
+    access.zone.runtime === 'current'
+      ? { maxFeePerGas: 0n, maxPriorityFeePerGas: 0n }
+      : {
+          gas:
+            ((await estimateGas(
+              client as never,
+              {
+                account,
+                calls: Actions.zone.requestWithdrawal.calls(request as never),
+              } as never,
+            )) *
+              12n) /
+            10n,
+        }
   // Not the Sync variant: the private RPC hides the outbox's own event from receipts, which the
   // Sync variant looks for. A receipt of our own transaction is enough.
   const hash = await Actions.zone.requestWithdrawal(
     client as never,
-    {
-      token: access.zone.token,
-      amount: parameters.amount,
-      to: parameters.to ?? account.address,
-      // Gas in a current-runtime zone costs nothing; a sandbox zone prices its own.
-      ...(access.zone.runtime === 'current' ? { maxFeePerGas: 0n, maxPriorityFeePerGas: 0n } : {}),
-    } as never,
+    { ...request, ...fees } as never,
   )
   const receipt = await waitForTransactionReceipt(client, { hash, timeout: 30_000 })
   if (receipt.status !== 'success') throw new Error('The zone didn’t take the withdrawal.')
   return receipt
+}
+
+/**
+ * What a move out keeps back for the zone's gas, in base units, rounded up to a cent: nothing on a
+ * current-runtime zone; on a sandbox zone, about 600,000 gas at its own gas price.
+ */
+export async function moveOutReserve(access: ZoneAccess): Promise<bigint> {
+  if (access.zone.runtime === 'current') return 0n
+  const price = await getGasPrice(zoneClient(access))
+  const cost = (600_000n * price) / 10n ** 12n
+  return ((cost + 9_999n) / 10_000n) * 10_000n
 }
 
 /** What moved in or out of a private balance, as the zone's private RPC shows its owner. */
@@ -296,20 +333,27 @@ const transfer = parseAbiItem(
  * outbox). The private RPC returns only events that name you, so this is all it can show, and
  * it never shows who a deposit came from.
  */
+/** Zones cap a log query at a million blocks: about three days, at a block every 250 ms. */
+const HISTORY_BLOCKS = 900_000n
+
 export async function privateMoves(access: ZoneAccess, address: Address): Promise<PrivateMove[]> {
   const client = zoneClient(access)
+  const head = await getBlockNumber(client)
+  const fromBlock = head > HISTORY_BLOCKS ? head - HISTORY_BLOCKS : 0n
   const [incoming, outgoing] = await Promise.all([
     getLogs(client, {
       address: access.zone.token,
       event: transfer,
       args: { to: address },
-      fromBlock: 0n,
+      fromBlock,
+      toBlock: head,
     }),
     getLogs(client, {
       address: access.zone.token,
       event: transfer,
       args: { from: address },
-      fromBlock: 0n,
+      fromBlock,
+      toBlock: head,
     }),
   ])
   const zero = /^0x0{40}$/i
@@ -317,7 +361,11 @@ export async function privateMoves(access: ZoneAccess, address: Address): Promis
     ...incoming
       .filter((l) => l.args.from && zero.test(l.args.from))
       .map((l) => ({ kind: 'in' as const, log: l })),
-    ...outgoing.map((l) => ({ kind: 'out' as const, log: l })),
+    // A move out is the transfer to the outbox; a sandbox zone's gas goes to its fee manager
+    // in the same transaction, and isn't a move of its own.
+    ...outgoing
+      .filter((l) => l.args.to && isAddressEqual(l.args.to, Addresses.zoneOutbox))
+      .map((l) => ({ kind: 'out' as const, log: l })),
   ]
   const blocks = new Map<bigint, number>()
   for (const { log } of moves) {

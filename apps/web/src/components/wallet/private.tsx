@@ -119,7 +119,8 @@ export function PrivateScreen() {
           </div>
         )}
         <p className="w-private-where">
-          In {zone.operator === 'Ren' ? 'Ren’s' : `${zone.operator}’s`} private zone on {chainName}
+          In {zone.operator}’s private zone
+          {zone.operator === chainName ? '' : ` on ${chainName}`}
         </p>
         <Art name="reni-key" size={104} className="w-private-reni" />
       </section>
@@ -318,7 +319,14 @@ export function MoveSheet({ direction }: { direction: 'in' | 'out' }) {
   const router = useRouter()
   const { privacy } = useWallet()
   const into = direction === 'in'
-  const available = into ? privacy.available : privacy.balance
+  // Moving out keeps back what the zone charges for gas, where it charges any.
+  const available = into
+    ? privacy.available
+    : privacy.balance === null
+      ? null
+      : privacy.balance > privacy.outReserve
+        ? privacy.balance - privacy.outReserve
+        : 0n
   const locked = !into && privacy.status !== 'ready'
   const [step, setStep] = useState<Step>('amount')
   const [typed, setTyped] = useState('')
@@ -517,7 +525,16 @@ export function MoveSheet({ direction }: { direction: 'in' | 'out' }) {
                   </span>
                 </div>
                 <dl className="w-facts">
-                  <Fact label="Fee" value={into ? '$0.00, Ren covers it' : '$0.00'} />
+                  <Fact
+                    label="Fee"
+                    value={
+                      into
+                        ? '$0.00, Ren covers it'
+                        : privacy.outReserve > 0n
+                          ? `Under ${formatUsd(privacy.outReserve)}, the zone’s gas`
+                          : '$0.00'
+                    }
+                  />
                   <Fact
                     label={`${chainName} sees`}
                     value={

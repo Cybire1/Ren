@@ -17,6 +17,7 @@ import { tempoModerato } from 'viem/chains'
 import { Actions, createClient } from 'viem/tempo'
 import {
   deposit,
+  moveOutReserve,
   privateBalance,
   privateMoves,
   unlockZone,
@@ -133,22 +134,27 @@ async function main() {
 
   step('Bob moves his $2 out to his Tempo balance')
   const before = await tempoBalance(bob.address)
-  const out = await withdraw(access, bob, { amount: 2_000_000n })
+  // All of it, as the wallet moves it: less what the zone keeps back for gas, if it charges any.
+  const reserve = await moveOutReserve(access)
+  const leaving = 2_000_000n - reserve
+  if (reserve > 0n) console.log(`  keeping back ${usd(reserve)} for the zone's gas`)
+  const out = await withdraw(access, bob, { amount: leaving })
   console.log(`  withdrawal in the zone: ${out.transactionHash}`)
   let after = before
   const started = Date.now()
-  while (after === before && Date.now() - started < 90_000) {
+  while (
+    after === before &&
+    Date.now() - started < Number(env('ZONE_SETTLE_SECONDS', '90')) * 1000
+  ) {
     await new Promise((r) => setTimeout(r, 1000))
     after = await tempoBalance(bob.address)
   }
   check(
-    after - before === 2_000_000n,
+    after - before === leaving,
     `Bob's Tempo balance went ${usd(before)} → ${usd(after)} in ${((Date.now() - started) / 1000).toFixed(1)} s`,
   )
-  check(
-    (await privateBalance(access, bob.address)) === 0n,
-    'Bob’s private balance is back to $0.00',
-  )
+  const left = await privateBalance(access, bob.address)
+  check(left <= reserve, `Bob’s private balance is down to ${usd(left)}, at most the gas he kept back`)
 
   step('Bob’s private history, as the zone shows him')
   const moves = await privateMoves(access, bob.address)

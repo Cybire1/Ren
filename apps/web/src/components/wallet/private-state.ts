@@ -17,6 +17,7 @@ import { relayedClient } from '@/lib/wallet/chain-tempo'
 import { spend } from '@/lib/wallet/session'
 import {
   deposit,
+  moveOutReserve,
   type PrivateMove,
   privateBalance,
   privateMoves,
@@ -57,6 +58,8 @@ export interface PrivateValue {
   balance: bigint | null
   /** What can move in: your balance on the zone's Tempo. */
   available: bigint | null
+  /** What a move out keeps back for the zone's gas (nothing on a current-runtime zone). */
+  outReserve: bigint
   entries: PrivateEntry[]
   open: () => Promise<void>
   moveIn: (amount: bigint) => Promise<Moved>
@@ -135,6 +138,7 @@ export function usePrivate({
   const [moves, setMoves] = useState<PrivateMove[]>([])
   const [notes, setNotes] = useState<Record<string, PrivateNote>>({})
   const [parentBalance, setParentBalance] = useState<bigint | null>(null)
+  const [outReserve, setOutReserve] = useState(0n)
 
   // The zone's Tempo: this site's own, through Ren's relay, or a local test chain with no relay.
   const parent = useMemo(() => {
@@ -206,13 +210,17 @@ export function usePrivate({
     if (!access || !address) return
     if (!zoneUnlocked(access.zone, address)) return setStatus('locked')
     try {
+      // The balance is what matters; a history the zone won't give right now keeps the last one.
       const [amount, history] = await Promise.all([
         privateBalance(access, address),
-        privateMoves(access, address),
+        privateMoves(access, address).catch(() => null),
       ])
       setHeld(amount)
-      setMoves(history)
+      if (history) setMoves(history)
       setStatus('ready')
+      void moveOutReserve(access)
+        .then(setOutReserve)
+        .catch(() => {})
     } catch (error) {
       setStatus(refused(error) ? 'locked' : 'unreachable')
     }
@@ -415,6 +423,7 @@ export function usePrivate({
       status: zone ? status : 'locked',
       balance: held,
       available: parent ? parentBalance : balance,
+      outReserve,
       entries,
       open,
       moveIn,
@@ -432,6 +441,7 @@ export function usePrivate({
       noteFor,
       noteList,
       open,
+      outReserve,
       parent,
       parentBalance,
       sendPrivately,
