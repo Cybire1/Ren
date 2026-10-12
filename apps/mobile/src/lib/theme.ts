@@ -2,8 +2,9 @@
  * Ren's visual system: mint paper, one deep teal-black ink, and three colours that each
  * mean something.
  *
- * Every surface is flat, drawn with a 2px ink outline and no shadows. Teal is money at rest
- * and arriving, coral is paying and anything that spends, yellow is Kovi and the coins.
+ * Every surface is flat, drawn with a 2px ink outline. What you can press stands on a hard ink
+ * shadow and sinks into it when pressed; nothing is blurred. Teal is money at rest and arriving,
+ * coral is paying and anything that spends, yellow is Kovi and the coins.
  */
 export const colors = {
   /** The ground every screen sits on. */
@@ -48,4 +49,6 @@ export const fonts = {
   medium: 'Manrope_500Medium',
   semi: 'Manrope_600SemiBold',
   bold: 'Manrope_700Bold',
+  /** Headlines and amounts. */
+  heavy: 'Manrope_800ExtraBold',
 } as const

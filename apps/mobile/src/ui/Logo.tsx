@@ -7,8 +7,9 @@
 import Svg, { Circle, Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
 
-const STEM = 'M62 46 V154'
-const WAVES = [
+export const STEM = 'M62 46 V154'
+/** The three tap waves, on the mark's 200×200 canvas. */
+export const WAVES = [
   'M92.6 74.3 A40 40 0 0 1 92.6 125.7',
   'M115.6 55 A70 70 0 0 1 115.6 145',
   'M138.6 35.7 A100 100 0 0 1 138.6 164.3',

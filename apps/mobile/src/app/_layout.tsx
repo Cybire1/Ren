@@ -3,6 +3,7 @@ import {
   Manrope_500Medium,
   Manrope_600SemiBold,
   Manrope_700Bold,
+  Manrope_800ExtraBold,
   useFonts,
 } from '@expo-google-fonts/manrope'
 import { router, Stack, useRootNavigationState } from 'expo-router'
@@ -56,7 +57,7 @@ function ArrivalWatcher() {
 }
 
 export default function RootLayout() {
-  const [loaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold })
+  const [loaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold })
   // Local prices on the first screen should already use today's rates.
   const ratesReady = useLiveRates()
 

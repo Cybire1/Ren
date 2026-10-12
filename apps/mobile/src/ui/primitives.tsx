@@ -44,17 +44,26 @@ export function Txt({
 
 const press = { damping: 18, stiffness: 420, mass: 0.6 }
 
-/** A die-cut sticker: a flat surface with an ink outline that gives a little when pressed. */
+/** How far a lifted surface stands off its ink shadow. Pressed, it sinks all but a point of it. */
+export const LIFT = 4
+
+/**
+ * A die-cut sticker: a flat surface with an ink outline that gives a little when pressed.
+ * `lift` stands it on a hard ink shadow, like a key on a till: pressed, it sinks into the shadow
+ * and springs back.
+ */
 export function Sticker({
   children,
   onPress,
   radius = 28,
   fill = colors.surface,
   outline = true,
+  lift = false,
   disabled,
   style,
   innerStyle,
   accessibilityLabel,
+  accessibilityHint,
   haptic = true,
 }: {
   children: ReactNode
@@ -62,28 +71,32 @@ export function Sticker({
   radius?: number
   fill?: string
   outline?: boolean
+  lift?: boolean
   disabled?: boolean
   style?: StyleProp<ViewStyle>
   innerStyle?: StyleProp<ViewStyle>
   accessibilityLabel?: string
+  accessibilityHint?: string
   haptic?: boolean
 }) {
   const scale = useSharedValue(1)
-  const face = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }))
-  const body = (
+  const sink = useSharedValue(0)
+  const face = useAnimatedStyle(() => ({ transform: [{ translateY: sink.value }, { scale: scale.value }] }))
+  // A pressable or lifted sticker fills the box that carries the layout (the Pressable, or the
+  // shadow's frame); a plain one takes exactly the size its style or content gives it.
+  const framed = !!onPress || lift
+  const surface = (
     <Animated.View
       style={[
         {
-          // A pressable sticker fills its Pressable, which carries the layout; a plain one
-          // takes exactly the size its style or content gives it.
-          flexGrow: onPress ? 1 : 0,
+          flexGrow: framed ? 1 : 0,
           borderRadius: radius,
           backgroundColor: fill,
           borderWidth: outline ? 2 : 0,
           borderColor: colors.ink,
           overflow: 'hidden',
         },
-        onPress ? null : style,
+        framed ? null : style,
         innerStyle,
         face,
       ]}
@@ -91,16 +104,27 @@ export function Sticker({
       {children}
     </Animated.View>
   )
+  const body = lift ? (
+    <View style={[{ flexGrow: 1 }, onPress ? null : style]}>
+      <View pointerEvents="none" style={[styles.plate, { borderRadius: radius }]} />
+      {surface}
+    </View>
+  ) : (
+    surface
+  )
   if (!onPress) return body
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityHint={accessibilityHint}
       disabled={disabled}
       onPressIn={() => {
-        scale.value = withSpring(0.97, press)
+        if (lift) sink.value = withSpring(LIFT - 1, press)
+        else scale.value = withSpring(0.97, press)
       }}
       onPressOut={() => {
+        sink.value = withSpring(0, press)
         scale.value = withSpring(1, press)
       }}
       onPress={() => {
@@ -315,6 +339,8 @@ export function Rise({ children, delay = 0, style }: { children: ReactNode; dela
 }
 
 const styles = StyleSheet.create({
+  /** The hard ink shadow a lifted sticker stands on: its own shape, set LIFT points lower. */
+  plate: { position: 'absolute', left: 0, right: 0, top: LIFT, bottom: -LIFT, backgroundColor: colors.ink },
   pill: {
     height: 64,
     borderRadius: 32,
