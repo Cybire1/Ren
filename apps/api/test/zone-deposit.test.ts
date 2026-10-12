@@ -1,4 +1,4 @@
-import { type Address, encodeFunctionData } from 'viem'
+import { type Address, encodeFunctionData, parseAbi } from 'viem'
 import { Abis, Actions } from 'viem/tempo'
 import { describe, expect, it } from 'vitest'
 import { zoneDepositProblem } from '../src/tempo/zone-deposit.js'
@@ -109,5 +109,45 @@ describe('zoneDepositProblem', () => {
     expect(zoneDepositProblem(deposit(5_000_000n).slice(0, 1), sender, portal, dollars)).toBe(
       'expected an approval and a deposit',
     )
+  })
+})
+
+/** Tempo's persistent sandbox zones (A and B) take the earlier deposit, without a refund address. */
+const sandboxPortal = parseAbi([
+  'function depositEncrypted(address token, uint128 amount, uint256 keyIndex, (bytes32 ephemeralPubkeyX, uint8 ephemeralPubkeyYParity, bytes ciphertext, bytes12 nonce, bytes16 tag) encrypted) returns (bytes32)',
+])
+const sandboxDeposit = (approved: bigint, deposited: bigint, token: Address = alpha) => [
+  {
+    to: token,
+    data: encodeFunctionData({
+      abi: Abis.tip20,
+      functionName: 'approve',
+      args: [portal, approved],
+    }),
+  },
+  {
+    to: portal,
+    data: encodeFunctionData({
+      abi: sandboxPortal,
+      functionName: 'depositEncrypted',
+      args: [token, deposited, 0n, encrypted],
+    }),
+  },
+]
+
+describe('zoneDepositProblem, sandbox portal', () => {
+  it('pays for the earlier encrypted deposit of the approved dollar and amount', () => {
+    expect(
+      zoneDepositProblem(sandboxDeposit(5_000_000n, 5_000_000n), sender, portal, dollars),
+    ).toBeNull()
+  })
+
+  it('still refuses a deposit larger than the approval, or another dollar', () => {
+    expect(
+      zoneDepositProblem(sandboxDeposit(5_000_000n, 9_000_000n), sender, portal, dollars),
+    ).toBe('the deposit is not the approved amount')
+    expect(
+      zoneDepositProblem(sandboxDeposit(5_000_000n, 5_000_000n, beta), sender, portal, dollars),
+    ).toBe('not a dollar Ren accepts')
   })
 })

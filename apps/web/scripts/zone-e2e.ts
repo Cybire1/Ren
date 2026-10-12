@@ -36,6 +36,7 @@ const access: ZoneAccess = {
     token: env('ZONE_TOKEN', '0x20c0000000000000000000000000000000000001') as Address,
     parent: Number(env('ZONE_PARENT', '1337')),
     operator: 'Ren',
+    runtime: env('ZONE_RUNTIME', 'current') === 'sandbox' ? 'sandbox' : 'current',
   },
 }
 // Anvil's second dev account: funds the test wallets. Not the zone's sequencer, which is the first.

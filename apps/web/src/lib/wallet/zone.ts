@@ -1,13 +1,23 @@
+import { gcm } from '@noble/ciphers/aes'
+import { secp256k1 } from '@noble/curves/secp256k1'
+import { hkdf } from '@noble/hashes/hkdf.js'
+import { sha256 } from '@noble/hashes/sha2.js'
 import {
   type Address,
+  bytesToHex,
   type Chain,
+  concatBytes,
+  encodeFunctionData,
   type Hex,
+  hexToBytes,
   type LocalAccount,
+  numberToBytes,
+  parseAbi,
   parseAbiItem,
   type TransactionReceipt,
 } from 'viem'
-import { getBlock, getLogs, waitForTransactionReceipt } from 'viem/actions'
-import { Actions, createClient, Store, Zone, http as zoneHttp } from 'viem/tempo'
+import { getBlock, getLogs, sendTransactionSync, waitForTransactionReceipt } from 'viem/actions'
+import { Abis, Actions, createClient, Store, Zone, http as zoneHttp } from 'viem/tempo'
 
 /**
  * Private dollars, on a Tempo Zone: a private chain anchored to Tempo, run by an operator, where
@@ -39,6 +49,12 @@ export interface ZoneInfo {
   parent: number
   /** Who runs it, as people see it named. */
   operator: string
+  /**
+   * Its zone software: `current` (Tempo's permissioned zones and new ones), or `sandbox` (Tempo's
+   * persistent testnet zones A and B, an earlier portal whose encrypted deposit names no refund
+   * address and whose deposit key doesn't bind the sender).
+   */
+  runtime: 'current' | 'sandbox'
 }
 
 /** The zone as a site configures it (lib/zone-site.ts). */
@@ -137,16 +153,92 @@ export async function deposit(
   zone: ZoneInfo,
   parameters: { amount: bigint; to: Address; sponsored: boolean },
 ): Promise<TransactionReceipt> {
+  const sponsor = parameters.sponsored ? { feePayer: true } : {}
+  if (zone.runtime === 'sandbox') {
+    // The earlier portal: the same approve-and-deposit pair, sealed its way.
+    const { keyIndex, publicKey } = await Actions.zone.getEncryptionKey(client as never, {
+      portalAddress: zone.portal,
+      zoneId: zone.id,
+    })
+    const encrypted = sealForSandbox(publicKey, parameters.to, zone.portal, keyIndex)
+    const receipt = await sendTransactionSync(
+      client as never,
+      {
+        calls: [
+          {
+            to: zone.token,
+            data: encodeFunctionData({
+              abi: Abis.tip20,
+              functionName: 'approve',
+              args: [zone.portal, parameters.amount],
+            }),
+          },
+          {
+            to: zone.portal,
+            data: encodeFunctionData({
+              abi: sandboxPortal,
+              functionName: 'depositEncrypted',
+              args: [zone.token, parameters.amount, keyIndex, encrypted],
+            }),
+          },
+        ],
+        ...sponsor,
+      } as never,
+    )
+    if (receipt.status !== 'success') throw new Error('The deposit didn’t go through.')
+    return receipt as TransactionReceipt
+  }
   const { receipt } = await Actions.zone.encryptedDepositSync(client, {
     token: zone.token,
     amount: parameters.amount,
     portalAddress: zone.portal,
     zoneId: zone.id,
     recipient: parameters.to,
-    ...(parameters.sponsored ? { feePayer: true } : {}),
+    ...sponsor,
   } as never)
   if (receipt.status !== 'success') throw new Error('The deposit didn’t go through.')
   return receipt as TransactionReceipt
+}
+
+/** The earlier portal's encrypted deposit (Tempo's sandbox zones): no refund address. */
+export const sandboxPortal = parseAbi([
+  'function depositEncrypted(address token, uint128 amount, uint256 keyIndex, (bytes32 ephemeralPubkeyX, uint8 ephemeralPubkeyYParity, bytes ciphertext, bytes12 nonce, bytes16 tag) encrypted) returns (bytes32)',
+])
+
+/**
+ * Seals a deposit's recipient for a sandbox zone: ECIES on secp256k1 to the sequencer's key, the
+ * AES-256-GCM key from HKDF-SHA256 over the shared point's x, salted "ecies-aes-key", with the
+ * portal, key index and ephemeral key as info. The current runtime also binds the sender there,
+ * which viem's own encryptedDeposit does.
+ */
+export function sealForSandbox(
+  sequencer: { prefix: number; x: Hex },
+  to: Address,
+  portal: Address,
+  keyIndex: bigint,
+) {
+  const sequencerKey = concatBytes([Uint8Array.of(sequencer.prefix), hexToBytes(sequencer.x)])
+  const ephemeral = secp256k1.utils.randomPrivateKey()
+  const ephemeralPublic = secp256k1.getPublicKey(ephemeral, true)
+  const shared = secp256k1.getSharedSecret(ephemeral, sequencerKey, true).slice(1)
+  const info = concatBytes([
+    hexToBytes(portal),
+    numberToBytes(keyIndex, { size: 32 }),
+    ephemeralPublic.slice(1),
+  ])
+  const key = hkdf(sha256, shared, new TextEncoder().encode('ecies-aes-key'), info, 32)
+  const nonce = crypto.getRandomValues(new Uint8Array(12))
+  // Recipient, an empty memo, and padding: 64 bytes in, 64 bytes of ciphertext and a 16-byte tag out.
+  const sealed = gcm(key, nonce).encrypt(
+    concatBytes([hexToBytes(to), new Uint8Array(32), new Uint8Array(12)]),
+  )
+  return {
+    ephemeralPubkeyX: bytesToHex(ephemeralPublic.slice(1)),
+    ephemeralPubkeyYParity: ephemeralPublic[0] as number,
+    ciphertext: bytesToHex(sealed.slice(0, 64)),
+    nonce: bytesToHex(nonce),
+    tag: bytesToHex(sealed.slice(64)),
+  }
 }
 
 /** Waits until the zone has read Tempo up to `block`, so a deposit made there has landed. */
@@ -177,8 +269,8 @@ export async function withdraw(
       token: access.zone.token,
       amount: parameters.amount,
       to: parameters.to ?? account.address,
-      maxFeePerGas: 0n,
-      maxPriorityFeePerGas: 0n,
+      // Gas in a current-runtime zone costs nothing; a sandbox zone prices its own.
+      ...(access.zone.runtime === 'current' ? { maxFeePerGas: 0n, maxPriorityFeePerGas: 0n } : {}),
     } as never,
   )
   const receipt = await waitForTransactionReceipt(client, { hash, timeout: 30_000 })

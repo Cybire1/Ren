@@ -13,6 +13,7 @@ import type { ZoneConfig } from '@/lib/wallet/zone'
  *   KOVA_ZONE_RPC_URL           its private (redacted) RPC
  *   KOVA_ZONE_RPC_AUTHORIZATION the operator's access key, when the zone asks for one
  *   KOVA_ZONE_OPERATOR          who runs it, as people see it named (default: Ren)
+ *   KOVA_ZONE_RUNTIME           sandbox for Tempo's persistent testnet zones A and B
  *   KOVA_ZONE_PARENT_RPC, KOVA_ZONE_PARENT_CHAIN_ID
  *                               a Tempo other than this site's to deposit on (local tests only)
  */
@@ -32,6 +33,7 @@ export function zoneSite(): ZoneConfig | null {
       (process.env.KOVA_ZONE_TOKEN as Address | undefined) ?? getToken(network, 'USDC').address,
     parent: Number(process.env.KOVA_ZONE_PARENT_CHAIN_ID) || getNetwork(network).chainId,
     operator: process.env.KOVA_ZONE_OPERATOR ?? 'Ren',
+    runtime: process.env.KOVA_ZONE_RUNTIME === 'sandbox' ? 'sandbox' : 'current',
     parentRpc: process.env.KOVA_ZONE_PARENT_RPC ?? null,
   }
 }
