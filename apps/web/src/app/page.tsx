@@ -42,6 +42,10 @@ export default async function Landing() {
       {/* Hero ------------------------------------------------------------------------------ */}
       <section className="lp-hero">
         <div className="lp-hero-copy">
+          <p className="lp-live">
+            <span className="lp-live-dot" aria-hidden="true" />
+            Live on {chainName} testnet
+          </p>
           <h1 className="lp-title" aria-label="Tap. Paid. Anywhere.">
             <span className="lp-word" style={{ '--i': 0 } as React.CSSProperties}>
               Tap
@@ -70,7 +74,21 @@ export default async function Landing() {
               </Pill>
             </form>
           </div>
-          <p className="lp-fine">Live on {chainName}’s test network. Test dollars, real speed.</p>
+          <dl className="lp-facts">
+            <div>
+              <dt>Settles in</dt>
+              <dd>About a second</dd>
+            </div>
+            <div>
+              <dt>Card fees</dt>
+              <dd>$0.00</dd>
+            </div>
+            <div>
+              <dt>Your money</dt>
+              <dd>In your own wallet</dd>
+            </div>
+          </dl>
+          <p className="lp-fine">Test dollars on {chainName}’s test network, at real speed.</p>
         </div>
 
         <div className="lp-hero-stage">
@@ -155,7 +173,7 @@ export default async function Landing() {
         </div>
         <pre className="lp-code" aria-label="Example: create a charge">
           <code>
-            <span className="c-dim">$</span> curl <span className="c-str">https://api.kova…/v1/payment_intents</span> \{'\n'}
+            <span className="c-dim">$</span> curl <span className="c-str">https://api.ren…/v1/payment_intents</span> \{'\n'}
             {'    '}-H <span className="c-str">"Authorization: Bearer $KOVA_SECRET_KEY"</span> \{'\n'}
             {'    '}-d <span className="c-str">{`'{"amount":"12.50","reference":"Order 1042"}'`}</span>
             {'\n\n'}

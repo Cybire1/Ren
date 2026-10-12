@@ -1346,3 +1346,81 @@
     transition: none !important;
   }
 }
+
+/* Polish: a live chip over the headline, and the three facts as tiles under the buttons. */
+
+.lp-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  height: 2.35rem;
+  box-sizing: border-box;
+  margin-bottom: 1.4rem;
+  padding: 0 0.9rem 0 0.75rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.875rem;
+  font-weight: 800;
+  animation: word 0.9s var(--spring) both;
+}
+
+.lp-live-dot {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+  background: var(--teal);
+  animation: live-ring 2.2s ease-out infinite;
+}
+
+@keyframes live-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--teal) 55%, transparent);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 0.55rem color-mix(in srgb, var(--teal) 0%, transparent);
+  }
+}
+
+.lp-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin: 2.1rem 0 0;
+  animation: word 0.9s var(--spring) 0.65s both;
+}
+
+.lp-facts div {
+  padding: 0.6rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.1rem;
+  background: var(--surface);
+}
+
+.lp-facts dt {
+  color: var(--muted);
+  font-size: 0.6875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp-facts dd {
+  margin: 0.1rem 0 0;
+  font-size: 1.125rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.lp-facts + .lp-fine {
+  margin-top: 0.9rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lp-live,
+  .lp-live-dot,
+  .lp-facts {
+    animation: none;
+  }
+}
