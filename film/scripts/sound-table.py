@@ -45,14 +45,14 @@ put(sfx('blip'), 2.7, 0.2)
 put(sfx('coin'), 14.75, 0.7)
 put(sfx('ding'), 16.05, 0.8)
 for i in range(5):
-    put(sfx('stamp'), 19.5 + i * 0.32, 0.5)
-put(sfx('reward'), 21.35, 0.6)
+    put(sfx('stamp'), 20.2 + i * 0.28, 0.5)
+put(sfx('reward'), 21.55, 0.6)
 
 music = load('public/queue/hf/music.mp3')[:N]
 score = np.zeros((N, 2), dtype=np.float32)
 score[: len(music)] = music
 duck = np.ones(N)
-for at in [14.75, 16.05, 21.35]:
+for at in [14.75, 16.05, 21.55]:
     duck -= 0.22 * np.exp(-((t - at - 0.3) ** 2) / 0.2)
 duck *= np.clip((DUR - t) / 0.8, 0, 1)
 bus += score * (0.85 * duck)[:, None]
