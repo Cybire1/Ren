@@ -39,6 +39,7 @@ One network behind a wallet, a terminal, a card and an API.
 | **Shop dashboard** | shops | Today's takings, live. Payments print on a receipt tape the second they land, with the on-chain proof one click away. |
 | **Stalls and tables** | shops | Your menu on a link and a QR code. A table's code puts the table on the order; the buyer's phone lights up and chimes when it's ready, and a full stamp card makes an item free, paid as a $0 checkout that Ren's fee payer sponsors. |
 | **Guest checkout** | people | No wallet yet? Pay a shop with email or Google, then keep the change in a passkey wallet, moved for free. |
+| **Private dollars** | people | A private balance on a Tempo Zone: move dollars in, send them privately, move them out. Tempo sees dollars going into and out of the zone, not who paid whom. Built and tested end to end against a real zone; off on the live site until a testnet zone opens to Ren ([how it works](docs/zones.md)). |
 | **Ren Card** | people | An NFC card that pays with a limited Tempo access key: a daily limit, an expiry, and a freeze that stops the next tap. |
 | **Developers** | builders | Payment intents, signed webhooks and secret keys, so any website or till software can take Ren payments. |
 
@@ -125,6 +126,7 @@ access key on the owner's account, with an expiry, a spending limit and a scope.
 | Access keys with limits | Cards and staff phones hold keys with a spending limit, an expiry and a freeze |
 | ~0.5 s blocks, deterministic finality | Paid means paid: no confirmations to wait for, no reorg to unwind |
 | Dollar stablecoins | Prices, balances and settlement in dollars (AlphaUSD on testnet, USDC on mainnet) |
+| Zones (preview) | Private balances: encrypted deposits, a private RPC that answers each wallet only about itself, withdrawals settled in seconds ([docs/zones.md](docs/zones.md)) |
 
 ## Measured, not estimated
 
