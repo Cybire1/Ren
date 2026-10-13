@@ -57,6 +57,8 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
   const router = useRouter()
   const params = useSearchParams()
   const { contacts, balance, send, rates, liveRates, profile, noteReaches, privacy } = useWallet()
+  // Private: into their private balance on the site's zone. On from Private; a switch from Send.
+  const [secret, setSecret] = useState(privately)
 
   const asked = params.get('amount')
   const start: Payee | null =
@@ -122,7 +124,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
   const dollars = baseToNumber(amount)
   // Sending privately draws on your balance on the zone's Tempo: this same balance, unless the
   // zone hangs off a test chain.
-  const spendable = privately ? privacy.available : balance
+  const spendable = secret ? privacy.available : balance
   const over = spendable !== null && amount > spendable
   const theirLocal = local ? formatLocal(dollars, local, rates) : null
 
@@ -164,7 +166,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
     const started = Date.now()
     try {
       // Privately: a deposit into the private zone, addressed to them (components/wallet/private-state.ts).
-      const moved = privately
+      const moved = secret
         ? await privacy.sendPrivately({ address: payee.address, name }, amount)
         : await send(contact, amount, note)
       // Let Reni finish the leg it is on: the flight is timed to about what the chain takes.
@@ -199,13 +201,13 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
       <div
         role="dialog"
         aria-modal="true"
-        aria-label={payee ? `Send ${privately ? 'privately ' : ''}to ${name}` : 'Send'}
+        aria-label={payee ? `Send ${secret ? 'privately ' : ''}to ${name}` : 'Send'}
         className={`w-sheet${closing ? ' w-sheet-out' : ''}`}
       >
         <button type="button" className="w-sheet-grab" aria-label="Close" onClick={close} />
         <Fit>
           <div key={step} className={`w-sheet-step${back ? ' w-sheet-step-back' : ''}`}>
-            {step === 'who' ? <Who onPick={pick} privately={privately} /> : null}
+            {step === 'who' ? <Who onPick={pick} privately={secret} /> : null}
 
             {step === 'amount' && payee ? (
               <div className="w-sheet-amount">
@@ -233,11 +235,6 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                   {groupTyped(typed)}
                 </p>
                 <div className="w-sheet-pills">
-                  {privately ? (
-                    <span className="w-sheet-pill w-sheet-pill-ink">
-                      <Icon name="lock" size={13} /> Lands in their private balance
-                    </span>
-                  ) : null}
                   {theirLocal && amount > 0n ? (
                     <span className="w-sheet-pill w-sheet-pill-teal">
                       {first(name)} sees ≈ {theirLocal}
@@ -251,7 +248,31 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                     </span>
                   ) : null}
                 </div>
-                {privately ? null : onTempo ? (
+                {privacy.zone ? (
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={secret}
+                    className={`w-privswitch${secret ? ' w-privswitch-on' : ''}`}
+                    onClick={() => setSecret((on) => !on)}
+                  >
+                    <span className="w-privswitch-icon">
+                      <Icon name="lock" size={16} />
+                    </span>
+                    <span className="w-privswitch-text">
+                      <strong>Send privately</strong>
+                      <small>
+                        {secret
+                          ? `Into their private balance. ${chainName} won’t show who it’s for`
+                          : `${chainName} shows it as you paying them`}
+                      </small>
+                    </span>
+                    <span className="w-privswitch-track" aria-hidden="true">
+                      <span className="w-privswitch-knob" />
+                    </span>
+                  </button>
+                ) : null}
+                {secret ? null : onTempo ? (
                   <input
                     className="w-note"
                     value={note}
@@ -303,7 +324,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                   <strong className="w-sheet-title">
                     {busy
                       ? `Sending to ${first(name)}`
-                      : privately
+                      : secret
                         ? 'Check and send privately'
                         : 'Check and send'}
                   </strong>
@@ -324,7 +345,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                   </span>
                 </div>
                 <dl className="w-facts">
-                  {privately ? (
+                  {secret ? (
                     <>
                       <Fact label="Who knows" value={`You and ${first(name)}`} icon="lock" />
                       <Fact
@@ -338,7 +359,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                   <Fact label="Fee" value="$0.00, Ren covers it" />
                   <Fact
                     label="Arrives"
-                    value={privately ? 'In their private balance, in seconds' : 'In about a second'}
+                    value={secret ? 'In their private balance, in seconds' : 'In about a second'}
                     icon="bolt"
                   />
                   {local ? (
@@ -380,7 +401,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                   label={
                     problem
                       ? 'Slide to try again'
-                      : `Slide to send ${formatUsd(amount)}${privately ? ' privately' : ''}`
+                      : `Slide to send ${formatUsd(amount)}${secret ? ' privately' : ''}`
                   }
                   busy={busy}
                   disabled={over || amount === 0n}
@@ -397,20 +418,20 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
             {step === 'sent' && payee && sent ? (
               <div className="w-sheet-sent">
                 <div className="w-sheet-cheer">
-                  <Art name={privately ? 'reni-key' : 'reni-cheer'} size={150} />
+                  <Art name={secret ? 'reni-key' : 'reni-cheer'} size={150} />
                   <Art name="sparkle-4" size={26} className="w-spark w-spark-1" />
                   <Art name="sparkle-8" size={30} className="w-spark w-spark-2" />
                   <Art name="sparkle-11" size={20} className="w-spark w-spark-3" />
                 </div>
-                <h2>{privately ? 'Sent privately' : 'Sent'}</h2>
+                <h2>{secret ? 'Sent privately' : 'Sent'}</h2>
                 <p>
-                  {privately
+                  {secret
                     ? `${formatUsd(amount)} is in ${first(name)}’s private balance. Only the two of you know.`
                     : `${formatUsd(amount)} landed with ${first(name)}${theirLocal ? `, about ${theirLocal}` : ''}`}
                 </p>
                 <span className="w-sheet-time">
                   <Icon name="bolt" size={16} />
-                  {privately ? 'Sent' : 'Arrived'} in {(sent.ms / 1000).toFixed(2)} s on {chainName}
+                  {secret ? 'Sent' : 'Arrived'} in {(sent.ms / 1000).toFixed(2)} s on {chainName}
                 </span>
                 <button type="button" className="pill pill-block" data-tone="ink" onClick={close}>
                   <span className="pill-label">Done</span>
@@ -419,10 +440,10 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                   </span>
                 </button>
                 <Link
-                  href={privately ? '/wallet/private' : `/wallet/activity/${sent.hash}`}
+                  href={secret ? '/wallet/private' : `/wallet/activity/${sent.hash}`}
                   className="textlink"
                 >
-                  {privately ? 'See private activity' : 'See receipt'}
+                  {secret ? 'See private activity' : 'See receipt'}
                 </Link>
               </div>
             ) : null}

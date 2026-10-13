@@ -1,11 +1,12 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Art, Brand, Icon, Pill } from '@/components/brand'
-import { PaidCoin, ReceiptHero } from '@/components/receipt-hero'
-import { getSession } from '@/lib/session'
-import { signInDemo } from './actions'
 import { PaidInASecond } from '@/components/paid-in-a-second'
+import { PaidCoin, ReceiptHero } from '@/components/receipt-hero'
 import { chainName, onTempo } from '@/lib/chain'
+import { getSession } from '@/lib/session'
+import { zoneSite } from '@/lib/zone-site'
+import { signInDemo } from './actions'
 
 export const metadata: Metadata = {
   title: { absolute: 'Ren · Tap. Paid. Anywhere.' },
@@ -168,6 +169,53 @@ export default async function Landing() {
           {onTempo ? 'USDC' : 'AUSD, Agora’s dollar'}).
         </small>
       </section>
+
+      {/* Private ----------------------------------------------------------------------------- */}
+      {zoneSite() ? (
+        <section className="lp-private" id="private">
+          <div className="lp-private-copy">
+            <p className="lp-panel-kicker">Ren Private, on a {chainName} Zone</p>
+            <h2>Pay people without the whole chain watching</h2>
+            <p>
+              Keep dollars in a private balance that {chainName}’s explorer can’t see, and send them
+              to anyone privately. Move them back to your balance whenever you like.
+            </p>
+            <ul>
+              <li>
+                <Icon name="eyeOff" size={18} /> Only you see your private balance, once your
+                passkey says it’s you.
+              </li>
+              <li>
+                <Icon name="lock" size={18} /> {chainName} sees dollars going in, not who they’re
+                for.
+              </li>
+              <li>
+                <Icon name="bolt" size={18} /> Back in your balance in seconds, for under a cent.
+              </li>
+            </ul>
+            <Pill href="/wallet/private" icon="lock" tone="ink">
+              Open Private
+            </Pill>
+          </div>
+          <div className="lp-private-stage" aria-hidden="true">
+            <div className="lp-private-card">
+              <span className="lp-private-label">
+                <Icon name="lock" size={14} /> Private balance
+              </span>
+              <strong>$ ••••••</strong>
+              <span>Only you can see it</span>
+            </div>
+            <div className="lp-private-seen">
+              <small>What {chainName} sees</small>
+              <span>$20.00 into the private zone</span>
+              <span className="lp-private-hidden">
+                <Icon name="eyeOff" size={14} /> Who it’s for
+              </span>
+            </div>
+            <Art name="reni-key" size={150} className="lp-private-reni" />
+          </div>
+        </section>
+      ) : null}
 
       {/* Developers -------------------------------------------------------------------------- */}
       <section className="lp-dev" id="developers">

@@ -267,13 +267,15 @@ export async function waitForZone(access: ZoneAccess, block: bigint, timeout = 3
 export async function withdraw(
   access: ZoneAccess,
   account: LocalAccount,
-  parameters: { amount: bigint; to?: Address },
+  parameters: { amount: bigint; to?: Address; memo?: Hex },
 ): Promise<TransactionReceipt> {
   const client = zoneClient(access, account)
   const request = {
     token: access.zone.token,
     amount: parameters.amount,
     to: parameters.to ?? account.address,
+    // Public on Tempo with the payout: a Ren charge's memo, so the shop's charge settles.
+    ...(parameters.memo ? { memo: parameters.memo } : {}),
   }
   // Gas in a current-runtime zone costs nothing. A sandbox zone charges it in the zone's dollar,
   // from the same private balance, for the gas limit up front: so ask for what it needs, not

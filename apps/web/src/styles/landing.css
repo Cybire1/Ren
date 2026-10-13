@@ -1429,3 +1429,162 @@
     animation: none;
   }
 }
+
+/* --- Private: a balance on a Tempo Zone ------------------------------------------------------ */
+
+.lp-private {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2.5rem;
+  align-items: center;
+  width: min(100% - 2.5rem, var(--lp-max));
+  margin: 6rem auto 0;
+  padding: 3rem;
+  border-radius: 2.5rem;
+  background: var(--sunken);
+  scroll-margin-top: 1.5rem;
+}
+
+.lp-private h2 {
+  margin-top: 0.5rem;
+  max-width: 28rem;
+  font-size: clamp(2rem, 3.6vw, 2.9rem);
+  font-weight: 800;
+  letter-spacing: -0.045em;
+  line-height: 1.02;
+}
+
+.lp-private-copy > p:not(.lp-panel-kicker) {
+  margin: 1rem 0 0;
+  max-width: 30rem;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.lp-private ul {
+  display: grid;
+  gap: 0.8rem;
+  margin: 1.5rem 0 1.75rem;
+  padding: 0;
+  list-style: none;
+}
+
+.lp-private li {
+  display: grid;
+  grid-template-columns: 1.1rem 1fr;
+  gap: 0.7rem;
+  color: var(--ink-2);
+  font-weight: 500;
+}
+
+.lp-private li svg {
+  margin-top: 0.2rem;
+}
+
+.lp-private-stage {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 1rem;
+  padding: 1rem 0 2rem;
+}
+
+.lp-private-card {
+  position: relative;
+  display: grid;
+  gap: 0.35rem;
+  width: min(100%, 22rem);
+  padding: 1.4rem 1.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.9rem;
+  background-color: var(--ink);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.09) 1.2px, transparent 1.4px);
+  background-size: 12px 12px;
+  color: #fff;
+  transform: rotate(-3deg);
+  box-shadow: 0 6px 0 rgba(16, 35, 63, 0.25);
+}
+
+.lp-private-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--teal-soft);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lp-private-card strong {
+  font-size: 2.6rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.lp-private-card > span:last-child {
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 0.9rem;
+}
+
+.lp-private-seen {
+  display: grid;
+  gap: 0.2rem;
+  width: min(100%, 18rem);
+  padding: 0.9rem 1.1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.2rem;
+  background: var(--surface);
+  box-shadow: 0 4px 0 var(--ink);
+  transform: rotate(2deg) translateX(2.5rem);
+}
+
+.lp-private-seen small {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 750;
+}
+
+.lp-private-seen > span {
+  font-weight: 700;
+}
+
+.lp-private-hidden {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.lp-private-reni {
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0.5rem;
+  transform: rotate(-6deg);
+}
+
+@media (max-width: 960px) {
+  .lp-private {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 2rem 1.5rem;
+  }
+}
+
+@media (max-width: 560px) {
+  .lp-private-card strong {
+    font-size: 1.9rem;
+    letter-spacing: 0.06em;
+  }
+
+  .lp-private-seen {
+    transform: rotate(2deg);
+  }
+
+  .lp-private-reni {
+    display: none;
+  }
+}

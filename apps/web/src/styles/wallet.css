@@ -4237,3 +4237,98 @@ button.w-add-chain {
     animation: none;
   }
 }
+
+/* Send privately: a switch in the send sheet, when the site has a private zone. */
+
+.w-privswitch {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  width: 100%;
+  margin-top: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.1rem;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.w-privswitch-on {
+  background: var(--ink);
+  color: #fff;
+}
+
+.w-privswitch-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+.w-privswitch-on .w-privswitch-icon {
+  background: var(--ink-2);
+  color: var(--teal-soft);
+}
+
+.w-privswitch-text {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.w-privswitch-text strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.w-privswitch-text small {
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.w-privswitch-on .w-privswitch-text small {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.w-privswitch-track {
+  position: relative;
+  flex: none;
+  width: 2.6rem;
+  height: 1.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: var(--sunken);
+  transition: background 0.2s;
+}
+
+.w-privswitch-on .w-privswitch-track {
+  border-color: #fff;
+  background: var(--teal);
+}
+
+.w-privswitch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.25s var(--spring);
+}
+
+.w-privswitch-on .w-privswitch-knob {
+  transform: translateX(1.1rem);
+}
