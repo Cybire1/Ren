@@ -151,6 +151,26 @@ export default function Profile() {
       </Sticker>
       )}
 
+      {/* On Tempo: naira to any Nigerian bank, through Paystack (app/cash-out.tsx). */}
+      {onTempo ? (
+        <Sticker radius={24} accessibilityLabel="Cash out to naira" onPress={() => router.push('/cash-out')} style={{ height: 62, marginTop: 14 }}>
+          <View style={[styles.cashOut, { gap: 14 }]}>
+            <Txt weight="heavy" size={20} style={{ width: 22, textAlign: 'center' }}>
+              ₦
+            </Txt>
+            <View style={{ flex: 1 }}>
+              <Txt weight="semi" size={16}>
+                Cash out to naira
+              </Txt>
+              <Txt size={13} color={colors.muted}>
+                To any Nigerian bank account, through Paystack
+              </Txt>
+            </View>
+            <Icon name="arrow" size={20} />
+          </View>
+        </Sticker>
+      ) : null}
+
       {/* Paying from a phone with no data: a small pocket spent by dialling Ren's USSD code. */}
       <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 62, marginTop: 14 }}>
         <View style={[styles.cashOut, { gap: 14 }]}>

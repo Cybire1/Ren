@@ -103,6 +103,8 @@ export interface Keys {
   newToken: (key: KeyView) => Promise<string>
   payments: (key: KeyView) => Promise<KeyPaymentView[]>
   answer: (payment: KeyPaymentView, decision: 'approve' | 'decline') => Promise<KeyPaymentView>
+  /** This wallet's signed-in token for Ren's API (keys, cash-outs), signing in if it must. */
+  token: () => Promise<string>
   /** Accept an allowance from its link: this phone makes the key, and the giver switches it on. */
   claim: (code: string, name: string | undefined) => Promise<KeyView>
   /** Allowances given to this wallet that this phone holds the key for, as the chain sees them now. */
@@ -494,6 +496,7 @@ export function useKeys({
       claim,
       held,
       spend,
+      token,
       available: onTempo,
       status,
       given,
@@ -512,6 +515,6 @@ export function useKeys({
       payments,
       answer,
     }),
-    [answer, approvals, claim, createAgent, createAllowance, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, unfreeze],
+    [answer, approvals, claim, createAgent, createAllowance, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, token, unfreeze],
   )
 }

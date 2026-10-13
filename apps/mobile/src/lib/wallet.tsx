@@ -5,10 +5,11 @@ import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
-import { type Address, getAddress, hexToBytes, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
+import { type Address, getAddress, type Hex, hexToBytes, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
 import { type Checkout, demoSignIn } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
-import { chainKey, notesTravel, passkeyDomain, zone } from './config'
+import { walletClient } from './chain-tempo'
+import { chainKey, notesTravel, passkeyDomain, settlementToken, zone } from './config'
 import { openSigningSession } from './keys'
 import { type DisplayCurrency, formatUsd } from './money'
 import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
@@ -146,6 +147,8 @@ interface Wallet {
   signOut: () => Promise<void>
   /** Your private balance on a Tempo Zone, when this build has one (private.ts). */
   privacy: Privacy
+  /** Dollars to Ren itself with a Ren memo: a cash-out to a bank (app/cash-out.tsx). */
+  sendToRen: (input: { to: Address; amount: bigint; memo: Hex; name: string; detail: string }) => Promise<Entry>
   /** Everything that can spend this wallet's dollars short of the wallet itself (app/keys). */
   keys: Keys
 }
@@ -581,6 +584,37 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [unlock, record, rememberContact, refresh],
   )
 
+  const sendToRen = useCallback(
+    async (input: { to: Address; amount: bigint; memo: Hex; name: string; detail: string }) => {
+      const account = await unlock(input.amount)
+      const started = Date.now()
+      const { receipt } = await walletClient(account).token.transferSync({
+        token: settlementToken.address,
+        to: input.to,
+        amount: input.amount,
+        memo: input.memo,
+        feePayer: true,
+      } as never)
+      if (receipt.status !== 'success') throw new Error('Tempo didn’t take it. Nothing left your wallet.')
+      spend(input.amount)
+      const entry: Entry = {
+        id: newId(),
+        kind: 'sent',
+        amount: input.amount.toString(),
+        name: input.name,
+        detail: input.detail,
+        address: input.to,
+        txHash: receipt.transactionHash,
+        ms: Date.now() - started,
+        at: Date.now(),
+      }
+      await record(entry)
+      void refresh()
+      return entry
+    },
+    [unlock, record, refresh],
+  )
+
   const signOut = useCallback(async () => {
     // The passkey itself stays in iCloud Keychain: it can bring this wallet back at any time.
     endSession()
@@ -712,6 +746,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     signTypedData,
     signOut,
     privacy,
+    sendToRen,
     keys,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
