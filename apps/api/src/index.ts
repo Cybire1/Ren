@@ -13,6 +13,8 @@ import { demoRoutes } from './routes/demo.js'
 import { healthRoutes } from './routes/health.js'
 import { insightRoutes } from './routes/insights.js'
 import { intentRoutes } from './routes/intents.js'
+import { keyRoutes } from './routes/keys.js'
+import { mcpRoutes } from './routes/mcp.js'
 import { orderRoutes } from './routes/orders.js'
 import { rateRoutes } from './routes/rates.js'
 import { reportRoutes } from './routes/reports.js'
@@ -36,6 +38,8 @@ app.onError(errorHandler)
 app.notFound((c) => c.json({ error: { code: 'not_found', message: 'No such endpoint' } }, 404))
 
 app.route('/health', healthRoutes)
+// Ren's MCP server: AI agents pay with the key their owner gave them (routes/mcp.ts).
+app.route('/', mcpRoutes)
 app.route('/v1/checkout', checkoutRoutes)
 app.route('/v1/payment_intents', intentRoutes)
 app.route('/v1/terminals', terminalRoutes)
@@ -50,6 +54,7 @@ app.route('/v1', insightRoutes)
 // middleware covers all of /v1 (reports asks for an API key).
 app.route('/v1', walletRoutes)
 app.route('/v1', ussdRoutes)
+app.route('/v1', keyRoutes)
 app.route('/v1', cardRoutes)
 app.route('/v1', demoRoutes)
 app.route('/v1', rateRoutes)

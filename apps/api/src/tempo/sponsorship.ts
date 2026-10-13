@@ -2,7 +2,7 @@ import { schema } from '@kova/db'
 import { decodeMemo, TRANSFER_SELECTOR, TRANSFER_WITH_MEMO_SELECTOR } from '@kova/tempo'
 import { eq } from 'drizzle-orm'
 import { type Address, decodeFunctionData, type Hex, isAddressEqual } from 'viem'
-import { Abis } from 'viem/tempo'
+import { Abis, Addresses, Selectors } from 'viem/tempo'
 import { acceptedTokens } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
@@ -13,6 +13,8 @@ import { zoneDepositProblem } from './zone-deposit.js'
 /** A transaction as the relay hands it to `validate`: its calls plus the sender. */
 export interface FillRequest {
   from?: Address | undefined
+  /** A key authorization riding on the transaction: the sender putting an access key on-chain. */
+  keyAuthorization?: unknown
   calls?: readonly { to?: Address | undefined; data?: Hex | undefined }[] | undefined
   to?: Address | undefined
   data?: Hex | undefined
@@ -21,7 +23,7 @@ export interface FillRequest {
 }
 
 export type SponsorDecision =
-  | { sponsor: true; kind: 'charge' | 'send' | 'private' }
+  | { sponsor: true; kind: 'charge' | 'send' | 'private' | 'key' }
   | { sponsor: false; reason: string }
 
 /** The portal of the private zone Ren pays deposits into, when one is configured. */
@@ -38,6 +40,46 @@ function takeSend(from: Address): boolean {
   if (recent.length >= config.KOVA_SPONSORED_SENDS_A_DAY) return false
   sends.set(key, [...recent, now])
   return true
+}
+
+/** Key changes per wallet in the last day: putting keys on-chain, freezing, removing. */
+const keyChanges = new Map<string, number[]>()
+const KEY_CHANGES_A_DAY = 40
+
+function takeKeyChange(from: Address): boolean {
+  const key = from.toLowerCase()
+  const now = Date.now()
+  const recent = (keyChanges.get(key) ?? []).filter((t) => now - t < DAY_MS)
+  if (recent.length >= KEY_CHANGES_A_DAY) return false
+  keyChanges.set(key, [...recent, now])
+  return true
+}
+
+const ZERO = '0x0000000000000000000000000000000000000000'
+const KEYCHAIN_CHANGES = [Selectors.accountKeychain.updateSpendingLimit, Selectors.accountKeychain.revokeKey]
+
+/**
+ * A wallet looking after its own keys (services/keys.ts): putting an access key on-chain (a key
+ * authorization on an empty call, which is how viem sends it), or, on the AccountKeychain, changing
+ * a key's spending limit (freezing and unfreezing) or revoking it. Only the account's root key can
+ * do the last two, and the chain checks that; Ren just pays the fee, a few a day per wallet.
+ */
+function keyChangeProblem(
+  request: FillRequest,
+  calls: readonly { to?: Address | undefined; data?: Hex | undefined }[],
+): string | null | undefined {
+  const [call] = calls
+  if (request.keyAuthorization) {
+    if (calls.length !== 1 || !call || (call.to && !isAddressEqual(call.to, ZERO)) || (call.data && call.data !== '0x'))
+      return 'a key authorization is sponsored on its own'
+    return null
+  }
+  if (calls.length === 1 && call?.to && call.data && isAddressEqual(call.to, Addresses.accountKeychain)) {
+    if (!KEYCHAIN_CHANGES.some((selector) => call.data?.startsWith(selector)))
+      return 'only limit changes and revokes on the keychain are sponsored'
+    return null
+  }
+  return undefined
 }
 
 /**
@@ -70,6 +112,14 @@ export async function shouldSponsor(
     const worstCase = request.gas * request.maxFeePerGas
     if (worstCase > options.maxFee * 10n ** 12n)
       return { sponsor: false, reason: 'tx_fee_limit_exceeded' }
+  }
+
+  const keyChange = keyChangeProblem(request, calls)
+  if (keyChange !== undefined) {
+    if (keyChange) return { sponsor: false, reason: keyChange }
+    if (!request.from) return { sponsor: false, reason: 'no sender' }
+    if (!takeKeyChange(request.from)) return { sponsor: false, reason: 'daily key changes used up' }
+    return { sponsor: true, kind: 'key' }
   }
 
   if (calls.length === 2 && zonePortal) {

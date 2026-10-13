@@ -16,7 +16,8 @@
     "perf": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/profile.ts",
     "pay:checkout": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/pay-checkout.ts",
     "menu:read": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/read-menu.ts",
-    "mainnet:check": "tsx --env-file=.env.mainnet src/scripts/mainnet-check.ts"
+    "mainnet:check": "tsx --env-file=.env.mainnet src/scripts/mainnet-check.ts",
+    "keys:e2e": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/keys-e2e.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
@@ -25,10 +26,12 @@
     "@kova/db": "workspace:*",
     "@kova/monad": "workspace:*",
     "@kova/tempo": "workspace:*",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@scure/bip32": "2.4.0",
     "@scure/bip39": "2.4.0",
     "drizzle-orm": "0.45.2",
     "hono": "4.13.8",
+    "mppx": "0.11.0",
     "ox": "0.14.45",
     "tapimo": "0.15.1",
     "viem": "2.56.8",

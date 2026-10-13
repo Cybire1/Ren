@@ -127,6 +127,18 @@ const schema = z.object({
     .string()
     .regex(/^0x[0-9a-fA-F]{64}$/)
     .optional(),
+  /**
+   * Keys (Tempo): seals each AI agent's key at rest and signs the tokens wallets and agents sign in
+   * with, and MPP's challenges (32 bytes, hex; a KMS in production). Without it, keys are off.
+   */
+  KOVA_KEYS_MASTER_KEY: z
+    .string()
+    .regex(/^[0-9a-fA-F]{64}$/)
+    .optional(),
+  /** Paystack (test or live secret key): naira in for paying a shop, naira out for cashing out. */
+  PAYSTACK_SECRET_KEY: z.string().startsWith('sk_').optional(),
+  /** Naira per dollar Ren quotes against the market rate: a cash-out gets this much less. */
+  KOVA_NAIRA_SPREAD: z.coerce.number().min(0).max(0.1).default(0.01),
 })
 
 export type Config = z.infer<typeof schema>

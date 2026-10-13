@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
+import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
 import type { Hex } from 'viem'
 import { config } from './config.js'
 
@@ -53,4 +53,45 @@ export async function secretMatches(secret: string, stored: string): Promise<boo
   const expected = unb64(hash)
   const actual = await derive(secret, unb64(salt))
   return actual.length === expected.length && timingSafeEqual(actual, expected)
+}
+
+// ── Keys (Tempo) ────────────────────────────────────────────────────────────────────────────
+
+/**
+ * One key for every secret the keys layer keeps, derived per purpose from KOVA_KEYS_MASTER_KEY so
+ * no two uses share a key: sealing agents' keys, and signing the tokens wallets and agents sign in
+ * with.
+ */
+export function keysSubkey(purpose: 'agent-seal' | 'wallet-token' | 'mpp-challenge'): Buffer {
+  if (!config.KOVA_KEYS_MASTER_KEY) throw new Error('KOVA_KEYS_MASTER_KEY is not set')
+  return Buffer.from(
+    hkdfSync('sha256', Buffer.from(config.KOVA_KEYS_MASTER_KEY, 'hex'), Buffer.alloc(0), `ren.keys.${purpose}`, 32),
+  )
+}
+
+/** An agent's private key at rest: AES-256-GCM, bound to its key's id so it can't be moved to another. */
+export function sealAgentKey(privateKey: Hex, keyRowId: string): string {
+  const iv = randomBytes(12)
+  const cipher = createCipheriv('aes-256-gcm', keysSubkey('agent-seal'), iv)
+  cipher.setAAD(Buffer.from(`ren.agent.v1:${keyRowId}`))
+  const sealed = Buffer.concat([cipher.update(privateKey.slice(2), 'hex'), cipher.final()])
+  return [b64(iv), b64(cipher.getAuthTag()), b64(sealed)].join('.')
+}
+
+export function openAgentKey(sealedKey: string, keyRowId: string): Hex {
+  const [iv, tag, body] = sealedKey.split('.')
+  if (!iv || !tag || !body) throw new Error('Malformed sealed key')
+  const decipher = createDecipheriv('aes-256-gcm', keysSubkey('agent-seal'), unb64(iv))
+  decipher.setAAD(Buffer.from(`ren.agent.v1:${keyRowId}`))
+  decipher.setAuthTag(unb64(tag))
+  return `0x${Buffer.concat([decipher.update(unb64(body)), decipher.final()]).toString('hex')}` as Hex
+}
+
+/** A long random token's hash. Tokens carry 192 random bits, so a plain SHA-256 is enough. */
+export const tokenHash = (token: string) => createHash('sha256').update(token).digest('base64url')
+
+export function sameSecret(a: string, b: string): boolean {
+  const x = Buffer.from(a)
+  const y = Buffer.from(b)
+  return x.length === y.length && timingSafeEqual(x, y)
 }

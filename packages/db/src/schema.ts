@@ -174,6 +174,114 @@ export const policies = pgTable(
   (t) => [index('policies_credential_idx').on(t.credentialId)],
 )
 
+// --- Keys -----------------------------------------------------------------
+
+export const keyKind = pgEnum('key_kind', ['agent', 'allowance', 'card'])
+
+/** What Ren checks before an agent key signs: what the chain can't express. Amounts are base units. */
+export interface KeyRules {
+  /** The most one payment may be. */
+  perPayment: string
+  /** Payments above this wait for the owner to approve them. */
+  approveAbove: string
+  /** Where the agent may pay: anyone, or only these wallets. */
+  payees: 'anyone' | string[]
+}
+
+/**
+ * A key that can spend a wallet's dollars, short of the wallet itself: an AI agent's key Ren holds,
+ * a person's allowance on their own phone, or a Ren Card. Each is a Tempo access key on the owner's
+ * account, so the chain itself caps what it can spend, renews that cap each period, ends it at its
+ * expiry and stops it when frozen. Ren keeps the label, who holds it, and for an agent the key
+ * itself (sealed) and the rules it checks before signing.
+ */
+export const walletKeys = pgTable(
+  'wallet_keys',
+  {
+    id: id(),
+    network: network('network').notNull(),
+    /** The wallet whose dollars the key spends: the Tempo account it is authorized on. */
+    ownerAddress: address('owner_address').notNull(),
+    kind: keyKind('kind').notNull(),
+    label: text('label').notNull(),
+    /** The access key's id on Tempo (its address). Null for an allowance nobody has accepted yet. */
+    keyId: address('key_id'),
+    /** secp256k1 or p256. */
+    keyType: text('key_type').notNull(),
+    /** A P-256 key's uncompressed public key. */
+    publicKey: text('public_key'),
+    /** An allowance's holder: the Ren wallet that sees and spends it. */
+    holderAddress: address('holder_address'),
+    holderName: text('holder_name'),
+    token: address('token').notNull(),
+    /** What it may spend each period, in base units. */
+    spendLimit: amount('spend_limit').notNull(),
+    /** Seconds the limit renews over (86,400 a day, 604,800 a week). */
+    period: integer('period').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    rules: jsonb('rules').$type<KeyRules>(),
+    /** An agent's private key, sealed under Ren's master key. Ren signs with it once its rules pass. */
+    sealedKey: text('sealed_key'),
+    /** The start of an agent's token, to find it by; the whole token is only ever stored hashed. */
+    tokenPrefix: text('token_prefix'),
+    tokenHash: text('token_hash'),
+    /** An allowance invite's code, hashed: whoever opens the link first claims it. */
+    inviteHash: text('invite_hash'),
+    /** pending (not on-chain yet) | active | frozen (limit 0 on-chain) | revoked (for good) */
+    status: text('status').notNull().default('pending'),
+    authorizedTxHash: text('authorized_tx_hash'),
+    revokedTxHash: text('revoked_tx_hash'),
+    lastUsedAt: timestamp('last_used_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('wallet_keys_owner_idx').on(t.ownerAddress, t.network),
+    index('wallet_keys_holder_idx').on(t.holderAddress, t.network),
+    uniqueIndex('wallet_keys_key_idx').on(t.keyId, t.network),
+    uniqueIndex('wallet_keys_token_idx').on(t.tokenPrefix),
+    uniqueIndex('wallet_keys_invite_idx').on(t.inviteHash),
+  ],
+)
+
+/**
+ * Every payment a key asked Ren to make, paid or not: an agent's audit log. A payment over the
+ * key's approval line waits here for its owner, and is paid only once they say yes.
+ */
+export const keyPayments = pgTable(
+  'key_payments',
+  {
+    id: id(),
+    walletKeyId: uuid('wallet_key_id')
+      .notNull()
+      .references(() => walletKeys.id),
+    /** pay (to a wallet) or mpp (a paid request to a URL) */
+    kind: text('kind').notNull(),
+    /** For a paid request: the site's origin and the URL. */
+    origin: text('origin'),
+    url: text('url'),
+    recipient: address('recipient').notNull(),
+    amount: amount('amount').notNull(),
+    /** What the agent said it's for, or the site's own description. Shown, never trusted. */
+    description: text('description'),
+    /** paid | denied | pending_approval | approved | declined | failed | expired */
+    status: text('status').notNull(),
+    reason: text('reason'),
+    txHash: text('tx_hash'),
+    /** What to send once approved: the request the agent made. */
+    request: jsonb('request').$type<Record<string, unknown>>(),
+    /** For a paid request: what came back, so the agent can collect it after an approval. */
+    response: jsonb('response').$type<Record<string, unknown>>(),
+    decidedAt: timestamp('decided_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('key_payments_key_idx').on(t.walletKeyId, t.createdAt),
+    index('key_payments_status_idx').on(t.status),
+  ],
+)
+
 // --- Payments -------------------------------------------------------------
 
 export const intentStatus = pgEnum('intent_status', [
