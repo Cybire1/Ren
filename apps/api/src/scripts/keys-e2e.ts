@@ -163,35 +163,42 @@ const approved = await call<{ payment: { status: string; tx_hash: string; reason
 expect(approved.body.payment?.status === 'paid', `approve: ${JSON.stringify(approved.body)}`)
 ok(`approved with the wallet's signature, and paid: ${approved.body.payment.tx_hash}`)
 
-step('A paid API over MPP: a test merchant charging $0.25 a request')
-const merchant = newCustomer().address
-const feePayerKey = process.env.KOVA_FEE_PAYER_PRIVATE_KEY as Hex | undefined
-const mppx = Mppx.create({
-  methods: [
-    tempo.charge({
-      currency: token,
-      recipient: merchant,
-      testnet: true,
-      ...(feePayerKey ? { feePayer: privateKeyToAccount(feePayerKey) } : {}),
-    }),
-  ],
-  secretKey: randomBytes(32).toString('hex'),
-})
-const shop = new Hono()
-shop.get('/joke', async (c) => {
-  const result = await mppx.charge({ amount: '0.25', description: 'One joke' })(c.req.raw)
-  if (result.status === 402) return result.challenge
-  return result.withReceipt(c.json({ joke: 'A stablecoin walks into a bar. The bartender says: we have a fixed price.' }))
-})
+// A local test merchant only: Ren's production API calls public https sites, never a laptop.
+const local = /localhost|127\.0\.0\.1/.test(api)
 const port = 4800 + Math.floor(Math.random() * 100)
-const server = serve({ fetch: shop.fetch, port })
-await new Promise((r) => setTimeout(r, 300))
-const fetched = await call<{ status: string; response: { status: number; body: string }; payment: { tx_hash: string; amount: string } | null; reason?: string }>(
-  '/v1/agent/fetch',
-  { method: 'POST', token: agentToken, body: JSON.stringify({ url: `http://localhost:${port}/joke`, max_amount: '0.50' }) },
-)
-expect(fetched.body.status === 'paid', `mpp: ${JSON.stringify(fetched.body)}`)
-ok(`paid $${fetched.body.payment?.amount}, tx ${fetched.body.payment?.tx_hash}; the site said ${fetched.body.response.body}`)
+let server: { close: () => void } | null = null
+if (local) {
+  step('A paid API over MPP: a test merchant charging $0.25 a request')
+  const merchant = newCustomer().address
+  const feePayerKey = process.env.KOVA_FEE_PAYER_PRIVATE_KEY as Hex | undefined
+  const mppx = Mppx.create({
+    methods: [
+      tempo.charge({
+        currency: token,
+        recipient: merchant,
+        testnet: true,
+        ...(feePayerKey ? { feePayer: privateKeyToAccount(feePayerKey) } : {}),
+      }),
+    ],
+    secretKey: randomBytes(32).toString('hex'),
+  })
+  const shop = new Hono()
+  shop.get('/joke', async (c) => {
+    const result = await mppx.charge({ amount: '0.25', description: 'One joke' })(c.req.raw)
+    if (result.status === 402) return result.challenge
+    return result.withReceipt(c.json({ joke: 'A stablecoin walks into a bar. The bartender says: we have a fixed price.' }))
+  })
+  server = serve({ fetch: shop.fetch, port })
+  await new Promise((r) => setTimeout(r, 300))
+  const fetched = await call<{ status: string; response: { status: number; body: string }; payment: { tx_hash: string; amount: string } | null; reason?: string }>(
+    '/v1/agent/fetch',
+    { method: 'POST', token: agentToken, body: JSON.stringify({ url: `http://localhost:${port}/joke`, max_amount: '0.50' }) },
+  )
+  expect(fetched.body.status === 'paid', `mpp: ${JSON.stringify(fetched.body)}`)
+  ok(`paid $${fetched.body.payment?.amount}, tx ${fetched.body.payment?.tx_hash}; the site said ${fetched.body.response.body}`)
+
+
+}
 
 step('The same, through Ren’s MCP server')
 const mcp = new Client({ name: 'keys-e2e', version: '1.0.0' })
@@ -202,12 +209,14 @@ const tools = await mcp.listTools()
 ok(`tools: ${tools.tools.map((t) => t.name).join(', ')}`)
 const status = await mcp.callTool({ name: 'ren_status', arguments: {} })
 ok(`ren_status: ${JSON.stringify(JSON.parse((status.content as { text: string }[])[0]?.text ?? '{}').left)} left`)
-const viaMcp = await mcp.callTool({ name: 'ren_fetch', arguments: { url: `http://localhost:${port}/joke`, max_amount: '0.10' } })
-ok(`ren_fetch with a $0.10 cap: ${(viaMcp.content as { text: string }[])[0]?.text.split('\n')[0]}`)
+if (local) {
+  const viaMcp = await mcp.callTool({ name: 'ren_fetch', arguments: { url: `http://localhost:${port}/joke`, max_amount: '0.10' } })
+  ok(`ren_fetch with a $0.10 cap: ${(viaMcp.content as { text: string }[])[0]?.text.split('\n')[0]}`)
+}
 const paidMcp = await mcp.callTool({ name: 'ren_pay', arguments: { to: friend, amount: '0.20' } })
 ok(`ren_pay: ${(paidMcp.content as { text: string }[])[0]?.text}`)
 await mcp.close()
-server.close()
+server?.close()
 
 step('A Ren shop takes payment over MPP: the agent pays a till’s charge through /v1/mpp/charges')
 const mppShop = await call<{ secret_key?: string; key?: string }>('/v1/merchants', {
