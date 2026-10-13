@@ -164,11 +164,15 @@ function seal(
     concatBytes([hexToBytes(to), new Uint8Array(32), new Uint8Array(12)]),
   )
   return {
-    ephemeralPubkeyX: bytesToHex(ephemeralPublic.slice(1)),
-    ephemeralPubkeyYParity: ephemeralPublic[0] as number,
-    ciphertext: bytesToHex(sealed.slice(0, 64)),
-    nonce: bytesToHex(nonce),
-    tag: bytesToHex(sealed.slice(64)),
+    encrypted: {
+      ephemeralPubkeyX: bytesToHex(ephemeralPublic.slice(1)),
+      ephemeralPubkeyYParity: ephemeralPublic[0] as number,
+      ciphertext: bytesToHex(sealed.slice(0, 64)),
+      nonce: bytesToHex(nonce),
+      tag: bytesToHex(sealed.slice(64)),
+    },
+    /** The one-time key: whoever holds it can open this one deposit, and only this one. */
+    opening: bytesToHex(ephemeral),
   }
 }
 
@@ -180,13 +184,13 @@ export async function deposit(
   client: Parameters<typeof sendTransactionSync>[0],
   zone: ZoneInfo,
   parameters: { amount: bigint; to: Address; from: Address },
-): Promise<TransactionReceipt> {
+): Promise<TransactionReceipt & { opening: Hex }> {
   const { keyIndex, publicKey } = await Actions.zone.getEncryptionKey(client as never, {
     portalAddress: zone.portal,
     zoneId: zone.id,
   })
   const sandbox = zone.runtime === 'sandbox'
-  const encrypted = seal(publicKey, parameters.to, zone.portal, keyIndex, sandbox ? null : parameters.from)
+  const { encrypted, opening } = seal(publicKey, parameters.to, zone.portal, keyIndex, sandbox ? null : parameters.from)
   const depositData = sandbox
     ? encodeFunctionData({
         abi: sandboxPortal,
@@ -214,7 +218,8 @@ export async function deposit(
     feePayer: true,
   } as never)
   if (receipt.status !== 'success') throw new Error('The deposit didn’t go through.')
-  return receipt as TransactionReceipt
+  // The one-time key it was sealed with: proof, for Ren alone, of whom a private payment was for.
+  return Object.assign(receipt as TransactionReceipt, { opening })
 }
 
 /** Waits until the zone has read Tempo up to `block`, so a deposit made there has landed. */

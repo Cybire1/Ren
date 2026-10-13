@@ -1,8 +1,10 @@
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native'
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import { getAddress } from 'viem'
 import { type Checkout, getCheckout, type OrderStatus } from '@/lib/api'
+import { apiUrl, chainName } from '@/lib/config'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/money'
 import { useSessionCovers } from '@/lib/session'
 import { colors } from '@/lib/theme'
@@ -26,7 +28,9 @@ let devPaid = false
 export default function PayCharge() {
   // autopay is development-only: it presses Pay by itself, so a film can capture the real flow.
   const { id, autopay } = useLocalSearchParams<{ id: string; autopay?: string }>()
-  const { profile, balance, payCheckout } = useWallet()
+  const { profile, balance, payCheckout, privacy } = useWallet()
+  // Privately: into the shop's private balance on the zone, so Tempo doesn't show which shop it paid.
+  const [secret, setSecret] = useState(false)
   const [stage, setStage] = useState<Stage>('loading')
   const [checkout, setCheckout] = useState<Checkout | null>(null)
   const [entry, setEntry] = useState<Entry | null>(null)
@@ -58,11 +62,37 @@ export default function PayCharge() {
       })
   }, [id])
 
+  /** A deposit into the shop's private balance, then its proof to Ren, which settles the charge. */
+  const payPrivately = async (c: Checkout): Promise<Entry> => {
+    const shop = c.order?.stall?.name ?? c.merchant_name
+    const sent = await privacy.sendPrivately({ address: getAddress(c.pay_to), name: shop }, BigInt(c.amount_base))
+    const response = await fetch(`${apiUrl}/v1/checkout/${encodeURIComponent(c.id)}/private`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tx_hash: sent.hash, opening: sent.opening }),
+    })
+    const body = (await response.json().catch(() => ({}))) as { status?: string; error?: { message?: string } }
+    if (!response.ok || body.status !== 'paid')
+      throw new Error(`${body.error?.message ?? 'The shop didn’t see it yet.'} Your dollars went through; the shop can still match them.`)
+    return {
+      id: sent.hash,
+      kind: 'sent',
+      amount: c.amount_base,
+      name: shop,
+      detail: 'Paid privately',
+      address: getAddress(c.pay_to),
+      txHash: sent.hash,
+      ms: sent.ms,
+      at: Date.now(),
+      private: 'both',
+    }
+  }
+
   const pay = async () => {
     if (!checkout) return
     setStage('paying')
     try {
-      const done = await payCheckout(checkout)
+      const done = secret ? await payPrivately(checkout) : await payCheckout(checkout)
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       // A stall order: follow it until the counter marks it ready, wherever the buyer goes next.
       watchOrder(checkout)
@@ -307,6 +337,31 @@ export default function PayCharge() {
             <Line label="Fee" value="$0.00, Ren covers it" />
           </View>
         </Sticker>
+        {privacy.zone && !free ? (
+          <Pressable
+            accessibilityRole="switch"
+            accessibilityState={{ checked: secret }}
+            accessibilityLabel="Pay privately"
+            onPress={() => {
+              void Haptics.selectionAsync()
+              setSecret((on) => !on)
+            }}
+            style={[styles.privRow, secret && styles.privRowOn]}
+          >
+            <Icon name="lock" size={16} color={secret ? colors.tealSoft : colors.ink} />
+            <View style={{ flex: 1 }}>
+              <Txt weight="bold" size={15} color={secret ? colors.white : colors.ink}>
+                Pay privately
+              </Txt>
+              <Txt size={12} color={secret ? colors.onInk : colors.muted} numberOfLines={2}>
+                {secret ? `Into the shop’s private balance. ${chainName} won’t show which shop` : `${chainName} shows it as you paying the shop`}
+              </Txt>
+            </View>
+            <View style={[styles.track, secret && styles.trackOn]}>
+              <View style={[styles.knob, secret && styles.knobOn]} />
+            </View>
+          </Pressable>
+        ) : null}
         {short ? (
           <Txt weight="medium" size={15} color={colors.danger} style={{ marginTop: 12, textAlign: 'center' }}>
             You need {formatUsd(amount - (balance ?? 0n))} more. Add money first.
@@ -318,7 +373,7 @@ export default function PayCharge() {
           <PillButton label="Add money" icon="plus" onPress={() => router.push('/add-money')} />
         ) : (
           <>
-            <PillButton label={free ? 'Get it free' : `Pay ${formatUsd(amount)}`} icon={covered ? 'bolt' : 'face'} loading={stage === 'paying'} onPress={pay} />
+            <PillButton label={free ? 'Get it free' : `Pay ${formatUsd(amount)}${secret ? ' privately' : ''}`} icon={covered ? 'bolt' : 'face'} loading={stage === 'paying'} onPress={pay} />
             {free ? (
               <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
                 {covered ? 'Nothing to pay. Your wallet is open, so no Face ID either.' : 'Nothing to pay. Face ID confirms it’s your card.'}
@@ -391,6 +446,12 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
+  privRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 12, padding: 14, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface },
+  privRowOn: { backgroundColor: colors.ink },
+  track: { width: 44, height: 26, borderRadius: 13, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.sunken, padding: 2 },
+  trackOn: { backgroundColor: colors.teal, borderColor: colors.tealSoft },
+  knob: { width: 18, height: 18, borderRadius: 9, backgroundColor: colors.white, borderWidth: 2, borderColor: colors.ink },
+  knobOn: { transform: [{ translateX: 18 }] },
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28 },
   title: { marginTop: 16, letterSpacing: -0.6 },
   body: { textAlign: 'center', marginTop: 8, lineHeight: 23 },

@@ -8,6 +8,7 @@ import { Art, Icon } from '@/components/brand'
 import { OrderReady } from '@/components/order-ready'
 import { StampsAfterPay } from '@/components/stamp-card'
 import type { Checkout } from '@/lib/api'
+import { chainName } from '@/lib/chain'
 import { rememberPayer } from '@/lib/payer'
 import type { ChargeToPay } from '@/lib/wallet/chain'
 import { parseScanned } from '@/lib/wallet/links'
@@ -183,9 +184,11 @@ type Charge = Omit<ChargeToPay, 'order'> & { status: string; order?: Checkout['o
 
 /** Paying a shop's charge from this wallet: what it's for, then paid in about a second. */
 export function PayCharge({ id }: { id: string }) {
-  const { balance, payCheckout, profile, rates } = useWallet()
+  const { balance, payCheckout, profile, rates, privacy } = useWallet()
   const [charge, setCharge] = useState<Charge | null>(null)
   const [stage, setStage] = useState<Stage>({ at: 'loading' })
+  // Privately: into the shop's private balance on the zone, so Tempo doesn't show which shop it paid.
+  const [secret, setSecret] = useState(false)
 
   useEffect(() => {
     let live = true
@@ -280,6 +283,21 @@ export function PayCharge({ id }: { id: string }) {
       </div>
     )
 
+  /** A deposit into the shop's private balance, then its proof to Ren, which settles the charge. */
+  const payPrivately = async (c: Charge) => {
+    const sent = await privacy.sendPrivately({ address: c.pay_to, name: place }, BigInt(c.amount_base))
+    if (!sent.opening) throw new Error('This zone can’t take private payments to a shop yet.')
+    const response = await fetch(`/api/naira/checkout/${encodeURIComponent(c.id)}/private`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ tx_hash: sent.hash, opening: sent.opening }),
+    })
+    const body = (await response.json().catch(() => ({}))) as { status?: string; error?: { message?: string } }
+    if (!response.ok || body.status !== 'paid')
+      throw new Error(`${body.error?.message ?? 'The shop didn’t see it yet.'} Your dollars went through; the shop can still match them.`)
+    return sent
+  }
+
   const lines = order?.lines ?? []
   return (
     <div className="w-screen">
@@ -337,6 +355,30 @@ export function PayCharge({ id }: { id: string }) {
               <strong>$0.00, Ren covers it</strong>
             </div>
           </div>
+          {privacy.zone && !order?.reward ? (
+            <button
+              type="button"
+              role="switch"
+              aria-checked={secret}
+              className={`w-privswitch${secret ? ' w-privswitch-on' : ''}`}
+              onClick={() => setSecret((on) => !on)}
+            >
+              <span className="w-privswitch-icon">
+                <Icon name="lock" size={16} />
+              </span>
+              <span className="w-privswitch-text">
+                <strong>Pay privately</strong>
+                <small>
+                  {secret
+                    ? `Into ${place}’s private balance. ${chainName} won’t show which shop you paid`
+                    : `${chainName} shows it as you paying ${place}`}
+                </small>
+              </span>
+              <span className="w-privswitch-track" aria-hidden="true">
+                <span className="w-privswitch-knob" />
+              </span>
+            </button>
+          ) : null}
           {stage.at === 'problem' ? (
             <p className="form-error">
               {stage.message}
@@ -365,7 +407,7 @@ export function PayCharge({ id }: { id: string }) {
               onClick={async () => {
                 setStage({ at: 'paying' })
                 try {
-                  const moved = await payCheckout(charge)
+                  const moved = secret ? await payPrivately(charge) : await payCheckout(charge)
                   // This wallet is the stamp card at the shop.
                   if (profile) rememberPayer(profile.address)
                   setStage({ at: 'paid', ms: moved.ms, hash: moved.hash })
@@ -376,7 +418,7 @@ export function PayCharge({ id }: { id: string }) {
               }}
             >
               <span className="pill-label">
-                {stage.at === 'paying' ? 'Paying…' : `Pay ${formatUsd(amount)}`}
+                {stage.at === 'paying' ? 'Paying…' : `Pay ${formatUsd(amount)}${secret ? ' privately' : ''}`}
               </span>
               <span className="pill-cap">
                 <Icon name={sessionCovers(amount) ? 'bolt' : 'face'} size={18} />

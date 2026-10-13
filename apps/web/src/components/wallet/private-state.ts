@@ -64,7 +64,7 @@ export interface PrivateValue {
   open: () => Promise<void>
   moveIn: (amount: bigint) => Promise<Moved>
   moveOut: (amount: bigint) => Promise<Moved>
-  sendPrivately: (to: { address: string; name: string }, amount: bigint) => Promise<Moved>
+  sendPrivately: (to: { address: string; name: string }, amount: bigint) => Promise<Moved & { opening?: `0x${string}` }>
   /** What this wallet did with a Tempo transaction into or out of the zone, for public history. */
   noteFor: (hash: string) => PrivateNote | undefined
   /** Every private move this browser made. */
@@ -151,7 +151,8 @@ export function usePrivate({
     return { chain, rpc: zone.parentRpc }
   }, [zone])
   const parentClient = useCallback(
-    (account: LocalAccount) =>
+    // Typed loosely on purpose: the two clients' full types are too deep for TypeScript to unify.
+    (account: LocalAccount): { client: unknown; sponsored: boolean } =>
       parent
         ? {
             client: createClient({
@@ -296,12 +297,12 @@ export function usePrivate({
 
   const sendPrivately = useCallback(
     async (to: { address: string; name: string }, amount: bigint) => {
-      const { hash, ms } = await depositFor(amount, getAddress(to.address), {
+      const { hash, ms, receipt } = await depositFor(amount, getAddress(to.address), {
         kind: 'sent',
         name: to.name,
         to: to.address,
       })
-      return { hash, ms, explorer: explorerTx(hash) }
+      return { hash, ms, explorer: explorerTx(hash), opening: receipt.opening }
     },
     [depositFor, explorerTx],
   )

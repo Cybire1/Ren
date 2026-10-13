@@ -40,6 +40,8 @@ const schema = z.object({
    * moving dollars into your private balance, or sending them privately. Set it to the zone the
    * web wallet uses (KOVA_ZONE_PORTAL there too). Unset, Ren pays for no zone deposits.
    */
+  /** The zone's id at its portal (Tempo's testnet Zone A is 6). */
+  KOVA_ZONE_ID: z.coerce.number().int().positive().default(6),
   KOVA_ZONE_PORTAL: z
     .string()
     .regex(/^0x[0-9a-fA-F]{40}$/)

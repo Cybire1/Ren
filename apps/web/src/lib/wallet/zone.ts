@@ -161,7 +161,7 @@ export async function deposit(
   client: Parameters<typeof Actions.zone.encryptedDepositSync>[0],
   zone: ZoneInfo,
   parameters: { amount: bigint; to: Address; sponsored: boolean },
-): Promise<TransactionReceipt> {
+): Promise<TransactionReceipt & { opening?: Hex }> {
   const sponsor = parameters.sponsored ? { feePayer: true } : {}
   if (zone.runtime === 'sandbox') {
     // The earlier portal: the same approve-and-deposit pair, sealed its way.
@@ -169,7 +169,7 @@ export async function deposit(
       portalAddress: zone.portal,
       zoneId: zone.id,
     })
-    const encrypted = sealForSandbox(publicKey, parameters.to, zone.portal, keyIndex)
+    const { encrypted, opening } = sealForSandbox(publicKey, parameters.to, zone.portal, keyIndex)
     const receipt = await sendTransactionSync(
       client as never,
       {
@@ -195,7 +195,8 @@ export async function deposit(
       } as never,
     )
     if (receipt.status !== 'success') throw new Error('The deposit didn’t go through.')
-    return receipt as TransactionReceipt
+    // The one-time key it was sealed with: proof, for Ren alone, of whom a private payment was for.
+    return Object.assign(receipt as TransactionReceipt, { opening })
   }
   const { receipt } = await Actions.zone.encryptedDepositSync(client, {
     token: zone.token,
@@ -242,11 +243,15 @@ export function sealForSandbox(
     concatBytes([hexToBytes(to), new Uint8Array(32), new Uint8Array(12)]),
   )
   return {
-    ephemeralPubkeyX: bytesToHex(ephemeralPublic.slice(1)),
-    ephemeralPubkeyYParity: ephemeralPublic[0] as number,
-    ciphertext: bytesToHex(sealed.slice(0, 64)),
-    nonce: bytesToHex(nonce),
-    tag: bytesToHex(sealed.slice(64)),
+    encrypted: {
+      ephemeralPubkeyX: bytesToHex(ephemeralPublic.slice(1)),
+      ephemeralPubkeyYParity: ephemeralPublic[0] as number,
+      ciphertext: bytesToHex(sealed.slice(0, 64)),
+      nonce: bytesToHex(nonce),
+      tag: bytesToHex(sealed.slice(64)),
+    },
+    /** The one-time key: whoever holds it can open this one deposit, and only this one. */
+    opening: bytesToHex(ephemeral),
   }
 }
 

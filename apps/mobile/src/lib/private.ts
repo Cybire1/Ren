@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AppState } from 'react-native'
-import type { Address, LocalAccount } from 'viem'
+import type { Address, Hex, LocalAccount } from 'viem'
 import { getBalance, walletClient } from './chain-tempo'
 import { chainKey } from './config'
 import { spend } from './session'
@@ -58,7 +58,7 @@ export interface Privacy {
   open: () => Promise<void>
   moveIn: (amount: bigint) => Promise<{ hash: string; ms: number }>
   moveOut: (amount: bigint) => Promise<{ hash: string; ms: number }>
-  sendPrivately: (to: { address: Address; name: string }, amount: bigint) => Promise<{ hash: string; ms: number }>
+  sendPrivately: (to: { address: Address; name: string }, amount: bigint) => Promise<{ hash: string; ms: number; opening: Hex }>
 }
 
 const refused = (error: unknown) => {
@@ -194,8 +194,8 @@ export function usePrivacy({
 
   const sendPrivately = useCallback(
     async (to: { address: Address; name: string }, amount: bigint) => {
-      const { hash, ms } = await depositFor(amount, to.address, { kind: 'sent', name: to.name, to: to.address })
-      return { hash, ms }
+      const { hash, ms, receipt } = await depositFor(amount, to.address, { kind: 'sent', name: to.name, to: to.address })
+      return { hash, ms, opening: receipt.opening }
     },
     [depositFor],
   )

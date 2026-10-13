@@ -12,6 +12,7 @@ const baseUrl = process.env.KOVA_API_URL ?? 'http://localhost:4000'
 const ALLOWED = [
   /^naira(\/(banks|account|quote))?$/,
   /^checkout\/pi_[0-9a-z]{26}\/naira(\/verify)?$/,
+  /^checkout\/pi_[0-9a-z]{26}\/private$/,
   /^wallets\/0x[0-9a-fA-F]{40}\/cash-outs(\/[0-9a-f-]{36}(\/sent)?)?$/,
 ]
 

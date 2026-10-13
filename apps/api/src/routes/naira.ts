@@ -25,6 +25,7 @@ import {
   startPayIn,
 } from '../services/naira.js'
 import { accountName, nigerianBanks, paystackTestMode, webhookIsPaystack } from '../services/paystack.js'
+import { privatePayReady, settlePrivatePayment } from '../services/private-pay.js'
 import { requireWallet } from '../services/wallet-auth.js'
 
 /**
@@ -39,6 +40,9 @@ import { requireWallet } from '../services/wallet-auth.js'
  *   POST /checkout/:id/naira                    pay a charge in naira: where to send the payer
  *   POST /checkout/:id/naira/verify             the payer came back from Paystack
  *   POST /paystack/webhook                      Paystack's word, signed
+ *
+ * And paying a charge privately, into the shop's private balance on the zone (services/private-pay.ts):
+ *   POST /checkout/:id/private                  the deposit's hash and the key it was sealed with
  */
 
 const money = z.string().regex(/^\d{1,7}(\.\d{1,6})?$/, 'Expected dollars, like 50 or 12.50')
@@ -158,6 +162,20 @@ nairaRoutes.post('/checkout/:id/naira/verify', async (c) => {
     throw new KovaError('invalid_request', 'That payment isn’t for this charge.')
   const row = await settlePayIn(body.reference)
   return c.json({ status: row.status, tx_hash: row.txHash, failure: row.failure })
+})
+
+nairaRoutes.post('/checkout/:id/private', async (c) => {
+  if (!privatePayReady()) throw new KovaError('conflict', 'Private payments aren’t switched on for this server.')
+  limit(`private-pay:${ip(c)}`, 30, 60_000, 'Too many tries. Wait a minute.')
+  const body = await bodyOf(
+    c,
+    z.object({
+      tx_hash: z.string().refine((v) => isHex(v) && v.length === 66, 'Expected a transaction hash'),
+      opening: z.string().refine((v) => isHex(v) && v.length === 66, 'Expected the 32-byte key the deposit was sealed with'),
+    }),
+  )
+  const { intent } = await openIntent(c.req.param('id'))
+  return c.json(await settlePrivatePayment(intent, { txHash: body.tx_hash as Hex, opening: body.opening as Hex }))
 })
 
 nairaRoutes.post('/paystack/webhook', async (c) => {
