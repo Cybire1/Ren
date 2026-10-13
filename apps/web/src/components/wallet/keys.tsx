@@ -80,7 +80,7 @@ export function KeysCard() {
   const people = live.filter((k) => k.kind === 'allowance').length
   const summary =
     keys.status !== 'ready'
-      ? 'Limited keys for agents and people'
+      ? 'For agents and people'
       : agents + people === 0
         ? 'None yet: only your passkey can spend'
         : [agents ? `${agents} agent${agents === 1 ? '' : 's'}` : '', people ? `${people} allowance${people === 1 ? '' : 's'}` : '']
