@@ -24,6 +24,7 @@ import { Txt } from '@/ui/primitives'
  * the till's mode, `tables=6&stamps=5` gives the stall table codes and a stamp card (0 turns either off), and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
  * `card=link&limit=100&pin=4827` links the software Kova Card (`newcard=1` makes a fresh one first); `tapcard=<charge>` taps it at this till.
  * `private=open,in:2,send:<address>:1,out:0.5` moves dollars through the private balance (lib/private.ts).
+ * `keys=signin,agent:<name>,allowance:<name>` signs in to Keys and makes keys with the real code (lib/keys-state.ts).
  * Release builds redirect home.
  */
 /** A small Lagos kitchen menu for trying the stall screens. */
@@ -169,6 +170,8 @@ export default function Dev() {
     demo?: string
     /** open,in:<dollars>,send:<address>:<dollars>,out:<dollars>: the private balance's real code, in order. */
     private?: string
+    /** signin,agent:<name>,allowance:<name>: Keys' real code, in order. */
+    keys?: string
   }>()
   const wallet = useWallet()
   const prefs = usePrefs()
@@ -246,6 +249,29 @@ export default function Dev() {
                 toBase(second ?? '1'),
               )
             if (what === 'out') await wallet.privacy.moveOut(toBase(first ?? '1'))
+          }
+        }
+        if (params.keys && wallet.keys.available) {
+          for (const what of params.keys.split(',')) {
+            const [kind, name] = what.split(':')
+            setStep(`keys ${what}`)
+            if (kind === 'signin') await wallet.keys.signIn()
+            if (kind === 'agent') {
+              const made = await wallet.keys.createAgent({
+                label: name || 'Research agent',
+                limit: '20',
+                period: 'day',
+                days: 30,
+                perPayment: '5',
+                approveAbove: '1',
+                payees: 'anyone',
+              })
+              console.log(`[dev] agent ${made.key.id} token ${made.token}`)
+            }
+            if (kind === 'allowance') {
+              const made = await wallet.keys.createAllowance({ label: name || 'Mum', limit: '30', period: 'week', days: 30 })
+              console.log(`[dev] allowance ${made.key.id} ${made.link}`)
+            }
           }
         }
         if (params.unpair) await terminal.unpair()
