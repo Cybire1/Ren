@@ -105,7 +105,7 @@ This is the running log required by the brief (§17). Newest entries go at the t
 
 **Still to check:** a real JCOP card must verify P-256 inside the applet.
 
-### D-006 · Agents use Kova-held access keys behind a policy gate, paying over MPP (Proposed)
+### D-006 · Agents use Kova-held access keys behind a policy gate, paying over MPP (Built: docs/keys.md)
 **Decision:** Each agent gets a Tempo access key that the user authorizes with their passkey.
 - **On-chain limits:** a per-period cap on USDC.e, with calls scoped to `transfer`/`transferWithMemo`.
 - **Kova policy (before any `mppx` signing):** the per-request cap, the whitelist and human approval.
