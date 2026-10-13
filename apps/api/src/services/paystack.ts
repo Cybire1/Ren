@@ -57,7 +57,9 @@ export async function nigerianBanks(): Promise<Bank[]> {
     const data = await call<{ name: string; code: string; active: boolean; is_deleted?: boolean }[]>(
       `/bank?currency=NGN&perPage=100&page=${page}`,
     )
-    for (const bank of data) if (bank.active && !bank.is_deleted) list.push({ name: bank.name, code: bank.code })
+    for (const bank of data)
+      if (bank.active && !bank.is_deleted && !list.some((b) => b.code === bank.code && b.name === bank.name))
+        list.push({ name: bank.name, code: bank.code })
     if (data.length < 100) break
   }
   list.sort((a, b) => a.name.localeCompare(b.name))

@@ -262,7 +262,7 @@ export default function CashOutScreen() {
                     </Txt>
                   ) : (
                     shown.map((b, i) => (
-                      <Pressable key={b.code} onPress={() => setBank(b)} style={[styles.bankRow, i < shown.length - 1 && styles.rule]}>
+                      <Pressable key={`${b.code}-${b.name}`} onPress={() => setBank(b)} style={[styles.bankRow, i < shown.length - 1 && styles.rule]}>
                         <Txt size={15}>{b.name}</Txt>
                       </Pressable>
                     ))

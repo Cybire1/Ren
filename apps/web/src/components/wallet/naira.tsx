@@ -256,7 +256,7 @@ export function NairaCashOut() {
                   <p className="w-quiet">Loading banks…</p>
                 ) : (
                   shown.map((b) => (
-                    <button key={b.code} type="button" role="option" aria-selected={false} onClick={() => setBank(b)}>
+                    <button key={`${b.code}-${b.name}`} type="button" role="option" aria-selected={false} onClick={() => setBank(b)}>
                       {b.name}
                     </button>
                   ))

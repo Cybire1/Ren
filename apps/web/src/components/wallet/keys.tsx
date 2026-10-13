@@ -80,7 +80,7 @@ export function KeysCard() {
   const people = live.filter((k) => k.kind === 'allowance').length
   const summary =
     keys.status !== 'ready'
-      ? 'Give an agent or a person a limited key'
+      ? 'Limited keys for agents and people'
       : agents + people === 0
         ? 'None yet: only your passkey can spend'
         : [agents ? `${agents} agent${agents === 1 ? '' : 's'}` : '', people ? `${people} allowance${people === 1 ? '' : 's'}` : '']
@@ -187,7 +187,7 @@ export function KeysScreen() {
               </span>
               <span className="w-entry-text">
                 <span className="w-entry-name">Your passkey</span>
-                <span className="w-entry-sub">Full access. Only you hold it, on your devices.</span>
+                <span className="w-entry-sub">Full access. Only you hold it.</span>
               </span>
               <span className="w-chip w-chip-ink">You</span>
             </div>
@@ -509,7 +509,7 @@ export function KeyScreen({ id }: { id: string }) {
       ) : null}
 
       <dl className="w-facts w-keyfacts">
-        <Fact label="Limit" value={`${dollars(key.limit)} a ${key.period}`} icon="shield" hint={`${chainName} enforces it`} />
+        <Fact label="Limit" value={`${dollars(key.limit)} a ${key.period}`} icon="lock" hint={`${chainName} enforces it`} />
         {key.rules ? (
           <>
             <Fact label="Most per payment" value={dollars(key.rules.per_payment)} />
@@ -527,7 +527,7 @@ export function KeyScreen({ id }: { id: string }) {
           <Fact label="Held by" value={key.holder_name ? `${key.holder_name} (${short(key.holder)})` : short(key.holder)} />
         ) : null}
         <Fact label="Ends" value={new Date(key.expires_at).toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' })} />
-        {key.key_id ? <Fact label={`Key on ${chainName}`} value={short(key.key_id)} icon="key" /> : null}
+        {key.key_id ? <Fact label={`Key on ${chainName}`} value={short(key.key_id)} /> : null}
       </dl>
       {key.key_id && key.status !== 'pending' ? (
         <a className="w-keylink" href={explorerAddressUrl(network, key.owner)} target="_blank" rel="noreferrer">
@@ -958,7 +958,7 @@ export function AgentSheet() {
               </span>
             </div>
             <dl className="w-facts">
-              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} icon="shield" hint={`Ends ${ends}. Not even Ren can raise it.`} />
+              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} icon="lock" hint={`Ends ${ends}. Not even Ren can raise it.`} />
               <Fact label="Ren checks" value={`${dollars(perPayment)} a payment at most`} hint={askNever ? 'Never asks you first' : `Asks you above ${dollars(approveAbove)}`} />
               <Fact label="May pay" value={onlyListed ? `${payees.length} wallet${payees.length === 1 ? '' : 's'}` : 'Anyone'} />
               <Fact label="Fee" value="$0.00, Ren covers it" />
@@ -1123,7 +1123,7 @@ export function AllowanceSheet() {
             <dl className="w-facts">
               <Fact label="How" value="A link you send them" hint="They open it in Ren and accept on their phone" />
               <Fact label="Then" value="You switch it on" hint="With your passkey, once they’ve accepted" />
-              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} icon="shield" />
+              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} icon="lock" />
             </dl>
             {problem ? (
               <p className="w-sheet-problem" role="alert">
@@ -1140,7 +1140,7 @@ export function AllowanceSheet() {
             <div className="w-sheet-cheer">
               <Art name="reni-wave" size={130} />
             </div>
-            <h2>Send {label.trim()} the link</h2>
+            <h2>Send it to {label.trim()}</h2>
             <p>
               When they open it in Ren and accept, you’ll switch it on here. The link works once, for seven
               days.

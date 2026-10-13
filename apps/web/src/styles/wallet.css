@@ -4463,7 +4463,7 @@ button.w-add-chain {
 
 .w-keys-hero p {
   max-width: 26rem;
-  padding-right: 4.5rem;
+  padding-right: 6.25rem;
   color: var(--ink-2);
   font-size: 0.9375rem;
   line-height: 1.45;
@@ -4808,6 +4808,9 @@ button.w-add-chain {
 }
 
 .w-snippet .w-copy {
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
   color: #fff;
 }
 

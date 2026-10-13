@@ -135,7 +135,7 @@ export function AcceptAllowance({ code }: { code: string }) {
             <>
               <dl className="w-facts">
                 <Fact label="From" value={giver(invite.from)} />
-                <Fact label="You can spend" value={`${formatUsd(BigInt(Math.round(Number(invite.limit) * 1e6)))} a ${invite.period}`} icon="shield" hint={`${chainName} enforces it`} />
+                <Fact label="You can spend" value={`${formatUsd(BigInt(Math.round(Number(invite.limit) * 1e6)))} a ${invite.period}`} icon="lock" hint={`${chainName} enforces it`} />
                 <Fact label="Your key" value="Made in this browser" icon="lock" hint="It never leaves it, and Ren never sees it" />
               </dl>
               {problem ? (
