@@ -81,12 +81,28 @@ and on whose behalf, plus the network fee, so nobody needs a gas token to pay fo
   </tr>
 </table>
 
+**Private dollars.** A private balance on Tempo's testnet Zone A, in the same wallet:
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/screenshots/ren/web-private-home.png" alt="Home with the dark Private card: $4.00 only you can see, under Pay, Send and Request"></td>
+    <td width="33%"><img src="docs/screenshots/ren/web-send-private.png" alt="The send sheet with Send privately on: into their private balance, Tempo won't show who it's for"></td>
+    <td width="33%"><img src="docs/screenshots/ren/web-private.png" alt="The Private screen: the private balance, Move in, Send privately, Move out, and what stays private"></td>
+  </tr>
+  <tr>
+    <td><sub><b>Home.</b> The private balance has its own dark card, opened with your passkey.</sub></td>
+    <td><sub><b>Send privately.</b> One switch in Send, and it lands in their private balance.</sub></td>
+    <td><sub><b>Private.</b> Move in, send, move out, and what Tempo can and can't see.</sub></td>
+  </tr>
+</table>
+
 ## Try it in two minutes
 
 1. Open **[the live app](https://web-production-acdb.up.railway.app)** and choose **Explore the demo shop**. You land on a shop's dashboard and its live tape.
 2. Choose **Charge**, type an amount and start the charge. A QR code appears.
 3. On your phone, open the same site and choose **Create my wallet**. Face ID or your fingerprint makes the passkey. Then **Add $5, free**.
 4. Tap **Pay** and scan the code, or point your phone's camera at it. The charge flips to **Paid** in about a second, and the payment prints on the shop's tape.
+5. Back on your wallet's Home, tap **Private**, show it with your passkey and move a few dollars in. Then **Send** to someone with **Send privately** on: Tempo's explorer shows dollars going into the zone, not who they're for.
 
 Everything runs on Tempo's Moderato testnet with test dollars. Ren pays every network fee.
 
