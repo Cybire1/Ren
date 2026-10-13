@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import type { Checkout } from '@/lib/api'
 import { KeepInKova } from './keep-in-kova'
+import { NairaPay } from './naira-pay'
 import { PaidReceipt } from './paid-receipt'
 import { type PaidGuest, WalletPay } from './wallet-pay'
 import { WatchPaid } from './watch-paid'
@@ -45,6 +46,7 @@ export function PayFlow({
           onGuestPaying={setGuestPaying}
         />
       </div>
+      {guest ? null : <NairaPay checkout={checkout} />}
       {guest ? null : <p className="fineprint">Tap. Paid. Anywhere.</p>}
       <WatchPaid id={checkout.id} paused={guestPaying || guest !== null} />
     </>

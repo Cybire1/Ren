@@ -84,8 +84,18 @@ export function Profile() {
         </span>
       </div>
 
-      {/* Mainnet only: on testnet there's nothing real to cash out. Ramp pays out AUSD on Monad,
-          so there's no cash-out on Tempo yet. */}
+      {/* On Tempo, naira to any Nigerian bank through Paystack (components/wallet/naira.tsx). */}
+      {onTempo ? (
+        <Link href="/wallet/cash-out" className="w-add-chain">
+          <span>
+            <strong>Cash out to naira</strong>
+            <small>To any Nigerian bank account, through Paystack</small>
+          </span>
+          <Icon name="out" size={18} />
+        </Link>
+      ) : null}
+
+      {/* Mainnet only: on testnet there's nothing real to cash out. Ramp pays out AUSD on Monad. */}
       {network === 'mainnet' && !onTempo ? (
         <Link href="/wallet/cash-out" className="w-add-chain">
           <span>

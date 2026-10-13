@@ -113,6 +113,20 @@
       "when": 1791860636547,
       "tag": "0015_wallet_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1791862643062,
+      "tag": "0016_naira",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1791862976635,
+      "tag": "0017_cash_out_recipient_later",
+      "breakpoints": true
     }
   ]
 }

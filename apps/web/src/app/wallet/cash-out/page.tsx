@@ -1,9 +1,8 @@
-import { redirect } from 'next/navigation'
 import { CashOut } from '@/components/wallet/cash-out'
+import { NairaCashOut } from '@/components/wallet/naira'
 import { onTempo } from '@/lib/chain'
 
+/** Cashing out: on Tempo to naira in a Nigerian bank (Paystack); on Monad to a bank or card (Ramp). */
 export default function CashOutPage() {
-  // Cash out goes through Ramp, which pays out AUSD on Monad: nothing to show on Tempo yet.
-  if (onTempo) redirect('/wallet/profile')
-  return <CashOut />
+  return onTempo ? <NairaCashOut /> : <CashOut />
 }

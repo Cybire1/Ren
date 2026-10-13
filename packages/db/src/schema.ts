@@ -282,6 +282,77 @@ export const keyPayments = pgTable(
   ],
 )
 
+// --- Naira ----------------------------------------------------------------
+
+/**
+ * Dollars out to a Nigerian bank account, in naira (services/naira.ts). The wallet sends the
+ * dollars to Ren's treasury with this cash-out's memo; once Ren sees them on-chain, Paystack pays
+ * the naira to the account. The quote holds for fifteen minutes.
+ */
+export const cashOuts = pgTable(
+  'cash_outs',
+  {
+    id: id(),
+    network: network('network').notNull(),
+    walletAddress: address('wallet_address').notNull(),
+    /** Dollars, base units. */
+    amount: amount('amount').notNull(),
+    /** Naira the account gets, in kobo, after the bank fee. */
+    naira: bigint('naira', { mode: 'bigint' }).notNull(),
+    /** Naira per dollar, as quoted. */
+    rate: text('rate').notNull(),
+    /** The bank transfer's fee, in kobo, taken from the naira. */
+    fee: bigint('fee', { mode: 'bigint' }).notNull(),
+    bankCode: text('bank_code').notNull(),
+    bankName: text('bank_name').notNull(),
+    accountNumber: text('account_number').notNull(),
+    accountName: text('account_name').notNull(),
+    /** Paystack's transfer recipient for the account, made when the naira is sent. */
+    recipientCode: text('recipient_code'),
+    /** quoted | received | paying | paid | failed | expired */
+    status: text('status').notNull().default('quoted'),
+    /** The wallet's transfer of the dollars to Ren's treasury. */
+    txHash: text('tx_hash'),
+    /** Paystack's transfer, by our reference (the cash-out's id) and its code. */
+    transferCode: text('transfer_code'),
+    failure: text('failure'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    paidAt: timestamp('paid_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('cash_outs_wallet_idx').on(t.walletAddress, t.createdAt), uniqueIndex('cash_outs_tx_idx').on(t.txHash)],
+)
+
+/**
+ * A Ren charge paid in naira by card or bank transfer (Paystack): the customer pays naira, and
+ * once Paystack confirms it, Ren's treasury pays the shop the charge in dollars, with the charge's
+ * memo, so the till turns to paid like any other payment.
+ */
+export const nairaPayIns = pgTable(
+  'naira_pay_ins',
+  {
+    id: id(),
+    intentId: uuid('intent_id')
+      .notNull()
+      .references(() => paymentIntents.id),
+    /** Paystack's transaction reference. */
+    reference: text('reference').notNull(),
+    /** What the customer pays, in kobo. */
+    naira: bigint('naira', { mode: 'bigint' }).notNull(),
+    rate: text('rate').notNull(),
+    email: text('email').notNull(),
+    /** initialized | paid (Paystack confirmed) | settled (the shop has its dollars) | failed */
+    status: text('status').notNull().default('initialized'),
+    /** Ren's treasury paying the shop. */
+    txHash: text('tx_hash'),
+    failure: text('failure'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('naira_pay_ins_reference_idx').on(t.reference), index('naira_pay_ins_intent_idx').on(t.intentId)],
+)
+
 // --- Payments -------------------------------------------------------------
 
 export const intentStatus = pgEnum('intent_status', [

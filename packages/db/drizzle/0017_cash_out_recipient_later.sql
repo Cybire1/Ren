@@ -1,0 +1,1 @@
+ALTER TABLE "cash_outs" ALTER COLUMN "recipient_code" DROP NOT NULL;

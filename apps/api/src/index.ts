@@ -15,6 +15,7 @@ import { insightRoutes } from './routes/insights.js'
 import { intentRoutes } from './routes/intents.js'
 import { keyRoutes } from './routes/keys.js'
 import { mcpRoutes } from './routes/mcp.js'
+import { nairaRoutes } from './routes/naira.js'
 import { orderRoutes } from './routes/orders.js'
 import { rateRoutes } from './routes/rates.js'
 import { reportRoutes } from './routes/reports.js'
@@ -26,6 +27,7 @@ import { walletRoutes } from './routes/wallet.js'
 import { webhookRoutes } from './routes/webhooks.js'
 import { startDemo } from './services/demo.js'
 import { expireStaleIntents } from './services/intents.js'
+import { checkPayingCashOuts, retryPayIns } from './services/naira.js'
 import { rateBook } from './services/rates.js'
 import { expireTrips } from './services/travel.js'
 import { relayHandler, relayPath } from './tempo/relay.js'
@@ -55,6 +57,7 @@ app.route('/v1', insightRoutes)
 app.route('/v1', walletRoutes)
 app.route('/v1', ussdRoutes)
 app.route('/v1', keyRoutes)
+app.route('/v1', nairaRoutes)
 app.route('/v1', cardRoutes)
 app.route('/v1', demoRoutes)
 app.route('/v1', rateRoutes)
@@ -88,6 +91,8 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
   const expire = () => {
     void expireStaleIntents().catch((error) => console.error('[expiry]', error))
     void expireTrips().catch((error) => console.error('[expiry] trips', error))
+    void checkPayingCashOuts().catch((error) => console.error('[naira] cash-outs', error))
+    void retryPayIns().catch((error) => console.error('[naira] pay-ins', error))
   }
   expire()
   setInterval(expire, 30_000)

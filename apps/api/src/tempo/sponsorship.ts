@@ -7,6 +7,7 @@ import { acceptedTokens } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { findIntentByMemo } from '../services/intents.js'
+import { cashOutSponsorProblem } from '../services/naira.js'
 import { rewardRefusal } from '../services/stamps.js'
 import { zoneDepositProblem } from './zone-deposit.js'
 
@@ -23,7 +24,7 @@ export interface FillRequest {
 }
 
 export type SponsorDecision =
-  | { sponsor: true; kind: 'charge' | 'send' | 'private' | 'key' }
+  | { sponsor: true; kind: 'charge' | 'send' | 'private' | 'key' | 'cashout' }
   | { sponsor: false; reason: string }
 
 /** The portal of the private zone Ren pays deposits into, when one is configured. */
@@ -158,6 +159,12 @@ export async function shouldSponsor(
     if (!request.from) return { sponsor: false, reason: 'no sender' }
     if (!takeSend(request.from)) return { sponsor: false, reason: 'daily sponsored sends used up' }
     return { sponsor: true, kind: 'send' }
+  }
+  // A cash-out: exactly its dollars, to Ren's treasury, from the wallet that asked (services/naira.ts).
+  if (kova.kind === 'cashout') {
+    const problem = await cashOutSponsorProblem({ id: kova.id, to, amount, token: call.to, from: request.from })
+    if (problem) return { sponsor: false, reason: problem }
+    return { sponsor: true, kind: 'cashout' }
   }
   if (kova.kind !== 'payment') return { sponsor: false, reason: `a ${kova.kind} is Ren's to send` }
 
