@@ -337,6 +337,64 @@ export async function revokeKey(row: KeyRow, txHash: Hex | undefined): Promise<K
   return updated as KeyRow
 }
 
+// ── Cards ───────────────────────────────────────────────────────────────────────────────────
+
+/**
+ * A Ren Card on Tempo: the chip's own secp256k1 key becomes an access key on the holder's wallet,
+ * with a daily limit. A till reads the card, builds the payment from the holder's wallet, and the
+ * chip signs it in the same tap; Tempo checks the key's limit, and freezing stops it.
+ */
+export async function createCardKey(
+  owner: Address,
+  input: { label: string; keyId: Address; limit: bigint; expiresAt: Date },
+): Promise<KeyRow> {
+  requireKeys()
+  checkTerms(termsOf({ limit: input.limit, period: DAY, expiresAt: input.expiresAt, payees: 'anyone' }))
+  const taken = await db.query.walletKeys.findFirst({
+    where: and(eq(schema.walletKeys.keyId, lower(input.keyId)), eq(schema.walletKeys.network, net)),
+  })
+  if (taken && taken.status !== 'pending')
+    throw new KovaError('conflict', taken.status === 'revoked' ? 'This card was removed for good. Use another card.' : 'This card is already linked.')
+  if (taken) await db.delete(schema.walletKeys).where(eq(schema.walletKeys.id, taken.id))
+  const [row] = await db
+    .insert(schema.walletKeys)
+    .values({
+      id: uuidv7(),
+      network: net,
+      ownerAddress: lower(owner),
+      kind: 'card',
+      label: input.label.trim().slice(0, 40) || 'Ren Card',
+      keyId: lower(input.keyId),
+      keyType: 'secp256k1',
+      token: lower(settlementToken.address),
+      spendLimit: input.limit,
+      period: DAY,
+      expiresAt: input.expiresAt,
+      status: 'pending',
+    })
+    .returning()
+  if (!row) throw new KovaError('internal', 'The card wasn’t saved.')
+  return row
+}
+
+/** What a till needs about a card it just read: whose wallet it spends, and whether it can now. */
+export async function cardForTill(keyId: Address) {
+  const row = await db.query.walletKeys.findFirst({
+    where: and(eq(schema.walletKeys.keyId, lower(keyId)), eq(schema.walletKeys.network, net), eq(schema.walletKeys.kind, 'card')),
+  })
+  if (!row || row.status === 'pending') throw new KovaError('not_found', 'This card isn’t linked to a Ren wallet. Link it in Keys.')
+  const chain = await onChainKey(getAddress(row.ownerAddress), keyId, getAddress(row.token)).catch(() => null)
+  const status = row.status === 'active' && row.expiresAt < new Date() ? 'expired' : row.status
+  return {
+    object: 'card',
+    key_id: getAddress(keyId),
+    holder: getAddress(row.ownerAddress),
+    label: row.label,
+    status,
+    left_today: chain?.live ? formatAmount(chain.remaining) : '0.00',
+  }
+}
+
 // ── Allowances ──────────────────────────────────────────────────────────────────────────────
 
 export interface AllowanceInput {

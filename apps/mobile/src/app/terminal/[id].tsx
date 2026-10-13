@@ -6,6 +6,7 @@ import QRCode from 'react-native-qrcode-svg'
 import { chainName, settlementToken } from '@/lib/config'
 import { cancelCharge, getCharge, type PaymentIntent, payLinkFor } from '@/lib/api'
 import { CardError, cardsLive, finishTap, isCancelled, type ReadTap, readTap } from '@/lib/card'
+import { tapToPay, tempoCards } from '@/lib/card-tempo'
 import { useShop } from '@/lib/shop'
 import { colors } from '@/lib/theme'
 import { ReniPeek, peekEdge } from '@/ui/art'
@@ -52,6 +53,18 @@ export default function CustomerDisplay() {
 
   const tapCard = async () => {
     setTap({ at: 'reading' })
+    // On Tempo the card is an access key: one tap reads it and has its chip sign the payment.
+    if (tempoCards) {
+      try {
+        const charge = intent ?? (await getCharge(id))
+        await tapToPay({ amount: charge.amount, pay_to: charge.pay_to, memo: charge.memo })
+        setTap({ at: 'paying' })
+        setIntent(await getCharge(id))
+      } catch (error) {
+        setTap(isCancelled(error) ? { at: 'idle' } : { at: 'idle', problem: error instanceof Error ? error.message : 'That didn’t work. Tap again.' })
+      }
+      return
+    }
     try {
       const { tap: read, signature } = await readTap(id)
       if (read.pin_required) setTap({ at: 'pin', read, signature, pin: '' })
@@ -239,7 +252,7 @@ export default function CustomerDisplay() {
       </View>
       <View style={[styles.footer, { alignItems: 'center', gap: 12 }]}>
         {/* Card taps go through the KovaCard contract, so a Tempo till takes scans only. */}
-        {cardsLive ? (
+        {cardsLive || tempoCards ? (
           <View style={{ alignSelf: 'stretch' }}>
             <PillButton
               label={tap.at === 'paying' ? 'Paying…' : tap.at === 'reading' ? 'Hold the card to the phone' : 'Tap a Ren Card'}

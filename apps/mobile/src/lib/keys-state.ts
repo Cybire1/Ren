@@ -96,6 +96,8 @@ export interface Keys {
   refresh: () => Promise<void>
   createAgent: (input: AgentInput) => Promise<{ key: KeyView; token: string; ms: number }>
   createAllowance: (input: AllowanceInput) => Promise<{ key: KeyView; link: string }>
+  /** Links a Ren Card: its chip's key goes on-chain with a daily limit (lib/card-tempo.ts). */
+  createCard: (input: { label: string; keyId: Address; limit: string; days: number }) => Promise<KeyView>
   switchOn: (key: KeyView) => Promise<KeyView>
   freeze: (key: KeyView) => Promise<void>
   unfreeze: (key: KeyView) => Promise<void>
@@ -337,6 +339,24 @@ export function useKeys({
     [address, authed, refresh],
   )
 
+  const createCard = useCallback(
+    async (input: { label: string; keyId: Address; limit: string; days: number }) => {
+      if (!address) throw new Error('Open your wallet first.')
+      const made = await authed<{ key: KeyView; authorize: Authorization }>(`wallets/${address}/keys/cards`, {
+        method: 'POST',
+        body: { label: input.label, key_id: input.keyId, limit: input.limit, expires_at: daysFromNow(input.days) },
+      })
+      const txHash = await authorizeOnChain(made.authorize)
+      const confirmed = await authed<{ key: KeyView }>(`wallets/${address}/keys/${made.key.id}/confirm`, {
+        method: 'POST',
+        body: { tx_hash: txHash },
+      })
+      await refresh()
+      return confirmed.key
+    },
+    [address, authed, authorizeOnChain, refresh],
+  )
+
   const switchOn = useCallback(
     async (key: KeyView) => {
       if (!address) throw new Error('Open your wallet first.')
@@ -507,6 +527,7 @@ export function useKeys({
       refresh,
       createAgent,
       createAllowance,
+      createCard,
       switchOn,
       freeze,
       unfreeze,
@@ -515,6 +536,6 @@ export function useKeys({
       payments,
       answer,
     }),
-    [answer, approvals, claim, createAgent, createAllowance, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, token, unfreeze],
+    [answer, approvals, claim, createAgent, createAllowance, createCard, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, token, unfreeze],
   )
 }

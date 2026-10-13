@@ -101,6 +101,7 @@ export default function RootLayout() {
                   <Stack.Screen name="card/pin" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="cash-out" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="keys/agent" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
+                  <Stack.Screen name="keys/card" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="keys/allowance" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
                   <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />

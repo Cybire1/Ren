@@ -17,6 +17,8 @@ import {
 } from '../services/agents.js'
 import {
   authorizationFor,
+  cardForTill,
+  createCardKey,
   claimAllowance,
   confirmKey,
   createAgentKey,
@@ -41,6 +43,7 @@ import { requireWallet, signInWallet } from '../services/wallet-auth.js'
  *   GET  /wallets/:address/keys                      keys it gave, allowances it received, and what's waiting
  *   POST /wallets/:address/keys/agents               a new agent key, for the device to put on-chain
  *   POST /wallets/:address/keys/allowances           a new allowance invite (a link)
+ *   POST /wallets/:address/keys/cards                a Ren Card's chip key, for the device to put on-chain
  *   POST /wallets/:address/keys/:id/confirm          the device put it on-chain: switch it on
  *   POST /wallets/:address/keys/:id/freeze|unfreeze  stop it at once, or start it again
  *   POST /wallets/:address/keys/:id/revoke           for good
@@ -51,6 +54,9 @@ import { requireWallet, signInWallet } from '../services/wallet-auth.js'
  * The person an allowance is for, from its link:
  *   GET  /allowances/:code                           what it offers
  *   POST /allowances/:code/claim                     accept it with a key their phone made
+ *
+ * A till that just read a Ren Card:
+ *   GET  /key-cards/:keyId                           whose wallet it spends, and whether it can pay now
  *
  * The agent, with its token (Authorization: Bearer ren_agent_…):
  *   GET  /agent                                      who it is and what it can still spend
@@ -146,6 +152,29 @@ keyRoutes.post('/wallets/:address/keys/allowances', async (c) => {
     expiresAt: body.expires_at,
   })
   return c.json({ key: await serializeKey(row, { chain: false }), code }, 201)
+})
+
+keyRoutes.post('/wallets/:address/keys/cards', async (c) => {
+  needKeys()
+  const owner = requireWallet(c, c.req.param('address'))
+  limit(`keys-new:${owner}`, 20, 60 * 60_000, 'That’s a lot of new keys. Try again later.')
+  const body = await bodyOf(c, z.object({ label: z.string().max(40).default('Ren Card'), key_id: addr, limit: money, expires_at: until }))
+  const row = await createCardKey(owner, {
+    label: body.label,
+    keyId: getAddress(body.key_id),
+    limit: parseAmount(body.limit),
+    expiresAt: body.expires_at,
+  })
+  return c.json({ key: await serializeKey(row, { chain: false }), authorize: authorizationFor(row) }, 201)
+})
+
+/** A till just read a card: whose wallet it spends and whether it can pay now. Public, like a tap. */
+keyRoutes.get('/key-cards/:keyId', async (c) => {
+  needKeys()
+  limit(`card-look:${ip(c)}`, 120, 60_000, 'Too many looks. Wait a minute.')
+  const keyId = c.req.param('keyId')
+  if (!isAddress(keyId)) throw new KovaError('invalid_request', 'Not a card.')
+  return c.json(await cardForTill(getAddress(keyId)))
 })
 
 keyRoutes.get('/wallets/:address/keys/:id/authorize', async (c) => {

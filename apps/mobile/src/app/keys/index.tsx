@@ -89,6 +89,25 @@ export default function KeysScreen() {
               />
             </View>
 
+            <Sticker onPress={() => router.push('/keys/card')} lift fill={colors.coralTint} radius={22} style={{ marginTop: 10 }} accessibilityLabel="Link a Ren Card">
+              <View style={styles.cardTile}>
+                <View style={[styles.disc, { backgroundColor: colors.coral }]}>
+                  <Icon name="card" size={18} color={colors.white} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Txt weight="heavy" size={15}>
+                    Link a Ren Card
+                  </Txt>
+                  <Txt size={12} color={colors.muted}>
+                    Tap to pay at any Ren till, with a daily limit
+                  </Txt>
+                </View>
+                <View style={styles.plus}>
+                  <Icon name="plus" size={14} />
+                </View>
+              </View>
+            </Sticker>
+
             <Txt weight="heavy" size={20} style={styles.section}>
               Your keys
             </Txt>
@@ -202,6 +221,7 @@ const styles = StyleSheet.create({
   section: { marginTop: 26, marginBottom: 10 },
   new: { flexDirection: 'row', gap: 10, marginTop: 16 },
   tile: { padding: 12, paddingBottom: 14, gap: 2, minHeight: 118 },
+  cardTile: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   tileTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
   disc: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   plus: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },

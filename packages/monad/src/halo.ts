@@ -103,6 +103,14 @@ export async function readCard(transceive: Transceive): Promise<Address> {
   return addressOfPublicKey(key)
 }
 
+/** Reads the card's key in slot 1: its address and its uncompressed public key (a Tempo access key needs both). */
+export async function readCardKey(transceive: Transceive): Promise<{ address: Address; publicKey: Hex }> {
+  const keys = parsePublicKeys(await command(transceive, [CMD_GET_PKEYS]))
+  const key = keys[CARD_KEY_SLOT - 1]
+  if (!key) throw new HaloError('This card has no key yet.')
+  return { address: addressOfPublicKey(key), publicKey: bytesToHex(key) }
+}
+
 /** r and s from a DER signature, with s normalized to the low half (EIP-2). */
 export function parseDerSignature(der: Uint8Array): { r: bigint; s: bigint; length: number } {
   if (der[0] !== 0x30 || der[2] !== 0x02) throw new HaloError('The card sent a signature Kova can’t read.')

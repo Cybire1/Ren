@@ -19,7 +19,9 @@ import { randomBytes } from 'node:crypto'
 import { type Address, type Hex, getAddress } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
 import { Account, Actions, WebCryptoP256 } from 'viem/tempo'
-import { PublicKey } from 'ox'
+import { PublicKey, Signature } from 'ox'
+import { readCardKey, signWithCard, softCard } from '@kova/monad'
+import { hexToNumber, slice } from 'viem'
 import { fund, newCustomer, walletFor } from './customer-tempo.js'
 
 const api = process.env.API_URL ?? 'http://localhost:4400'
@@ -312,5 +314,77 @@ const over = await mumSpends.token
   .catch((error: Error) => error.message.split('\n')[0])
 expect(over !== 'went through', 'the chain should refuse a spend over the limit')
 ok(`refused: ${over}`)
+
+// ── A Ren Card ─────────────────────────────────────────────────────────────────────────────
+
+step('The owner links a Ren Card: its chip’s key, $1.20 a day (a software chip, as the simulator taps)')
+const chip = softCard(`0x${randomBytes(32).toString('hex')}` as Hex)
+const { address: cardKey, publicKey: cardPublicKey } = await readCardKey(chip)
+const linked = await call<{ key: { id: string }; authorize: { key_id: Address; limit_units: string; period: number; expiry: number } }>(
+  `/v1/wallets/${owner.address}/keys/cards`,
+  { method: 'POST', token: session, body: JSON.stringify({ label: 'Ren Card', key_id: cardKey, limit: '1.20', expires_at: new Date(Date.now() + 90 * 86_400_000).toISOString() }) },
+)
+expect(linked.status === 201, `link: ${JSON.stringify(linked.body)}`)
+const cardTerms: KeyTerms = { token, limit: BigInt(linked.body.authorize.limit_units), period: linked.body.authorize.period, expiry: linked.body.authorize.expiry, payees: 'anyone' }
+const { receipt: cardReceipt } = await Actions.accessKey.authorizeSync(wallet as never, {
+  accessKey: { address: cardKey, type: 'secp256k1' },
+  expiry: cardTerms.expiry,
+  limits: keyLimits(cardTerms),
+  scopes: keyScopes(cardTerms),
+  feePayer: true,
+} as never)
+expect(cardReceipt.status === 'success', 'card authorize reverted')
+await call(`/v1/wallets/${owner.address}/keys/${linked.body.key.id}/confirm`, { method: 'POST', token: session, body: JSON.stringify({ tx_hash: cardReceipt.transactionHash }) })
+const tillView = await call<{ holder: string; status: string; left_today: string }>(`/v1/key-cards/${cardKey}`)
+expect(tillView.body.status === 'active', `till lookup: ${JSON.stringify(tillView.body)}`)
+ok(`card ${cardKey} is on: a till sees it spends ${tillView.body.holder}, $${tillView.body.left_today} left today`)
+
+step('A shop charges $1.00; the card pays it in one tap')
+const cardShop = newCustomer().address
+const opened = await call<{ secret_key?: string; key?: string }>('/v1/merchants', {
+  method: 'POST',
+  body: JSON.stringify({ name: 'Card Test Kitchen', settlement_address: cardShop, country: 'NG' }),
+})
+const shopKey = opened.body.secret_key ?? opened.body.key
+expect(shopKey, `open shop: ${JSON.stringify(opened.body)}`)
+const charge = await call<{ id: string; amount: string; pay_to: Address; memo: Hex }>('/v1/payment_intents', {
+  method: 'POST',
+  token: shopKey,
+  body: JSON.stringify({ amount: '1.00', currency: 'USDC', reference: 'Suya' }),
+})
+expect(charge.status === 201, `charge: ${JSON.stringify(charge.body)}`)
+const cardAccount = Account.from({
+  access: owner.address,
+  keyType: 'secp256k1',
+  publicKey: PublicKey.fromHex(cardPublicKey),
+  async sign({ hash }: { hash: Hex }) {
+    const { signature } = await signWithCard(chip, hash)
+    return Signature.toHex({ r: BigInt(slice(signature, 0, 32)), s: BigInt(slice(signature, 32, 64)), yParity: hexToNumber(slice(signature, 64, 65)) - 27 })
+  },
+})
+const till = walletFor(api, health.chain_id, cardAccount as never, token)
+const tapped = Date.now()
+const { receipt: tapReceipt } = await till.token.transferSync({ token, to: charge.body.pay_to, amount: 1_000_000n, memo: charge.body.memo, feePayer: true } as never)
+expect(tapReceipt.status === 'success', 'card tap reverted')
+let paid = ''
+for (let i = 0; i < 20 && paid !== 'paid'; i++) {
+  paid = (await call<{ status: string }>(`/v1/checkout/${charge.body.id}`)).body.status
+  if (paid !== 'paid') await new Promise((r) => setTimeout(r, 500))
+}
+expect(paid === 'paid', `the charge should be paid, is ${paid}`)
+ok(`paid by tap in ${Date.now() - tapped} ms: ${tapReceipt.transactionHash}; the till shows PAID`)
+
+step('$0.50 more is over what the card has left today ($0.20): Tempo refuses it')
+const charge2 = await call<{ pay_to: Address; memo: Hex }>('/v1/payment_intents', {
+  method: 'POST',
+  token: shopKey,
+  body: JSON.stringify({ amount: '0.50', currency: 'USDC', reference: 'Zobo' }),
+})
+const refusedTap = await till.token
+  .transferSync({ token, to: charge2.body.pay_to, amount: 500_000n, memo: charge2.body.memo, feePayer: true } as never)
+  .then(() => 'went through')
+  .catch((error: Error) => error.message.split('\n')[0])
+expect(refusedTap !== 'went through', 'the chain should refuse a tap over the daily limit')
+ok(`refused: ${refusedTap}`)
 console.log('\nAll keys checks passed.')
 process.exit(0)
