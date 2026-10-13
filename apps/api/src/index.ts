@@ -15,6 +15,7 @@ import { insightRoutes } from './routes/insights.js'
 import { intentRoutes } from './routes/intents.js'
 import { keyRoutes } from './routes/keys.js'
 import { mcpRoutes } from './routes/mcp.js'
+import { mppRoutes } from './routes/mpp.js'
 import { nairaRoutes } from './routes/naira.js'
 import { orderRoutes } from './routes/orders.js'
 import { rateRoutes } from './routes/rates.js'
@@ -58,6 +59,7 @@ app.route('/v1', walletRoutes)
 app.route('/v1', ussdRoutes)
 app.route('/v1', keyRoutes)
 app.route('/v1', nairaRoutes)
+app.route('/v1', mppRoutes)
 app.route('/v1', cardRoutes)
 app.route('/v1', demoRoutes)
 app.route('/v1', rateRoutes)

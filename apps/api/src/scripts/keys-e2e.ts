@@ -209,6 +209,28 @@ ok(`ren_pay: ${(paidMcp.content as { text: string }[])[0]?.text}`)
 await mcp.close()
 server.close()
 
+step('A Ren shop takes payment over MPP: the agent pays a till’s charge through /v1/mpp/charges')
+const mppShop = await call<{ secret_key?: string; key?: string }>('/v1/merchants', {
+  method: 'POST',
+  body: JSON.stringify({ name: 'MPP Test Kitchen', settlement_address: newCustomer().address, country: 'NG' }),
+})
+const mppShopKey = mppShop.body.secret_key ?? mppShop.body.key
+const mppCharge = await call<{ id: string }>('/v1/payment_intents', {
+  method: 'POST',
+  token: mppShopKey,
+  body: JSON.stringify({ amount: '0.30', currency: 'USDC', reference: 'Akara' }),
+})
+expect(mppCharge.status === 201, `mpp charge: ${JSON.stringify(mppCharge.body)}`)
+const viaMpp = await call<{ status: string; payment: { tx_hash: string } | null; response: { body: string } | null; reason?: string }>('/v1/agent/fetch', {
+  method: 'POST',
+  token: agentToken,
+  body: JSON.stringify({ url: `${api}/v1/mpp/charges/${mppCharge.body.id}`, method: 'POST', max_amount: '0.50' }),
+})
+expect(viaMpp.body.status === 'paid', `mpp charge pay: ${JSON.stringify(viaMpp.body)}`)
+const mppStatus = (await call<{ status: string }>(`/v1/checkout/${mppCharge.body.id}`)).body.status
+expect(mppStatus === 'paid', `the charge should be paid, is ${mppStatus}`)
+ok(`paid over MPP (${viaMpp.body.payment?.tx_hash}); the shop’s charge is ${mppStatus}`)
+
 // ── The owner stops it ─────────────────────────────────────────────────────────────────────
 
 step('The owner freezes it: Ren stops at once, and its limit on Tempo goes to zero')
