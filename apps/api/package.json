@@ -19,7 +19,8 @@
     "mainnet:check": "tsx --env-file=.env.mainnet src/scripts/mainnet-check.ts",
     "keys:e2e": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/keys-e2e.ts",
     "naira:e2e": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/naira-e2e.ts",
-    "private:e2e": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/private-e2e.ts"
+    "private:e2e": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/private-e2e.ts",
+    "agent-charge:e2e": "tsx --env-file-if-exists=.env --env-file-if-exists=.env.tempo src/scripts/agent-charge-e2e.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.128.0",
