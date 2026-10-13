@@ -10,6 +10,7 @@ import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { type Entry, isUnnamed, useWallet } from '@/lib/wallet'
+import { PrivateCard } from '@/ui/PrivateCard'
 import { ActionTile } from '@/ui/ActionTile'
 import { Awning } from '@/ui/Awning'
 import { Avatar, Flyer, ShopBadge } from '@/ui/art'
@@ -79,6 +80,8 @@ export default function Home() {
       {firstRun ? (
         <>
           <ReadyCard />
+          {/* Dollars someone sent privately are here even when the balance is empty. */}
+          <PrivateCard />
           <FirstSteps />
           <ShopCard />
         </>
@@ -93,6 +96,8 @@ export default function Home() {
               <ActionTile kind="request" onPress={() => router.push('/request')} />
             </View>
           </View>
+
+          <PrivateCard />
 
           <ShopCard />
 

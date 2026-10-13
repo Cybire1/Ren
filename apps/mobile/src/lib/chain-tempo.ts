@@ -13,25 +13,31 @@ import { type Address, type Hash, type Hex, http, isAddressEqual, type LocalAcco
 import { Actions, createClient, withRelay } from 'viem/tempo'
 import type { NoteToSeal } from './chain-monad'
 import { apiUrl, isTestnet, network, networkId, settlementToken } from './config'
-
-export const publicClient = createClient({
-  testnet: isTestnet,
-  feeToken: settlementToken.address,
-  transport: http(network.rpcUrl, { timeout: 8_000 }),
-})
+import { directOrThroughRen } from './transport'
 
 /** Kova's fee-payer relay: payments and sends go through it so the payer never needs a gas token. */
 export const relayUrl = `${apiUrl}/rpc/relay`
 
-function walletClient(account: LocalAccount) {
+/** Reads go straight to Tempo's RPC, or through Ren's relay, which passes them on, if it's unreachable. */
+const reads = () =>
+  directOrThroughRen(
+    'tempo',
+    http(network.rpcUrl, { timeout: 8_000, retryCount: 1 }),
+    http(relayUrl, { timeout: 12_000 }),
+  )
+
+export const publicClient = createClient({
+  testnet: isTestnet,
+  feeToken: settlementToken.address,
+  transport: reads(),
+})
+
+export function walletClient(account: LocalAccount) {
   return createClient({
     account,
     testnet: isTestnet,
     feeToken: settlementToken.address,
-    transport: withRelay(
-      http(network.rpcUrl, { timeout: 8_000 }),
-      http(relayUrl, { timeout: 12_000 }),
-    ),
+    transport: withRelay(reads(), http(relayUrl, { timeout: 12_000 })),
   })
 }
 

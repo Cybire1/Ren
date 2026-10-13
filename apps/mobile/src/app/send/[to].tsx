@@ -10,7 +10,7 @@ import { SendSheet } from '@/ui/send/SendSheet'
  * starting at the amount (or at the review, when the link says how much).
  */
 export default function SendTo() {
-  const params = useLocalSearchParams<{ to: string; name?: string; cur?: string; amount?: string; note?: string; rename?: string; autosend?: string }>()
+  const params = useLocalSearchParams<{ to: string; name?: string; cur?: string; amount?: string; note?: string; rename?: string; autosend?: string; privately?: string }>()
   if (!params.to || !isAddress(params.to))
     return (
       <View style={{ padding: 24, paddingBottom: 48, backgroundColor: colors.paper }}>
@@ -21,6 +21,7 @@ export default function SendTo() {
     )
   return (
     <SendSheet
+      privately={params.privately === '1'}
       payee={{
         address: getAddress(params.to),
         name: params.name || undefined,

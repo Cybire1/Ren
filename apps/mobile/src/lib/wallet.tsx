@@ -8,7 +8,7 @@ import { AppState } from 'react-native'
 import { type Address, getAddress, hexToBytes, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
 import { type Checkout, demoSignIn } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
-import { chainKey, notesTravel, passkeyDomain } from './config'
+import { chainKey, notesTravel, passkeyDomain, zone } from './config'
 import { openSigningSession } from './keys'
 import { type DisplayCurrency, formatUsd } from './money'
 import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
@@ -16,6 +16,7 @@ import { endSession, sessionAccount, spend, startSession } from './session'
 import { load, remove, save } from './storage'
 import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vault'
 import { ensureNoteKey, myNoteKeys, readNote, theirNoteKey } from './notes'
+import { type Privacy, usePrivacy } from './private'
 
 /**
  * The wallet is a passkey. Creating it takes one Face ID: the passkey, which iCloud Keychain
@@ -72,6 +73,8 @@ export interface Entry {
   at: number
   /** `detail` is a private note: readable by both of you, or (when they had no note key) by you alone. */
   private?: 'both' | 'you'
+  /** Dollars between your balance and your private balance (a Tempo Zone), not to a person. */
+  zone?: boolean
 }
 
 export interface Contact {
@@ -140,6 +143,8 @@ interface Wallet {
    */
   signTypedData: (typedData: TypedDataDefinition) => Promise<`0x${string}`>
   signOut: () => Promise<void>
+  /** Your private balance on a Tempo Zone, when this build has one (private.ts). */
+  privacy: Privacy
 }
 
 const WalletContext = createContext<Wallet | null>(null)
@@ -299,6 +304,20 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         if (stopped) return
         await save(CURSOR, head.toString())
         for (const t of transfers) {
+          // Dollars moved out of your private balance arrive from the zone's portal: yours already.
+          if (zone && isAddressEqual(t.from, zone.portal)) {
+            await record({
+              id: newId(),
+              kind: 'received',
+              amount: t.amount.toString(),
+              name: 'Private balance',
+              detail: 'Moved out',
+              txHash: t.hash,
+              at: Date.now(),
+              zone: true,
+            })
+            continue
+          }
           const note = t.note ? await readNote(t.note, { from: t.from, to: profile.address, value: t.amount }) : null
           const refund = t.kind === 'refund'
           const name = t.faucet ? 'Test dollars' : refund ? 'Refund' : (nameFor(t.from) ?? `${t.from.slice(0, 6)}…${t.from.slice(-4)}`)
@@ -622,6 +641,47 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setStatus('ready')
   }, [])
 
+  const base = usePrivacy({ zone, address: profile?.address ?? null, unlock, onMoved: () => void refresh() })
+  // Private moves show in the wallet's own history too: what Tempo saw, named for what it was.
+  const privacy = useMemo<Privacy>(
+    () => ({
+      ...base,
+      moveIn: async (amount) => {
+        const done = await base.moveIn(amount)
+        await record({
+          id: newId(),
+          kind: 'sent',
+          amount: amount.toString(),
+          name: 'Private balance',
+          detail: 'Moved in',
+          txHash: done.hash,
+          ms: done.ms,
+          at: Date.now(),
+          zone: true,
+        })
+        return done
+      },
+      sendPrivately: async (to, amount) => {
+        const done = await base.sendPrivately(to, amount)
+        await record({
+          id: newId(),
+          kind: 'sent',
+          amount: amount.toString(),
+          name: to.name,
+          detail: 'Sent privately',
+          address: to.address,
+          txHash: done.hash,
+          ms: done.ms,
+          at: Date.now(),
+          private: 'both',
+        })
+        await rememberContact({ address: to.address, name: to.name })
+        return done
+      },
+    }),
+    [base, record, rememberContact],
+  )
+
   const value: Wallet = {
     status,
     profile,
@@ -646,6 +706,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     signMessage,
     signTypedData,
     signOut,
+    privacy,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
 }

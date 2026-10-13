@@ -1,5 +1,7 @@
 import { getNetwork as monadNetwork, getToken as monadToken } from '@kova/monad'
 import { getNetwork as tempoNetwork, getToken as tempoToken } from '@kova/tempo'
+import type { Address } from 'viem'
+import type { ZoneInfo } from './zone'
 
 /**
  * Ren is one app on two chains. A build runs on one, picked by EXPO_PUBLIC_KOVA_CHAIN: Tempo
@@ -79,3 +81,25 @@ export const notesTravel = !onTempo
 
 /** Local keys that belong to one chain (history, balance, cursor) carry its name. */
 export const chainKey = (name: string) => `kova.${chain}.${name}`
+
+/**
+ * The private zone (Tempo Zones) the wallet keeps a private balance on (zone.ts): on Tempo testnet,
+ * Tempo's persistent Zone A, the one Ren's site uses. EXPO_PUBLIC_KOVA_ZONE_ID and the rest of the
+ * EXPO_PUBLIC_KOVA_ZONE_* variables point a build at another; EXPO_PUBLIC_KOVA_ZONE_ID=0 turns it off.
+ */
+const zoneId = Number(process.env.EXPO_PUBLIC_KOVA_ZONE_ID ?? (onTempo && isTestnet ? 6 : 0))
+export const zone: ZoneInfo | null =
+  onTempo && zoneId > 0
+    ? {
+        id: zoneId,
+        chainId: Number(process.env.EXPO_PUBLIC_KOVA_ZONE_CHAIN_ID ?? 4_217_000_006),
+        portal: (process.env.EXPO_PUBLIC_KOVA_ZONE_PORTAL ??
+          '0x7069DeC4E64Fd07334A0933eDe836C17259c9B23') as Address,
+        token: settlementToken.address,
+        parent: network.chainId,
+        operator: process.env.EXPO_PUBLIC_KOVA_ZONE_OPERATOR ?? 'Tempo',
+        runtime: process.env.EXPO_PUBLIC_KOVA_ZONE_RUNTIME === 'current' ? 'current' : 'sandbox',
+        rpc: process.env.EXPO_PUBLIC_KOVA_ZONE_RPC_URL ?? 'https://rpc-zone-a.testnet.tempo.xyz',
+        proxy: process.env.EXPO_PUBLIC_KOVA_ZONE_PROXY_URL ?? `${webUrl}/api/zone`,
+      }
+    : null

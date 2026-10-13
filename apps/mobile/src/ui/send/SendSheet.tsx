@@ -47,8 +47,10 @@ const SIDE = 20
  * same sheet becomes the receipt. The sheet is sized to each step, so it grows for the keypad and
  * settles low once the money has landed, showing your balance behind it as it drops.
  */
-export function SendSheet({ payee }: { payee?: Payee }) {
-  const { profile, balance, send, contacts, noteReaches } = useWallet()
+export function SendSheet({ payee, privately = false }: { payee?: Payee; privately?: boolean }) {
+  const { profile, balance, send, contacts, noteReaches, privacy } = useWallet()
+  // Private: into their private balance on the zone. On from Private; a switch from Send.
+  const [secret, setSecret] = useState(privately && !!privacy.zone)
   const { width } = useWindowDimensions()
   const inner = width - SIDE * 2
 
@@ -96,7 +98,20 @@ export function SendSheet({ payee }: { payee?: Payee }) {
     setLeg('flying')
     const started = Date.now()
     try {
-      const done = await send({ address: to.address, name, currency: theirs ?? undefined }, amount, note.trim() || undefined)
+      const done: Entry = secret
+        ? await privacy.sendPrivately({ address: to.address, name }, amount).then((r) => ({
+            id: r.hash,
+            kind: 'sent' as const,
+            amount: amount.toString(),
+            name,
+            detail: 'Sent privately',
+            address: to.address,
+            txHash: r.hash,
+            ms: r.ms,
+            at: Date.now(),
+            private: 'both' as const,
+          }))
+        : await send({ address: to.address, name, currency: theirs ?? undefined }, amount, note.trim() || undefined)
       // Let Reni finish the leg in flight: the flight is timed to about what the chain takes.
       await new Promise((r) => setTimeout(r, Math.max(0, 1360 - (Date.now() - started))))
       setLeg('landed')
@@ -200,8 +215,35 @@ export function SendSheet({ payee }: { payee?: Payee }) {
                 </View>
               ) : null}
             </View>
+            {privacy.zone ? (
+              <Pressable
+                accessibilityRole="switch"
+                accessibilityState={{ checked: secret }}
+                accessibilityLabel="Send privately"
+                onPress={() => {
+                  void Haptics.selectionAsync()
+                  setSecret((on) => !on)
+                }}
+                style={[styles.switchRow, secret && styles.switchRowOn]}
+              >
+                <View style={[styles.switchIcon, secret && styles.switchIconOn]}>
+                  <Icon name="lock" size={16} color={secret ? colors.tealSoft : colors.ink} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Txt weight="bold" size={15} color={secret ? colors.white : colors.ink}>
+                    Send privately
+                  </Txt>
+                  <Txt size={12} color={secret ? colors.onInk : colors.muted} numberOfLines={2}>
+                    {secret ? `Into their private balance. ${chainName} won’t show who it’s for` : `${chainName} shows it as you paying them`}
+                  </Txt>
+                </View>
+                <View style={[styles.track, secret && styles.trackOn]}>
+                  <View style={[styles.knob, secret && styles.knobOn]} />
+                </View>
+              </Pressable>
+            ) : null}
             {/* On Monad a note is sealed for the two of you; on Tempo it stays on this phone. */}
-            <View style={styles.note}>
+            {secret ? null : <View style={styles.note}>
               {notesTravel ? <Icon name="lock" size={15} color={colors.muted} /> : null}
               <TextInput
                 value={note}
@@ -212,7 +254,7 @@ export function SendSheet({ payee }: { payee?: Payee }) {
                 accessibilityLabel={notesTravel ? 'Private note, only you and them can read it' : 'What it’s for, kept on this phone'}
                 style={styles.noteInput}
               />
-            </View>
+            </View>}
           </View>
           <Keypad onKey={(key) => setTyped((v) => applyKey(v, key))} size={56} />
           <View style={{ marginTop: 14 }}>
@@ -227,7 +269,7 @@ export function SendSheet({ payee }: { payee?: Payee }) {
           <View style={styles.top}>
             <Round icon="back" label="Change the amount" onPress={() => moveTo('amount')} disabled={busy} />
             <Txt weight="semi" size={17} style={{ flex: 1 }}>
-              {busy ? `Sending to ${first}` : 'Check and send'}
+              {busy ? `Sending to ${first}` : secret ? 'Check and send privately' : 'Check and send'}
             </Txt>
           </View>
 
@@ -245,8 +287,10 @@ export function SendSheet({ payee }: { payee?: Payee }) {
           </View>
 
           <View style={styles.facts}>
+            {secret ? <Fact label="Who knows" value={`You and ${first}`} icon="lock" /> : null}
+            {secret ? <Fact label={`${chainName} sees`} value={`${formatUsd(amount)} going in`} hint="Not who it’s for" /> : null}
             <Fact label="Fee" value="$0.00, Ren covers it" />
-            <Fact label="Arrives" value="In about a second" icon="bolt" />
+            <Fact label="Arrives" value={secret ? 'In their private balance, in seconds' : 'In about a second'} icon="bolt" />
             {local ? (
               <Fact
                 label="Rate"
@@ -254,7 +298,7 @@ export function SendSheet({ payee }: { payee?: Payee }) {
                 hint={rateLabel()}
               />
             ) : null}
-            {note.trim() && notesTravel ? (
+            {secret ? null : note.trim() && notesTravel ? (
               <Fact
                 label="Note"
                 value={note.trim()}
@@ -281,7 +325,7 @@ export function SendSheet({ payee }: { payee?: Payee }) {
             </Txt>
           ) : null}
 
-          <SlideToSend label={problem ? 'Slide to try again' : `Slide to send ${formatUsd(amount)}`} busy={busy} disabled={over || amount === 0n} onSend={go} />
+          <SlideToSend label={problem ? 'Slide to try again' : `Slide to send ${formatUsd(amount)}${secret ? ' privately' : ''}`} busy={busy} disabled={over || amount === 0n} onSend={go} />
           <Txt size={12} color={colors.muted} style={{ textAlign: 'center', marginTop: 10 }}>
             Face ID confirms it. Payments on {chainName} can’t be undone.
           </Txt>
@@ -290,7 +334,7 @@ export function SendSheet({ payee }: { payee?: Payee }) {
 
       {step === 'sent' && to && entry ? (
         <Animated.View key="sent" entering={FadeIn.duration(320)} style={[pad, { alignItems: 'center', paddingTop: 22 }]}>
-          <ReniStage pose="cheer" size={150} />
+          <ReniStage pose={secret ? 'key' : 'cheer'} size={150} />
           <Burst
             spots={[
               { x: width / 2 - 110, y: 50, size: 24, fill: colors.yellow, delay: 0 },
@@ -300,26 +344,28 @@ export function SendSheet({ payee }: { payee?: Payee }) {
             ]}
           />
           <Txt weight="bold" size={44} style={[styles.big, { marginTop: 10 }]}>
-            Sent
+            {secret ? 'Sent privately' : 'Sent'}
           </Txt>
           <Txt weight="medium" size={18} style={{ textAlign: 'center', marginTop: 2 }}>
-            {formatUsd(amount)} landed with {first}
-            {local ? `, about ${formatLocal(dollars, local)}` : ''}
+            {secret
+              ? `${formatUsd(amount)} is in ${first}’s private balance. Only the two of you know.`
+              : `${formatUsd(amount)} landed with ${first}${local ? `, about ${formatLocal(dollars, local)}` : ''}`}
           </Txt>
           <View style={styles.time}>
             <Icon name="bolt" size={16} color={colors.white} />
             <Txt weight="semi" size={14} color={colors.white}>
-              {entry.ms ? `Arrived in ${(entry.ms / 1000).toFixed(2)} s on ${chainName}` : `Arrived on ${chainName}`}
+              {entry.ms ? `${secret ? 'Sent' : 'Arrived'} in ${(entry.ms / 1000).toFixed(2)} s on ${chainName}` : `Arrived on ${chainName}`}
             </Txt>
           </View>
           <View style={{ alignSelf: 'stretch', marginTop: 22, gap: 12 }}>
             <PillButton label="Done" icon="check" onPress={close} />
             <View style={{ alignItems: 'center' }}>
               <TextLink
-                label="See receipt"
+                label={secret ? 'See private activity' : 'See receipt'}
                 onPress={() => {
                   close()
-                  router.push({ pathname: '/receipt/[id]', params: { id: entry.id } })
+                  if (secret) router.push('/private')
+                  else router.push({ pathname: '/receipt/[id]', params: { id: entry.id } })
                 }}
               />
             </View>
@@ -565,6 +611,25 @@ function FieldButton({ icon, label, onPress, solid }: { icon: IconName; label: s
 
 const styles = StyleSheet.create({
   sheet: { backgroundColor: colors.paper },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+  },
+  switchRowOn: { backgroundColor: colors.ink },
+  switchIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.sunken, alignItems: 'center', justifyContent: 'center' },
+  switchIconOn: { backgroundColor: '#1E3557' },
+  track: { width: 42, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.sunken, justifyContent: 'center', paddingHorizontal: 2 },
+  trackOn: { backgroundColor: colors.teal, borderColor: colors.white },
+  knob: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white },
+  knobOn: { transform: [{ translateX: 18 }] },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 24 },
   round: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
   whoRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },

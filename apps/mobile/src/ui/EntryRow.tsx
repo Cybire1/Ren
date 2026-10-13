@@ -34,7 +34,11 @@ export function EntryRow({ entry, inset, fresh }: { entry: Entry; inset?: boolea
         onPress={() => router.push({ pathname: '/receipt/[id]', params: { id: entry.id } })}
         style={({ pressed }) => [styles.row, inset && styles.inset, pressed && { opacity: 0.6 }]}
       >
-        {entry.kind === 'paid' ? (
+        {entry.zone ? (
+          <View style={styles.lockBadge}>
+            <Icon name="lock" size={18} color={colors.tealSoft} />
+          </View>
+        ) : entry.kind === 'paid' ? (
           <ShopBadge size={38} />
         ) : entry.kind === 'added' ? (
           <AddBadge size={38} />
@@ -66,6 +70,7 @@ export function signed(entry: Entry) {
 }
 
 const styles = StyleSheet.create({
+  lockBadge: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   inset: { paddingVertical: 10, paddingLeft: 10, paddingRight: 14 },
 })

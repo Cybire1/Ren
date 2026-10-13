@@ -1,9 +1,10 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Image, View } from 'react-native'
+import { getAddress, isAddress } from 'viem'
 import { createItem, getCatalog, getCheckout, listOrders, lookupBarcode, ringUp, setOrderStatus, updateStall, uploadImage } from '@/lib/api'
 import { finishTap, forgetDevCard, linkCard, readTap } from '@/lib/card'
-import type { DisplayCurrency } from '@/lib/money'
+import { type DisplayCurrency, toBase } from '@/lib/money'
 import { type Mode, usePrefs } from '@/lib/prefs'
 import { useStall } from '@/lib/stall'
 import { save } from '@/lib/storage'
@@ -22,6 +23,7 @@ import { Txt } from '@/ui/primitives'
  * that stall with a small menu (and a barcoded drink for the till), `seed=bakery` with a bakery's, `till=keypad|items|scan` picks
  * the till's mode, `tables=6&stamps=5` gives the stall table codes and a stamp card (0 turns either off), and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
  * `card=link&limit=100&pin=4827` links the software Kova Card (`newcard=1` makes a fresh one first); `tapcard=<charge>` taps it at this till.
+ * `private=open,in:2,send:<address>:1,out:0.5` moves dollars through the private balance (lib/private.ts).
  * Release builds redirect home.
  */
 /** A small Lagos kitchen menu for trying the stall screens. */
@@ -165,6 +167,8 @@ export default function Dev() {
     pin?: string
     tapcard?: string
     demo?: string
+    /** open,in:<dollars>,send:<address>:<dollars>,out:<dollars>: the private balance's real code, in order. */
+    private?: string
   }>()
   const wallet = useWallet()
   const prefs = usePrefs()
@@ -229,6 +233,20 @@ export default function Dev() {
         if (params.fund) {
           setStep('funding')
           await wallet.addMoney().catch(() => {})
+        }
+        if (params.private && wallet.privacy.zone) {
+          for (const move of params.private.split(',')) {
+            const [what, first, second] = move.split(':')
+            setStep(`private ${move}`)
+            if (what === 'open') await wallet.privacy.open()
+            if (what === 'in') await wallet.privacy.moveIn(toBase(first ?? '1'))
+            if (what === 'send' && first && isAddress(first))
+              await wallet.privacy.sendPrivately(
+                { address: getAddress(first), name: `${first.slice(0, 6)}…${first.slice(-4)}` },
+                toBase(second ?? '1'),
+              )
+            if (what === 'out') await wallet.privacy.moveOut(toBase(first ?? '1'))
+          }
         }
         if (params.unpair) await terminal.unpair()
         if (params.pair) {
