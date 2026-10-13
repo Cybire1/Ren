@@ -1,38 +1,38 @@
-# Demo video: Ren on Tempo (2:45)
+# Demo video: Ren on Tempo (under 3:00)
 
-The product in actual operation on the live site, on Tempo's Moderato testnet: every number on
-screen comes from a transaction made during the take, and the key moments cut to Tempo's
-explorer. Each scene names what it proves.
+Colosseum asks for the live product, not slides or code. Every number on screen comes from a
+transaction made during the take, on Tempo's Moderato testnet. The new part is the moat: keys,
+and an AI agent paying a shop within a limit Tempo enforces.
 
 ## Setup (before recording)
 
-- **Shop:** Chrome on the laptop at https://web-production-acdb.up.railway.app, **Explore the demo
-  shop**, so the dashboard and its tape are on screen.
-- **Ada (the customer):** a phone browser at the same site, or a phone-sized Chrome window. Create
-  the wallet on camera, or have it ready with **Add $5, free** done twice.
-- **Lucía (the friend):** a second browser profile with her own Ren wallet, currency EUR. Copy her
-  Ren link (Request → Share) so Ada can paste it.
-- **Explorer:** a tab at https://explore.moderato.tempo.xyz for the cut-aways.
-- **Recording:** 1080p screen recordings of each window, notifications off. Record the voiceover
-  separately, calm and short.
+- **Shop:** Chrome on the laptop at the live site → **Explore the demo shop**, so the till and
+  its tape are on screen.
+- **Ada (the customer):** a phone-sized Chrome window on the live site. Make her wallet
+  beforehand, with **Add $5, free** done twice, so she has $10.
+- **Lucía (a friend abroad):** a second browser profile with her own Ren wallet, currency EUR.
+  Copy her Ren link (Request → Share).
+- **Claude Code:** a terminal, already logged in. Hide anything personal on screen.
+- **Explorer:** a tab at https://explore.moderato.tempo.xyz for one cut-away.
+- **Recording:** 1080p, notifications off. Record the voiceover separately: calm and short.
 
 ## Script
 
-| Time | Shot | Voiceover | Proves |
-|---|---|---|---|
-| 0:00–0:12 | Landing page hero, the receipt printing "Paid". | "Shops lose a cut of every card payment and wait days for the money. Ren turns any phone into the till, and it settles on Tempo in about a second." | Problem, track fit |
-| 0:12–0:32 | Ada: Create my wallet → name → Face ID → Home. **Add $5, free**: the balance rolls up. | "Ada makes a wallet with Face ID. The passkey is the wallet: no seed phrase, and no gas token, ever." | Passkey wallet (P-256/WebAuthn), product quality |
-| 0:32–1:02 | Shop: **Charge** $4.50 "Flat white" → QR. Ada: **Pay** → scan (or open the pay link) → Face ID → **Paid** with its time. Shop: the tape prints. Cut: explorer, the TIP-20 `transferWithMemo` with the charge's memo, the fee paid by Ren's fee payer. | "She pays the café. Paid in about a second. The memo ties the payment to the charge, so nobody holds the money in between, and Ren sponsors the fee." | TIP-20 memos, fee sponsorship, ~1 s finality |
-| 1:02–1:22 | Ada: **Send** → paste Lucía's link → $20 → "Lucía sees ≈ €…" → slide to send → **Sent** with its time. | "Sending to a friend abroad is one sheet, in her own currency." | Cross-border dollars |
-| 1:22–1:45 | Ada: Home → the dark **Private** card → **Show with passkey** → **Move in** $5 → "Out of sight". | "Some payments shouldn't be public. Ren keeps a private balance on a Tempo Zone, which Tempo's explorer can't see." | Tempo Zones |
-| 1:45–2:15 | Ada: **Send** → Lucía → $2 → switch **Send privately** on → review ("Who knows: you and Lucía", "Tempo sees: $2.00 going in") → slide → **Sent privately**. Lucía: **Private** → "Arrived privately +$2.00". Cut: explorer, the deposit into Zone A's portal: an amount, no recipient. | "One switch makes it private. Lucía has it in her private balance. On Tempo, all anyone sees is two dollars going into the zone, not who they're for." | Encrypted deposits, private RPC |
-| 2:15–2:30 | Ada: **Move out** $1 → "On its way back" → the balance chip "+$1.00 from Private". | "And it moves back to her balance in seconds." | Withdrawals settled on Tempo |
-| 2:30–2:45 | Shop dashboard, today's takings with $0.00 in card fees. Text: the live URL. | "Ren. Tap, paid, anywhere. Try it live on Tempo testnet." | Close |
+| Time | Shot | Voiceover |
+|---|---|---|
+| 0:00–0:10 | Landing page, the receipt printing "Paid". | "Shops lose a cut of every card payment and wait days for the money. Ren turns any phone into the till, settled on Tempo in about a second." |
+| 0:10–0:35 | Shop: **Charge** $4.50 "Flat white" → QR. Ada: **Pay** → Face ID → **Paid** with its time. The shop's tape prints. | "Ada pays the café with Face ID. No seed phrase, no gas token: Ren pays the fee. Paid in about a second." |
+| 0:35–0:50 | Ada: **Send** → paste Lucía's link → $10 → "Lucía sees ≈ €…" → slide → **Sent**. | "Sending to a friend abroad is one sheet, in her currency." |
+| 0:50–1:15 | Ada: **Send** → Lucía → $2 → switch **Send privately** → slide → **Sent privately**. Cut: the explorer, a deposit into the zone with an amount and no recipient. | "One switch makes it private. On Tempo, all anyone sees is two dollars going into a zone, not who they're for." |
+| 1:15–1:40 | Ada: Home → **Keys** → "Your dollars, your rules" → **New agent key**: "Shopping agent", $20 a day, $5 a payment at most, ask me above $1 → slide → Face ID → token and the one-line `claude mcp add`. | "Here's what Ren is really about: who may spend your dollars. Ada gives her AI agent its own key: twenty dollars a day, five a payment, and it asks her above one. Tempo enforces the limit. Not even Ren can raise it." |
+| 1:40–2:10 | Terminal: paste the `claude mcp add` line. Shop: **Charge** $3.00 "Croissant", copy its pay link. Claude Code: "Pay this for me: <link>". Claude calls `ren_pay_charge` → Paid. The shop's tape prints. | "She connects Claude in one line. Claude pays the café's charge itself, and the till turns to paid like any customer." |
+| 2:10–2:30 | Claude: "Now pay this one" (a $4.00 charge, over $1). Ada's Home turns watermelon: "Shopping agent asks: Pay $4.00?" → **Approve** with Face ID → Paid. | "Above her line, it has to ask. Ada says yes on her phone." |
+| 2:30–2:45 | Ada: the key → **Freeze this key**. Claude tries again → "Refused: this key is frozen". | "And one tap freezes it. Its limit on Tempo goes to zero." |
+| 2:45–2:58 | The shop dashboard: today's takings, $0.00 in card fees. Text: the live URL. | "Ren: payments where you decide who can spend. Live on Tempo testnet." |
 
 ## Rules for the edit
 
-- Real transactions only: no mockups, no slides. If a step is slow, cut it; don't speed it up.
+- Real transactions only: no mockups. If a step is slow, cut it; don't speed it up.
 - Keep the times Ren shows on screen; they are the proof.
-- Every cut to the explorer shows the transaction the viewer just watched happen.
-- Private needs the passkey once per visit to show the balance: keep that tap in, it's the point.
+- The explorer cut shows the transaction the viewer just watched happen.
 - Under three minutes, captions on for numbers.
