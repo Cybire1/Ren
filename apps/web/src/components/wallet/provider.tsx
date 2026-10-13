@@ -34,6 +34,7 @@ import { fetchNoteKey, noteKeys, openNote, publishNoteKey } from '@/lib/wallet/n
 import { endSession, sessionAccount, spend, startSession } from '@/lib/wallet/session'
 import { lockZone, type ZoneConfig } from '@/lib/wallet/zone'
 import { isZonePortal, type PrivateValue, usePrivate } from './private-state'
+import { type KeysValue, useKeys } from './keys-state'
 
 /**
  * Kova Pay on the web: your wallet, from your passkey, the one the Kova app uses.
@@ -164,6 +165,8 @@ interface WalletValue {
   refresh: () => Promise<void>
   /** Your private balance on the site's Tempo Zone, when it has one (components/wallet/private.tsx). */
   privacy: PrivateValue
+  /** Everything that can spend this wallet's dollars short of the wallet itself (components/wallet/keys.tsx). */
+  keys: KeysValue
 }
 
 /**
@@ -432,6 +435,8 @@ export function WalletProvider({
     unlock,
     onMoved: () => void refresh(),
   })
+
+  const keys = useKeys({ network, address: profile?.address ?? null, unlock })
 
   const noteReaches = useCallback(
     async (address: string) => (await fetchNoteKey(getAddress(address))) !== null,
@@ -828,9 +833,11 @@ export function WalletProvider({
       signOut,
       refresh,
       privacy,
+      keys,
     }),
     [
       privacy,
+      keys,
       network,
       shop,
       knownShop,

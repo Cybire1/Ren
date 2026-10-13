@@ -6,6 +6,7 @@ import { Awning } from '@/components/awning'
 import { Art, Icon } from '@/components/brand'
 import { chainName, onTempo } from '@/lib/chain'
 import { formatUsd, toBase } from '@/lib/wallet/money'
+import { KeysCard } from './keys'
 import { PrivateCard } from './private'
 import { isUnnamed, useWallet } from './provider'
 import { ActionTile, Avatar, BalanceCard, EntryRow, isFresh, Waves } from './ui'
@@ -69,6 +70,7 @@ export function Home() {
           <BalanceCard empty />
           {/* Dollars someone sent privately are here even when the balance above is empty. */}
           <PrivateCard />
+          <KeysCard />
         </div>
         <div className="w-home-side">
           <FirstSteps />
@@ -123,6 +125,7 @@ export function Home() {
         </div>
 
         <PrivateCard />
+        <KeysCard />
 
         <ShopCard />
 

@@ -10,6 +10,7 @@ import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { type Entry, isUnnamed, useWallet } from '@/lib/wallet'
+import { KeysCard } from '@/ui/keys'
 import { PrivateCard } from '@/ui/PrivateCard'
 import { ActionTile } from '@/ui/ActionTile'
 import { Awning } from '@/ui/Awning'
@@ -82,6 +83,7 @@ export default function Home() {
           <ReadyCard />
           {/* Dollars someone sent privately are here even when the balance is empty. */}
           <PrivateCard />
+          <KeysCard />
           <FirstSteps />
           <ShopCard />
         </>
@@ -98,6 +100,7 @@ export default function Home() {
           </View>
 
           <PrivateCard />
+          <KeysCard />
 
           <ShopCard />
 

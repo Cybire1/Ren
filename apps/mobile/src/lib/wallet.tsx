@@ -16,6 +16,7 @@ import { endSession, sessionAccount, spend, startSession } from './session'
 import { load, remove, save } from './storage'
 import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vault'
 import { ensureNoteKey, myNoteKeys, readNote, theirNoteKey } from './notes'
+import { type Keys, useKeys } from './keys-state'
 import { type Privacy, usePrivacy } from './private'
 
 /**
@@ -145,6 +146,8 @@ interface Wallet {
   signOut: () => Promise<void>
   /** Your private balance on a Tempo Zone, when this build has one (private.ts). */
   privacy: Privacy
+  /** Everything that can spend this wallet's dollars short of the wallet itself (app/keys). */
+  keys: Keys
 }
 
 const WalletContext = createContext<Wallet | null>(null)
@@ -682,6 +685,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     [base, record, rememberContact],
   )
 
+  const keys = useKeys({ address: profile?.address ?? null, unlock })
+
   const value: Wallet = {
     status,
     profile,
@@ -707,6 +712,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     signTypedData,
     signOut,
     privacy,
+    keys,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
 }

@@ -70,3 +70,6 @@ export const walletChains: Record<
     nativeCurrency: { name: 'MON', symbol: 'MON', decimals: 18 },
   },
 }
+
+/** A wallet's page on the chain's explorer. */
+export const explorerAddressUrl = (id: NetworkId, address: string) => `${networkOf(id).explorerUrl}/address/${address}`
