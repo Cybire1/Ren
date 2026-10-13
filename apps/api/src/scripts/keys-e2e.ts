@@ -18,7 +18,8 @@ import { Mppx, tempo } from 'mppx/server'
 import { randomBytes } from 'node:crypto'
 import { type Address, type Hex, getAddress } from 'viem'
 import { privateKeyToAccount } from 'viem/accounts'
-import { Actions } from 'viem/tempo'
+import { Account, Actions, WebCryptoP256 } from 'viem/tempo'
+import { PublicKey } from 'ox'
 import { fund, newCustomer, walletFor } from './customer-tempo.js'
 
 const api = process.env.API_URL ?? 'http://localhost:4400'
@@ -237,5 +238,79 @@ ok(`token refused (${dead.status}); revoked on Tempo: ${revoked.transactionHash}
 
 const history = await call<{ given: { id: string; status: string }[] }>(`/v1/wallets/${owner.address}/keys`, { token: session })
 ok(`the key shows as ${history.body.given.find((k) => k.id === key.id)?.status}`)
+
+// ── An allowance ───────────────────────────────────────────────────────────────────────────
+
+step('The owner gives an allowance: $3 a week, as a link')
+const invite = await call<{ key: { id: string }; code: string }>(`/v1/wallets/${owner.address}/keys/allowances`, {
+  method: 'POST',
+  token: session,
+  body: JSON.stringify({ label: 'Mum', limit: '3', period: 'week', expires_at: new Date(Date.now() + 30 * 86_400_000).toISOString() }),
+})
+expect(invite.status === 201, `allowance: ${JSON.stringify(invite.body)}`)
+const offer = await call<{ limit: string; period: string; from: string }>(`/v1/allowances/${invite.body.code}`)
+ok(`the link offers $${offer.body.limit} a ${offer.body.period} from ${offer.body.from}`)
+
+step('Mum accepts on her own device: a P-256 key made by WebCrypto, never extractable')
+const mum = newCustomer()
+const mumMessage = walletSignInMessage({ address: mum.address, issuedAt: new Date().toISOString(), nonce: randomBytes(16).toString('hex') })
+const mumSession = (
+  await call<{ token: string }>(`/v1/wallets/${mum.address}/keys/sign-in`, {
+    method: 'POST',
+    body: JSON.stringify({ message: mumMessage, signature: await mum.signMessage({ message: mumMessage }) }),
+  })
+).body.token
+const pair = await WebCryptoP256.createKeyPair()
+const mumKeyId = Account.fromWebCryptoP256(pair).address
+const claimed = await call<{ key: { status: string } }>(`/v1/allowances/${invite.body.code}/claim`, {
+  method: 'POST',
+  token: mumSession,
+  body: JSON.stringify({ holder: mum.address, holder_name: 'Mum', key_id: mumKeyId, key_type: 'p256', public_key: PublicKey.toHex(pair.publicKey) }),
+})
+expect(claimed.status === 200, `claim: ${JSON.stringify(claimed.body)}`)
+const again = await call(`/v1/allowances/${invite.body.code}/claim`, {
+  method: 'POST',
+  token: mumSession,
+  body: JSON.stringify({ holder: mum.address, key_id: mumKeyId, key_type: 'p256' }),
+})
+expect(again.status === 404 || again.status === 409, 'a second claim must fail')
+ok(`claimed, key ${mumKeyId}; the link can’t be claimed twice (${again.status})`)
+
+step('The owner switches it on with its passkey')
+const allowAuth = (await call<{ key_id: Address; key_type: 'p256'; limit_units: string; period: number; expiry: number }>(
+  `/v1/wallets/${owner.address}/keys/${invite.body.key.id}/authorize`,
+  { token: session },
+)).body
+const allowTerms: KeyTerms = { token, limit: BigInt(allowAuth.limit_units), period: allowAuth.period, expiry: allowAuth.expiry, payees: 'anyone' }
+const { receipt: allowReceipt } = await Actions.accessKey.authorizeSync(wallet as never, {
+  accessKey: { address: allowAuth.key_id, type: 'p256' },
+  expiry: allowTerms.expiry,
+  limits: keyLimits(allowTerms),
+  scopes: keyScopes(allowTerms),
+  feePayer: true,
+} as never)
+expect(allowReceipt.status === 'success', 'allowance authorize reverted')
+const on = await call<{ key: { status: string; remaining: string } }>(`/v1/wallets/${owner.address}/keys/${invite.body.key.id}/confirm`, {
+  method: 'POST',
+  token: session,
+  body: JSON.stringify({ tx_hash: allowReceipt.transactionHash }),
+})
+expect(on.body.key?.status === 'active', `switch on: ${JSON.stringify(on.body)}`)
+ok(`on: $${on.body.key.remaining} left this week`)
+
+step('Mum pays $1 from the allowance: the owner’s dollars, her key’s signature, Ren’s fee')
+const mumSpends = walletFor(api, health.chain_id, Account.fromWebCryptoP256(pair, { access: owner.address }) as never, token)
+const { receipt: spent } = await mumSpends.token.transferSync({ token, to: friend, amount: 1_000_000n, feePayer: true } as never)
+expect(spent.status === 'success', 'allowance spend reverted')
+const leftMum = await Actions.accessKey.getRemainingLimit(wallet as never, { account: owner.address, accessKey: mumKeyId, token })
+ok(`paid: ${spent.transactionHash}; $${Number(leftMum.remaining) / 1e6} left this week`)
+
+step('$5 is over what it has left: Tempo refuses it')
+const over = await mumSpends.token
+  .transferSync({ token, to: friend, amount: 5_000_000n, feePayer: true } as never)
+  .then(() => 'went through')
+  .catch((error: Error) => error.message.split('\n')[0])
+expect(over !== 'went through', 'the chain should refuse a spend over the limit')
+ok(`refused: ${over}`)
 console.log('\nAll keys checks passed.')
 process.exit(0)

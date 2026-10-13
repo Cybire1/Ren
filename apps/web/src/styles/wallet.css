@@ -4961,3 +4961,108 @@ button.w-add-chain {
 .w-keydone .w-snippet {
   width: 100%;
 }
+
+/* Allowances, from the side of the person they're for (components/wallet/allowance.tsx). */
+
+.w-allowhero {
+  position: relative;
+  overflow: hidden;
+  min-height: 11rem;
+  margin-top: 1rem;
+  padding: 1rem 1.25rem 1.2rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.9rem;
+  background: var(--teal-deep);
+  color: #fff;
+}
+
+.w-allowhero .w-private-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: var(--on-teal);
+}
+
+.w-allowhero-from {
+  position: relative;
+  margin-top: 0.6rem;
+  color: var(--on-teal);
+  font-weight: 700;
+}
+
+.w-allowhero .w-private-amount {
+  margin-top: 0.1rem;
+}
+
+.w-allowhero-sub {
+  position: relative;
+  max-width: 14rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.9375rem;
+}
+
+.w-allowcard {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.8rem 0.75rem 0.85rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.6rem;
+  background: var(--tint-mint);
+  box-shadow: 0 4px 0 var(--ink);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.w-allowcard:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 var(--ink);
+}
+
+.w-allowcard .w-keyscard-go {
+  background: var(--teal-deep);
+}
+
+/* Send: pay from your balance or from an allowance you hold. */
+
+.w-from {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0.2rem 0 0.6rem;
+}
+
+.w-from-label {
+  margin-right: 0.15rem;
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.w-from-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.45rem 0.75rem;
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.w-from-on {
+  background: var(--ink);
+  color: #fff;
+}
+
+.w-from-allow.w-from-on {
+  background: var(--teal-deep);
+}

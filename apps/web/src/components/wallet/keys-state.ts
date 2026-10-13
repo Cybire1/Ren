@@ -10,9 +10,11 @@ import {
   walletSignInMessage,
 } from '@kova/tempo'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { type Address, getAddress, type Hex, type LocalAccount } from 'viem'
-import { Actions } from 'viem/tempo'
+import { type Address, getAddress, type Hex, http, type LocalAccount } from 'viem'
+import { Actions, createClient } from 'viem/tempo'
+import { getNetwork } from '@kova/tempo'
 import { relayedClient } from '@/lib/wallet/chain-tempo'
+import { heldKey, heldKeys, keepKey, makeKey, spendingAccount } from '@/lib/wallet/device-keys'
 
 /**
  * Keys (the API's services/keys.ts), for the wallet: everything that can spend its dollars short of
@@ -113,6 +115,28 @@ export interface KeysValue {
   answer: (payment: KeyPaymentView, decision: 'approve' | 'decline') => Promise<KeyPaymentView>
   /** For the allowance link's page: sign in as the person accepting it. */
   token: () => Promise<string>
+  /** Accept an allowance from its link: this browser makes the key, and the giver switches it on. */
+  claim: (code: string, name: string | undefined) => Promise<KeyView>
+  /** Allowances given to this wallet that this browser holds the key for, as the chain sees them now. */
+  held: HeldAllowance[]
+  /** Pays from an allowance: the giver's dollars, signed for by this browser's key. */
+  spend: (allowance: HeldAllowance, to: Address, amount: bigint, memo?: Hex) => Promise<{ hash: Hex; ms: number }>
+}
+
+/** An allowance this browser can spend: read from the chain, so it needs no sign-in to show. */
+export interface HeldAllowance {
+  id: string
+  owner: Address
+  keyId: Address
+  token: Address
+  limit: bigint
+  period: 'day' | 'week'
+  expiresAt: string
+  /** What it can spend now; 0 once frozen, used up for the period, ended or removed. */
+  remaining: bigint
+  renewsAt: number | null
+  /** The giver switched it on, and hasn't removed it. */
+  live: boolean
 }
 
 const STORE = (address: string) => `ren.keys.session.${address.toLowerCase()}`
@@ -160,6 +184,7 @@ export function useKeys({
   const [approvals, setApprovals] = useState<KeyPaymentView[]>([])
   const [connect, setConnect] = useState<KeysValue['connect']>(null)
   const session = useRef<{ token: string; expires: number } | null>(null)
+  const [held, setHeld] = useState<HeldAllowance[]>([])
 
   // A new wallet in this tab starts signed out of its keys, unless this tab already signed it in.
   useEffect(() => {
@@ -183,6 +208,44 @@ export function useKeys({
   useEffect(() => {
     void call<{ api_url: string; mcp_url: string }>('connect').then(setConnect).catch(() => {})
   }, [])
+
+  // The allowances this browser holds the key for, and what the chain says each can spend now.
+  const readHeld = useCallback(async () => {
+    if (!address) return setHeld([])
+    const mine = (await heldKeys()).filter((k) => k.holder.toLowerCase() === address.toLowerCase())
+    if (mine.length === 0) return setHeld([])
+    const reader = createClient({ testnet: network === 'testnet', transport: http(getNetwork(network).rpcUrl) })
+    const read = await Promise.all(
+      mine.map(async (k): Promise<HeldAllowance> => {
+        const [meta, limit] = await Promise.all([
+          Actions.accessKey.getMetadata(reader as never, { account: k.owner, accessKey: k.keyId }).catch(() => null),
+          Actions.accessKey.getRemainingLimit(reader as never, { account: k.owner, accessKey: k.keyId, token: k.token }).catch(() => null),
+        ])
+        const live = Boolean(meta && Number(meta.expiry) > Date.now() / 1000 && !meta.isRevoked)
+        return {
+          id: k.id,
+          owner: k.owner,
+          keyId: k.keyId,
+          token: k.token,
+          limit: BigInt(k.limit),
+          period: k.period,
+          expiresAt: k.expiresAt,
+          remaining: live ? (limit?.remaining ?? 0n) : 0n,
+          renewsAt: limit?.periodEnd ? Number(limit.periodEnd) * 1000 : null,
+          live,
+        }
+      }),
+    )
+    setHeld(read)
+  }, [address, network])
+
+  useEffect(() => {
+    void readHeld()
+    const id = setInterval(() => {
+      if (document.visibilityState === 'visible') void readHeld()
+    }, 15_000)
+    return () => clearInterval(id)
+  }, [readHeld])
 
   const token = useCallback(async (): Promise<string> => {
     if (!address) throw new Error('Open your wallet first.')
@@ -424,8 +487,56 @@ export function useKeys({
     [address, authed, refresh, unlock],
   )
 
+  const claim = useCallback(
+    async (code: string, name: string | undefined) => {
+      if (!address) throw new Error('Open your wallet first.')
+      const key = await makeKey()
+      const claimed = await call<{ key: KeyView }>(`allowances/${code}/claim`, {
+        method: 'POST',
+        token: await token(),
+        body: { holder: address, holder_name: name, key_id: key.keyId, key_type: 'p256', public_key: key.publicKey },
+      })
+      await keepKey({
+        id: claimed.key.id,
+        owner: claimed.key.owner,
+        holder: address,
+        ...key,
+        token: claimed.key.token,
+        limit: BigInt(Math.round(Number(claimed.key.limit) * 1e6)).toString(),
+        period: claimed.key.period,
+        expiresAt: claimed.key.expires_at,
+      })
+      await readHeld()
+      return claimed.key
+    },
+    [address, readHeld, token],
+  )
+
+  const spend = useCallback(
+    async (allowance: HeldAllowance, to: Address, amount: bigint, memo?: Hex) => {
+      const local = await heldKey(allowance.id)
+      if (!local) throw new Error('This browser doesn’t hold the key for that allowance.')
+      if (amount > allowance.remaining) throw new Error('That’s more than the allowance has left.')
+      const started = performance.now()
+      const { receipt } = await relayedClient(network, spendingAccount(local) as never).token.transferSync({
+        token: allowance.token,
+        to,
+        amount,
+        ...(memo ? { memo } : {}),
+        feePayer: true,
+      } as never)
+      if (receipt.status !== 'success') throw new Error('Tempo didn’t take it. Nothing moved.')
+      void readHeld()
+      return { hash: receipt.transactionHash as Hex, ms: Math.round(performance.now() - started) }
+    },
+    [network, readHeld],
+  )
+
   return useMemo(
     () => ({
+      claim,
+      held,
+      spend,
       status,
       given,
       received,
@@ -444,7 +555,7 @@ export function useKeys({
       answer,
       token,
     }),
-    [answer, approvals, connect, createAgent, createAllowance, freeze, given, newToken, payments, received, refresh, remove, signIn, status, switchOn, token, unfreeze],
+    [answer, approvals, claim, connect, createAgent, createAllowance, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, token, unfreeze],
   )
 }
 

@@ -20,6 +20,7 @@ import {
   toBase,
 } from '@/lib/wallet/money'
 import { sessionCovers } from '@/lib/wallet/session'
+import { useGiverName } from './allowance'
 import { Home } from './home'
 import { PrivateScreen } from './private'
 import { type Contact, isUnnamed, short, useWallet } from './provider'
@@ -56,9 +57,14 @@ type Leg = 'waiting' | 'flying' | 'landed'
 export function SendSheet({ to, privately = false }: { to?: string; privately?: boolean }) {
   const router = useRouter()
   const params = useSearchParams()
-  const { contacts, balance, send, rates, liveRates, profile, noteReaches, privacy } = useWallet()
+  const { contacts, balance, send, rates, liveRates, profile, noteReaches, privacy, keys } = useWallet()
+  const giver = useGiverName()
   // Private: into their private balance on the site's zone. On from Private; a switch from Send.
   const [secret, setSecret] = useState(privately)
+  // From an allowance someone gave this wallet (components/wallet/allowance.tsx), or your balance.
+  const [from, setFrom] = useState<string | null>(privately ? null : params.get('from'))
+  const allowances = keys.held.filter((h) => h.live && h.remaining > 0n)
+  const allowance = from ? allowances.find((h) => h.id === from) : undefined
 
   const asked = params.get('amount')
   const start: Payee | null =
@@ -124,7 +130,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
   const dollars = baseToNumber(amount)
   // Sending privately draws on your balance on the zone's Tempo: this same balance, unless the
   // zone hangs off a test chain.
-  const spendable = secret ? privacy.available : balance
+  const spendable = allowance ? allowance.remaining : secret ? privacy.available : balance
   const over = spendable !== null && amount > spendable
   const theirLocal = local ? formatLocal(dollars, local, rates) : null
 
@@ -166,9 +172,11 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
     const started = Date.now()
     try {
       // Privately: a deposit into the private zone, addressed to them (components/wallet/private-state.ts).
-      const moved = secret
-        ? await privacy.sendPrivately({ address: payee.address, name }, amount)
-        : await send(contact, amount, note)
+      const moved = allowance
+        ? await keys.spend(allowance, getAddress(payee.address), amount)
+        : secret
+          ? await privacy.sendPrivately({ address: payee.address, name }, amount)
+          : await send(contact, amount, note)
       // Let Reni finish the leg it is on: the flight is timed to about what the chain takes.
       await wait(Math.max(0, 1360 - (Date.now() - started)))
       setLeg('landed')
@@ -248,7 +256,36 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                     </span>
                   ) : null}
                 </div>
-                {privacy.zone ? (
+                {allowances.length && !privately ? (
+                  <div className="w-from" role="radiogroup" aria-label="Pay from">
+                    <span className="w-from-label">From</span>
+                    <button
+                      type="button"
+                      role="radio"
+                      aria-checked={!allowance}
+                      className={`w-from-item${allowance ? '' : ' w-from-on'}`}
+                      onClick={() => setFrom(null)}
+                    >
+                      Your balance
+                    </button>
+                    {allowances.map((h) => (
+                      <button
+                        key={h.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={allowance?.id === h.id}
+                        className={`w-from-item w-from-allow${allowance?.id === h.id ? ' w-from-on' : ''}`}
+                        onClick={() => {
+                          setFrom(h.id)
+                          setSecret(false)
+                        }}
+                      >
+                        <Icon name="user" size={14} /> {giver(h.owner)}’s allowance · {formatUsd(h.remaining)}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+                {privacy.zone && !allowance ? (
                   <button
                     type="button"
                     role="switch"
@@ -356,6 +393,14 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                       />
                     </>
                   ) : null}
+                  {allowance ? (
+                    <Fact
+                      label="From"
+                      value={`${giver(allowance.owner)}’s allowance`}
+                      icon="user"
+                      hint={`${formatUsd(allowance.remaining - amount)} left after this`}
+                    />
+                  ) : null}
                   <Fact label="Fee" value="$0.00, Ren covers it" />
                   <Fact
                     label="Arrives"
@@ -394,7 +439,9 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                 ) : null}
                 {over ? (
                   <p className="form-error">
-                    You have {formatUsd(spendable ?? 0n)}. Add money first, or send less.
+                    {allowance
+                      ? `The allowance has ${formatUsd(spendable ?? 0n)} left. Send less.`
+                      : `You have ${formatUsd(spendable ?? 0n)}. Add money first, or send less.`}
                   </p>
                 ) : null}
                 <SlideToSend
@@ -427,7 +474,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                 <p>
                   {secret
                     ? `${formatUsd(amount)} is in ${first(name)}’s private balance. Only the two of you know.`
-                    : `${formatUsd(amount)} landed with ${first(name)}${theirLocal ? `, about ${theirLocal}` : ''}`}
+                    : `${formatUsd(amount)} landed with ${first(name)}${theirLocal ? `, about ${theirLocal}` : ''}${allowance ? `, from ${giver(allowance.owner)}’s allowance` : ''}`}
                 </p>
                 <span className="w-sheet-time">
                   <Icon name="bolt" size={16} />
