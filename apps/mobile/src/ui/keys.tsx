@@ -368,3 +368,49 @@ const styles = StyleSheet.create({
   heroLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   heroReni: { position: 'absolute', right: 8, bottom: -10, transform: [{ rotate: '-6deg' }] },
 })
+
+/** Allowances this phone can spend, on Home: green, like money at rest. */
+export function AllowanceCards() {
+  const { keys, contacts } = useWallet()
+  const live = keys.held.filter((h) => h.live)
+  if (live.length === 0) return null
+  const giver = (owner: string) => {
+    const known = contacts.find((c) => c.address.toLowerCase() === owner.toLowerCase())
+    return known && !known.name.startsWith('0x') ? known.name : shortAddress(owner)
+  }
+  return (
+    <>
+      {live.map((h) => (
+        <Sticker
+          key={h.id}
+          onPress={() => router.push({ pathname: '/send', params: { from: h.id } })}
+          fill="#CFF5E6"
+          radius={26}
+          lift
+          style={{ marginTop: 12 }}
+          accessibilityLabel={`Allowance from ${giver(h.owner)}, ${dollars((Number(h.remaining) / 1e6).toString())} left`}
+        >
+          <View style={styles.cardRow}>
+            <View style={[styles.cardIcon, { backgroundColor: colors.tealDeep }]}>
+              <Icon name="user" size={20} color={colors.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt weight="heavy" size={12} color={colors.tealDeep} style={styles.kicker}>
+                FROM {giver(h.owner).toUpperCase()}
+              </Txt>
+              <Txt weight="heavy" size={20}>
+                {dollars((Number(h.remaining) / 1e6).toString())} left
+              </Txt>
+              <Meter value={h.limit > 0n ? Number((h.remaining * 1000n) / h.limit) / 1000 : 0} />
+            </View>
+            <View style={[styles.answer, { backgroundColor: colors.tealDeep }]}>
+              <Txt weight="bold" size={14} color={colors.white}>
+                Spend
+              </Txt>
+            </View>
+          </View>
+        </Sticker>
+      ))}
+    </>
+  )
+}

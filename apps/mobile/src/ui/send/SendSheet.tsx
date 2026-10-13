@@ -47,10 +47,18 @@ const SIDE = 20
  * same sheet becomes the receipt. The sheet is sized to each step, so it grows for the keypad and
  * settles low once the money has landed, showing your balance behind it as it drops.
  */
-export function SendSheet({ payee, privately = false }: { payee?: Payee; privately?: boolean }) {
-  const { profile, balance, send, contacts, noteReaches, privacy } = useWallet()
+export function SendSheet({ payee, privately = false, from }: { payee?: Payee; privately?: boolean; from?: string }) {
+  const { profile, balance, send, contacts, noteReaches, privacy, keys } = useWallet()
   // Private: into their private balance on the zone. On from Private; a switch from Send.
   const [secret, setSecret] = useState(privately && !!privacy.zone)
+  // From an allowance someone gave this wallet (app/a/[code].tsx), or your own balance.
+  const [source, setSource] = useState<string | null>(privately ? null : (from ?? null))
+  const allowances = keys.held.filter((h) => h.live && h.remaining > 0n)
+  const allowance = source ? allowances.find((h) => h.id === source) : undefined
+  const giver = (owner: string) => {
+    const known = contacts.find((c) => isAddressEqual(c.address, owner as `0x${string}`))?.name
+    return known && !isUnnamed(known) ? known : short(owner)
+  }
   const { width } = useWindowDimensions()
   const inner = width - SIDE * 2
 
@@ -79,7 +87,8 @@ export function SendSheet({ payee, privately = false }: { payee?: Payee; private
   const local = theirs && theirs !== 'USD' ? theirs : null
   const dollars = typed === '' ? 0 : Number(typed)
   const amount = dollars > 0 ? toBase(dollars.toFixed(2)) : 0n
-  const over = balance !== null && amount > balance
+  const spendable = allowance ? allowance.remaining : balance
+  const over = spendable !== null && amount > spendable
 
   const pick = (p: Payee) => {
     void Haptics.selectionAsync()
@@ -98,7 +107,19 @@ export function SendSheet({ payee, privately = false }: { payee?: Payee; private
     setLeg('flying')
     const started = Date.now()
     try {
-      const done: Entry = secret
+      const done: Entry = allowance
+        ? await keys.spend(allowance, to.address, amount).then((r) => ({
+            id: r.hash,
+            kind: 'sent' as const,
+            amount: amount.toString(),
+            name,
+            detail: `From ${giver(allowance.owner)}’s allowance`,
+            address: to.address,
+            txHash: r.hash,
+            ms: r.ms,
+            at: Date.now(),
+          }))
+        : secret
         ? await privacy.sendPrivately({ address: to.address, name }, amount).then((r) => ({
             id: r.hash,
             kind: 'sent' as const,
@@ -207,15 +228,51 @@ export function SendSheet({ payee, privately = false }: { payee?: Payee; private
                   </Txt>
                 </View>
               ) : null}
-              {balance !== null ? (
+              {spendable !== null ? (
                 <View style={[styles.pill, over && { backgroundColor: colors.coralSoft }]}>
                   <Txt weight="medium" size={14} color={over ? colors.danger : colors.onTint}>
-                    {over ? `You have ${formatUsd(balance)}` : `${formatUsd(balance)} available`}
+                    {over
+                      ? `${allowance ? 'The allowance has' : 'You have'} ${formatUsd(spendable)}`
+                      : `${formatUsd(spendable)} ${allowance ? 'left in the allowance' : 'available'}`}
                   </Txt>
                 </View>
               ) : null}
             </View>
-            {privacy.zone ? (
+            {allowances.length && !privately ? (
+              <View style={styles.fromRow} accessibilityRole="radiogroup" accessibilityLabel="Pay from">
+                <Txt weight="heavy" size={12} color={colors.muted} style={{ letterSpacing: 0.6 }}>
+                  FROM
+                </Txt>
+                <Pressable
+                  onPress={() => setSource(null)}
+                  style={[styles.fromItem, !allowance && styles.fromOn]}
+                  accessibilityRole="radio"
+                  accessibilityState={{ checked: !allowance }}
+                >
+                  <Txt weight="bold" size={13} color={!allowance ? colors.white : colors.ink}>
+                    Your balance
+                  </Txt>
+                </Pressable>
+                {allowances.map((h) => (
+                  <Pressable
+                    key={h.id}
+                    onPress={() => {
+                      void Haptics.selectionAsync()
+                      setSource(h.id)
+                      setSecret(false)
+                    }}
+                    style={[styles.fromItem, allowance?.id === h.id && styles.fromAllow]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: allowance?.id === h.id }}
+                  >
+                    <Txt weight="bold" size={13} color={allowance?.id === h.id ? colors.white : colors.ink}>
+                      {giver(h.owner)}’s · {formatUsd(h.remaining)}
+                    </Txt>
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
+            {privacy.zone && !allowance ? (
               <Pressable
                 accessibilityRole="switch"
                 accessibilityState={{ checked: secret }}
@@ -610,6 +667,10 @@ function FieldButton({ icon, label, onPress, solid }: { icon: IconName; label: s
 }
 
 const styles = StyleSheet.create({
+  fromRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 },
+  fromItem: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white },
+  fromOn: { backgroundColor: colors.ink },
+  fromAllow: { backgroundColor: colors.tealDeep },
   sheet: { backgroundColor: colors.paper },
   switchRow: {
     flexDirection: 'row',

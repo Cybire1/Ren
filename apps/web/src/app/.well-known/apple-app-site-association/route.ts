@@ -3,8 +3,8 @@
  * - webcredentials: Ren Pay may create and use passkeys for this domain. The wallet is a
  *   passkey, so this file is what makes a wallet possible at all. Both apps are listed (Ren on
  *   Tempo, xyz.kova.pay, and Ren on Monad), so one passkey opens the same wallet in either.
- * - applinks: scanning a shop's code (a /pay/… link), opening a stall (/s/…) or someone's request
- *   (/to/…) with the iPhone camera opens Ren Pay straight at it, when it's installed.
+ * - applinks: scanning a shop's code (a /pay/… link), opening a stall (/s/…), someone's request
+ *   (/to/…) or an allowance someone gave you (/a/…) opens Ren Pay straight at it, when it's installed.
  *
  * Served as JSON with no redirect, as Apple requires.
  */
@@ -25,7 +25,7 @@ export function GET() {
     webcredentials: { apps },
     applinks: {
       details: [
-        { appIDs: apps, components: [{ '/': '/pay/*' }, { '/': '/s/*' }, { '/': '/to/*' }] },
+        { appIDs: apps, components: [{ '/': '/pay/*' }, { '/': '/s/*' }, { '/': '/to/*' }, { '/': '/a/*' }] },
       ],
     },
   })

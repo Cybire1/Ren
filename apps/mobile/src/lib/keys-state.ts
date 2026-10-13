@@ -3,7 +3,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AppState } from 'react-native'
 import { type Address, getAddress, type Hex, type LocalAccount } from 'viem'
 import { Actions } from 'viem/tempo'
-import { walletClient } from './chain-tempo'
+import { publicClient, walletClient } from './chain-tempo'
+import { heldKeys, keepKey, makeKey, spendingAccount } from './held-keys'
 import { apiUrl, onTempo, webUrl } from './config'
 
 /**
@@ -102,6 +103,26 @@ export interface Keys {
   newToken: (key: KeyView) => Promise<string>
   payments: (key: KeyView) => Promise<KeyPaymentView[]>
   answer: (payment: KeyPaymentView, decision: 'approve' | 'decline') => Promise<KeyPaymentView>
+  /** Accept an allowance from its link: this phone makes the key, and the giver switches it on. */
+  claim: (code: string, name: string | undefined) => Promise<KeyView>
+  /** Allowances given to this wallet that this phone holds the key for, as the chain sees them now. */
+  held: HeldAllowance[]
+  /** Pays from an allowance: the giver's dollars, signed for by this phone's key. */
+  spend: (allowance: HeldAllowance, to: Address, amount: bigint, memo?: Hex) => Promise<{ hash: Hex; ms: number }>
+}
+
+/** An allowance this phone can spend: read from the chain, so it needs no sign-in to show. */
+export interface HeldAllowance {
+  id: string
+  owner: Address
+  keyId: Address
+  token: Address
+  limit: bigint
+  period: 'day' | 'week'
+  expiresAt: string
+  remaining: bigint
+  renewsAt: number | null
+  live: boolean
 }
 
 class KeysError extends Error {
@@ -145,6 +166,44 @@ export function useKeys({
   const [received, setReceived] = useState<KeyView[]>([])
   const [approvals, setApprovals] = useState<KeyPaymentView[]>([])
   const session = useRef<{ token: string; expires: number } | null>(null)
+  const [held, setHeld] = useState<HeldAllowance[]>([])
+
+  // The allowances this phone holds the key for, and what the chain says each can spend now.
+  const readHeld = useCallback(async () => {
+    if (!address) return setHeld([])
+    const mine = (await heldKeys()).filter((k) => k.holder.toLowerCase() === address.toLowerCase())
+    if (mine.length === 0) return setHeld([])
+    const read = await Promise.all(
+      mine.map(async (k): Promise<HeldAllowance> => {
+        const [meta, limit] = await Promise.all([
+          Actions.accessKey.getMetadata(publicClient as never, { account: k.owner, accessKey: k.keyId }).catch(() => null),
+          Actions.accessKey.getRemainingLimit(publicClient as never, { account: k.owner, accessKey: k.keyId, token: k.token }).catch(() => null),
+        ])
+        const live = Boolean(meta && Number(meta.expiry) > Date.now() / 1000 && !meta.isRevoked)
+        return {
+          id: k.id,
+          owner: k.owner,
+          keyId: k.keyId,
+          token: k.token,
+          limit: BigInt(k.limit),
+          period: k.period,
+          expiresAt: k.expiresAt,
+          remaining: live ? (limit?.remaining ?? 0n) : 0n,
+          renewsAt: limit?.periodEnd ? Number(limit.periodEnd) * 1000 : null,
+          live,
+        }
+      }),
+    )
+    setHeld(read)
+  }, [address])
+
+  useEffect(() => {
+    void readHeld()
+    const id = setInterval(() => {
+      if (AppState.currentState === 'active') void readHeld()
+    }, 15_000)
+    return () => clearInterval(id)
+  }, [readHeld])
 
   useEffect(() => {
     setGiven([])
@@ -382,8 +441,59 @@ export function useKeys({
     [address, authed, refresh, unlock],
   )
 
+  const claim = useCallback(
+    async (code: string, name: string | undefined) => {
+      if (!address) throw new Error('Open your wallet first.')
+      const key = makeKey()
+      const claimed = await call<{ key: KeyView }>(`allowances/${code}/claim`, {
+        method: 'POST',
+        token: await token(),
+        body: { holder: address, holder_name: name, key_id: key.keyId, key_type: 'secp256k1' },
+      })
+      await keepKey(
+        {
+          id: claimed.key.id,
+          owner: claimed.key.owner,
+          holder: address,
+          keyId: key.keyId,
+          token: claimed.key.token,
+          limit: units(claimed.key.limit).toString(),
+          period: claimed.key.period,
+          expiresAt: claimed.key.expires_at,
+        },
+        key.privateKey,
+      )
+      await readHeld()
+      return claimed.key
+    },
+    [address, readHeld, token],
+  )
+
+  const spend = useCallback(
+    async (allowance: HeldAllowance, to: Address, amount: bigint, memo?: Hex) => {
+      const local = (await heldKeys()).find((k) => k.id === allowance.id)
+      if (!local) throw new Error('This phone doesn’t hold the key for that allowance.')
+      if (amount > allowance.remaining) throw new Error('That’s more than the allowance has left.')
+      const started = Date.now()
+      const { receipt } = await Actions.token.transferSync(walletClient((await spendingAccount(local)) as never) as never, {
+        token: allowance.token,
+        to,
+        amount,
+        ...(memo ? { memo } : {}),
+        feePayer: true,
+      } as never)
+      if (receipt.status !== 'success') throw new Error('Tempo didn’t take it. Nothing moved.')
+      void readHeld()
+      return { hash: receipt.transactionHash as Hex, ms: Date.now() - started }
+    },
+    [readHeld],
+  )
+
   return useMemo(
     () => ({
+      claim,
+      held,
+      spend,
       available: onTempo,
       status,
       given,
@@ -402,6 +512,6 @@ export function useKeys({
       payments,
       answer,
     }),
-    [answer, approvals, createAgent, createAllowance, freeze, given, newToken, payments, received, refresh, remove, signIn, status, switchOn, unfreeze],
+    [answer, approvals, claim, createAgent, createAllowance, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, unfreeze],
   )
 }
