@@ -15,10 +15,10 @@ import {
 import { ScreenHead } from './activity'
 import { short, useWallet } from './provider'
 import { CopyButton, Keypad, QR, ShareButton } from './ui'
-import { chainName, onTempo } from '@/lib/chain'
+import { chainName, homeSite, onTempo } from '@/lib/chain'
 
 function useOrigin() {
-  const [origin, setOrigin] = useState('https://mykova.app')
+  const [origin, setOrigin] = useState(homeSite)
   useEffect(() => setOrigin(window.location.origin), [])
   return origin
 }

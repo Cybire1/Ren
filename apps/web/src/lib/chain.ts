@@ -16,6 +16,9 @@ export const onTempo = chain === 'tempo'
 export const chainName = onTempo ? 'Tempo' : 'Monad'
 
 /** Where people can look a transaction up. */
+/** Ren's site on Tempo, Kova's on Monad: links shown before the page knows its own address. */
+export const homeSite = onTempo ? 'https://renpay.app' : 'https://mykova.app'
+
 export const explorerName = onTempo ? 'Tempo Explorer' : 'Monadscan'
 
 export const networkOf = (id: NetworkId) => (onTempo ? tempoNetwork(id) : monadNetwork(id))

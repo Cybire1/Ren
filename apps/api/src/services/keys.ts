@@ -317,6 +317,28 @@ export async function setFrozen(owner: Address, row: KeyRow, frozen: boolean): P
 }
 
 /**
+ * A new limit: the owner's device sets it on Tempo first (`updateLimit` sets the limit and what's
+ * left of it this period), and Ren records it once the chain shows no more than that left. A
+ * frozen key has to be unfrozen first, since setting a limit on Tempo would quietly unfreeze it.
+ */
+export async function setLimit(owner: Address, row: KeyRow, limit: bigint): Promise<KeyRow> {
+  if (row.status === 'revoked') throw new KovaError('conflict', 'This key was removed.')
+  if (row.status === 'pending' || !row.keyId) throw new KovaError('conflict', 'This key isn’t on Tempo yet.')
+  if (row.status === 'frozen') throw new KovaError('conflict', 'Unfreeze it before changing its limit.')
+  checkTerms(termsOf({ limit, period: row.period, expiresAt: row.expiresAt, payees: 'anyone' }))
+  const chain = await onChainKey(owner, getAddress(row.keyId), getAddress(row.token))
+  if (!chain.live) throw new KovaError('conflict', 'This key isn’t on Tempo any more.')
+  if (chain.remaining > limit)
+    throw new KovaError('conflict', 'Tempo still shows the old limit. Try again in a moment.')
+  const [updated] = await db
+    .update(schema.walletKeys)
+    .set({ spendLimit: limit, updatedAt: new Date() })
+    .where(eq(schema.walletKeys.id, row.id))
+    .returning()
+  return updated as KeyRow
+}
+
+/**
  * Removing a key is for good. Ren forgets an agent's key and token at once, so it can't sign
  * again whatever happens on-chain; the owner's device revokes it on Tempo, which can't be undone.
  */

@@ -16,7 +16,7 @@ import { SESSION_LIMIT, TAP_LIMIT, useSessionState } from '@/lib/wallet/session'
 import { ScreenHead } from './activity'
 import { short, useWallet } from './provider'
 import { CopyButton, QR } from './ui'
-import { chainName, onTempo } from '@/lib/chain'
+import { chainName, homeSite, onTempo } from '@/lib/chain'
 
 /** "$50", for limits that are always whole dollars. */
 const whole = (base: bigint) => formatUsd(base).replace(/\.00$/, '')
@@ -27,7 +27,7 @@ export function Profile() {
     useWallet()
   const session = useSessionState()
   const router = useRouter()
-  const [origin, setOrigin] = useState('https://mykova.app')
+  const [origin, setOrigin] = useState(homeSite)
   const [forgetting, setForgetting] = useState(false)
   useEffect(() => setOrigin(window.location.origin), [])
   if (!profile) return null

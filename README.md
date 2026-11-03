@@ -129,8 +129,9 @@ Every payment carries the charge's id in its memo. That is how an on-chain trans
 an order without Ren sitting in the middle of the money, and why a payment Ren never submitted is
 still recognised by the chain watcher.
 
-**A card, a phone and an agent are the same thing here:** a P-256 key registered as a Tempo
-access key on the owner's account, with an expiry, a spending limit and a scope.
+**A card, a phone and an agent are the same thing here:** a key registered as a Tempo access key
+on the owner's account, with an expiry, a spending limit and a scope. A card's key lives in its
+chip, an agent's is sealed by Ren, and an allowance's is made on the other person's own device.
 
 ## What Ren uses from Tempo
 
@@ -138,7 +139,7 @@ access key on the owner's account, with an expiry, a spending limit and a scope.
 |---|---|
 | TIP-20 `transferWithMemo` | Every payment names its charge in a 32-byte memo, so matching needs no custody |
 | Fee sponsorship | Ren's relayer pays the network fee in dollars; customers never hold a gas token |
-| P-256 and WebAuthn signatures | Passkey wallets on the web and in the app, and cards that sign with P-256 |
+| Passkeys and P-256 keys | Wallets come from a passkey (Face ID) through WebAuthn PRF, with no seed phrase; an allowance accepted in a browser is a P-256 key that never leaves it |
 | Access keys with limits | Cards and staff phones hold keys with a spending limit, an expiry and a freeze |
 | ~0.5 s blocks, deterministic finality | Paid means paid: no confirmations to wait for, no reorg to unwind |
 | Dollar stablecoins | Prices, balances and settlement in dollars (AlphaUSD on testnet, USDC on mainnet) |
@@ -181,7 +182,7 @@ in [`docs/market`](docs/market).
 Ren's look is called Soda: mint paper, green for money at rest, watermelon for paying, navy ink,
 2px ink outlines, and a solid ink shadow that buttons press into. Type is Manrope, with tabular
 figures so amounts never jump. The logo is the R coin: a capital R whose bowl is a coin, sitting
-on the same ink shadow. Reni, a watermelon coin with a sprout, shows up when money moves. Every screen is built
+on the same ink shadow. Reni, a silver coin, shows up when money moves. Every screen is built
 for a phone first and gets a real desktop layout. Text meets WCAG contrast on its background,
 and every animation stops for people who ask for reduced motion.
 

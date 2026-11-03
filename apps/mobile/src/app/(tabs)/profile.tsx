@@ -171,21 +171,24 @@ export default function Profile() {
         </Sticker>
       ) : null}
 
-      {/* Paying from a phone with no data: a small pocket spent by dialling Ren's USSD code. */}
-      <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 62, marginTop: 14 }}>
-        <View style={[styles.cashOut, { gap: 14 }]}>
-          <Icon name="keypad" size={22} />
-          <View style={{ flex: 1 }}>
-            <Txt weight="semi" size={16}>
-              Pay by USSD
-            </Txt>
-            <Txt size={13} color={colors.muted}>
-              From any phone, even with no data
-            </Txt>
+      {/* Paying from a phone with no data: a small pocket spent by dialling Ren's USSD code.
+          Monad only for now; on Tempo a basic phone becomes a key on this wallet (docs/parity-plan.md). */}
+      {onTempo ? null : (
+        <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 62, marginTop: 14 }}>
+          <View style={[styles.cashOut, { gap: 14 }]}>
+            <Icon name="keypad" size={22} />
+            <View style={{ flex: 1 }}>
+              <Txt weight="semi" size={16}>
+                Pay by USSD
+              </Txt>
+              <Txt size={13} color={colors.muted}>
+                From any phone, even with no data
+              </Txt>
+            </View>
+            <Icon name="arrow" size={20} />
           </View>
-          <Icon name="arrow" size={20} />
-        </View>
-      </Sticker>
+        </Sticker>
+      )}
 
       <MoneyCard
         currency={profile.currency}

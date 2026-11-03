@@ -22,7 +22,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { cardsLive, changeCard, type KovaCard, listCards, removeCard } from '@/lib/card'
-import { chainName } from '@/lib/config'
+import { chainName, onTempo } from '@/lib/config'
+import type { KeyPaymentView, KeyView } from '@/lib/keys-state'
 import { load as loadSaved, save } from '@/lib/storage'
 import { colors } from '@/lib/theme'
 import { isUnnamed, useWallet } from '@/lib/wallet'
@@ -48,12 +49,17 @@ const dollars = (value: string | null) => {
  * The Ren Card. You can pick it up: it tilts under your finger and springs back. Freezing
  * frosts it over and lets the snow fall.
  *
- * Everything here is the card's real state: the limit and what it spent today come from Monad,
- * and every change (freeze, limit, removal) is approved by this wallet and checked by the
- * KovaCard contract. A freeze also stops Ren cosigning the card at once, before the chain hears.
- * A Tempo build has no card contract yet (`cardsLive`), so there the tab only introduces the card.
+ * Everything here is the card's real state. On Tempo a card is an access key on this wallet
+ * (Keys): its daily limit and what's left today are read from Tempo, and every change (freeze,
+ * limit, removal) is signed by this wallet's passkey and enforced by the chain. A Monad build
+ * keeps its cards in the KovaCard contract (`cardsLive`).
  */
 export default function Card() {
+  if (onTempo) return <TempoCards />
+  return <MonadCards />
+}
+
+function MonadCards() {
   const { profile, signTypedData } = useWallet()
   const insets = useSafeAreaInsets()
   const [cards, setCards] = useState<KovaCard[] | null>(null)
@@ -151,7 +157,380 @@ export default function Card() {
   )
 }
 
-/** No card yet: what a Ren Card does, and on Monad, the way to link one. */
+/**
+ * The Card tab on Tempo: the wallet's Ren Cards, each an access key with a daily limit that
+ * Tempo enforces. The chip signs every tap itself, so there's no PIN and nothing for Ren to
+ * cosign: freezing sets the key's limit to zero on Tempo.
+ */
+function TempoCards() {
+  const { keys } = useWallet()
+  const insets = useSafeAreaInsets()
+  const [selected, setSelected] = useState(0)
+  const [refreshing, setRefreshing] = useState(false)
+
+  useFocusEffect(
+    useCallback(() => {
+      if (keys.status === 'signed-out') void keys.signIn().catch(() => {})
+      else if (keys.status === 'ready') void keys.refresh()
+    }, [keys]),
+  )
+
+  const cards = keys.given.filter((k) => k.kind === 'card' && k.status !== 'revoked' && k.status !== 'pending')
+  const card = cards[Math.min(selected, Math.max(cards.length - 1, 0))] ?? null
+  const frozen = card?.status === 'frozen'
+
+  const scroll = (children: ReactNode) => (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: frozen ? colors.sunken : colors.paper }}
+      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: dockClearance + insets.bottom }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={async () => {
+            setRefreshing(true)
+            await keys.refresh().catch(() => {})
+            setRefreshing(false)
+          }}
+        />
+      }
+    >
+      {children}
+    </ScrollView>
+  )
+
+  if (keys.status === 'signing-in' && cards.length === 0)
+    return scroll(
+      <View style={{ paddingTop: 160, alignItems: 'center' }}>
+        <ActivityIndicator color={colors.ink} />
+      </View>,
+    )
+  if (!card) return scroll(<NoCard />)
+  return scroll(
+    <TempoCardView
+      key={card.id}
+      card={card}
+      others={cards}
+      selected={selected}
+      onSelect={setSelected}
+      onRemoved={() => setSelected(0)}
+    />,
+  )
+}
+
+const tempoLimits = ['20', '50', '100', '200']
+
+/** "at 10:26 PM", "tomorrow at 10:26 PM", or "on Friday at 10:26 PM": a key's period runs from when it was made, not midnight. */
+function whenRenews(at: Date) {
+  const time = at.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+  const day = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+  const days = Math.round((day(at) - day(new Date())) / 86_400_000)
+  if (days <= 0) return `at ${time}`
+  if (days === 1) return `tomorrow at ${time}`
+  return `on ${at.toLocaleDateString([], { weekday: 'long' })} at ${time}`
+}
+
+function TempoCardView({
+  card,
+  others,
+  selected,
+  onSelect,
+  onRemoved,
+}: {
+  card: KeyView
+  others: KeyView[]
+  selected: number
+  onSelect: (index: number) => void
+  onRemoved: () => void
+}) {
+  const { keys } = useWallet()
+  const { width } = useWindowDimensions()
+  const reduced = useReducedMotion()
+  const cardW = width - 60
+  const frozen = card.status === 'frozen'
+  const expired = card.status === 'expired'
+  const last4 = card.key_id?.slice(-4).toUpperCase() ?? '····'
+  const [pending, setPending] = useState<string | null>(null)
+  const [problem, setProblem] = useState<string | null>(null)
+  const [taps, setTaps] = useState<KeyPaymentView[] | null>(null)
+
+  useEffect(() => {
+    let live = true
+    keys
+      .payments(card)
+      .then((list) => live && setTaps(list.filter((p) => p.status === 'paid').slice(0, 8)))
+      .catch(() => live && setTaps([]))
+    return () => {
+      live = false
+    }
+  }, [card, keys])
+
+  const rx = useSharedValue(0)
+  const ry = useSharedValue(0)
+  const tilt = Gesture.Pan()
+    .enabled(!reduced)
+    .onUpdate((e) => {
+      ry.value = Math.max(-18, Math.min(18, e.translationX / 8))
+      rx.value = Math.max(-14, Math.min(14, -e.translationY / 8))
+    })
+    .onEnd(() => {
+      rx.value = withSpring(0, spring)
+      ry.value = withSpring(0, spring)
+    })
+  const tilted = useAnimatedStyle(() => ({
+    transform: [{ perspective: 900 }, { rotateX: `${rx.value}deg` }, { rotateY: `${ry.value}deg` }],
+  }))
+
+  const frozenAt = useSharedValue(frozen ? 1 : 0)
+  useEffect(() => {
+    frozenAt.value = withTiming(frozen ? 1 : 0, { duration: 320, easing: Easing.bezier(0.32, 0.72, 0, 1) })
+  }, [frozen, frozenAt])
+  const [trackW, setTrackW] = useState(0)
+  const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: frozenAt.value * (trackW / 2) }] }))
+
+  const act = async (what: string, run: () => Promise<void>, feel = Haptics.NotificationFeedbackType.Success) => {
+    if (pending) return
+    setPending(what)
+    setProblem(null)
+    try {
+      await run()
+      void Haptics.notificationAsync(feel)
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'That didn’t work. Try again.'
+      if (!/cancel/i.test(message)) setProblem(message)
+    } finally {
+      setPending(null)
+    }
+  }
+
+  const setFrozen = (next: boolean) => {
+    if (next === frozen) return
+    void act(
+      next ? 'freeze' : 'unfreeze',
+      () => (next ? keys.freeze(card) : keys.unfreeze(card)),
+      next ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success,
+    )
+  }
+
+  const remove = () =>
+    Alert.alert(`Remove card •••• ${last4}?`, 'It won’t be able to pay any more. To use it again, link it again.', [
+      { text: 'Keep it', style: 'cancel' },
+      {
+        text: 'Remove',
+        style: 'destructive',
+        onPress: () =>
+          void act('remove', async () => {
+            await keys.remove(card)
+            onRemoved()
+          }),
+      },
+    ])
+
+  const limit = Number(card.limit)
+  const left = card.remaining === null ? null : Number(card.remaining)
+  // Frozen, Tempo shows nothing left, which isn't spending: the meter rests until it's unfrozen.
+  const spent = left === null || frozen ? 0 : Math.max(0, limit - left)
+  const renews = card.period_ends_at ? new Date(card.period_ends_at) : null
+
+  return (
+    <>
+      <View style={styles.head}>
+        <Txt weight="bold" size={32} style={{ letterSpacing: -1 }}>
+          Card
+        </Txt>
+        <View style={[styles.status, { backgroundColor: frozen || expired ? colors.ink : colors.teal }]}>
+          <Icon name={frozen ? 'snow' : 'tap'} size={14} color={colors.white} />
+          <Txt weight="semi" size={13} color={colors.white}>
+            {frozen ? 'Frozen' : expired ? 'Expired' : 'Ready to tap'}
+          </Txt>
+        </View>
+      </View>
+
+      <GestureDetector gesture={tilt}>
+        <Animated.View style={[styles.hero, tilted]}>
+          <CardArt width={cardW} last4={last4} frozen={frozen} />
+          {frozen ? <Snowfall width={cardW + 20} height={cardW * 0.6} /> : null}
+        </Animated.View>
+      </GestureDetector>
+      <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 6 }}>
+        {frozen
+          ? 'Nobody can tap with it until you unfreeze it.'
+          : expired
+            ? 'Its key has ended. Link it again to keep paying with it.'
+            : `${card.label}. Tap it at any Ren till. Drag it to tilt it.`}
+      </Txt>
+
+      {others.length > 1 ? (
+        <View style={styles.picker}>
+          {others.map((c, i) => (
+            <Pressable
+              key={c.id}
+              onPress={() => onSelect(i)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: i === selected }}
+              style={[styles.pick, i === selected && styles.pickOn]}
+            >
+              <Txt weight="semi" size={14} color={i === selected ? colors.white : colors.ink}>
+                •••• {c.key_id?.slice(-4).toUpperCase()}
+              </Txt>
+            </Pressable>
+          ))}
+        </View>
+      ) : null}
+
+      <View style={styles.body}>
+        <View
+          style={styles.switch}
+          onLayout={(e) => setTrackW(e.nativeEvent.layout.width - 12)}
+          accessibilityRole="radiogroup"
+          accessibilityLabel="Card status"
+        >
+          <Animated.View
+            style={[styles.thumb, { width: trackW / 2, backgroundColor: frozen ? colors.ink : colors.teal }, thumb]}
+          />
+          <Choice icon="tap" label="Active" on={!frozen} busy={pending === 'unfreeze'} onPress={() => setFrozen(false)} />
+          <Choice icon="snow" label="Frozen" on={frozen} busy={pending === 'freeze'} onPress={() => setFrozen(true)} />
+        </View>
+
+        {problem ? (
+          <View style={styles.problem}>
+            <Icon name="info" size={18} color={colors.danger} />
+            <Txt weight="medium" size={14} color={colors.danger} style={{ flex: 1 }}>
+              {problem}
+            </Txt>
+          </View>
+        ) : null}
+
+        <View style={styles.section}>
+          <View style={styles.limitHead}>
+            <View>
+              <Txt size={13} color={colors.muted}>
+                Daily limit
+              </Txt>
+              <Txt weight="bold" size={28} style={{ letterSpacing: -0.8 }}>
+                {dollars(card.limit)}
+                <Txt size={15} color={colors.muted}>
+                  {'  '}a {card.period}
+                </Txt>
+              </Txt>
+            </View>
+            <Txt size={13} color={colors.muted} style={{ textAlign: 'right' }}>
+              {frozen ? 'Paused' : `${dollars(String(spent))} spent\n${card.period === 'day' ? 'today' : 'this week'}`}
+            </Txt>
+          </View>
+          <View style={styles.meter}>
+            <View style={[styles.meterFill, { width: `${Math.max(2, Math.min(100, (spent / (limit || 1)) * 100))}%` }]} />
+          </View>
+          <View style={styles.ticks}>
+            {tempoLimits.map((l) => {
+              const on = Number(l) === limit
+              return (
+                <Pressable
+                  key={l}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: on, busy: pending === `limit:${l}` }}
+                  accessibilityLabel={`$${l} a day`}
+                  disabled={on || pending !== null || frozen || expired}
+                  onPress={() => {
+                    void Haptics.selectionAsync()
+                    void act(`limit:${l}`, () => keys.setLimit(card, l))
+                  }}
+                  hitSlop={6}
+                  style={[styles.tick, on && styles.tickOn, (frozen || expired) && !on && { opacity: 0.4 }]}
+                >
+                  {pending === `limit:${l}` ? (
+                    <ActivityIndicator color={colors.ink} size="small" />
+                  ) : (
+                    <Txt weight="semi" size={14} color={on ? colors.white : colors.ink}>
+                      ${l}
+                    </Txt>
+                  )}
+                </Pressable>
+              )
+            })}
+          </View>
+          <Txt size={12} color={colors.muted} style={{ marginTop: 10, lineHeight: 17 }}>
+            {frozen
+              ? 'Frozen: its limit on Tempo is zero until you unfreeze it.'
+              : `It can spend ${dollars(left === null ? null : String(left))} more${
+                  renews ? `, and the limit renews ${whenRenews(renews)}` : ' today'
+                }. It’s kept on ${chainName}, so only your Face ID can change it.`}
+          </Txt>
+        </View>
+
+        <View style={[styles.section, { padding: 0 }]}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={frozen || pending !== null}
+            onPress={() => setFrozen(true)}
+            style={({ pressed }) => pressed && { opacity: 0.7 }}
+          >
+            <Row
+              icon="snow"
+              tint={colors.coralSoft}
+              label="Report lost"
+              value={frozen ? 'Frozen. Unfreeze it if you find it.' : 'Freezes it straight away'}
+            >
+              <Icon name="arrow" size={17} />
+            </Row>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/keys/card')}
+            style={({ pressed }) => pressed && { opacity: 0.7 }}
+          >
+            <Row icon="plus" tint={colors.sunken} label="Link another card" value="Each with its own daily limit">
+              <Icon name="arrow" size={17} />
+            </Row>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            disabled={pending !== null}
+            onPress={remove}
+            style={({ pressed }) => pressed && { opacity: 0.7 }}
+          >
+            <Row icon="trash" tint={colors.sunken} label="Remove card" value="Tempo revokes its key for good" last>
+              {pending === 'remove' ? <ActivityIndicator color={colors.ink} /> : <Icon name="arrow" size={17} />}
+            </Row>
+          </Pressable>
+        </View>
+
+        <View style={styles.section}>
+          <Txt weight="semi" size={17}>
+            Recent taps
+          </Txt>
+          {taps === null ? (
+            <ActivityIndicator color={colors.ink} style={{ marginTop: 10 }} />
+          ) : taps.length === 0 ? (
+            <Txt size={14} color={colors.muted} style={{ marginTop: 6 }}>
+              Nothing yet. Taps show up here the moment they’re paid.
+            </Txt>
+          ) : (
+            taps.map((t) => (
+              <View key={t.id} style={styles.tap}>
+                <View style={[styles.rowIcon, { backgroundColor: colors.tealSoft }]}>
+                  <Icon name="tap" size={18} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Txt weight="semi" size={15} numberOfLines={1}>
+                    {t.description ?? 'A Ren till'}
+                  </Txt>
+                  <Txt size={13} color={colors.muted}>
+                    {new Date(t.created_at).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+                  </Txt>
+                </View>
+                <Txt weight="semi" size={16}>
+                  −{dollars(t.amount)}
+                </Txt>
+              </View>
+            ))
+          )}
+        </View>
+      </View>
+    </>
+  )
+}
+
+/** No card yet: what a Ren Card does, and the way to link one. */
 function NoCard() {
   const { width } = useWindowDimensions()
   return (
@@ -192,13 +571,11 @@ function NoCard() {
             <Point icon="snow" text="Freeze it in a second if it’s lost." />
           </View>
         </View>
-        {cardsLive ? (
-          <PillButton label="Link a Ren Card" icon="tap" onPress={() => router.push('/card/link')} />
-        ) : (
-          <Txt size={14} color={colors.muted} style={{ textAlign: 'center', lineHeight: 20 }}>
-            Linking a card from the app is coming to {chainName}.
-          </Txt>
-        )}
+        <PillButton
+          label="Link a Ren Card"
+          icon="tap"
+          onPress={() => router.push(cardsLive ? '/card/link' : '/keys/card')}
+        />
       </View>
     </>
   )

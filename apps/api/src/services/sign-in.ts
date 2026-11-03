@@ -8,7 +8,7 @@ import {
   validateSiweMessage,
 } from 'viem/siwe'
 import { generateApiKey } from '../auth.js'
-import { network } from '../chain.js'
+import { network, onTempo } from '../chain.js'
 import { config, isProduction } from '../config.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
@@ -41,14 +41,21 @@ const domains = config.KOVA_SIGN_IN_DOMAINS
   ? config.KOVA_SIGN_IN_DOMAINS.split(',')
       .map((d) => d.trim())
       .filter(Boolean)
-  : [
-      'mykova.app',
-      'www.mykova.app',
-      'web-monad.up.railway.app',
-      'web-monad-mainnet.up.railway.app',
-      'test.mykova.app',
-      ...(isProduction ? [] : ['localhost:3000', 'localhost:3002', 'localhost:3005']),
-    ]
+  : onTempo
+    ? [
+        'renpay.app',
+        'www.renpay.app',
+        'web-production-acdb.up.railway.app',
+        ...(isProduction ? [] : ['localhost:3000', 'localhost:3002', 'localhost:3005']),
+      ]
+    : [
+        'mykova.app',
+        'www.mykova.app',
+        'web-monad.up.railway.app',
+        'web-monad-mainnet.up.railway.app',
+        'test.mykova.app',
+        ...(isProduction ? [] : ['localhost:3000', 'localhost:3002', 'localhost:3005']),
+      ]
 
 const expired = () =>
   new KovaError('unauthorized', 'That sign-in took too long or was already used. Try again.')

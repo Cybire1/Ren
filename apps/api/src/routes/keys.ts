@@ -33,6 +33,7 @@ import {
   serializeKey,
   serializePayment,
   setFrozen,
+  setLimit,
 } from '../services/keys.js'
 import { requireWallet, signInWallet } from '../services/wallet-auth.js'
 
@@ -199,6 +200,15 @@ for (const action of ['freeze', 'unfreeze'] as const)
     const updated = await setFrozen(owner, row, action === 'freeze')
     return c.json({ key: await serializeKey(updated) })
   })
+
+/** After the owner's device has set a new limit on Tempo, Ren records it. */
+keyRoutes.post('/wallets/:address/keys/:id/limit', async (c) => {
+  const owner = requireWallet(c, c.req.param('address'))
+  const body = await bodyOf(c, z.object({ limit: money }))
+  const row = await ownedKey(owner, c.req.param('id'))
+  const updated = await setLimit(owner, row, parseAmount(body.limit))
+  return c.json({ key: await serializeKey(updated) })
+})
 
 keyRoutes.post('/wallets/:address/keys/:id/revoke', async (c) => {
   const owner = requireWallet(c, c.req.param('address'))

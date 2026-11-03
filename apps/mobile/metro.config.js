@@ -21,8 +21,19 @@ const appPackage = path.join(projectRoot, 'package.json')
 // siblings as './x.js' (Node ESM style), which Metro resolves to the './x.ts' next to them.
 const monadSource = path.join(workspaceRoot, 'packages/monad/src')
 
+// ox ships its TypeScript sources beside its builds (ox/tempo/VirtualAddress.ts next to the
+// ox/tempo/VirtualAddress/ folder), and Metro picks the .ts for some subpaths, whose own './x.js'
+// imports then don't resolve. A subpath import takes the CommonJS build its exports map names.
+const oxRoot = path.join(projectRoot, 'node_modules/ox')
+const oxExports = require(path.join(oxRoot, 'package.json')).exports
+
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === '@kova/monad') return { type: 'sourceFile', filePath: path.join(monadSource, 'index.ts') }
+  if (moduleName.startsWith('ox/')) {
+    const entry = oxExports[`./${moduleName.slice(3)}`]
+    const target = typeof entry === 'string' ? entry : entry?.default
+    if (target) return { type: 'sourceFile', filePath: path.join(oxRoot, target) }
+  }
   if (context.originModulePath.startsWith(monadSource) && moduleName.startsWith('.') && moduleName.endsWith('.js')) {
     const ts = path.resolve(path.dirname(context.originModulePath), moduleName.replace(/\.js$/, '.ts'))
     if (fs.existsSync(ts)) return { type: 'sourceFile', filePath: ts }

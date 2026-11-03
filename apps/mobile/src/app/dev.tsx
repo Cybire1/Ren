@@ -4,6 +4,8 @@ import { Image, View } from 'react-native'
 import { getAddress, isAddress } from 'viem'
 import { createItem, getCatalog, getCheckout, listOrders, lookupBarcode, ringUp, setOrderStatus, updateStall, uploadImage } from '@/lib/api'
 import { finishTap, forgetDevCard, linkCard, readTap } from '@/lib/card'
+import { readCardToLink } from '@/lib/card-tempo'
+import type { KeyView } from '@/lib/keys-state'
 import { type DisplayCurrency, toBase } from '@/lib/money'
 import { type Mode, usePrefs } from '@/lib/prefs'
 import { useStall } from '@/lib/stall'
@@ -24,7 +26,9 @@ import { Txt } from '@/ui/primitives'
  * the till's mode, `tables=6&stamps=5` gives the stall table codes and a stamp card (0 turns either off), and `sell=<item name>*<qty>;<item name>*<qty>` rings a sale up at the till and shows the customer display.
  * `card=link&limit=100&pin=4827` links the software Kova Card (`newcard=1` makes a fresh one first); `tapcard=<charge>` taps it at this till.
  * `private=open,in:2,send:<address>:1,out:0.5` moves dollars through the private balance (lib/private.ts).
- * `keys=signin,agent:<name>,allowance:<name>` signs in to Keys and makes keys with the real code (lib/keys-state.ts).
+ * `keys=signin,agent:<name>,allowance:<name>,card:<name>` signs in to Keys and makes keys with the real code (lib/keys-state.ts);
+ * `card:` links the software Ren Card at `limit` dollars a day, and `cardlimit:<dollars>` or `freeze` change the newest card, then
+ * the Card tab opens.
  * Release builds redirect home.
  */
 /** A small Lagos kitchen menu for trying the stall screens. */
@@ -252,6 +256,8 @@ export default function Dev() {
           }
         }
         if (params.keys && wallet.keys.available) {
+          let opensCard = false
+          let linked: KeyView | undefined
           for (const what of params.keys.split(',')) {
             const [kind, name] = what.split(':')
             setStep(`keys ${what}`)
@@ -272,7 +278,28 @@ export default function Dev() {
               const made = await wallet.keys.createAllowance({ label: name || 'Mum', limit: '30', period: 'week', days: 30 })
               console.log(`[dev] allowance ${made.key.id} ${made.link}`)
             }
+            // The card linked in this link, else the newest one Keys already listed.
+            const card = () => linked ?? wallet.keys.given.find((k) => k.kind === 'card' && k.status !== 'revoked')
+            if (kind === 'card') {
+              // newcard=1: a fresh software card, when this install's last one is linked to an old wallet.
+              if (params.newcard) await forgetDevCard()
+              const read = await readCardToLink()
+              linked = await wallet.keys.createCard({ label: name || 'Ren Card', keyId: read.address, limit: params.limit || '50', days: 90 })
+              opensCard = true
+            }
+            if (kind === 'cardlimit' && name) {
+              const target = card()
+              if (target) await wallet.keys.setLimit(target, name)
+              if (linked) linked = { ...linked, limit: name }
+              opensCard = true
+            }
+            if (kind === 'freeze') {
+              const target = card()
+              if (target) await wallet.keys.freeze(target)
+              opensCard = true
+            }
           }
+          if (opensCard) return router.replace('/(tabs)/card')
         }
         if (params.unpair) await terminal.unpair()
         if (params.pair) {

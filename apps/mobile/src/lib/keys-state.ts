@@ -101,6 +101,8 @@ export interface Keys {
   switchOn: (key: KeyView) => Promise<KeyView>
   freeze: (key: KeyView) => Promise<void>
   unfreeze: (key: KeyView) => Promise<void>
+  /** Changes what the key may spend each period (dollars, as typed). */
+  setLimit: (key: KeyView, limit: string) => Promise<void>
   remove: (key: KeyView) => Promise<void>
   newToken: (key: KeyView) => Promise<string>
   payments: (key: KeyView) => Promise<KeyPaymentView[]>
@@ -405,6 +407,23 @@ export function useKeys({
     [address, authed, refresh, unlock],
   )
 
+  /** A new limit goes on Tempo first (Face ID), then Ren records it once the chain shows it. */
+  const setLimit = useCallback(
+    async (key: KeyView, limit: string) => {
+      if (!address || !key.key_id) return
+      const account = await unlock(0n)
+      await Actions.accessKey.updateLimitSync(walletClient(account) as never, {
+        accessKey: key.key_id,
+        token: key.token,
+        limit: units(limit),
+        feePayer: true,
+      } as never)
+      await authed(`wallets/${address}/keys/${key.id}/limit`, { method: 'POST', body: { limit } })
+      await refresh()
+    },
+    [address, authed, refresh, unlock],
+  )
+
   const remove = useCallback(
     async (key: KeyView) => {
       if (!address) return
@@ -531,11 +550,12 @@ export function useKeys({
       switchOn,
       freeze,
       unfreeze,
+      setLimit,
       remove,
       newToken,
       payments,
       answer,
     }),
-    [answer, approvals, claim, createAgent, createAllowance, createCard, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, token, unfreeze],
+    [answer, approvals, claim, createAgent, createAllowance, createCard, freeze, given, held, newToken, payments, received, refresh, remove, setLimit, signIn, spend, status, switchOn, token, unfreeze],
   )
 }

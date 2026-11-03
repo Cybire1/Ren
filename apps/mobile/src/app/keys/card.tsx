@@ -137,7 +137,7 @@ export default function LinkCardScreen() {
             <View style={styles.facts}>
               <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a day, dollars only`} hint="The chip can’t spend more, whoever holds it" />
               <Fact label="Pays" value="Any Ren till, by tapping" />
-              <Fact label="Lost it?" value="Freeze it in Keys" hint="Its limit on Tempo goes to zero at once" last />
+              <Fact label="Lost it?" value="Freeze it from the Card tab" hint="Its limit on Tempo goes to zero at once" last />
             </View>
             {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
             <View style={{ flex: 1 }} />
