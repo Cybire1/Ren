@@ -1,0 +1,110 @@
+# Every push to main and every pull request: the same checks a contributor runs locally (see
+# AGENTS.md). Four jobs, in parallel:
+#   check  typecheck all packages, lint (Biome), unit tests of the shared packages
+#   api    the API's tests against a real Postgres (the live Tempo tests need a funded fee
+#          payer, so they run locally with `pnpm --filter @kova/api test:e2e`)
+#   web    the website builds (Next.js), for Tempo
+#   ios    the iPhone app typechecks (Expo, installed with npm outside the pnpm workspace)
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: '1'
+
+jobs:
+  check:
+    name: Typecheck, lint, unit tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm lint
+      - name: Unit tests (packages/*)
+        run: pnpm --filter "./packages/*" test
+
+  api:
+    name: API tests (Postgres)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: ren
+          POSTGRES_PASSWORD: ren
+          POSTGRES_DB: ren_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U ren"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DATABASE_URL: postgres://ren:ren@localhost:5432/ren_test
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @kova/api test
+
+  web:
+    name: Website build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      NEXT_PUBLIC_KOVA_CHAIN: tempo
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @kova/web build
+
+  ios:
+    name: iPhone app typecheck
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      # Builds packages/* (the app imports the shared packages through file: dependencies).
+      - run: pnpm install --frozen-lockfile
+      - name: Install the app (npm, outside the pnpm workspace)
+        working-directory: apps/mobile
+        run: npm ci --no-audit --no-fund
+      - name: Typecheck
+        working-directory: apps/mobile
+        run: |
+          # Expo writes this on `expo start`; it is git-ignored, so CI writes it the same way.
+          echo '/// <reference types="expo/types" />' > expo-env.d.ts
+          npx tsc --noEmit
