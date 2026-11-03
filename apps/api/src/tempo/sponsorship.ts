@@ -6,6 +6,7 @@ import { Abis, Addresses, Selectors } from 'viem/tempo'
 import { acceptedTokens } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
+import { takeSponsorship } from '../kv.js'
 import { findIntentByMemo } from '../services/intents.js'
 import { cashOutSponsorProblem } from '../services/naira.js'
 import { rewardRefusal } from '../services/stamps.js'
@@ -30,31 +31,12 @@ export type SponsorDecision =
 /** The portal of the private zone Ren pays deposits into, when one is configured. */
 const zonePortal = config.KOVA_ZONE_PORTAL ? (config.KOVA_ZONE_PORTAL as Address) : null
 
-/** Sponsored sends per wallet in the last day. In memory: a restart forgets, and that only costs Kova fees. */
-const sends = new Map<string, number[]>()
-const DAY_MS = 86_400_000
+/** Sends between people Ren pays for, per wallet per day; recorded in Postgres (kv.ts). */
+const takeSend = (from: Address) => takeSponsorship(from, 'send', config.KOVA_SPONSORED_SENDS_A_DAY)
 
-function takeSend(from: Address): boolean {
-  const key = from.toLowerCase()
-  const now = Date.now()
-  const recent = (sends.get(key) ?? []).filter((t) => now - t < DAY_MS)
-  if (recent.length >= config.KOVA_SPONSORED_SENDS_A_DAY) return false
-  sends.set(key, [...recent, now])
-  return true
-}
-
-/** Key changes per wallet in the last day: putting keys on-chain, freezing, removing. */
-const keyChanges = new Map<string, number[]>()
+/** Key changes per wallet per day: putting keys on-chain, freezing, changing limits, removing. */
 const KEY_CHANGES_A_DAY = 40
-
-function takeKeyChange(from: Address): boolean {
-  const key = from.toLowerCase()
-  const now = Date.now()
-  const recent = (keyChanges.get(key) ?? []).filter((t) => now - t < DAY_MS)
-  if (recent.length >= KEY_CHANGES_A_DAY) return false
-  keyChanges.set(key, [...recent, now])
-  return true
-}
+const takeKeyChange = (from: Address) => takeSponsorship(from, 'key', KEY_CHANGES_A_DAY)
 
 const ZERO = '0x0000000000000000000000000000000000000000'
 const KEYCHAIN_CHANGES = [
@@ -132,7 +114,8 @@ export async function shouldSponsor(
   if (keyChange !== undefined) {
     if (keyChange) return { sponsor: false, reason: keyChange }
     if (!request.from) return { sponsor: false, reason: 'no sender' }
-    if (!takeKeyChange(request.from)) return { sponsor: false, reason: 'daily key changes used up' }
+    if (!(await takeKeyChange(request.from)))
+      return { sponsor: false, reason: 'daily key changes used up' }
     return { sponsor: true, kind: 'key' }
   }
 
@@ -144,7 +127,7 @@ export async function shouldSponsor(
       acceptedTokens.map((t) => t.address),
     )
     if (problem) return { sponsor: false, reason: problem }
-    if (!takeSend(request.from as Address))
+    if (!(await takeSend(request.from as Address)))
       return { sponsor: false, reason: 'daily sponsored sends used up' }
     return { sponsor: true, kind: 'private' }
   }
@@ -170,7 +153,8 @@ export async function shouldSponsor(
   if (!kova) {
     if (amount <= 0n) return { sponsor: false, reason: 'nothing to send' }
     if (!request.from) return { sponsor: false, reason: 'no sender' }
-    if (!takeSend(request.from)) return { sponsor: false, reason: 'daily sponsored sends used up' }
+    if (!(await takeSend(request.from)))
+      return { sponsor: false, reason: 'daily sponsored sends used up' }
     return { sponsor: true, kind: 'send' }
   }
   // A cash-out: exactly its dollars, to Ren's treasury, from the wallet that asked (services/naira.ts).

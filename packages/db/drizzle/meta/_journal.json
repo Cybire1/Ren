@@ -127,6 +127,13 @@
       "when": 1791862976635,
       "tag": "0017_cash_out_recipient_later",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1793741964934,
+      "tag": "0018_persistent_limits",
+      "breakpoints": true
     }
   ]
 }

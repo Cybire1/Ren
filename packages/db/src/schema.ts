@@ -1129,3 +1129,36 @@ export const cardTaps = pgTable(
     index('card_taps_intent_idx').on(t.intentId),
   ],
 )
+
+/**
+ * What the API has to remember across restarts and instances for a short while: replay claims
+ * (a signed sign-in message, an MPP credential) and MPP's own store. A row whose `expires_at` has
+ * passed is as good as gone and is swept now and then.
+ */
+export const kvStore = pgTable(
+  'kv_store',
+  {
+    key: text('key').primaryKey(),
+    value: jsonb('value').notNull(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }),
+  },
+  (t) => [index('kv_store_expires_idx').on(t.expiresAt)],
+)
+
+/**
+ * Each fee Ren's fee payer agreed to pay that has a daily cap per wallet: sends between people
+ * and key changes (charges are unlimited and aren't written here). Counted per wallet over the
+ * last day, so the caps hold across restarts and instances.
+ */
+export const sponsorships = pgTable(
+  'sponsorships',
+  {
+    id: id(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    /** send or key. */
+    kind: text('kind').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [index('sponsorships_wallet_idx').on(t.wallet, t.kind, t.createdAt)],
+)

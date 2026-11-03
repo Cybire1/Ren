@@ -5,6 +5,7 @@ import { logger } from 'hono/logger'
 import { feePayerAddress, kit, network, onTempo } from './chain.js'
 import { config } from './config.js'
 import { errorHandler } from './errors.js'
+import { sweep } from './kv.js'
 import { accountRoutes } from './routes/account.js'
 import { cardRoutes, cardTapRoutes } from './routes/cards.js'
 import { catalogRoutes } from './routes/catalog.js'
@@ -98,6 +99,8 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
   }
   expire()
   setInterval(expire, 30_000)
+  // Expired claims and old sponsorships leave Postgres every few minutes (kv.ts).
+  setInterval(() => void sweep().catch((error) => console.error('[kv] sweep', error)), 10 * 60_000)
   // Rates change every 15 minutes at most; keep Kova Travel's copy fresh without waiting for a request.
   void rateBook()
   setInterval(() => void rateBook(), 5 * 60_000)

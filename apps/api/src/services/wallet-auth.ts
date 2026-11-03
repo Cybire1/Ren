@@ -11,6 +11,7 @@ import {
 } from 'viem'
 import { network } from '../chain.js'
 import { KovaError } from '../errors.js'
+import { claimOnce } from '../kv.js'
 import { keysSubkey, sameSecret } from '../secrets.js'
 
 /**
@@ -26,9 +27,6 @@ import { keysSubkey, sameSecret } from '../secrets.js'
 const TOKEN_TTL_MS = 12 * 60 * 60_000
 /** A sign-in message is used at once; an older one is refused. */
 const MESSAGE_MAX_AGE_MS = 5 * 60_000
-
-/** Nonces seen recently, so one signed message can't sign in twice. */
-const usedNonces = new Map<string, number>()
 
 function mac(address: Address, expires: number): string {
   return createHmac('sha256', keysSubkey('wallet-token'))
@@ -55,17 +53,16 @@ export async function signInWallet(input: {
   if (!(age > -60_000 && age < MESSAGE_MAX_AGE_MS))
     throw new KovaError('invalid_request', 'That sign-in ran out. Try again.')
 
-  const now = Date.now()
-  for (const [n, at] of usedNonces) if (now - at > MESSAGE_MAX_AGE_MS * 2) usedNonces.delete(n)
-  if (usedNonces.has(nonce)) throw new KovaError('conflict', 'That sign-in was already used.')
-
   const signer = await recoverMessageAddress({
     message: input.message,
     signature: input.signature,
   }).catch(() => null)
   if (!signer || !isAddressEqual(signer, input.address))
     throw new KovaError('forbidden', 'Only the wallet itself can sign in to its keys.')
-  usedNonces.set(nonce, now)
+  // One signed message signs in once, on any instance, for as long as it could be used at all.
+  const now = Date.now()
+  if (!(await claimOnce(`wallet-sign-in:${nonce}`, now + MESSAGE_MAX_AGE_MS * 2)))
+    throw new KovaError('conflict', 'That sign-in was already used.')
 
   const expires = now + TOKEN_TTL_MS
   const address = getAddress(input.address)

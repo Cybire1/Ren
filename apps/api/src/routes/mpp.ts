@@ -2,12 +2,13 @@ import { schema } from '@kova/db'
 import { formatAmount } from '@kova/tempo'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
-import { Mppx, Store, tempo } from 'mppx/server'
+import { Mppx, tempo } from 'mppx/server'
 import { type Address, getAddress, type Hex, type TransactionReceipt } from 'viem'
 import { feePayerAccount, network, onTempo, publicClient, settlementToken } from '../chain.js'
 import { db } from '../db.js'
 import { KovaError, notFound } from '../errors.js'
 import { decodeId } from '../ids.js'
+import { mppStore } from '../kv.js'
 import { keysSubkey } from '../secrets.js'
 import { settleVerified } from '../services/settle.js'
 
@@ -31,7 +32,7 @@ function makeServer() {
         testnet: network.id === 'testnet',
         // Ren pays the network fee, so an agent spends exactly the charge.
         feePayer: feePayerAccount,
-        store: Store.memory(),
+        store: mppStore('mpp:'),
       }),
     ],
     realm: 'Ren',
