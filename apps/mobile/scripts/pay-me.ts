@@ -6,7 +6,11 @@ const [to, dollars = '25'] = process.argv.slice(2)
 async function main() {
   const friend = privateKeyToAccount(generatePrivateKey())
   await fundFromFaucet(friend.address)
-  const { hash, ms } = await sendMoney(friend, to as `0x${string}`, BigInt(Math.round(Number(dollars) * 1e6)))
+  const { hash, ms } = await sendMoney(
+    friend,
+    to as `0x${string}`,
+    BigInt(Math.round(Number(dollars) * 1e6)),
+  )
   console.log(`sent $${dollars} from ${friend.address} in ${ms}ms: ${hash}`)
 }
 

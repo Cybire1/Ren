@@ -38,7 +38,10 @@ function open(): Promise<IDBDatabase> {
   })
 }
 
-async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) => IDBRequest<T>): Promise<T> {
+async function run<T>(
+  mode: IDBTransactionMode,
+  work: (store: IDBObjectStore) => IDBRequest<T>,
+): Promise<T> {
   const db = await open()
   return new Promise((resolve, reject) => {
     const request = work(db.transaction(STORE, mode).objectStore(STORE))
@@ -48,7 +51,11 @@ async function run<T>(mode: IDBTransactionMode, work: (store: IDBObjectStore) =>
 }
 
 /** A fresh key for an allowance, before Ren knows which allowance it's for. */
-export async function makeKey(): Promise<{ privateKey: CryptoKey; publicKey: Hex; keyId: Address }> {
+export async function makeKey(): Promise<{
+  privateKey: CryptoKey
+  publicKey: Hex
+  keyId: Address
+}> {
   const pair = await WebCryptoP256.createKeyPair()
   const publicKey = PublicKey.toHex(pair.publicKey)
   const keyId = Account.fromWebCryptoP256(pair).address

@@ -51,7 +51,8 @@ async function request<T>(path: string, init: RequestInit & { auth?: Auth } = {}
   })
   const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
   if (auth && key && response.status === 401) revoked[auth]?.()
-  if (!response.ok) throw new Error(body.error?.message ?? `Ren is unreachable (${response.status})`)
+  if (!response.ok)
+    throw new Error(body.error?.message ?? `Ren is unreachable (${response.status})`)
   return body as T
 }
 
@@ -66,7 +67,10 @@ export interface DemoAccount {
 
 /** Testnet only: the demo account's username and password, for its wallet's secret. */
 export const demoSignIn = (username: string, password: string) =>
-  request<DemoAccount>('/v1/demo/sign_in', { method: 'POST', body: JSON.stringify({ username, password }) })
+  request<DemoAccount>('/v1/demo/sign_in', {
+    method: 'POST',
+    body: JSON.stringify({ username, password }),
+  })
 
 // --- payer ---------------------------------------------------------------------------------
 
@@ -187,12 +191,19 @@ export interface StampCard {
 
 export interface PlacedOrder {
   id: string
-  checkout: { id: string; amount: string; status: Checkout['status']; expires_at: string; link: string }
+  checkout: {
+    id: string
+    amount: string
+    status: Checkout['status']
+    expires_at: string
+    link: string
+  }
   /** Set when the payer's stamp card was full: this item is free, and the charge is lower (it can be $0). */
   reward?: StampReward | null
 }
 
-export const getPublicStall = (slug: string) => request<PublicStall>(`/v1/public/stalls/${encodeURIComponent(slug)}`)
+export const getPublicStall = (slug: string) =>
+  request<PublicStall>(`/v1/public/stalls/${encodeURIComponent(slug)}`)
 
 /** Order from a stall. The server prices every line; the result is a charge to pay, or to send on. */
 export const orderFromStall = (
@@ -207,11 +218,17 @@ export const orderFromStall = (
     /** The wallet that will pay: it earns the stamp, and spends a full card. */
     payer?: string
   },
-) => request<PlacedOrder>(`/v1/public/stalls/${encodeURIComponent(slug)}/orders`, { method: 'POST', body: JSON.stringify(order) })
+) =>
+  request<PlacedOrder>(`/v1/public/stalls/${encodeURIComponent(slug)}/orders`, {
+    method: 'POST',
+    body: JSON.stringify(order),
+  })
 
 /** A wallet's stamp card at a stall. The wallet that pays is the card: there's nothing to sign up for. */
 export const getStampCard = (slug: string, payer: string) =>
-  request<StampCard>(`/v1/public/stalls/${encodeURIComponent(slug)}/stamps?payer=${encodeURIComponent(payer)}`)
+  request<StampCard>(
+    `/v1/public/stalls/${encodeURIComponent(slug)}/stamps?payer=${encodeURIComponent(payer)}`,
+  )
 
 // --- shop: taking payments (device key) ----------------------------------------------------
 
@@ -238,25 +255,33 @@ export interface Summary {
   [key: string]: unknown
 }
 
-export const createCharge = (amount: string, options: { reference?: string; metadata?: Record<string, unknown> } = {}) =>
+export const createCharge = (
+  amount: string,
+  options: { reference?: string; metadata?: Record<string, unknown> } = {},
+) =>
   request<PaymentIntent>('/v1/payment_intents', {
     method: 'POST',
     auth: 'device',
     body: JSON.stringify({ amount, ...options }),
   })
 
-export const getCharge = (id: string) => request<PaymentIntent>(`/v1/payment_intents/${id}`, { auth: 'device' })
+export const getCharge = (id: string) =>
+  request<PaymentIntent>(`/v1/payment_intents/${id}`, { auth: 'device' })
 
 export const cancelCharge = (id: string) =>
   request<PaymentIntent>(`/v1/payment_intents/${id}/cancel`, { method: 'POST', auth: 'device' })
 
 export const getSummary = () => {
   const tz = Intl.DateTimeFormat().resolvedOptions().timeZone
-  return request<Summary>(`/v1/summary${tz ? `?tz=${encodeURIComponent(tz)}` : ''}`, { auth: 'device' })
+  return request<Summary>(`/v1/summary${tz ? `?tz=${encodeURIComponent(tz)}` : ''}`, {
+    auth: 'device',
+  })
 }
 
 export const listCharges = (limit = 25) =>
-  request<{ data: PaymentIntent[] }>(`/v1/payment_intents?limit=${limit}`, { auth: 'device' }).then((r) => r.data)
+  request<{ data: PaymentIntent[] }>(`/v1/payment_intents?limit=${limit}`, { auth: 'device' }).then(
+    (r) => r.data,
+  )
 
 export type OrderStatus = 'new' | 'preparing' | 'ready' | 'collected' | 'cancelled'
 
@@ -286,15 +311,25 @@ export interface Order {
 
 /** Stall orders, newest first. open: paid and not handed over yet; unpaid: still waiting for payment. */
 export const listOrders = (status: 'all' | 'open' | 'collected' | 'unpaid' = 'all', limit = 50) =>
-  request<{ data: Order[] }>(`/v1/orders?status=${status}&source=stall&limit=${limit}`, { auth: 'device' }).then((r) => r.data)
+  request<{ data: Order[] }>(`/v1/orders?status=${status}&source=stall&limit=${limit}`, {
+    auth: 'device',
+  }).then((r) => r.data)
 
 /** Moves an order along the counter: new, preparing, ready, collected or cancelled. */
 export const setOrderStatus = (id: string, status: OrderStatus) =>
-  request<Order>(`/v1/orders/${id}/status`, { method: 'POST', auth: 'device', body: JSON.stringify({ status }) })
+  request<Order>(`/v1/orders/${id}/status`, {
+    method: 'POST',
+    auth: 'device',
+    body: JSON.stringify({ status }),
+  })
 
 /** Handed over, or back to waiting to undo a mistap. */
 export const collectOrder = (id: string, collected = true) =>
-  request<Order>(`/v1/orders/${id}/collect`, { method: 'POST', auth: 'device', body: JSON.stringify({ collected }) })
+  request<Order>(`/v1/orders/${id}/collect`, {
+    method: 'POST',
+    auth: 'device',
+    body: JSON.stringify({ collected }),
+  })
 
 /** A till sale: what was scanned or picked at the counter, priced by Kova from the catalogue. */
 export const ringUp = (items: { id: string; quantity: number }[], note?: string) =>
@@ -304,14 +339,20 @@ export const ringUp = (items: { id: string; quantity: number }[], note?: string)
     body: JSON.stringify({ items, note }),
   })
 
-export const getCatalog = () => request<{ data: CatalogItem[] }>('/v1/catalog/items', { auth: 'device' }).then((r) => r.data)
+export const getCatalog = () =>
+  request<{ data: CatalogItem[] }>('/v1/catalog/items', { auth: 'device' }).then((r) => r.data)
 
 export interface BarcodeLookup {
   code: string
   /** This shop's item with that barcode. */
   item: CatalogItem | null
   /** Otherwise, what open product databases know about it. */
-  suggestion: { name: string; brand: string | null; image_url: string | null; source: string } | null
+  suggestion: {
+    name: string
+    brand: string | null
+    image_url: string | null
+    source: string
+  } | null
 }
 
 export const lookupBarcode = (code: string, auth: Auth = 'device') =>
@@ -326,10 +367,14 @@ export interface PairedTerminal {
 
 /** Redeems a pairing code from the dashboard for this phone's own terminal key. */
 export const pairTerminal = (code: string, name: string, device: Record<string, unknown>) =>
-  request<PairedTerminal>('/v1/terminals/pair', { method: 'POST', body: JSON.stringify({ code, name, device }) })
+  request<PairedTerminal>('/v1/terminals/pair', {
+    method: 'POST',
+    body: JSON.stringify({ code, name, device }),
+  })
 
 /** Tells Kova this phone is no longer a terminal, so its key stops working everywhere. */
-export const unpairTerminal = () => request<{ status: string }>('/v1/terminals/self/unpair', { method: 'POST', auth: 'device' })
+export const unpairTerminal = () =>
+  request<{ status: string }>('/v1/terminals/self/unpair', { method: 'POST', auth: 'device' })
 
 // --- shop: running it (owner key) ----------------------------------------------------------
 
@@ -355,10 +400,18 @@ export const shopChallenge = (address: string, purpose: 'sign_in' | 'open_shop' 
  * Opens a shop whose payments settle in `settlementAddress`: this phone's own wallet. With the
  * wallet's signed "open a shop" message, the wallet owns it: its passkey signs in to it on the web.
  */
-export const openShop = (name: string, settlementAddress: string, owner?: { message: string; signature: string }) =>
+export const openShop = (
+  name: string,
+  settlementAddress: string,
+  owner?: { message: string; signature: string },
+) =>
   request<OpenedShop>('/v1/merchants', {
     method: 'POST',
-    body: JSON.stringify({ name, settlement_address: settlementAddress, ...(owner ? { owner } : {}) }),
+    body: JSON.stringify({
+      name,
+      settlement_address: settlementAddress,
+      ...(owner ? { owner } : {}),
+    }),
   })
 
 /** Signs a wallet in to the shop it owns (its newest, if several): a session key for this phone. */
@@ -369,28 +422,58 @@ export const signInToShop = (message: string, signature: string) =>
   })
 
 /** Who signs in to the shop this phone owns: its owner's wallet, or nobody's yet. */
-export const getOwnedShop = () => request<{ id: string; name: string; owner_address: string | null }>('/v1/account', { auth: 'owner' })
+export const getOwnedShop = () =>
+  request<{ id: string; name: string; owner_address: string | null }>('/v1/account', {
+    auth: 'owner',
+  })
 
 /** Makes a wallet the shop's owner with its signed message, so its passkey signs in on the web. */
 export const linkShopOwner = (message: string, signature: string) =>
-  request<{ owner_address: string | null }>('/v1/account/owner', { method: 'POST', body: JSON.stringify({ message, signature }), auth: 'owner' })
+  request<{ owner_address: string | null }>('/v1/account/owner', {
+    method: 'POST',
+    body: JSON.stringify({ message, signature }),
+    auth: 'owner',
+  })
 
 /** A lasting owner key for this phone: a shop opened with a wallet signs in with a key that lapses. */
 export const createOwnerKey = (name: string) =>
-  request<{ secret: string }>('/v1/api_keys', { method: 'POST', body: JSON.stringify({ name }), auth: 'owner' })
+  request<{ secret: string }>('/v1/api_keys', {
+    method: 'POST',
+    body: JSON.stringify({ name }),
+    auth: 'owner',
+  })
 
 /** A one-time code to pair a terminal; the phone that opened the shop pairs itself with one. */
-export const createPairing = () => request<{ code: string; link: string }>('/v1/terminals/pairings', { method: 'POST', auth: 'owner' })
+export const createPairing = () =>
+  request<{ code: string; link: string }>('/v1/terminals/pairings', {
+    method: 'POST',
+    auth: 'owner',
+  })
 
-export const listStalls = () => request<{ data: Stall[] }>('/v1/stalls', { auth: 'owner' }).then((r) => r.data)
+export const listStalls = () =>
+  request<{ data: Stall[] }>('/v1/stalls', { auth: 'owner' }).then((r) => r.data)
 
 export const getStall = (id: string) => request<StallDetail>(`/v1/stalls/${id}`, { auth: 'owner' })
 
 export const createStall = (stall: { name: string; tagline?: string | null }) =>
   request<Stall>('/v1/stalls', { method: 'POST', auth: 'owner', body: JSON.stringify(stall) })
 
-export const updateStall = (id: string, patch: Partial<{ name: string; tagline: string | null; open: boolean; item_ids: string[]; table_count: number | null; loyalty_every: number | null }>) =>
-  request<Stall>(`/v1/stalls/${id}`, { method: 'PATCH', auth: 'owner', body: JSON.stringify(patch) })
+export const updateStall = (
+  id: string,
+  patch: Partial<{
+    name: string
+    tagline: string | null
+    open: boolean
+    item_ids: string[]
+    table_count: number | null
+    loyalty_every: number | null
+  }>,
+) =>
+  request<Stall>(`/v1/stalls/${id}`, {
+    method: 'PATCH',
+    auth: 'owner',
+    body: JSON.stringify(patch),
+  })
 
 export interface ItemInput {
   name: string
@@ -405,38 +488,71 @@ export interface ItemInput {
 }
 
 export const createItem = (item: ItemInput & { stall_ids?: string[] }) =>
-  request<CatalogItem>('/v1/catalog/items', { method: 'POST', auth: 'owner', body: JSON.stringify(item) })
+  request<CatalogItem>('/v1/catalog/items', {
+    method: 'POST',
+    auth: 'owner',
+    body: JSON.stringify(item),
+  })
 
 export const updateItem = (id: string, patch: Partial<ItemInput>) =>
-  request<CatalogItem>(`/v1/catalog/items/${id}`, { method: 'PATCH', auth: 'owner', body: JSON.stringify(patch) })
+  request<CatalogItem>(`/v1/catalog/items/${id}`, {
+    method: 'PATCH',
+    auth: 'owner',
+    body: JSON.stringify(patch),
+  })
 
 /** Before adding a product: does the shop already sell it under another name? (Jev) */
 export const findSimilarItem = (name: string) =>
-  request<{ item: CatalogItem | null; confidence: number | null }>('/v1/catalog/similar', { method: 'POST', auth: 'owner', body: JSON.stringify({ name }) })
+  request<{ item: CatalogItem | null; confidence: number | null }>('/v1/catalog/similar', {
+    method: 'POST',
+    auth: 'owner',
+    body: JSON.stringify({ name }),
+  })
 
-export const removeItem = (id: string) => request<{ deleted: boolean }>(`/v1/catalog/items/${id}`, { method: 'DELETE', auth: 'owner' })
+export const removeItem = (id: string) =>
+  request<{ deleted: boolean }>(`/v1/catalog/items/${id}`, { method: 'DELETE', auth: 'owner' })
 
 /** Uploads a photo already on the phone (a file URI). Returns its id for an item. */
 export async function uploadImage(uri: string, contentType = 'image/jpeg') {
   const bytes = await (await fetch(uri)).blob()
   const response = await fetch(`${apiUrl}/v1/images`, {
     method: 'POST',
-    headers: { 'content-type': contentType, ...(keys.owner ? { authorization: `Bearer ${keys.owner}` } : {}) },
+    headers: {
+      'content-type': contentType,
+      ...(keys.owner ? { authorization: `Bearer ${keys.owner}` } : {}),
+    },
     body: bytes,
   })
-  const body = (await response.json().catch(() => ({}))) as { id?: string; url?: string; error?: { message?: string } }
-  if (!response.ok || !body.id) throw new Error(body.error?.message ?? `The photo didn’t upload (${response.status})`)
+  const body = (await response.json().catch(() => ({}))) as {
+    id?: string
+    url?: string
+    error?: { message?: string }
+  }
+  if (!response.ok || !body.id)
+    throw new Error(body.error?.message ?? `The photo didn’t upload (${response.status})`)
   return { id: body.id, url: body.url ?? null }
 }
 
 export interface MenuImport {
   currency: string
-  items: { name: string; description: string | null; price: string; original: { amount: number; currency: string } }[]
+  items: {
+    name: string
+    description: string | null
+    price: string
+    original: { amount: number; currency: string }
+  }[]
 }
 
 /** Snap your menu: a photo of a menu board or price list in, suggested items out. Nothing is saved. */
-export const readMenuPhoto = (base64: string, mediaType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg') =>
-  request<MenuImport>('/v1/catalog/import', { method: 'POST', auth: 'owner', body: JSON.stringify({ image: base64, media_type: mediaType }) })
+export const readMenuPhoto = (
+  base64: string,
+  mediaType: 'image/jpeg' | 'image/png' | 'image/webp' = 'image/jpeg',
+) =>
+  request<MenuImport>('/v1/catalog/import', {
+    method: 'POST',
+    auth: 'owner',
+    body: JSON.stringify({ image: base64, media_type: mediaType }),
+  })
 
 // --- travel --------------------------------------------------------------------------------
 
@@ -508,7 +624,13 @@ export interface ExtraBag {
 }
 
 export type SeatCell =
-  | { kind: 'seat'; designator: string; name: string | null; available: boolean; services: { id: string; passenger_id: string; price: Money }[] }
+  | {
+      kind: 'seat'
+      designator: string
+      name: string | null
+      available: boolean
+      services: { id: string; passenger_id: string; price: Money }[]
+    }
   | { kind: 'exit' | 'space' }
 
 export interface SeatMap {
@@ -572,7 +694,16 @@ export interface Trip {
     title: string
     subtitle: string
     provider: { name: string; image: string | null }
-    legs: { from: string; to: string; departs: string; arrives: string; carrier: string | null; flight: string | null; stops: number; duration: string | null }[]
+    legs: {
+      from: string
+      to: string
+      departs: string
+      arrives: string
+      carrier: string | null
+      flight: string | null
+      stops: number
+      duration: string | null
+    }[]
     room?: { name: string; board: string; cancellation: string }
     extras: string[]
     bookedBy: string
@@ -642,27 +773,43 @@ export interface TravellerInput {
   passenger_id?: string
 }
 
-export const travelStatus = () => request<{ ready: boolean; test_mode: boolean; understands: boolean }>('/v1/travel')
+export const travelStatus = () =>
+  request<{ ready: boolean; test_mode: boolean; understands: boolean }>('/v1/travel')
 
 export const searchPlaces = (q: string) =>
   request<{ data: Place[] }>(`/v1/travel/places?q=${encodeURIComponent(q)}`).then((r) => r.data)
 
 export const understandTrip = (text: string) =>
-  request<UnderstoodTrip>('/v1/travel/understand', { method: 'POST', body: JSON.stringify({ text, today: new Date().toISOString().slice(0, 10) }) })
+  request<UnderstoodTrip>('/v1/travel/understand', {
+    method: 'POST',
+    body: JSON.stringify({ text, today: new Date().toISOString().slice(0, 10) }),
+  })
 
 export const searchFlights = (search: FlightSearch) =>
-  request<{ data: FlightOffer[]; best: string | null; test_mode: boolean }>('/v1/travel/flights/search', { method: 'POST', body: JSON.stringify(search) })
+  request<{ data: FlightOffer[]; best: string | null; test_mode: boolean }>(
+    '/v1/travel/flights/search',
+    { method: 'POST', body: JSON.stringify(search) },
+  )
 
-export const getFlightOffer = (id: string) => request<FlightOffer & { extra_bags: ExtraBag[] }>(`/v1/travel/flights/offers/${id}`)
+export const getFlightOffer = (id: string) =>
+  request<FlightOffer & { extra_bags: ExtraBag[] }>(`/v1/travel/flights/offers/${id}`)
 
-export const getSeatMaps = (offerId: string) => request<{ data: SeatMap[] }>(`/v1/travel/flights/offers/${offerId}/seats`).then((r) => r.data)
+export const getSeatMaps = (offerId: string) =>
+  request<{ data: SeatMap[] }>(`/v1/travel/flights/offers/${offerId}/seats`).then((r) => r.data)
 
 export const searchStays = (search: StaySearch) =>
-  request<{ data: StayResult[]; best: string | null; test_mode: boolean }>('/v1/travel/stays/search', { method: 'POST', body: JSON.stringify(search) })
+  request<{ data: StayResult[]; best: string | null; test_mode: boolean }>(
+    '/v1/travel/stays/search',
+    { method: 'POST', body: JSON.stringify(search) },
+  )
 
-export const getStay = (resultId: string) => request<StayDetail>(`/v1/travel/stays/results/${resultId}`)
+export const getStay = (resultId: string) =>
+  request<StayDetail>(`/v1/travel/stays/results/${resultId}`)
 
-export type CreatedTrip = Omit<Trip, 'shares'> & { token: string; shares: (TripShare & { link: string })[] }
+export type CreatedTrip = Omit<Trip, 'shares'> & {
+  token: string
+  shares: (TripShare & { link: string })[]
+}
 
 export const createFlightTrip = (body: {
   offer_id: string
@@ -671,7 +818,11 @@ export const createFlightTrip = (body: {
   extras: string[]
   payers: string[]
   booked_by: string
-}) => request<CreatedTrip>('/v1/travel/trips', { method: 'POST', body: JSON.stringify({ kind: 'flight', ...body }) })
+}) =>
+  request<CreatedTrip>('/v1/travel/trips', {
+    method: 'POST',
+    body: JSON.stringify({ kind: 'flight', ...body }),
+  })
 
 export const createStayTrip = (body: {
   rate_id: string
@@ -680,13 +831,27 @@ export const createStayTrip = (body: {
   phone_number: string
   payers: string[]
   booked_by: string
-}) => request<CreatedTrip>('/v1/travel/trips', { method: 'POST', body: JSON.stringify({ kind: 'stay', ...body }) })
+}) =>
+  request<CreatedTrip>('/v1/travel/trips', {
+    method: 'POST',
+    body: JSON.stringify({ kind: 'stay', ...body }),
+  })
 
-export const getTrip = (id: string, token: string) => request<Trip>(`/v1/travel/trips/${id}`, { headers: { 'x-trip-token': token } })
+export const getTrip = (id: string, token: string) =>
+  request<Trip>(`/v1/travel/trips/${id}`, { headers: { 'x-trip-token': token } })
 
 // --- insights ------------------------------------------------------------------------------
 
-export type SpendingCategory = 'food' | 'groceries' | 'travel' | 'transport' | 'shopping' | 'bills' | 'health' | 'people' | 'other'
+export type SpendingCategory =
+  | 'food'
+  | 'groceries'
+  | 'travel'
+  | 'transport'
+  | 'shopping'
+  | 'bills'
+  | 'health'
+  | 'people'
+  | 'other'
 
 /** Sorts payments into spending categories (Jev). Nothing is stored on Kova's side. */
 export const categorize = (payments: { id: string; text: string }[]) =>
@@ -704,7 +869,8 @@ export const payLinkFor = (id: string) => `${webUrl}/pay/${id}`
 export const stallLinkFor = (slug: string) => `${webUrl}/s/${slug}`
 
 /** One table's own code: the stall link that remembers the table, so the order is brought to it. */
-export const tableLinkFor = (slug: string, table: string) => `${stallLinkFor(slug)}?table=${encodeURIComponent(table)}`
+export const tableLinkFor = (slug: string, table: string) =>
+  `${stallLinkFor(slug)}?table=${encodeURIComponent(table)}`
 
 /** The printable table poster, on the web. */
 export const posterLinkFor = (slug: string) => `${webUrl}/s/${slug}/poster`

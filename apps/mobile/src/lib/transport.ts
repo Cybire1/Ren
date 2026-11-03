@@ -13,10 +13,17 @@ const AWAY_MS = 5 * 60_000
 // By name: viem/tempo's transports throw from their own copy of viem's errors in the app's bundle.
 const unreachable = (error: unknown) => {
   const e = error as { name?: string; status?: number } | null
-  return e?.name === 'TimeoutError' || (e?.name === 'HttpRequestError' && (e.status === undefined || e.status >= 500))
+  return (
+    e?.name === 'TimeoutError' ||
+    (e?.name === 'HttpRequestError' && (e.status === undefined || e.status >= 500))
+  )
 }
 
-export function directOrThroughRen(name: string, direct: Transport, throughRen: Transport): Transport {
+export function directOrThroughRen(
+  name: string,
+  direct: Transport,
+  throughRen: Transport,
+): Transport {
   return (config) => {
     const directly = direct(config)
     const viaRen = throughRen(config)
@@ -26,12 +33,14 @@ export function directOrThroughRen(name: string, direct: Transport, throughRen: 
       type: name,
       retryCount: 0,
       async request({ method, params }, options) {
-        if ((downUntil.get(name) ?? 0) > Date.now()) return viaRen.request({ method, params }, options) as never
+        if ((downUntil.get(name) ?? 0) > Date.now())
+          return viaRen.request({ method, params }, options) as never
         try {
           return (await directly.request({ method, params }, options)) as never
         } catch (error) {
           if (!unreachable(error)) throw error
-          if (typeof __DEV__ !== 'undefined' && __DEV__) console.log(`[transport] ${name} unreachable, going through Ren`)
+          if (typeof __DEV__ !== 'undefined' && __DEV__)
+            console.log(`[transport] ${name} unreachable, going through Ren`)
           downUntil.set(name, Date.now() + AWAY_MS)
           return viaRen.request({ method, params }, options) as never
         }

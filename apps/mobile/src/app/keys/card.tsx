@@ -67,14 +67,19 @@ export default function LinkCardScreen() {
     }
   }
 
-  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], { day: 'numeric', month: 'long' })
+  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], {
+    day: 'numeric',
+    month: 'long',
+  })
 
   return (
     <Screen>
       <Header
         title={step === 'done' ? undefined : 'Link a Ren Card'}
         backIcon={step === 'review' ? 'back' : 'close'}
-        onBack={step === 'review' && !busy ? () => setStep('setup') : busy ? null : () => router.back()}
+        onBack={
+          step === 'review' && !busy ? () => setStep('setup') : busy ? null : () => router.back()
+        }
       />
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         {step === 'tap' ? (
@@ -88,7 +93,13 @@ export default function LinkCardScreen() {
             </Txt>
             {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
             <View style={{ alignSelf: 'stretch', marginTop: 8 }}>
-              <PillButton label={busy ? 'Reading…' : 'Read the card'} icon="tap" loading={busy} disabled={busy} onPress={() => void tap()} />
+              <PillButton
+                label={busy ? 'Reading…' : 'Read the card'}
+                icon="tap"
+                loading={busy}
+                disabled={busy}
+                onPress={() => void tap()}
+              />
             </View>
           </View>
         ) : null}
@@ -102,7 +113,12 @@ export default function LinkCardScreen() {
               </Txt>
             </View>
             <Field label="Name">
-              <TextInput value={label} onChangeText={setLabel} maxLength={40} style={styles.input} />
+              <TextInput
+                value={label}
+                onChangeText={setLabel}
+                maxLength={40}
+                style={styles.input}
+              />
             </Field>
             <Field label="It can spend a day">
               <MoneyField value={limit} onChange={setLimit} label="Daily limit" />
@@ -117,7 +133,11 @@ export default function LinkCardScreen() {
                 ]}
               />
             </Field>
-            <PillButton label={amountOk(limit) ? 'Review' : 'Set its daily limit'} disabled={!amountOk(limit)} onPress={() => setStep('review')} />
+            <PillButton
+              label={amountOk(limit) ? 'Review' : 'Set its daily limit'}
+              disabled={!amountOk(limit)}
+              onPress={() => setStep('review')}
+            />
           </ScrollView>
         ) : null}
 
@@ -135,13 +155,26 @@ export default function LinkCardScreen() {
               </Txt>
             </View>
             <View style={styles.facts}>
-              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a day, dollars only`} hint="The chip can’t spend more, whoever holds it" />
+              <Fact
+                label={`${chainName} enforces`}
+                value={`${dollars(limit)} a day, dollars only`}
+                hint="The chip can’t spend more, whoever holds it"
+              />
               <Fact label="Pays" value="Any Ren till, by tapping" />
-              <Fact label="Lost it?" value="Freeze it from the Card tab" hint="Its limit on Tempo goes to zero at once" last />
+              <Fact
+                label="Lost it?"
+                value="Freeze it from the Card tab"
+                hint="Its limit on Tempo goes to zero at once"
+                last
+              />
             </View>
             {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
             <View style={{ flex: 1 }} />
-            <SlideToSend label={problem ? 'Slide to try again' : 'Slide to link the card'} busy={busy} onSend={() => void link()} />
+            <SlideToSend
+              label={problem ? 'Slide to try again' : 'Slide to link the card'}
+              busy={busy}
+              onSend={() => void link()}
+            />
           </View>
         ) : null}
 
@@ -164,9 +197,21 @@ export default function LinkCardScreen() {
   )
 }
 
-function Fact({ label, value, hint, last }: { label: string; value: string; hint?: string; last?: boolean }) {
+function Fact({
+  label,
+  value,
+  hint,
+  last,
+}: {
+  label: string
+  value: string
+  hint?: string
+  last?: boolean
+}) {
   return (
-    <View style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}>
+    <View
+      style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}
+    >
       <Txt size={14} color={colors.muted}>
         {label}
       </Txt>
@@ -185,11 +230,40 @@ function Fact({ label, value, hint, last }: { label: string; value: string; hint
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 28 },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 28,
+  },
   form: { paddingHorizontal: 20, paddingBottom: 40, gap: 18 },
   flow: { flex: 1, paddingHorizontal: 20, paddingBottom: 12, gap: 12 },
-  read: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 12, borderRadius: 14, backgroundColor: '#CFF5E6' },
-  input: { paddingHorizontal: 14, paddingVertical: 12, borderWidth: 2, borderColor: colors.ink, borderRadius: 16, backgroundColor: colors.white, fontFamily: fonts.semi, fontSize: 16, color: colors.ink },
-  facts: { borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 14 },
+  read: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: '#CFF5E6',
+  },
+  input: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    fontFamily: fonts.semi,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  facts: {
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+  },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
 })

@@ -9,9 +9,9 @@ import {
   displayCurrencies,
   guessCurrency,
 } from '@/lib/wallet/money'
+import { InAppNote } from './in-app'
 import { useWallet } from './provider'
 import { Avatar } from './ui'
-import { InAppNote } from './in-app'
 
 type Step = { at: 'start' } | { at: 'name' } | { at: 'waiting'; what: 'create' | 'open' }
 
@@ -139,8 +139,8 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
 
       {!home ? (
         <p className="form-note">
-          Ren wallets open on <a href={`https://${passkeyDomain}/wallet`}>{passkeyDomain}</a>,
-          where your passkey lives.
+          Ren wallets open on <a href={`https://${passkeyDomain}/wallet`}>{passkeyDomain}</a>, where
+          your passkey lives.
         </p>
       ) : null}
 
@@ -188,8 +188,8 @@ export function Welcome({ forShop = false }: { forShop?: boolean }) {
       </div>
       {error ? <p className="form-error">{error}</p> : null}
       <p className="w-fine">
-        On a Mac or iPhone, iCloud Keychain brings the Ren app’s passkey here. Anywhere else,
-        choose “Use a phone” and scan the code with the phone that has Ren.
+        On a Mac or iPhone, iCloud Keychain brings the Ren app’s passkey here. Anywhere else, choose
+        “Use a phone” and scan the code with the phone that has Ren.
       </p>
     </div>
   )

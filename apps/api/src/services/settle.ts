@@ -54,7 +54,13 @@ export async function settleFromReceipt(
   const now = new Date()
 
   try {
-    await recordPayment(intent, receipt, { paymentId, status, payer: verdict.payer ?? '0x', credentialId: options.credentialId ?? null, now })
+    await recordPayment(intent, receipt, {
+      paymentId,
+      status,
+      payer: verdict.payer ?? '0x',
+      credentialId: options.credentialId ?? null,
+      now,
+    })
   } catch (error) {
     // The relay, the chain watcher and /confirm can all record the same transfer at the same
     // moment, and on Tempo's half-second blocks they often do. The unique index on tx_hash
@@ -90,14 +96,24 @@ export async function settleVerified(
   receipt: TransactionReceipt,
   payer: Address,
 ): Promise<SettleResult> {
-  const existing = await db.query.payments.findFirst({ where: eq(schema.payments.txHash, receipt.transactionHash) })
+  const existing = await db.query.payments.findFirst({
+    where: eq(schema.payments.txHash, receipt.transactionHash),
+  })
   if (existing) return { status: existing.status as SettleResult['status'], paymentId: existing.id }
   const paymentId = uuidv7()
   try {
-    await recordPayment(intent, receipt, { paymentId, status: 'paid', payer, credentialId: null, now: new Date() })
+    await recordPayment(intent, receipt, {
+      paymentId,
+      status: 'paid',
+      payer,
+      credentialId: null,
+      now: new Date(),
+    })
   } catch (error) {
     if (!isUniqueViolation(error)) throw error
-    const winner = await db.query.payments.findFirst({ where: eq(schema.payments.txHash, receipt.transactionHash) })
+    const winner = await db.query.payments.findFirst({
+      where: eq(schema.payments.txHash, receipt.transactionHash),
+    })
     if (!winner) throw error
     return { status: winner.status as SettleResult['status'], paymentId: winner.id }
   }
@@ -108,7 +124,19 @@ export async function settleVerified(
 async function recordPayment(
   intent: PaymentIntent,
   receipt: TransactionReceipt,
-  { paymentId, status, payer, credentialId, now }: { paymentId: string; status: 'paid' | 'held' | 'failed'; payer: string; credentialId: string | null; now: Date },
+  {
+    paymentId,
+    status,
+    payer,
+    credentialId,
+    now,
+  }: {
+    paymentId: string
+    status: 'paid' | 'held' | 'failed'
+    payer: string
+    credentialId: string | null
+    now: Date
+  },
 ) {
   await db.transaction(async (tx) => {
     await tx.insert(schema.payments).values({

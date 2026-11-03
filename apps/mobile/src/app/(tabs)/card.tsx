@@ -175,14 +175,19 @@ function TempoCards() {
     }, [keys]),
   )
 
-  const cards = keys.given.filter((k) => k.kind === 'card' && k.status !== 'revoked' && k.status !== 'pending')
+  const cards = keys.given.filter(
+    (k) => k.kind === 'card' && k.status !== 'revoked' && k.status !== 'pending',
+  )
   const card = cards[Math.min(selected, Math.max(cards.length - 1, 0))] ?? null
   const frozen = card?.status === 'frozen'
 
   const scroll = (children: ReactNode) => (
     <ScrollView
       style={{ flex: 1, backgroundColor: frozen ? colors.sunken : colors.paper }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: dockClearance + insets.bottom }}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8,
+        paddingBottom: dockClearance + insets.bottom,
+      }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -282,12 +287,21 @@ function TempoCardView({
 
   const frozenAt = useSharedValue(frozen ? 1 : 0)
   useEffect(() => {
-    frozenAt.value = withTiming(frozen ? 1 : 0, { duration: 320, easing: Easing.bezier(0.32, 0.72, 0, 1) })
+    frozenAt.value = withTiming(frozen ? 1 : 0, {
+      duration: 320,
+      easing: Easing.bezier(0.32, 0.72, 0, 1),
+    })
   }, [frozen, frozenAt])
   const [trackW, setTrackW] = useState(0)
-  const thumb = useAnimatedStyle(() => ({ transform: [{ translateX: frozenAt.value * (trackW / 2) }] }))
+  const thumb = useAnimatedStyle(() => ({
+    transform: [{ translateX: frozenAt.value * (trackW / 2) }],
+  }))
 
-  const act = async (what: string, run: () => Promise<void>, feel = Haptics.NotificationFeedbackType.Success) => {
+  const act = async (
+    what: string,
+    run: () => Promise<void>,
+    feel = Haptics.NotificationFeedbackType.Success,
+  ) => {
     if (pending) return
     setPending(what)
     setProblem(null)
@@ -312,18 +326,22 @@ function TempoCardView({
   }
 
   const remove = () =>
-    Alert.alert(`Remove card •••• ${last4}?`, 'It won’t be able to pay any more. To use it again, link it again.', [
-      { text: 'Keep it', style: 'cancel' },
-      {
-        text: 'Remove',
-        style: 'destructive',
-        onPress: () =>
-          void act('remove', async () => {
-            await keys.remove(card)
-            onRemoved()
-          }),
-      },
-    ])
+    Alert.alert(
+      `Remove card •••• ${last4}?`,
+      'It won’t be able to pay any more. To use it again, link it again.',
+      [
+        { text: 'Keep it', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: () =>
+            void act('remove', async () => {
+              await keys.remove(card)
+              onRemoved()
+            }),
+        },
+      ],
+    )
 
   const limit = Number(card.limit)
   const left = card.remaining === null ? null : Number(card.remaining)
@@ -337,7 +355,9 @@ function TempoCardView({
         <Txt weight="bold" size={32} style={{ letterSpacing: -1 }}>
           Card
         </Txt>
-        <View style={[styles.status, { backgroundColor: frozen || expired ? colors.ink : colors.teal }]}>
+        <View
+          style={[styles.status, { backgroundColor: frozen || expired ? colors.ink : colors.teal }]}
+        >
           <Icon name={frozen ? 'snow' : 'tap'} size={14} color={colors.white} />
           <Txt weight="semi" size={13} color={colors.white}>
             {frozen ? 'Frozen' : expired ? 'Expired' : 'Ready to tap'}
@@ -385,10 +405,26 @@ function TempoCardView({
           accessibilityLabel="Card status"
         >
           <Animated.View
-            style={[styles.thumb, { width: trackW / 2, backgroundColor: frozen ? colors.ink : colors.teal }, thumb]}
+            style={[
+              styles.thumb,
+              { width: trackW / 2, backgroundColor: frozen ? colors.ink : colors.teal },
+              thumb,
+            ]}
           />
-          <Choice icon="tap" label="Active" on={!frozen} busy={pending === 'unfreeze'} onPress={() => setFrozen(false)} />
-          <Choice icon="snow" label="Frozen" on={frozen} busy={pending === 'freeze'} onPress={() => setFrozen(true)} />
+          <Choice
+            icon="tap"
+            label="Active"
+            on={!frozen}
+            busy={pending === 'unfreeze'}
+            onPress={() => setFrozen(false)}
+          />
+          <Choice
+            icon="snow"
+            label="Frozen"
+            on={frozen}
+            busy={pending === 'freeze'}
+            onPress={() => setFrozen(true)}
+          />
         </View>
 
         {problem ? (
@@ -414,11 +450,18 @@ function TempoCardView({
               </Txt>
             </View>
             <Txt size={13} color={colors.muted} style={{ textAlign: 'right' }}>
-              {frozen ? 'Paused' : `${dollars(String(spent))} spent\n${card.period === 'day' ? 'today' : 'this week'}`}
+              {frozen
+                ? 'Paused'
+                : `${dollars(String(spent))} spent\n${card.period === 'day' ? 'today' : 'this week'}`}
             </Txt>
           </View>
           <View style={styles.meter}>
-            <View style={[styles.meterFill, { width: `${Math.max(2, Math.min(100, (spent / (limit || 1)) * 100))}%` }]} />
+            <View
+              style={[
+                styles.meterFill,
+                { width: `${Math.max(2, Math.min(100, (spent / (limit || 1)) * 100))}%` },
+              ]}
+            />
           </View>
           <View style={styles.ticks}>
             {tempoLimits.map((l) => {
@@ -435,7 +478,11 @@ function TempoCardView({
                     void act(`limit:${l}`, () => keys.setLimit(card, l))
                   }}
                   hitSlop={6}
-                  style={[styles.tick, on && styles.tickOn, (frozen || expired) && !on && { opacity: 0.4 }]}
+                  style={[
+                    styles.tick,
+                    on && styles.tickOn,
+                    (frozen || expired) && !on && { opacity: 0.4 },
+                  ]}
                 >
                   {pending === `limit:${l}` ? (
                     <ActivityIndicator color={colors.ink} size="small" />
@@ -478,7 +525,12 @@ function TempoCardView({
             onPress={() => router.push('/keys/card')}
             style={({ pressed }) => pressed && { opacity: 0.7 }}
           >
-            <Row icon="plus" tint={colors.sunken} label="Link another card" value="Each with its own daily limit">
+            <Row
+              icon="plus"
+              tint={colors.sunken}
+              label="Link another card"
+              value="Each with its own daily limit"
+            >
               <Icon name="arrow" size={17} />
             </Row>
           </Pressable>
@@ -488,8 +540,18 @@ function TempoCardView({
             onPress={remove}
             style={({ pressed }) => pressed && { opacity: 0.7 }}
           >
-            <Row icon="trash" tint={colors.sunken} label="Remove card" value="Tempo revokes its key for good" last>
-              {pending === 'remove' ? <ActivityIndicator color={colors.ink} /> : <Icon name="arrow" size={17} />}
+            <Row
+              icon="trash"
+              tint={colors.sunken}
+              label="Remove card"
+              value="Tempo revokes its key for good"
+              last
+            >
+              {pending === 'remove' ? (
+                <ActivityIndicator color={colors.ink} />
+              ) : (
+                <Icon name="arrow" size={17} />
+              )}
             </Row>
           </Pressable>
         </View>
@@ -515,7 +577,11 @@ function TempoCardView({
                     {t.description ?? 'A Ren till'}
                   </Txt>
                   <Txt size={13} color={colors.muted}>
-                    {new Date(t.created_at).toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' })}
+                    {new Date(t.created_at).toLocaleString([], {
+                      weekday: 'short',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
                   </Txt>
                 </View>
                 <Txt weight="semi" size={16}>

@@ -42,7 +42,10 @@ export default function NewAgentScreen() {
   }, [keys])
 
   const payees = useMemo(() => {
-    const found = listed.split(/[\s,]+/).filter((a) => isAddress(a)).map((a) => getAddress(a) as Address)
+    const found = listed
+      .split(/[\s,]+/)
+      .filter((a) => isAddress(a))
+      .map((a) => getAddress(a) as Address)
     return [...new Set(found)]
   }, [listed])
   const askNever = Number(approveAbove) >= Number(perPayment)
@@ -55,7 +58,10 @@ export default function NewAgentScreen() {
         : onlyListed && payees.length === 0
           ? 'Add a wallet it may pay'
           : null
-  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], { day: 'numeric', month: 'long' })
+  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], {
+    day: 'numeric',
+    month: 'long',
+  })
 
   const go = async () => {
     setBusy(true)
@@ -86,13 +92,22 @@ export default function NewAgentScreen() {
       <Header
         title={step === 'done' ? undefined : 'New agent key'}
         backIcon={step === 'review' ? 'back' : 'close'}
-        onBack={step === 'review' && !busy ? () => setStep('setup') : busy ? null : () => router.back()}
+        onBack={
+          step === 'review' && !busy ? () => setStep('setup') : busy ? null : () => router.back()
+        }
       />
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         {step === 'setup' ? (
           <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
             <Field label="Name">
-              <TextInput value={label} onChangeText={setLabel} maxLength={40} placeholder="Research agent" placeholderTextColor={colors.muted} style={styles.input} />
+              <TextInput
+                value={label}
+                onChangeText={setLabel}
+                maxLength={40}
+                placeholder="Research agent"
+                placeholderTextColor={colors.muted}
+                style={styles.input}
+              />
             </Field>
             <Field label="It can spend">
               <View style={styles.row}>
@@ -112,10 +127,16 @@ export default function NewAgentScreen() {
             </Field>
             <Field label="Ask me first above">
               <View style={styles.row}>
-                {askNever ? null : <MoneyField value={approveAbove} onChange={setApproveAbove} label="Ask above" />}
+                {askNever ? null : (
+                  <MoneyField value={approveAbove} onChange={setApproveAbove} label="Ask above" />
+                )}
                 <Choice
                   value={askNever ? 'never' : 'ask'}
-                  onChange={(v) => setApproveAbove(v === 'never' ? perPayment : String(Math.min(1, Number(perPayment))))}
+                  onChange={(v) =>
+                    setApproveAbove(
+                      v === 'never' ? perPayment : String(Math.min(1, Number(perPayment))),
+                    )
+                  }
                   options={[
                     { value: 'ask', label: 'Ask' },
                     { value: 'never', label: 'Never ask' },
@@ -157,7 +178,11 @@ export default function NewAgentScreen() {
                 />
               ) : null}
             </Field>
-            <PillButton label={setupProblem ?? 'Review'} disabled={Boolean(setupProblem)} onPress={() => setStep('review')} />
+            <PillButton
+              label={setupProblem ?? 'Review'}
+              disabled={Boolean(setupProblem)}
+              onPress={() => setStep('review')}
+            />
           </ScrollView>
         ) : null}
 
@@ -175,16 +200,35 @@ export default function NewAgentScreen() {
               </Txt>
             </View>
             <View style={styles.facts}>
-              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} hint={`Ends ${ends}. Not even Ren can raise it.`} />
-              <Fact label="Ren checks" value={`${dollars(perPayment)} a payment at most`} hint={askNever ? 'Never asks you first' : `Asks you above ${dollars(approveAbove)}`} />
-              <Fact label="May pay" value={onlyListed ? `${payees.length} wallet${payees.length === 1 ? '' : 's'}` : 'Anyone'} />
+              <Fact
+                label={`${chainName} enforces`}
+                value={`${dollars(limit)} a ${period}, dollars only`}
+                hint={`Ends ${ends}. Not even Ren can raise it.`}
+              />
+              <Fact
+                label="Ren checks"
+                value={`${dollars(perPayment)} a payment at most`}
+                hint={askNever ? 'Never asks you first' : `Asks you above ${dollars(approveAbove)}`}
+              />
+              <Fact
+                label="May pay"
+                value={
+                  onlyListed ? `${payees.length} wallet${payees.length === 1 ? '' : 's'}` : 'Anyone'
+                }
+              />
               <Fact label="Fee" value="$0.00, Ren covers it" last />
             </View>
             {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
             <View style={{ flex: 1 }} />
-            <SlideToSend label={problem ? 'Slide to try again' : 'Slide to create the key'} busy={busy} onSend={() => void go()} />
+            <SlideToSend
+              label={problem ? 'Slide to try again' : 'Slide to create the key'}
+              busy={busy}
+              onSend={() => void go()}
+            />
             <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
-              {quick ? 'Your wallet is open, so this one needs no Face ID.' : 'Face ID approves it.'}
+              {quick
+                ? 'Your wallet is open, so this one needs no Face ID.'
+                : 'Face ID approves it.'}
             </Txt>
           </View>
         ) : null}
@@ -196,7 +240,8 @@ export default function NewAgentScreen() {
               {label.trim()} is ready
             </Txt>
             <Txt color={colors.muted} style={{ textAlign: 'center' }}>
-              Its key is on {chainName}. Give your agent this token: it’s shown once, so copy it now.
+              Its key is on {chainName}. Give your agent this token: it’s shown once, so copy it
+              now.
             </Txt>
             <View style={{ alignSelf: 'stretch' }}>
               <Snippet text={made.token} strong />
@@ -205,7 +250,9 @@ export default function NewAgentScreen() {
               Connect Claude Code in one line:
             </Txt>
             <View style={{ alignSelf: 'stretch' }}>
-              <Snippet text={`claude mcp add --transport http ren ${keys.mcpUrl} --header "Authorization: Bearer ${made.token}"`} />
+              <Snippet
+                text={`claude mcp add --transport http ren ${keys.mcpUrl} --header "Authorization: Bearer ${made.token}"`}
+              />
             </View>
             <View style={styles.time}>
               <Icon name="bolt" size={15} color={colors.white} />
@@ -214,7 +261,11 @@ export default function NewAgentScreen() {
               </Txt>
             </View>
             <View style={{ alignSelf: 'stretch' }}>
-              <PillButton label="Done" icon="check" onPress={() => router.replace({ pathname: '/keys/[id]', params: { id: made.id } })} />
+              <PillButton
+                label="Done"
+                icon="check"
+                onPress={() => router.replace({ pathname: '/keys/[id]', params: { id: made.id } })}
+              />
             </View>
           </ScrollView>
         ) : null}
@@ -223,9 +274,21 @@ export default function NewAgentScreen() {
   )
 }
 
-function Fact({ label, value, hint, last }: { label: string; value: string; hint?: string; last?: boolean }) {
+function Fact({
+  label,
+  value,
+  hint,
+  last,
+}: {
+  label: string
+  value: string
+  hint?: string
+  last?: boolean
+}) {
   return (
-    <View style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}>
+    <View
+      style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}
+    >
       <Txt size={14} color={colors.muted}>
         {label}
       </Txt>
@@ -246,12 +309,42 @@ function Fact({ label, value, hint, last }: { label: string; value: string; hint
 const styles = StyleSheet.create({
   form: { paddingHorizontal: 20, paddingBottom: 40, gap: 18 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  input: { paddingHorizontal: 14, paddingVertical: 12, borderWidth: 2, borderColor: colors.ink, borderRadius: 16, backgroundColor: colors.white, fontFamily: fonts.semi, fontSize: 16, color: colors.ink },
-  area: { minHeight: 80, marginTop: 8, fontFamily: 'Menlo', fontSize: 13, textAlignVertical: 'top' },
+  input: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    fontFamily: fonts.semi,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  area: {
+    minHeight: 80,
+    marginTop: 8,
+    fontFamily: 'Menlo',
+    fontSize: 13,
+    textAlignVertical: 'top',
+  },
   flow: { flex: 1, paddingHorizontal: 20, paddingBottom: 12, gap: 12 },
   sum: { marginTop: 6, gap: 4 },
-  facts: { borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 14 },
+  facts: {
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+  },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
   done: { alignItems: 'center', gap: 12, paddingHorizontal: 24, paddingBottom: 40 },
-  time: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.ink },
+  time: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: colors.ink,
+  },
 })

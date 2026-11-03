@@ -43,7 +43,8 @@ let server: ReturnType<typeof makeServer> | null = null
 
 /** One server for the process, so its replay store sees every credential. */
 function mpp() {
-  if (!onTempo || !feePayerAccount) throw new KovaError('conflict', 'MPP isn’t switched on for this server.')
+  if (!onTempo || !feePayerAccount)
+    throw new KovaError('conflict', 'MPP isn’t switched on for this server.')
   server ??= makeServer()
   return server
 }
@@ -52,7 +53,9 @@ function receiptReference(response: Response): Hex | null {
   const header = response.headers.get('payment-receipt')
   if (!header) return null
   try {
-    return ((JSON.parse(Buffer.from(header, 'base64url').toString('utf8')) as { reference?: string }).reference ?? null) as Hex | null
+    return ((
+      JSON.parse(Buffer.from(header, 'base64url').toString('utf8')) as { reference?: string }
+    ).reference ?? null) as Hex | null
   } catch {
     return null
   }
@@ -63,17 +66,25 @@ export const mppRoutes = new Hono()
 mppRoutes.on(['GET', 'POST'], '/mpp/charges/:id', async (c) => {
   const id = c.req.param('id')
   const uuid = decodeId('paymentIntent', id)
-  const intent = uuid ? await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, uuid) }) : undefined
+  const intent = uuid
+    ? await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, uuid) })
+    : undefined
   if (!intent) throw notFound('payment intent', id)
   if (intent.status === 'paid') return c.json({ status: 'paid', charge: id })
   if (intent.status !== 'requires_payment' || intent.expiresAt < new Date())
     throw new KovaError('conflict', 'This charge isn’t open any more.')
-  const merchant = await db.query.merchants.findFirst({ where: eq(schema.merchants.id, intent.merchantId) })
+  const merchant = await db.query.merchants.findFirst({
+    where: eq(schema.merchants.id, intent.merchantId),
+  })
 
   const result = await mpp().charge({
     amount: formatAmount(intent.amount),
     recipient: getAddress(intent.payTo),
-    description: `${merchant?.name ?? 'A Ren shop'}${intent.reference ? `: ${intent.reference}` : ''}`.slice(0, 120),
+    description:
+      `${merchant?.name ?? 'A Ren shop'}${intent.reference ? `: ${intent.reference}` : ''}`.slice(
+        0,
+        120,
+      ),
     meta: { charge: id },
     scope: `charge:${id}`,
   } as never)(c.req.raw)
@@ -82,7 +93,10 @@ mppRoutes.on(['GET', 'POST'], '/mpp/charges/:id', async (c) => {
   const response = result.withReceipt(Response.json({ status: 'paid', charge: id })) as Response
   const hash = receiptReference(response)
   if (hash) {
-    const receipt = (await publicClient.waitForTransactionReceipt({ hash, timeout: 30_000 })) as TransactionReceipt
+    const receipt = (await publicClient.waitForTransactionReceipt({
+      hash,
+      timeout: 30_000,
+    })) as TransactionReceipt
     await settleVerified(intent, receipt, receipt.from as Address)
   }
   return response

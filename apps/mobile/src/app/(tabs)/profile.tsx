@@ -1,16 +1,22 @@
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
+import * as WebBrowser from 'expo-web-browser'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
-import * as WebBrowser from 'expo-web-browser'
 import { chainName, isTestnet, network, onTempo, webUrl } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
 import { rateLabel, ratesLive } from '@/lib/rates'
-import { endSession, SESSION_IDLE_MS, SESSION_LIMIT, TAP_LIMIT, useSessionState } from '@/lib/session'
+import {
+  endSession,
+  SESSION_IDLE_MS,
+  SESSION_LIMIT,
+  TAP_LIMIT,
+  useSessionState,
+} from '@/lib/session'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
 import { vaultSavedAt } from '@/lib/vault'
@@ -38,7 +44,8 @@ export default function Profile() {
   const { scroll } = useLocalSearchParams<{ scroll?: string }>()
   const scroller = useRef<ScrollView>(null)
   useEffect(() => {
-    if (__DEV__ && scroll === 'end') setTimeout(() => scroller.current?.scrollToEnd({ animated: false }), 400)
+    if (__DEV__ && scroll === 'end')
+      setTimeout(() => scroller.current?.scrollToEnd({ animated: false }), 400)
   }, [scroll])
 
   const stats = useMemo(() => {
@@ -49,7 +56,11 @@ export default function Profile() {
 
   if (!profile) return null
   const since = new Date(profile.createdAt ?? activity.at(-1)?.at ?? Date.now())
-  const link = personLink({ address: profile.address, name: profile.name, currency: profile.currency })
+  const link = personLink({
+    address: profile.address,
+    name: profile.name,
+    currency: profile.currency,
+  })
 
   const copy = async () => {
     await Clipboard.setStringAsync(profile.address)
@@ -62,7 +73,11 @@ export default function Profile() {
     <ScrollView
       ref={scroller}
       style={{ flex: 1, backgroundColor: colors.paper }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: dockClearance + insets.bottom }}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8,
+        paddingHorizontal: 20,
+        paddingBottom: dockClearance + insets.bottom,
+      }}
     >
       <Txt weight="bold" size={32} style={{ letterSpacing: -1 }}>
         Profile
@@ -75,7 +90,13 @@ export default function Profile() {
             <Avatar name={profile.name} id={profile.address} size={54} />
           </View>
           <View style={{ flex: 1 }}>
-            <Txt weight="bold" size={22} color={colors.white} numberOfLines={1} style={{ letterSpacing: -0.4 }}>
+            <Txt
+              weight="bold"
+              size={22}
+              color={colors.white}
+              numberOfLines={1}
+              style={{ letterSpacing: -0.4 }}
+            >
               {profile.name}
             </Txt>
             <Txt size={13} color={colors.onInk}>
@@ -98,7 +119,15 @@ export default function Profile() {
                   Your address on {chainName}
                 </Txt>
                 <View style={styles.network}>
-                  <View style={[styles.dot, { backgroundColor: network.id === 'testnet' ? colors.yellow : colors.tealLight }]} />
+                  <View
+                    style={[
+                      styles.dot,
+                      {
+                        backgroundColor:
+                          network.id === 'testnet' ? colors.yellow : colors.tealLight,
+                      },
+                    ]}
+                  />
                   <Txt weight="semi" size={10} color={colors.white}>
                     {network.id === 'testnet' ? 'Testnet' : 'Mainnet'}
                   </Txt>
@@ -108,15 +137,31 @@ export default function Profile() {
                 {profile.address.slice(0, 8)}…{profile.address.slice(-6)}
               </Txt>
             </View>
-            <Pressable accessibilityRole="button" accessibilityLabel="Copy your address" onPress={copy} style={styles.copy}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Copy your address"
+              onPress={copy}
+              style={styles.copy}
+            >
               <Icon name={copied ? 'check' : 'copy'} size={15} color={colors.ink} />
               <Txt weight="semi" size={13}>
                 {copied ? 'Copied' : 'Copy'}
               </Txt>
             </Pressable>
           </View>
-          <Pressable accessibilityRole="button" accessibilityLabel="Show my Ren code" onPress={() => router.push('/receive')} style={styles.qr}>
-            <QRCode value={link} size={68} color={colors.ink} backgroundColor={colors.surface} ecl="L" />
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Show my Ren code"
+            onPress={() => router.push('/receive')}
+            style={styles.qr}
+          >
+            <QRCode
+              value={link}
+              size={68}
+              color={colors.ink}
+              backgroundColor={colors.surface}
+              ecl="L"
+            />
           </Pressable>
         </View>
       </View>
@@ -131,29 +176,34 @@ export default function Profile() {
       {/* Ramp's off-ramp runs on the web, where the same passkey opens this wallet. Monad mainnet
           only: Ramp sells AUSD on Monad, and on testnet there's nothing to cash out. */}
       {onTempo || isTestnet ? null : (
-      <Sticker
-        radius={24}
-        accessibilityLabel="Cash out to your bank or card"
-        onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet/cash-out`)}
-        style={{ height: 62, marginTop: 14 }}
-      >
-        <View style={styles.cashOut}>
-          <View style={{ flex: 1 }}>
-            <Txt weight="semi" size={16}>
-              Cash out
-            </Txt>
-            <Txt size={13} color={colors.muted}>
-              To your bank or card, with Ramp Network
-            </Txt>
+        <Sticker
+          radius={24}
+          accessibilityLabel="Cash out to your bank or card"
+          onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet/cash-out`)}
+          style={{ height: 62, marginTop: 14 }}
+        >
+          <View style={styles.cashOut}>
+            <View style={{ flex: 1 }}>
+              <Txt weight="semi" size={16}>
+                Cash out
+              </Txt>
+              <Txt size={13} color={colors.muted}>
+                To your bank or card, with Ramp Network
+              </Txt>
+            </View>
+            <Icon name="arrow" size={20} />
           </View>
-          <Icon name="arrow" size={20} />
-        </View>
-      </Sticker>
+        </Sticker>
       )}
 
       {/* On Tempo: naira to any Nigerian bank, through Paystack (app/cash-out.tsx). */}
       {onTempo ? (
-        <Sticker radius={24} accessibilityLabel="Cash out to naira" onPress={() => router.push('/cash-out')} style={{ height: 62, marginTop: 14 }}>
+        <Sticker
+          radius={24}
+          accessibilityLabel="Cash out to naira"
+          onPress={() => router.push('/cash-out')}
+          style={{ height: 62, marginTop: 14 }}
+        >
           <View style={[styles.cashOut, { gap: 14 }]}>
             <Txt weight="heavy" size={20} style={{ width: 22, textAlign: 'center' }}>
               ₦
@@ -174,7 +224,12 @@ export default function Profile() {
       {/* Paying from a phone with no data: a small pocket spent by dialling Ren's USSD code.
           Monad only for now; on Tempo a basic phone becomes a key on this wallet (docs/parity-plan.md). */}
       {onTempo ? null : (
-        <Sticker radius={24} accessibilityLabel="Pay by USSD, from any phone" onPress={() => router.push('/ussd')} style={{ height: 62, marginTop: 14 }}>
+        <Sticker
+          radius={24}
+          accessibilityLabel="Pay by USSD, from any phone"
+          onPress={() => router.push('/ussd')}
+          style={{ height: 62, marginTop: 14 }}
+        >
           <View style={[styles.cashOut, { gap: 14 }]}>
             <Icon name="keypad" size={22} />
             <View style={{ flex: 1 }}>
@@ -208,8 +263,8 @@ export default function Profile() {
                 You’re in the demo account
               </Txt>
               <Txt size={14} color={colors.muted} style={{ marginTop: 2, lineHeight: 20 }}>
-                A shared test wallet with test dollars, on {chainName} testnet. Your own Ren wallet is a passkey: remove
-                this one and choose “Create my wallet”.
+                A shared test wallet with test dollars, on {chainName} testnet. Your own Ren wallet
+                is a passkey: remove this one and choose “Create my wallet”.
               </Txt>
             </View>
           </View>
@@ -228,11 +283,15 @@ export default function Profile() {
               {profile.demo
                 ? 'It’s the shared demo account: sign in again with its username and password whenever you like.'
                 : stall.owned
-                ? `Your money stays in the wallet, and ${stall.owned.name} keeps paying into it. Your passkey brings it back here any time: choose “I already have Ren”.`
-                : 'Your money stays in the wallet. Your passkey brings it back here, or on any phone, any time: choose “I already have Ren”.'}
+                  ? `Your money stays in the wallet, and ${stall.owned.name} keeps paying into it. Your passkey brings it back here any time: choose “I already have Ren”.`
+                  : 'Your money stays in the wallet. Your passkey brings it back here, or on any phone, any time: choose “I already have Ren”.'}
             </Txt>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-              <Pressable accessibilityRole="button" onPress={() => setConfirmRemove(false)} style={[styles.small, { backgroundColor: colors.surface }]}>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => setConfirmRemove(false)}
+                style={[styles.small, { backgroundColor: colors.surface }]}
+              >
                 <Txt weight="semi" size={15}>
                   Keep it
                 </Txt>
@@ -243,7 +302,10 @@ export default function Profile() {
                   await signOut()
                   router.replace('/welcome')
                 }}
-                style={[styles.small, { backgroundColor: colors.danger, borderColor: colors.danger }]}
+                style={[
+                  styles.small,
+                  { backgroundColor: colors.danger, borderColor: colors.danger },
+                ]}
               >
                 <Txt weight="semi" size={15} color={colors.white}>
                   Remove wallet
@@ -266,7 +328,13 @@ export default function Profile() {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <View style={styles.stat}>
-      <Txt weight="bold" size={20} numberOfLines={1} adjustsFontSizeToFit style={{ letterSpacing: -0.5 }}>
+      <Txt
+        weight="bold"
+        size={20}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        style={{ letterSpacing: -0.5 }}
+      >
         {value}
       </Txt>
       <Txt size={12} color={colors.muted}>
@@ -280,10 +348,18 @@ function Stat({ value, label }: { value: string; label: string }) {
 const onTeal = '#E3FFF5'
 
 /** Your currency, at today's rate, with where that rate comes from. */
-function MoneyCard({ currency, onChange }: { currency: DisplayCurrency; onChange: (currency: DisplayCurrency) => void }) {
+function MoneyCard({
+  currency,
+  onChange,
+}: {
+  currency: DisplayCurrency
+  onChange: (currency: DisplayCurrency) => void
+}) {
   const [picking, setPicking] = useState(false)
   const info = currencyInfo[currency]
-  const rate = info.perUsd.toLocaleString('en-US', { maximumFractionDigits: info.decimals === 0 ? 2 : 4 })
+  const rate = info.perUsd.toLocaleString('en-US', {
+    maximumFractionDigits: info.decimals === 0 ? 2 : 4,
+  })
   return (
     <View style={styles.money}>
       <View style={styles.moneyTop}>
@@ -295,7 +371,12 @@ function MoneyCard({ currency, onChange }: { currency: DisplayCurrency; onChange
             {info.symbol} {info.name}
           </Txt>
         </View>
-        <Pressable accessibilityRole="button" accessibilityLabel="Change currency" onPress={() => setPicking(true)} style={({ pressed }) => [styles.change, pressed && { opacity: 0.8 }]}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Change currency"
+          onPress={() => setPicking(true)}
+          style={({ pressed }) => [styles.change, pressed && { opacity: 0.8 }]}
+        >
           <Txt weight="semi" size={14}>
             Change
           </Txt>
@@ -365,17 +446,24 @@ function KeysCard() {
         </View>
       </View>
 
-      <View style={[styles.session, session.open && styles.sessionOpen]} accessibilityLiveRegion="polite">
+      <View
+        style={[styles.session, session.open && styles.sessionOpen]}
+        accessibilityLiveRegion="polite"
+      >
         <View style={styles.liveDotWrap}>
           {session.open ? <Ping size={12} color={colors.teal} /> : null}
-          <View style={[styles.liveDot, { backgroundColor: session.open ? colors.teal : colors.muted }]} />
+          <View
+            style={[styles.liveDot, { backgroundColor: session.open ? colors.teal : colors.muted }]}
+          />
         </View>
         <View style={{ flex: 1 }}>
           <Txt weight="semi" size={15}>
             {session.open ? `Open for ${minutes}:${seconds}` : 'Locked'}
           </Txt>
           <Txt size={13} color={colors.muted}>
-            {session.open ? `Pays up to ${dollars(session.canApprove)} without Face ID` : 'Face ID opens it when you pay'}
+            {session.open
+              ? `Pays up to ${dollars(session.canApprove)} without Face ID`
+              : 'Face ID opens it when you pay'}
           </Txt>
         </View>
         {session.open ? (
@@ -397,7 +485,11 @@ function KeysCard() {
       </View>
 
       <View style={styles.rules}>
-        {[`${dollars(TAP_LIMIT)} a tap`, `${dollars(SESSION_LIMIT)} a session`, `${SESSION_IDLE_MS / 60_000} quiet minutes`].map((rule) => (
+        {[
+          `${dollars(TAP_LIMIT)} a tap`,
+          `${dollars(SESSION_LIMIT)} a session`,
+          `${SESSION_IDLE_MS / 60_000} quiet minutes`,
+        ].map((rule) => (
           <View key={rule} style={styles.rule}>
             <Txt weight="semi" size={12}>
               {rule}
@@ -407,7 +499,11 @@ function KeysCard() {
       </View>
 
       <View style={styles.backup}>
-        <Icon name={backedUp ? 'check' : 'info'} size={15} color={backedUp ? colors.positive : colors.muted} />
+        <Icon
+          name={backedUp ? 'check' : 'info'}
+          size={15}
+          color={backedUp ? colors.positive : colors.muted}
+        />
         <Txt size={13} color={colors.muted} style={{ flex: 1, lineHeight: 18 }}>
           {backedUp
             ? 'Your name and contacts are backed up, sealed by your passkey. Ren can’t read them.'
@@ -434,8 +530,19 @@ const styles = StyleSheet.create({
   },
   dot: { width: 6, height: 6, borderRadius: 3 },
   tear: { height: 26, justifyContent: 'center' },
-  notch: { position: 'absolute', width: 26, height: 26, borderRadius: 13, backgroundColor: colors.paper },
-  perforation: { marginHorizontal: 22, borderTopWidth: 2, borderColor: 'rgba(255,255,255,0.22)', borderStyle: 'dashed' },
+  notch: {
+    position: 'absolute',
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: colors.paper,
+  },
+  perforation: {
+    marginHorizontal: 22,
+    borderTopWidth: 2,
+    borderColor: 'rgba(255,255,255,0.22)',
+    borderStyle: 'dashed',
+  },
   passBottom: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, paddingTop: 12 },
   copy: {
     alignSelf: 'flex-start',
@@ -479,11 +586,31 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   moneyRule: { height: 2, borderRadius: 1, backgroundColor: colors.tealDeep, marginVertical: 12 },
-  rateLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' },
+  rateLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+    flexWrap: 'wrap',
+  },
   provenance: { flexDirection: 'row', alignItems: 'center', gap: 5 },
-  keys: { marginTop: 12, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, padding: 16 },
+  keys: {
+    marginTop: 12,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    padding: 16,
+  },
   keysTop: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  keyIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  keyIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   session: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -508,8 +635,30 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   rules: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
-  rule: { height: 28, paddingHorizontal: 10, borderRadius: 14, borderWidth: 1.5, borderColor: colors.ink, justifyContent: 'center' },
+  rule: {
+    height: 28,
+    paddingHorizontal: 10,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: colors.ink,
+    justifyContent: 'center',
+  },
   backup: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginTop: 12 },
-  confirm: { alignSelf: 'stretch', borderRadius: 22, borderWidth: 2, borderColor: colors.ink, padding: 16, backgroundColor: colors.surface },
-  small: { flex: 1, height: 40, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  confirm: {
+    alignSelf: 'stretch',
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    padding: 16,
+    backgroundColor: colors.surface,
+  },
+  small: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 })

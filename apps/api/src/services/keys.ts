@@ -56,7 +56,11 @@ export interface OnChainKey {
   periodEnd: number | null
 }
 
-export async function onChainKey(owner: Address, keyId: Address, token: Address): Promise<OnChainKey> {
+export async function onChainKey(
+  owner: Address,
+  keyId: Address,
+  token: Address,
+): Promise<OnChainKey> {
   const [meta, limit] = await Promise.all([
     Actions.accessKey.getMetadata(publicClient as never, { account: owner, accessKey: keyId }),
     Actions.accessKey
@@ -104,13 +108,21 @@ export async function keysOf(wallet: Address): Promise<{ given: KeyRow[]; receiv
   const rows = await db.query.walletKeys.findMany({
     where: and(
       eq(schema.walletKeys.network, net),
-      or(eq(schema.walletKeys.ownerAddress, lower(wallet)), eq(schema.walletKeys.holderAddress, lower(wallet))),
+      or(
+        eq(schema.walletKeys.ownerAddress, lower(wallet)),
+        eq(schema.walletKeys.holderAddress, lower(wallet)),
+      ),
     ),
     orderBy: [desc(schema.walletKeys.createdAt)],
   })
   return {
     given: rows.filter((r) => isAddressEqual(r.ownerAddress as Address, wallet)),
-    received: rows.filter((r) => r.holderAddress && isAddressEqual(r.holderAddress as Address, wallet) && r.status !== 'revoked'),
+    received: rows.filter(
+      (r) =>
+        r.holderAddress &&
+        isAddressEqual(r.holderAddress as Address, wallet) &&
+        r.status !== 'revoked',
+    ),
   }
 }
 
@@ -120,7 +132,11 @@ const periodName = (seconds: number) => (seconds === WEEK ? 'week' : 'day')
 export async function serializeKey(row: KeyRow, options: { chain?: boolean } = {}) {
   const chain =
     options.chain !== false && row.keyId && row.status !== 'pending'
-      ? await onChainKey(getAddress(row.ownerAddress), getAddress(row.keyId), getAddress(row.token)).catch(() => null)
+      ? await onChainKey(
+          getAddress(row.ownerAddress),
+          getAddress(row.keyId),
+          getAddress(row.token),
+        ).catch(() => null)
       : null
   const expired = row.expiresAt.getTime() < Date.now()
   const status = row.status === 'active' && expired ? 'expired' : row.status
@@ -138,7 +154,9 @@ export async function serializeKey(row: KeyRow, options: { chain?: boolean } = {
     token: getAddress(row.token),
     limit: formatAmount(row.spendLimit),
     period: periodName(row.period),
-    remaining: chain?.live ? formatAmount(chain.remaining > row.spendLimit ? row.spendLimit : chain.remaining) : null,
+    remaining: chain?.live
+      ? formatAmount(chain.remaining > row.spendLimit ? row.spendLimit : chain.remaining)
+      : null,
     period_ends_at: chain?.periodEnd ? new Date(chain.periodEnd * 1000).toISOString() : null,
     expires_at: row.expiresAt.toISOString(),
     rules: row.rules
@@ -166,7 +184,12 @@ export interface AgentInput {
   payees: 'anyone' | Address[]
 }
 
-function termsOf(input: { limit: bigint; period: number; expiresAt: Date; payees: 'anyone' | Address[] }): KeyTerms {
+function termsOf(input: {
+  limit: bigint
+  period: number
+  expiresAt: Date
+  payees: 'anyone' | Address[]
+}): KeyTerms {
   return {
     token: settlementToken.address,
     limit: input.limit,
@@ -259,10 +282,14 @@ export async function confirmKey(
   if (row.status !== 'pending') return { row }
   if (!row.keyId) throw new KovaError('conflict', 'Nobody has accepted this allowance yet.')
   const chain = await onChainKey(owner, getAddress(row.keyId), getAddress(row.token))
-  if (!chain.live) throw new KovaError('conflict', 'Tempo doesn’t have this key yet. Try again in a moment.')
+  if (!chain.live)
+    throw new KovaError('conflict', 'Tempo doesn’t have this key yet. Try again in a moment.')
   const wanted = Math.floor(row.expiresAt.getTime() / 1000)
   if (Math.abs(chain.expiry - wanted) > 300 || chain.remaining > row.spendLimit)
-    throw new KovaError('invalid_request', 'The key on Tempo doesn’t match what you set. Make it again.')
+    throw new KovaError(
+      'invalid_request',
+      'The key on Tempo doesn’t match what you set. Make it again.',
+    )
 
   const agentToken = row.kind === 'agent' ? newAgentToken() : undefined
   const [updated] = await db
@@ -270,7 +297,9 @@ export async function confirmKey(
     .set({
       status: 'active',
       authorizedTxHash: txHash ?? null,
-      ...(agentToken ? { tokenPrefix: agentToken.slice(0, TOKEN_PREFIX), tokenHash: tokenHash(agentToken) } : {}),
+      ...(agentToken
+        ? { tokenPrefix: agentToken.slice(0, TOKEN_PREFIX), tokenHash: tokenHash(agentToken) }
+        : {}),
       inviteHash: null,
       updatedAt: new Date(),
     })
@@ -282,13 +311,18 @@ export async function confirmKey(
 
 /** A new token for an agent; the old one stops working at once. */
 export async function replaceAgentToken(row: KeyRow): Promise<string> {
-  if (row.kind !== 'agent') throw new KovaError('invalid_request', 'Only an agent’s key has a token.')
+  if (row.kind !== 'agent')
+    throw new KovaError('invalid_request', 'Only an agent’s key has a token.')
   if (row.status === 'pending' || row.status === 'revoked')
     throw new KovaError('conflict', 'This key isn’t on Tempo.')
   const token = newAgentToken()
   await db
     .update(schema.walletKeys)
-    .set({ tokenPrefix: token.slice(0, TOKEN_PREFIX), tokenHash: tokenHash(token), updatedAt: new Date() })
+    .set({
+      tokenPrefix: token.slice(0, TOKEN_PREFIX),
+      tokenHash: tokenHash(token),
+      updatedAt: new Date(),
+    })
     .where(eq(schema.walletKeys.id, row.id))
   return token
 }
@@ -323,8 +357,10 @@ export async function setFrozen(owner: Address, row: KeyRow, frozen: boolean): P
  */
 export async function setLimit(owner: Address, row: KeyRow, limit: bigint): Promise<KeyRow> {
   if (row.status === 'revoked') throw new KovaError('conflict', 'This key was removed.')
-  if (row.status === 'pending' || !row.keyId) throw new KovaError('conflict', 'This key isn’t on Tempo yet.')
-  if (row.status === 'frozen') throw new KovaError('conflict', 'Unfreeze it before changing its limit.')
+  if (row.status === 'pending' || !row.keyId)
+    throw new KovaError('conflict', 'This key isn’t on Tempo yet.')
+  if (row.status === 'frozen')
+    throw new KovaError('conflict', 'Unfreeze it before changing its limit.')
   checkTerms(termsOf({ limit, period: row.period, expiresAt: row.expiresAt, payees: 'anyone' }))
   const chain = await onChainKey(owner, getAddress(row.keyId), getAddress(row.token))
   if (!chain.live) throw new KovaError('conflict', 'This key isn’t on Tempo any more.')
@@ -371,12 +407,19 @@ export async function createCardKey(
   input: { label: string; keyId: Address; limit: bigint; expiresAt: Date },
 ): Promise<KeyRow> {
   requireKeys()
-  checkTerms(termsOf({ limit: input.limit, period: DAY, expiresAt: input.expiresAt, payees: 'anyone' }))
+  checkTerms(
+    termsOf({ limit: input.limit, period: DAY, expiresAt: input.expiresAt, payees: 'anyone' }),
+  )
   const taken = await db.query.walletKeys.findFirst({
     where: and(eq(schema.walletKeys.keyId, lower(input.keyId)), eq(schema.walletKeys.network, net)),
   })
   if (taken && taken.status !== 'pending')
-    throw new KovaError('conflict', taken.status === 'revoked' ? 'This card was removed for good. Use another card.' : 'This card is already linked.')
+    throw new KovaError(
+      'conflict',
+      taken.status === 'revoked'
+        ? 'This card was removed for good. Use another card.'
+        : 'This card is already linked.',
+    )
   if (taken) await db.delete(schema.walletKeys).where(eq(schema.walletKeys.id, taken.id))
   const [row] = await db
     .insert(schema.walletKeys)
@@ -402,10 +445,17 @@ export async function createCardKey(
 /** What a till needs about a card it just read: whose wallet it spends, and whether it can now. */
 export async function cardForTill(keyId: Address) {
   const row = await db.query.walletKeys.findFirst({
-    where: and(eq(schema.walletKeys.keyId, lower(keyId)), eq(schema.walletKeys.network, net), eq(schema.walletKeys.kind, 'card')),
+    where: and(
+      eq(schema.walletKeys.keyId, lower(keyId)),
+      eq(schema.walletKeys.network, net),
+      eq(schema.walletKeys.kind, 'card'),
+    ),
   })
-  if (!row || row.status === 'pending') throw new KovaError('not_found', 'This card isn’t linked to a Ren wallet. Link it in Keys.')
-  const chain = await onChainKey(getAddress(row.ownerAddress), keyId, getAddress(row.token)).catch(() => null)
+  if (!row || row.status === 'pending')
+    throw new KovaError('not_found', 'This card isn’t linked to a Ren wallet. Link it in Keys.')
+  const chain = await onChainKey(getAddress(row.ownerAddress), keyId, getAddress(row.token)).catch(
+    () => null,
+  )
   const status = row.status === 'active' && row.expiresAt < new Date() ? 'expired' : row.status
   return {
     object: 'card',
@@ -430,7 +480,10 @@ export interface AllowanceInput {
  * An allowance starts as an invite: its terms and a link. Whoever opens the link first, in their
  * own Ren wallet, makes the key on their phone and claims it; the owner then puts it on-chain.
  */
-export async function createAllowance(owner: Address, input: AllowanceInput): Promise<{ row: KeyRow; code: string }> {
+export async function createAllowance(
+  owner: Address,
+  input: AllowanceInput,
+): Promise<{ row: KeyRow; code: string }> {
   requireKeys()
   checkTerms(termsOf({ ...input, payees: 'anyone' }))
   const label = input.label.trim().slice(0, 40)
@@ -464,8 +517,11 @@ export async function createAllowance(owner: Address, input: AllowanceInput): Pr
 }
 
 async function inviteRow(code: string): Promise<KeyRow> {
-  if (!/^[A-Za-z0-9_-]{16}$/.test(code)) throw new KovaError('not_found', 'This allowance link isn’t right.')
-  const row = await db.query.walletKeys.findFirst({ where: eq(schema.walletKeys.tokenPrefix, `inv_${code.slice(0, 10)}`) })
+  if (!/^[A-Za-z0-9_-]{16}$/.test(code))
+    throw new KovaError('not_found', 'This allowance link isn’t right.')
+  const row = await db.query.walletKeys.findFirst({
+    where: eq(schema.walletKeys.tokenPrefix, `inv_${code.slice(0, 10)}`),
+  })
   if (!row?.inviteHash || !(await secretMatches(code, row.inviteHash)))
     throw new KovaError('not_found', 'This allowance link isn’t right, or it was already used.')
   if (row.createdAt.getTime() + INVITE_TTL_MS < Date.now())
@@ -490,12 +546,21 @@ export async function inviteFor(code: string) {
 /** The person accepts: their phone made a key for it, and their wallet is where they'll see it. */
 export async function claimAllowance(
   code: string,
-  input: { holder: Address; holderName: string | undefined; keyId: Address; keyType: 'secp256k1' | 'p256'; publicKey?: Hex },
+  input: {
+    holder: Address
+    holderName: string | undefined
+    keyId: Address
+    keyType: 'secp256k1' | 'p256'
+    publicKey?: Hex
+  },
 ): Promise<KeyRow> {
   const row = await inviteRow(code)
   if (row.holderAddress) throw new KovaError('conflict', 'Someone already accepted this allowance.')
   if (isAddressEqual(input.holder, row.ownerAddress as Address))
-    throw new KovaError('invalid_request', 'This is your own allowance. Send the link to the person it’s for.')
+    throw new KovaError(
+      'invalid_request',
+      'This is your own allowance. Send the link to the person it’s for.',
+    )
   const [updated] = await db
     .update(schema.walletKeys)
     .set({

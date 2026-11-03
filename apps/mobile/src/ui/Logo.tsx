@@ -20,24 +20,60 @@ export const WAVES = [
 const SHINE = 'M40.8 20.5 A17 17 0 0 1 50.4 29.3'
 
 /** The R coin. On ink, pass `ink={colors.white}` and a darker `shadow`. */
-export function LogoMark({ size = 64, ink = colors.ink, shadow = colors.ink }: { size?: number; ink?: string; shadow?: string }) {
+export function LogoMark({
+  size = 64,
+  ink = colors.ink,
+  shadow = colors.ink,
+}: {
+  size?: number
+  ink?: string
+  shadow?: string
+}) {
   const weight = size >= 40 ? 19 : 21
   return (
     <Svg width={size} height={size} viewBox="0 0 200 200" accessibilityLabel="Ren">
       <G transform="translate(55.1 24.5) scale(1.36)">
         <Circle cx={35} cy={40} r={25} fill={shadow} />
         <Circle cx={35} cy={36.5} r={25} fill={colors.coral} stroke={ink} strokeWidth={5} />
-        {size >= 40 ? <Path d={SHINE} fill="none" stroke={colors.white} strokeWidth={4.5} strokeLinecap="round" /> : null}
+        {size >= 40 ? (
+          <Path
+            d={SHINE}
+            fill="none"
+            stroke={colors.white}
+            strokeWidth={4.5}
+            strokeLinecap="round"
+          />
+        ) : null}
         <Path d="M10 19 V92" stroke={ink} strokeWidth={weight} strokeLinecap="round" fill="none" />
-        <Path d="M34 62 L56 92" stroke={ink} strokeWidth={weight} strokeLinecap="round" fill="none" />
+        <Path
+          d="M34 62 L56 92"
+          stroke={ink}
+          strokeWidth={weight}
+          strokeLinecap="round"
+          fill="none"
+        />
       </G>
     </Svg>
   )
 }
 
 /** "Ren": the R coin as its capital, then e and n in the same stroke. `height` is the full height. */
-export function Wordmark({ height = 28, ink = colors.ink, shadow = colors.ink }: { height?: number; ink?: string; shadow?: string }) {
-  const line = { stroke: ink, strokeWidth: 15.5, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const, fill: 'none' }
+export function Wordmark({
+  height = 28,
+  ink = colors.ink,
+  shadow = colors.ink,
+}: {
+  height?: number
+  ink?: string
+  shadow?: string
+}) {
+  const line = {
+    stroke: ink,
+    strokeWidth: 15.5,
+    strokeLinecap: 'round' as const,
+    strokeLinejoin: 'round' as const,
+    fill: 'none',
+  }
   return (
     <Svg width={(height * 212) / 94} height={height} viewBox="0 8 212 94" accessibilityLabel="Ren">
       <Circle cx={35} cy={40} r={25} fill={shadow} />
@@ -53,9 +89,23 @@ export function Wordmark({ height = 28, ink = colors.ink, shadow = colors.ink }:
 }
 
 /** The tap-to-pay symbol: a stem and three waves. On ink, pass `stem={colors.white}`. */
-export function TapMark({ size = 24, stem = colors.ink, wave = colors.coral }: { size?: number; stem?: string; wave?: string }) {
+export function TapMark({
+  size = 24,
+  stem = colors.ink,
+  wave = colors.coral,
+}: {
+  size?: number
+  stem?: string
+  wave?: string
+}) {
   return (
-    <Svg width={size} height={size} viewBox="0 0 200 200" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Svg
+      width={size}
+      height={size}
+      viewBox="0 0 200 200"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
       <Path d={STEM} stroke={stem} strokeWidth={19} strokeLinecap="round" />
       {WAVES.map((d) => (
         <Path key={d} d={d} stroke={wave} strokeWidth={17} strokeLinecap="round" fill="none" />

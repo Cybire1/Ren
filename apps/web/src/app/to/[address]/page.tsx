@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { getAddress, isAddress } from 'viem'
 import { Brand, Icon } from '@/components/brand'
 import { Avatar } from '@/components/wallet/ui'
-import { parseScanned } from '@/lib/wallet/links'
 import { chainName } from '@/lib/chain'
+import { parseScanned } from '@/lib/wallet/links'
 
 type Props = {
   params: Promise<{ address: string }>
@@ -84,8 +84,8 @@ export default async function PayPersonPage(props: Props) {
           </a>
         </div>
         <p className="w-fine">
-          Pays from your Ren wallet, in dollars on {chainName}. {firstName} gets it in about a second,
-          and Ren covers the fee. New to Ren? Your wallet takes a passkey and a moment.
+          Pays from your Ren wallet, in dollars on {chainName}. {firstName} gets it in about a
+          second, and Ren covers the fee. New to Ren? Your wallet takes a passkey and a moment.
         </p>
       </div>
     </main>

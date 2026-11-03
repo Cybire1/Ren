@@ -78,7 +78,12 @@ export default function KeysScreen() {
             ) : null}
 
             <View style={styles.new}>
-              <NewTile icon="terminal" label="New agent key" sub="For Claude or any AI agent" onPress={() => router.push('/keys/agent')} />
+              <NewTile
+                icon="terminal"
+                label="New agent key"
+                sub="For Claude or any AI agent"
+                onPress={() => router.push('/keys/agent')}
+              />
               <NewTile
                 icon="user"
                 label="Give an allowance"
@@ -89,7 +94,14 @@ export default function KeysScreen() {
               />
             </View>
 
-            <Sticker onPress={() => router.push('/keys/card')} lift fill={colors.coralTint} radius={22} style={{ marginTop: 10 }} accessibilityLabel="Link a Ren Card">
+            <Sticker
+              onPress={() => router.push('/keys/card')}
+              lift
+              fill={colors.coralTint}
+              radius={22}
+              style={{ marginTop: 10 }}
+              accessibilityLabel="Link a Ren Card"
+            >
               <View style={styles.cardTile}>
                 <View style={[styles.disc, { backgroundColor: colors.coral }]}>
                   <Icon name="card" size={18} color={colors.white} />
@@ -142,7 +154,12 @@ export default function KeysScreen() {
                 </Txt>
                 <View style={styles.list}>
                   {keys.received.map((key, i) => (
-                    <KeyRow key={key.id} keyView={key} received last={i === keys.received.length - 1} />
+                    <KeyRow
+                      key={key.id}
+                      keyView={key}
+                      received
+                      last={i === keys.received.length - 1}
+                    />
                   ))}
                 </View>
               </>
@@ -153,9 +170,21 @@ export default function KeysScreen() {
         <Txt weight="heavy" size={20} style={styles.section}>
           How keys work
         </Txt>
-        <Fact icon="lock" title="Tempo enforces the limit" text="Each key is an access key on your wallet. It can only pay in dollars, up to its limit each day or week, until its end date. Not even Ren can raise it." />
-        <Fact icon="bell" title="Agents ask before big payments" text="Ren checks an agent’s rules before it signs: the most a payment can be, and above what it waits for your yes." />
-        <Fact icon="snow" title="Freeze in one tap" text="Freezing stops a key at once and sets its limit on Tempo to zero. Removing it is for good." />
+        <Fact
+          icon="lock"
+          title="Tempo enforces the limit"
+          text="Each key is an access key on your wallet. It can only pay in dollars, up to its limit each day or week, until its end date. Not even Ren can raise it."
+        />
+        <Fact
+          icon="bell"
+          title="Agents ask before big payments"
+          text="Ren checks an agent’s rules before it signs: the most a payment can be, and above what it waits for your yes."
+        />
+        <Fact
+          icon="snow"
+          title="Freeze in one tap"
+          text="Freezing stops a key at once and sets its limit on Tempo to zero. Removing it is for good."
+        />
       </ScrollView>
     </Screen>
   )
@@ -177,7 +206,14 @@ function NewTile({
   disc?: string
 }) {
   return (
-    <Sticker onPress={onPress} lift fill={fill} radius={22} style={{ flex: 1 }} accessibilityLabel={label}>
+    <Sticker
+      onPress={onPress}
+      lift
+      fill={fill}
+      radius={22}
+      style={{ flex: 1 }}
+      accessibilityLabel={label}
+    >
       <View style={styles.tile}>
         <View style={styles.tileTop}>
           <View style={[styles.disc, { backgroundColor: disc }]}>
@@ -222,15 +258,65 @@ const styles = StyleSheet.create({
   new: { flexDirection: 'row', gap: 10, marginTop: 16 },
   tile: { padding: 12, paddingBottom: 14, gap: 2, minHeight: 118 },
   cardTile: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
-  tileTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+  tileTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
   disc: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  plus: { width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
-  list: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.card, paddingHorizontal: 14 },
+  plus: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  list: {
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.card,
+    paddingHorizontal: 14,
+  },
   you: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   rule: { borderBottomWidth: 1, borderBottomColor: colors.sunken },
-  youBadge: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: colors.ink, backgroundColor: '#FFF0B5', alignItems: 'center', justifyContent: 'center' },
-  youChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999, backgroundColor: colors.ink },
-  fact: { flexDirection: 'row', gap: 12, padding: 14, marginBottom: 8, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface },
-  factIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  youBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: '#FFF0B5',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  youChip: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 999,
+    backgroundColor: colors.ink,
+  },
+  fact: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 14,
+    marginBottom: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+  },
+  factIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 24 },
 })

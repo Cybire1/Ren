@@ -39,7 +39,12 @@ export function Txt({
     <Text
       {...rest}
       style={[
-        { fontFamily: fonts[weight], fontSize: exact ? size : size * density.text, color, fontVariant: ['tabular-nums'] },
+        {
+          fontFamily: fonts[weight],
+          fontSize: exact ? size : size * density.text,
+          color,
+          fontVariant: ['tabular-nums'],
+        },
         style,
       ]}
     />
@@ -85,7 +90,9 @@ export function Sticker({
 }) {
   const scale = useSharedValue(1)
   const sink = useSharedValue(0)
-  const face = useAnimatedStyle(() => ({ transform: [{ translateY: sink.value }, { scale: scale.value }] }))
+  const face = useAnimatedStyle(() => ({
+    transform: [{ translateY: sink.value }, { scale: scale.value }],
+  }))
   // A pressable or lifted sticker fills the box that carries the layout (the Pressable, or the
   // shadow's frame); a plain one takes exactly the size its style or content gives it.
   const framed = !!onPress || lift
@@ -219,7 +226,12 @@ export function RoundButton({
       onPress={onPress}
       style={({ pressed }) => [
         styles.round,
-        { width: size, height: size, borderRadius: size / 2, backgroundColor: fill ?? 'rgba(16,35,63,0.07)' },
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: fill ?? 'rgba(16,35,63,0.07)',
+        },
         pressed && { transform: [{ scale: 0.92 }], opacity: 0.8 },
       ]}
     >
@@ -228,7 +240,15 @@ export function RoundButton({
   )
 }
 
-export function TextLink({ label, onPress, color = colors.ink }: { label: string; onPress: () => void; color?: string }) {
+export function TextLink({
+  label,
+  onPress,
+  color = colors.ink,
+}: {
+  label: string
+  onPress: () => void
+  color?: string
+}) {
   return (
     <Pressable accessibilityRole="link" onPress={onPress} hitSlop={10}>
       {({ pressed }) => (
@@ -294,7 +314,11 @@ export function Header({
   return (
     <View style={styles.header}>
       {onBack ? (
-        <RoundButton icon={backIcon} label={backIcon === 'close' ? 'Close' : 'Back'} onPress={onBack} />
+        <RoundButton
+          icon={backIcon}
+          label={backIcon === 'close' ? 'Close' : 'Back'}
+          onPress={onBack}
+        />
       ) : (
         <View style={{ width: 36 }} />
       )}
@@ -329,7 +353,15 @@ export function Chip({ label, dot, icon }: { label: string; dot?: string; icon?:
 }
 
 /** Fades and lifts content in once, when a screen first appears. */
-export function Rise({ children, delay = 0, style }: { children: ReactNode; delay?: number; style?: StyleProp<ViewStyle> }) {
+export function Rise({
+  children,
+  delay = 0,
+  style,
+}: {
+  children: ReactNode
+  delay?: number
+  style?: StyleProp<ViewStyle>
+}) {
   const shown = useSharedValue(0)
   useEffect(() => {
     shown.value = withTiming(1, { duration: 520 + delay })
@@ -344,7 +376,14 @@ export function Rise({ children, delay = 0, style }: { children: ReactNode; dela
 
 const styles = StyleSheet.create({
   /** The hard ink shadow a lifted sticker stands on: its own shape, set LIFT points lower. */
-  plate: { position: 'absolute', left: 0, right: 0, top: LIFT, bottom: -LIFT, backgroundColor: colors.ink },
+  plate: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: LIFT,
+    bottom: -LIFT,
+    backgroundColor: colors.ink,
+  },
   pill: {
     height: 48,
     borderRadius: 24,

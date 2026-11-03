@@ -10,26 +10,55 @@ import { Sticker, Txt } from './primitives'
  * something travelling along it — the plane leaving on Send, a coin dropping in on Request.
  * It stands on the hard ink shadow, and sinks into it when pressed.
  */
-export function ActionTile({
-  kind,
-  onPress,
-}: {
-  kind: 'send' | 'request'
-  onPress: () => void
-}) {
+export function ActionTile({ kind, onPress }: { kind: 'send' | 'request'; onPress: () => void }) {
   const send = kind === 'send'
   const tone: { fill: string; disc: string; icon: IconName; label: string; caption: string } = send
-    ? { fill: colors.coralSoft, disc: colors.coral, icon: 'send', label: 'Send', caption: 'Lands in seconds' }
-    : { fill: colors.surface, disc: colors.teal, icon: 'receive', label: 'Request', caption: 'Get paid by link' }
+    ? {
+        fill: colors.coralSoft,
+        disc: colors.coral,
+        icon: 'send',
+        label: 'Send',
+        caption: 'Lands in seconds',
+      }
+    : {
+        fill: colors.surface,
+        disc: colors.teal,
+        icon: 'receive',
+        label: 'Request',
+        caption: 'Get paid by link',
+      }
 
   return (
-    <Sticker lift fill={tone.fill} radius={22} style={{ flex: 1 }} onPress={onPress} accessibilityLabel={`${tone.label}. ${tone.caption}`}>
+    <Sticker
+      lift
+      fill={tone.fill}
+      radius={22}
+      style={{ flex: 1 }}
+      onPress={onPress}
+      accessibilityLabel={`${tone.label}. ${tone.caption}`}
+    >
       <View style={StyleSheet.absoluteFill} pointerEvents="none">
         <Svg width="100%" height="100%" viewBox="0 0 140 96" preserveAspectRatio="xMaxYMin meet">
           {send ? (
-            <Path d="M40 30 C62 30 74 14 100 12" fill="none" stroke={colors.ink} strokeWidth={1.8} strokeDasharray="1 5" strokeLinecap="round" opacity={0.55} />
+            <Path
+              d="M40 30 C62 30 74 14 100 12"
+              fill="none"
+              stroke={colors.ink}
+              strokeWidth={1.8}
+              strokeDasharray="1 5"
+              strokeLinecap="round"
+              opacity={0.55}
+            />
           ) : (
-            <Path d="M112 4 C112 18 90 22 66 30" fill="none" stroke={colors.ink} strokeWidth={1.8} strokeDasharray="1 5" strokeLinecap="round" opacity={0.55} />
+            <Path
+              d="M112 4 C112 18 90 22 66 30"
+              fill="none"
+              stroke={colors.ink}
+              strokeWidth={1.8}
+              strokeDasharray="1 5"
+              strokeLinecap="round"
+              opacity={0.55}
+            />
           )}
         </Svg>
       </View>

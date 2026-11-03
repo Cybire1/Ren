@@ -1,6 +1,6 @@
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
 import { colors } from '@/lib/theme'
-import { Reni, reniFeet, ReceiptTerminal, receipt } from './art'
+import { ReceiptTerminal, Reni, receipt, reniFeet } from './art'
 import { Burst, Hop } from './motion'
 
 /** The shared "it worked" moment: a receipt prints, Reni cheers on top, sparkles burst. */

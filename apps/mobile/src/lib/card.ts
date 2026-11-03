@@ -215,8 +215,7 @@ export interface LinkPlan {
  */
 export async function linkCard(plan: LinkPlan, signTypedData: SignTypedData): Promise<KovaCard> {
   const config = await getCardConfig()
-  if (!config.ready || !config.contract)
-    throw new CardError('Ren Cards aren’t switched on yet.', 0)
+  if (!config.ready || !config.contract) throw new CardError('Ren Cards aren’t switched on yet.', 0)
   const contract = config.contract
   const deadline = inTenMinutes()
 

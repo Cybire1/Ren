@@ -2,12 +2,28 @@ import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { useEffect, useMemo, useState } from 'react'
-import { Pressable, ScrollView, StyleSheet, TextInput, useWindowDimensions, View } from 'react-native'
-import Animated, { FadeInLeft, FadeInRight, FadeIn } from 'react-native-reanimated'
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  useWindowDimensions,
+  View,
+} from 'react-native'
+import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated'
 import { type Address, getAddress, isAddressEqual } from 'viem'
 import { chainName, notesTravel } from '@/lib/config'
 import { parseScanned } from '@/lib/links'
-import { applyKey, currencyInfo, type DisplayCurrency, displayCurrencies, formatLocal, formatUsd, groupTyped, toBase } from '@/lib/money'
+import {
+  applyKey,
+  currencyInfo,
+  type DisplayCurrency,
+  displayCurrencies,
+  formatLocal,
+  formatUsd,
+  groupTyped,
+  toBase,
+} from '@/lib/money'
 import { rateLabel } from '@/lib/rates'
 import { colors, fonts } from '@/lib/theme'
 import { type Contact, type Entry, isUnnamed, useWallet } from '@/lib/wallet'
@@ -47,7 +63,15 @@ const SIDE = 20
  * same sheet becomes the receipt. The sheet is sized to each step, so it grows for the keypad and
  * settles low once the money has landed, showing your balance behind it as it drops.
  */
-export function SendSheet({ payee, privately = false, from }: { payee?: Payee; privately?: boolean; from?: string }) {
+export function SendSheet({
+  payee,
+  privately = false,
+  from,
+}: {
+  payee?: Payee
+  privately?: boolean
+  from?: string
+}) {
   const { profile, balance, send, contacts, noteReaches, privacy, keys } = useWallet()
   // Private: into their private balance on the zone. On from Private; a switch from Send.
   const [secret, setSecret] = useState(privately && !!privacy.zone)
@@ -83,7 +107,10 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
   const saved = to ? contacts.find((c) => isAddressEqual(c.address, to.address))?.name : undefined
   const name = to ? (saved && !isUnnamed(saved) ? saved : to.name) || short(to.address) : ''
   const first = name.split(' ')[0]
-  const theirs = to && (displayCurrencies as readonly string[]).includes(to.currency ?? '') ? (to.currency as DisplayCurrency) : null
+  const theirs =
+    to && (displayCurrencies as readonly string[]).includes(to.currency ?? '')
+      ? (to.currency as DisplayCurrency)
+      : null
   const local = theirs && theirs !== 'USD' ? theirs : null
   const dollars = typed === '' ? 0 : Number(typed)
   const amount = dollars > 0 ? toBase(dollars.toFixed(2)) : 0n
@@ -120,19 +147,23 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
             at: Date.now(),
           }))
         : secret
-        ? await privacy.sendPrivately({ address: to.address, name }, amount).then((r) => ({
-            id: r.hash,
-            kind: 'sent' as const,
-            amount: amount.toString(),
-            name,
-            detail: 'Sent privately',
-            address: to.address,
-            txHash: r.hash,
-            ms: r.ms,
-            at: Date.now(),
-            private: 'both' as const,
-          }))
-        : await send({ address: to.address, name, currency: theirs ?? undefined }, amount, note.trim() || undefined)
+          ? await privacy.sendPrivately({ address: to.address, name }, amount).then((r) => ({
+              id: r.hash,
+              kind: 'sent' as const,
+              amount: amount.toString(),
+              name,
+              detail: 'Sent privately',
+              address: to.address,
+              txHash: r.hash,
+              ms: r.ms,
+              at: Date.now(),
+              private: 'both' as const,
+            }))
+          : await send(
+              { address: to.address, name, currency: theirs ?? undefined },
+              amount,
+              note.trim() || undefined,
+            )
       // Let Reni finish the leg in flight: the flight is timed to about what the chain takes.
       await new Promise((r) => setTimeout(r, Math.max(0, 1360 - (Date.now() - started))))
       setLeg('landed')
@@ -217,7 +248,13 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
           </View>
 
           <View style={styles.entry}>
-            <Txt weight="semi" size={64} style={[styles.big, typed === '' && { color: '#B4B9B8' }]} numberOfLines={1} adjustsFontSizeToFit>
+            <Txt
+              weight="semi"
+              size={64}
+              style={[styles.big, typed === '' && { color: '#B4B9B8' }]}
+              numberOfLines={1}
+              adjustsFontSizeToFit
+            >
               ${groupTyped(typed)}
             </Txt>
             <View style={styles.subRow}>
@@ -239,7 +276,11 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
               ) : null}
             </View>
             {allowances.length && !privately ? (
-              <View style={styles.fromRow} accessibilityRole="radiogroup" accessibilityLabel="Pay from">
+              <View
+                style={styles.fromRow}
+                accessibilityRole="radiogroup"
+                accessibilityLabel="Pay from"
+              >
                 <Txt weight="heavy" size={12} color={colors.muted} style={{ letterSpacing: 0.6 }}>
                   FROM
                 </Txt>
@@ -265,7 +306,11 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
                     accessibilityRole="radio"
                     accessibilityState={{ checked: allowance?.id === h.id }}
                   >
-                    <Txt weight="bold" size={13} color={allowance?.id === h.id ? colors.white : colors.ink}>
+                    <Txt
+                      weight="bold"
+                      size={13}
+                      color={allowance?.id === h.id ? colors.white : colors.ink}
+                    >
                       {giver(h.owner)}’s · {formatUsd(h.remaining)}
                     </Txt>
                   </Pressable>
@@ -291,7 +336,9 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
                     Send privately
                   </Txt>
                   <Txt size={12} color={secret ? colors.onInk : colors.muted} numberOfLines={2}>
-                    {secret ? `Into their private balance. ${chainName} won’t show who it’s for` : `${chainName} shows it as you paying them`}
+                    {secret
+                      ? `Into their private balance. ${chainName} won’t show who it’s for`
+                      : `${chainName} shows it as you paying them`}
                   </Txt>
                 </View>
                 <View style={[styles.track, secret && styles.trackOn]}>
@@ -300,38 +347,65 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
               </Pressable>
             ) : null}
             {/* On Monad a note is sealed for the two of you; on Tempo it stays on this phone. */}
-            {secret ? null : <View style={styles.note}>
-              {notesTravel ? <Icon name="lock" size={15} color={colors.muted} /> : null}
-              <TextInput
-                value={note}
-                onChangeText={setNote}
-                placeholder={notesTravel ? 'Private note' : 'What’s it for?'}
-                placeholderTextColor="#8C9799"
-                maxLength={60}
-                accessibilityLabel={notesTravel ? 'Private note, only you and them can read it' : 'What it’s for, kept on this phone'}
-                style={styles.noteInput}
-              />
-            </View>}
+            {secret ? null : (
+              <View style={styles.note}>
+                {notesTravel ? <Icon name="lock" size={15} color={colors.muted} /> : null}
+                <TextInput
+                  value={note}
+                  onChangeText={setNote}
+                  placeholder={notesTravel ? 'Private note' : 'What’s it for?'}
+                  placeholderTextColor="#8C9799"
+                  maxLength={60}
+                  accessibilityLabel={
+                    notesTravel
+                      ? 'Private note, only you and them can read it'
+                      : 'What it’s for, kept on this phone'
+                  }
+                  style={styles.noteInput}
+                />
+              </View>
+            )}
           </View>
           <Keypad onKey={(key) => setTyped((v) => applyKey(v, key))} size={56} />
           <View style={{ marginTop: 14 }}>
-            <PillButton label={over ? 'More than you have' : 'Review'} disabled={amount === 0n || over} onPress={() => moveTo('review')} />
+            <PillButton
+              label={over ? 'More than you have' : 'Review'}
+              disabled={amount === 0n || over}
+              onPress={() => moveTo('review')}
+            />
           </View>
-          <NameSheet person={naming ? { address: to.address, name } : null} onClose={() => setNaming(false)} />
+          <NameSheet
+            person={naming ? { address: to.address, name } : null}
+            onClose={() => setNaming(false)}
+          />
         </Animated.View>
       ) : null}
 
       {step === 'review' && to && profile ? (
         <Animated.View key="review" entering={enter} style={pad}>
           <View style={styles.top}>
-            <Round icon="back" label="Change the amount" onPress={() => moveTo('amount')} disabled={busy} />
+            <Round
+              icon="back"
+              label="Change the amount"
+              onPress={() => moveTo('amount')}
+              disabled={busy}
+            />
             <Txt weight="semi" size={17} style={{ flex: 1 }}>
-              {busy ? `Sending to ${first}` : secret ? 'Check and send privately' : 'Check and send'}
+              {busy
+                ? `Sending to ${first}`
+                : secret
+                  ? 'Check and send privately'
+                  : 'Check and send'}
             </Txt>
           </View>
 
           <View style={{ marginTop: 18 }}>
-            <ArcRoute width={inner} you={{ name: profile.name, id: profile.address }} them={{ name, id: to.address }} leg={leg} />
+            <ArcRoute
+              width={inner}
+              you={{ name: profile.name, id: profile.address }}
+              them={{ name, id: to.address }}
+              leg={leg}
+            />
           </View>
 
           <View style={styles.sums}>
@@ -339,15 +413,29 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
               {formatUsd(amount)}
             </Txt>
             <Txt size={15} color={colors.onTint}>
-              {local ? `${first} gets ${formatUsd(amount)}, about ${formatLocal(dollars, local)}` : isUnnamed(name) ? 'They get all of it' : `${first} gets all of it`}
+              {local
+                ? `${first} gets ${formatUsd(amount)}, about ${formatLocal(dollars, local)}`
+                : isUnnamed(name)
+                  ? 'They get all of it'
+                  : `${first} gets all of it`}
             </Txt>
           </View>
 
           <View style={styles.facts}>
             {secret ? <Fact label="Who knows" value={`You and ${first}`} icon="lock" /> : null}
-            {secret ? <Fact label={`${chainName} sees`} value={`${formatUsd(amount)} going in`} hint="Not who it’s for" /> : null}
+            {secret ? (
+              <Fact
+                label={`${chainName} sees`}
+                value={`${formatUsd(amount)} going in`}
+                hint="Not who it’s for"
+              />
+            ) : null}
             <Fact label="Fee" value="$0.00, Ren covers it" />
-            <Fact label="Arrives" value={secret ? 'In their private balance, in seconds' : 'In about a second'} icon="bolt" />
+            <Fact
+              label="Arrives"
+              value={secret ? 'In their private balance, in seconds' : 'In about a second'}
+              icon="bolt"
+            />
             {local ? (
               <Fact
                 label="Rate"
@@ -360,7 +448,13 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
                 label="Note"
                 value={note.trim()}
                 icon="lock"
-                hint={reaches === null ? 'Sealing…' : reaches ? `Sealed: only you and ${first} can read it` : `Sealed for you; ${first} can’t get private notes yet`}
+                hint={
+                  reaches === null
+                    ? 'Sealing…'
+                    : reaches
+                      ? `Sealed: only you and ${first} can read it`
+                      : `Sealed for you; ${first} can’t get private notes yet`
+                }
               />
             ) : note.trim() ? (
               <Fact label="For" value={note.trim()} hint="Kept on this phone" />
@@ -377,12 +471,26 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
             </Animated.View>
           ) : null}
           {over ? (
-            <Txt weight="medium" size={14} color={colors.danger} style={{ textAlign: 'center', marginBottom: 10 }}>
+            <Txt
+              weight="medium"
+              size={14}
+              color={colors.danger}
+              style={{ textAlign: 'center', marginBottom: 10 }}
+            >
               You have {formatUsd(balance ?? 0n)}. Add money or send less.
             </Txt>
           ) : null}
 
-          <SlideToSend label={problem ? 'Slide to try again' : `Slide to send ${formatUsd(amount)}${secret ? ' privately' : ''}`} busy={busy} disabled={over || amount === 0n} onSend={go} />
+          <SlideToSend
+            label={
+              problem
+                ? 'Slide to try again'
+                : `Slide to send ${formatUsd(amount)}${secret ? ' privately' : ''}`
+            }
+            busy={busy}
+            disabled={over || amount === 0n}
+            onSend={go}
+          />
           <Txt size={12} color={colors.muted} style={{ textAlign: 'center', marginTop: 10 }}>
             Face ID confirms it. Payments on {chainName} can’t be undone.
           </Txt>
@@ -390,7 +498,11 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
       ) : null}
 
       {step === 'sent' && to && entry ? (
-        <Animated.View key="sent" entering={FadeIn.duration(320)} style={[pad, { alignItems: 'center', paddingTop: 22 }]}>
+        <Animated.View
+          key="sent"
+          entering={FadeIn.duration(320)}
+          style={[pad, { alignItems: 'center', paddingTop: 22 }]}
+        >
           <ReniStage pose={secret ? 'key' : 'cheer'} size={150} />
           <Burst
             spots={[
@@ -411,7 +523,9 @@ export function SendSheet({ payee, privately = false, from }: { payee?: Payee; p
           <View style={styles.time}>
             <Icon name="bolt" size={16} color={colors.white} />
             <Txt weight="semi" size={14} color={colors.white}>
-              {entry.ms ? `${secret ? 'Sent' : 'Arrived'} in ${(entry.ms / 1000).toFixed(2)} s on ${chainName}` : `Arrived on ${chainName}`}
+              {entry.ms
+                ? `${secret ? 'Sent' : 'Arrived'} in ${(entry.ms / 1000).toFixed(2)} s on ${chainName}`
+                : `Arrived on ${chainName}`}
             </Txt>
           </View>
           <View style={{ alignSelf: 'stretch', marginTop: 22, gap: 12 }}>
@@ -442,20 +556,38 @@ function Who({ onPick }: { onPick: (p: Payee) => void }) {
 
   const people = useMemo(() => {
     const lastWith = (a: Address) => activity.find((e) => e.address && isAddressEqual(e.address, a))
-    return contacts.map((c) => ({ ...c, last: lastWith(c.address) })).sort((x, y) => (y.last?.at ?? 0) - (x.last?.at ?? 0))
+    return contacts
+      .map((c) => ({ ...c, last: lastWith(c.address) }))
+      .sort((x, y) => (y.last?.at ?? 0) - (x.last?.at ?? 0))
   }, [contacts, activity])
 
   const query = text.trim().toLowerCase()
-  const shown = query ? people.filter((p) => p.name.toLowerCase().includes(query) || p.address.toLowerCase().includes(query)) : people
+  const shown = query
+    ? people.filter(
+        (p) => p.name.toLowerCase().includes(query) || p.address.toLowerCase().includes(query),
+      )
+    : people
   const direct = query ? parseScanned(text) : null
 
   const go = (value: string) => {
     const scanned = parseScanned(value)
     if (!scanned) return setProblem('That isn’t a Ren link or a wallet address.')
-    if (scanned.kind === 'charge') return router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
-    if (scanned.kind === 'pair') return router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
-    if (scanned.kind === 'stall') return router.replace({ pathname: '/s/[slug]', params: { slug: scanned.slug, ...(scanned.table ? { table: scanned.table } : {}) } })
-    onPick({ address: getAddress(scanned.address), name: scanned.name, currency: scanned.currency, amount: scanned.amount, note: scanned.note })
+    if (scanned.kind === 'charge')
+      return router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
+    if (scanned.kind === 'pair')
+      return router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
+    if (scanned.kind === 'stall')
+      return router.replace({
+        pathname: '/s/[slug]',
+        params: { slug: scanned.slug, ...(scanned.table ? { table: scanned.table } : {}) },
+      })
+    onPick({
+      address: getAddress(scanned.address),
+      name: scanned.name,
+      currency: scanned.currency,
+      amount: scanned.amount,
+      note: scanned.note,
+    })
   }
 
   const paste = async () => {
@@ -497,20 +629,31 @@ function Who({ onPick }: { onPick: (p: Payee) => void }) {
         )}
       </View>
       {problem ? (
-        <Txt weight="medium" size={14} color={colors.danger} style={{ marginTop: 8, marginLeft: 6 }}>
+        <Txt
+          weight="medium"
+          size={14}
+          color={colors.danger}
+          style={{ marginTop: 8, marginLeft: 6 }}
+        >
           {problem}
         </Txt>
       ) : null}
 
       {direct && direct.kind === 'person' ? (
-        <Pressable accessibilityRole="button" onPress={() => go(text)} style={({ pressed }) => [styles.direct, pressed && { transform: [{ scale: 0.98 }] }]}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => go(text)}
+          style={({ pressed }) => [styles.direct, pressed && { transform: [{ scale: 0.98 }] }]}
+        >
           <Avatar name={direct.name ?? direct.address} id={direct.address} size={48} />
           <View style={{ flex: 1 }}>
             <Txt weight="semi" size={16} color={colors.white}>
               Send to {direct.name || short(direct.address)}
             </Txt>
             <Txt size={13} color={colors.onInk}>
-              {direct.amount ? `They asked for $${direct.amount}` : `${chainName} address, ready to pay`}
+              {direct.amount
+                ? `They asked for $${direct.amount}`
+                : `${chainName} address, ready to pay`}
             </Txt>
           </View>
           <View style={styles.directGo}>
@@ -527,14 +670,23 @@ function Who({ onPick }: { onPick: (p: Payee) => void }) {
           <Txt weight="semi" size={18}>
             Send your first payment
           </Txt>
-          <Txt size={14} color={colors.muted} style={{ textAlign: 'center', marginTop: 4, lineHeight: 20 }}>
+          <Txt
+            size={14}
+            color={colors.muted}
+            style={{ textAlign: 'center', marginTop: 4, lineHeight: 20 }}
+          >
             Scan a friend’s Ren code or paste their link. They’ll be saved here for next time.
           </Txt>
         </View>
       ) : null}
 
       {!query && people.length > 3 ? (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -SIDE, marginTop: 20 }} contentContainerStyle={{ paddingHorizontal: SIDE, gap: 12 }}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={{ marginHorizontal: -SIDE, marginTop: 20 }}
+          contentContainerStyle={{ paddingHorizontal: SIDE, gap: 12 }}
+        >
           {people.slice(0, 8).map((p) => (
             <Pressable
               key={p.address}
@@ -560,7 +712,11 @@ function Who({ onPick }: { onPick: (p: Payee) => void }) {
             {query ? `Matches (${shown.length})` : 'Everyone'}
           </Txt>
           <View style={styles.list}>
-            <ScrollView style={{ maxHeight: 64 * 4.5 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
+            <ScrollView
+              style={{ maxHeight: 64 * 4.5 }}
+              keyboardShouldPersistTaps="handled"
+              nestedScrollEnabled
+            >
               {shown.map((p, i) => (
                 <Pressable
                   key={p.address}
@@ -569,7 +725,11 @@ function Who({ onPick }: { onPick: (p: Payee) => void }) {
                   accessibilityHint="Hold to rename"
                   onPress={() => onPick({ address: p.address, name: p.name, currency: p.currency })}
                   onLongPress={() => setNaming(p)}
-                  style={({ pressed }) => [styles.row, i < shown.length - 1 && styles.rule, pressed && { backgroundColor: colors.sunken }]}
+                  style={({ pressed }) => [
+                    styles.row,
+                    i < shown.length - 1 && styles.rule,
+                    pressed && { backgroundColor: colors.sunken },
+                  ]}
                 >
                   <Avatar name={p.name} id={p.address} size={42} />
                   <View style={{ flex: 1 }}>
@@ -608,10 +768,22 @@ function ago(at: number) {
 function story(last: Entry | undefined) {
   if (!last) return 'No payments yet'
   const amount = formatUsd(BigInt(last.amount))
-  return last.kind === 'sent' || last.kind === 'paid' ? `You sent ${amount} · ${ago(last.at)}` : `Paid you ${amount} · ${ago(last.at)}`
+  return last.kind === 'sent' || last.kind === 'paid'
+    ? `You sent ${amount} · ${ago(last.at)}`
+    : `Paid you ${amount} · ${ago(last.at)}`
 }
 
-function Fact({ label, value, hint, icon }: { label: string; value: string; hint?: string; icon?: IconName }) {
+function Fact({
+  label,
+  value,
+  hint,
+  icon,
+}: {
+  label: string
+  value: string
+  hint?: string
+  icon?: IconName
+}) {
   return (
     <View style={styles.fact}>
       <Txt size={15} color={colors.muted}>
@@ -619,7 +791,9 @@ function Fact({ label, value, hint, icon }: { label: string; value: string; hint
       </Txt>
       <View style={{ flexShrink: 1, alignItems: 'flex-end' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          {icon ? <Icon name={icon} size={15} color={icon === 'bolt' ? colors.coral : colors.ink} /> : null}
+          {icon ? (
+            <Icon name={icon} size={15} color={icon === 'bolt' ? colors.coral : colors.ink} />
+          ) : null}
           <Txt weight="semi" size={15} numberOfLines={1}>
             {value}
           </Txt>
@@ -634,7 +808,17 @@ function Fact({ label, value, hint, icon }: { label: string; value: string; hint
   )
 }
 
-function Round({ icon, label, onPress, disabled }: { icon: IconName; label: string; onPress: () => void; disabled?: boolean }) {
+function Round({
+  icon,
+  label,
+  onPress,
+  disabled,
+}: {
+  icon: IconName
+  label: string
+  onPress: () => void
+  disabled?: boolean
+}) {
   return (
     <Pressable
       accessibilityRole="button"
@@ -645,21 +829,39 @@ function Round({ icon, label, onPress, disabled }: { icon: IconName; label: stri
         void Haptics.selectionAsync()
         onPress()
       }}
-      style={({ pressed }) => [styles.round, disabled && { opacity: 0.35 }, pressed && { transform: [{ scale: 0.92 }] }]}
+      style={({ pressed }) => [
+        styles.round,
+        disabled && { opacity: 0.35 },
+        pressed && { transform: [{ scale: 0.92 }] },
+      ]}
     >
       <Icon name={icon} size={20} />
     </Pressable>
   )
 }
 
-function FieldButton({ icon, label, onPress, solid }: { icon: IconName; label: string; onPress: () => void; solid?: boolean }) {
+function FieldButton({
+  icon,
+  label,
+  onPress,
+  solid,
+}: {
+  icon: IconName
+  label: string
+  onPress: () => void
+  solid?: boolean
+}) {
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       hitSlop={6}
       onPress={onPress}
-      style={({ pressed }) => [styles.fieldButton, solid && { backgroundColor: colors.coral }, pressed && { transform: [{ scale: 0.94 }] }]}
+      style={({ pressed }) => [
+        styles.fieldButton,
+        solid && { backgroundColor: colors.coral },
+        pressed && { transform: [{ scale: 0.94 }] },
+      ]}
     >
       <Icon name={icon} size={18} color={solid ? colors.white : colors.ink} />
     </Pressable>
@@ -668,7 +870,14 @@ function FieldButton({ icon, label, onPress, solid }: { icon: IconName; label: s
 
 const styles = StyleSheet.create({
   fromRow: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, marginTop: 10 },
-  fromItem: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white },
+  fromItem: {
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+  },
   fromOn: { backgroundColor: colors.ink },
   fromAllow: { backgroundColor: colors.tealDeep },
   sheet: { backgroundColor: colors.paper },
@@ -685,14 +894,46 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   switchRowOn: { backgroundColor: colors.ink },
-  switchIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.sunken, alignItems: 'center', justifyContent: 'center' },
+  switchIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.sunken,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   switchIconOn: { backgroundColor: '#1E3557' },
-  track: { width: 42, height: 24, borderRadius: 12, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.sunken, justifyContent: 'center', paddingHorizontal: 2 },
+  track: {
+    width: 42,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.sunken,
+    justifyContent: 'center',
+    paddingHorizontal: 2,
+  },
   trackOn: { backgroundColor: colors.teal, borderColor: colors.white },
-  knob: { width: 16, height: 16, borderRadius: 8, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white },
+  knob: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+  },
   knobOn: { transform: [{ translateX: 18 }] },
   top: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingTop: 24 },
-  round: { width: 40, height: 40, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  round: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   whoRow: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
   pen: {
     position: 'absolute',
@@ -709,8 +950,20 @@ const styles = StyleSheet.create({
   },
   entry: { alignItems: 'center', paddingTop: 18, paddingBottom: 14 },
   big: { letterSpacing: -2 },
-  subRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8, marginTop: 2 },
-  pill: { height: 30, paddingHorizontal: 12, borderRadius: 15, backgroundColor: colors.sunken, justifyContent: 'center' },
+  subRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  pill: {
+    height: 30,
+    paddingHorizontal: 12,
+    borderRadius: 15,
+    backgroundColor: colors.sunken,
+    justifyContent: 'center',
+  },
   note: {
     marginTop: 14,
     width: 240,
@@ -727,10 +980,42 @@ const styles = StyleSheet.create({
   },
   noteInput: { flex: 1, height: '100%', fontFamily: fonts.medium, fontSize: 15, color: colors.ink },
   sums: { alignItems: 'center', marginTop: 4 },
-  facts: { marginTop: 18, marginBottom: 16, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 16, paddingVertical: 6 },
-  fact: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingVertical: 9 },
-  problem: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12, padding: 12, borderRadius: 16, backgroundColor: colors.coralSoft },
-  time: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 14, height: 34, paddingHorizontal: 14, borderRadius: 17, backgroundColor: colors.ink },
+  facts: {
+    marginTop: 18,
+    marginBottom: 16,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+  },
+  fact: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 9,
+  },
+  problem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    padding: 12,
+    borderRadius: 16,
+    backgroundColor: colors.coralSoft,
+  },
+  time: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 14,
+    height: 34,
+    paddingHorizontal: 14,
+    borderRadius: 17,
+    backgroundColor: colors.ink,
+  },
   field: {
     marginTop: 14,
     height: 50,
@@ -745,12 +1030,40 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   input: { flex: 1, height: '100%', fontFamily: fonts.medium, fontSize: 16, color: colors.ink },
-  fieldButton: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.sunken, alignItems: 'center', justifyContent: 'center' },
-  direct: { marginTop: 12, borderRadius: 24, backgroundColor: colors.ink, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  directGo: { width: 42, height: 42, borderRadius: 21, backgroundColor: colors.surface, alignItems: 'center', justifyContent: 'center' },
+  fieldButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.sunken,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  direct: {
+    marginTop: 12,
+    borderRadius: 24,
+    backgroundColor: colors.ink,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  directGo: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   section: { marginTop: 20, marginBottom: 8, marginLeft: 4 },
   recent: { width: 68, alignItems: 'center', gap: 6 },
-  list: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, overflow: 'hidden' },
+  list: {
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, height: 56 },
   rule: { borderBottomWidth: 1, borderColor: colors.sunken },
   empty: { alignItems: 'center', paddingTop: 18, paddingHorizontal: 12 },

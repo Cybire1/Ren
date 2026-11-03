@@ -16,8 +16,10 @@ import { PillButton, Sticker, Txt } from './primitives'
  */
 
 export const dollars = (value: string | null | undefined) => `$${Number(value ?? 0).toFixed(2)}`
-export const shortDate = (iso: string) => new Date(iso).toLocaleDateString([], { day: 'numeric', month: 'short' })
-export const ended = (key: KeyView) => key.status === 'expired' || Date.parse(key.expires_at) < Date.now()
+export const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString([], { day: 'numeric', month: 'short' })
+export const ended = (key: KeyView) =>
+  key.status === 'expired' || Date.parse(key.expires_at) < Date.now()
 export const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`
 
 export const KIND: Record<KeyView['kind'], { icon: IconName; noun: string; fill: string }> = {
@@ -42,7 +44,10 @@ export function standing(key: KeyView): string {
         ? `${key.holder_name ?? 'They'} accepted. Switch it on`
         : 'Waiting for them to open your link'
       : 'Not on Tempo yet'
-  const left = key.remaining === null ? '' : `${dollars(key.remaining)} left ${key.period === 'week' ? 'this week' : 'today'} · `
+  const left =
+    key.remaining === null
+      ? ''
+      : `${dollars(key.remaining)} left ${key.period === 'week' ? 'this week' : 'today'} · `
   return `${left}until ${shortDate(key.expires_at)}`
 }
 
@@ -53,7 +58,13 @@ export function KeysCard() {
   const waiting = keys.approvals[0]
   if (waiting)
     return (
-      <Sticker onPress={() => router.push('/keys')} fill={colors.coralSoft} radius={26} lift style={{ marginTop: 12 }}>
+      <Sticker
+        onPress={() => router.push('/keys')}
+        fill={colors.coralSoft}
+        radius={26}
+        lift
+        style={{ marginTop: 12 }}
+      >
         <View style={styles.cardRow}>
           <View style={[styles.cardIcon, { backgroundColor: colors.coral }]}>
             <Icon name="bell" size={20} color={colors.white} />
@@ -66,7 +77,9 @@ export function KeysCard() {
               Pay {dollars(waiting.amount)}?
             </Txt>
             <Txt size={13} color={colors.muted} numberOfLines={1}>
-              {waiting.origin ? new URL(waiting.origin).host : (waiting.description ?? shortAddress(waiting.to))}
+              {waiting.origin
+                ? new URL(waiting.origin).host
+                : (waiting.description ?? shortAddress(waiting.to))}
             </Txt>
           </View>
           <View style={styles.answer}>
@@ -85,11 +98,20 @@ export function KeysCard() {
       ? 'For agents and people'
       : agents + people === 0
         ? 'None yet: only your passkey can spend'
-        : [agents ? `${agents} agent${agents === 1 ? '' : 's'}` : '', people ? `${people} allowance${people === 1 ? '' : 's'}` : '']
+        : [
+            agents ? `${agents} agent${agents === 1 ? '' : 's'}` : '',
+            people ? `${people} allowance${people === 1 ? '' : 's'}` : '',
+          ]
             .filter(Boolean)
             .join(' · ')
   return (
-    <Sticker onPress={() => router.push('/keys')} fill={colors.card} radius={26} lift style={{ marginTop: 12 }}>
+    <Sticker
+      onPress={() => router.push('/keys')}
+      fill={colors.card}
+      radius={26}
+      lift
+      style={{ marginTop: 12 }}
+    >
       <View style={styles.cardRow}>
         <View style={[styles.cardIcon, { backgroundColor: '#FFF0B5' }]}>
           <Icon name="lock" size={20} />
@@ -113,18 +135,35 @@ export function KeysCard() {
   )
 }
 
-export function KeyRow({ keyView: key, received, last }: { keyView: KeyView; received?: boolean; last?: boolean }) {
+export function KeyRow({
+  keyView: key,
+  received,
+  last,
+}: {
+  keyView: KeyView
+  received?: boolean
+  last?: boolean
+}) {
   const kind = KIND[key.kind]
   const off = key.status !== 'active' || ended(key)
   return (
     <Pressable
       onPress={() => router.push({ pathname: '/keys/[id]', params: { id: key.id } })}
-      style={({ pressed }) => [styles.row, !last && styles.rowRule, off && { opacity: 0.6 }, pressed && { opacity: 0.5 }]}
+      style={({ pressed }) => [
+        styles.row,
+        !last && styles.rowRule,
+        off && { opacity: 0.6 },
+        pressed && { opacity: 0.5 },
+      ]}
       accessibilityRole="button"
       accessibilityLabel={`${key.label}. ${standing(key)}`}
     >
       <View style={[styles.badge, { backgroundColor: kind.fill }]}>
-        <Icon name={key.status === 'frozen' ? 'snow' : kind.icon} size={18} color={key.kind === 'agent' ? colors.tealSoft : colors.white} />
+        <Icon
+          name={key.status === 'frozen' ? 'snow' : kind.icon}
+          size={18}
+          color={key.kind === 'agent' ? colors.tealSoft : colors.white}
+        />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Txt weight="bold" size={15} numberOfLines={1}>
@@ -133,7 +172,9 @@ export function KeyRow({ keyView: key, received, last }: { keyView: KeyView; rec
         <Txt size={13} color={colors.muted} numberOfLines={1}>
           {standing(key)}
         </Txt>
-        {key.status === 'active' && !ended(key) && key.remaining !== null ? <Meter value={meter(key)} /> : null}
+        {key.status === 'active' && !ended(key) && key.remaining !== null ? (
+          <Meter value={meter(key)} />
+        ) : null}
       </View>
       {key.status === 'pending' && key.kind === 'allowance' && key.holder && !received ? (
         <View style={[styles.chip, { backgroundColor: colors.coral }]}>
@@ -163,8 +204,19 @@ export function KeyRow({ keyView: key, received, last }: { keyView: KeyView; rec
 
 export function Meter({ value, onInk }: { value: number; onInk?: boolean }) {
   return (
-    <View style={[styles.meter, onInk && { backgroundColor: 'rgba(255,255,255,0.18)', height: 8, maxWidth: 240 }]}>
-      <View style={[styles.meterFill, { width: `${Math.round(value * 100)}%` }, onInk && { backgroundColor: colors.tealSoft }]} />
+    <View
+      style={[
+        styles.meter,
+        onInk && { backgroundColor: 'rgba(255,255,255,0.18)', height: 8, maxWidth: 240 },
+      ]}
+    >
+      <View
+        style={[
+          styles.meterFill,
+          { width: `${Math.round(value * 100)}%` },
+          onInk && { backgroundColor: colors.tealSoft },
+        ]}
+      />
     </View>
   )
 }
@@ -188,7 +240,9 @@ export function Ask({ payment }: { payment: KeyPaymentView }) {
       setBusy(null)
     }
   }
-  const where = payment.origin ? new URL(payment.origin).host : (payment.description ?? shortAddress(payment.to))
+  const where = payment.origin
+    ? new URL(payment.origin).host
+    : (payment.description ?? shortAddress(payment.to))
   return (
     <Sticker fill={colors.coralTint} radius={22} lift style={{ marginBottom: 10 }}>
       <View style={{ padding: 14, gap: 12 }}>
@@ -215,7 +269,13 @@ export function Ask({ payment }: { payment: KeyPaymentView }) {
         ) : null}
         <View style={{ flexDirection: 'row', gap: 10 }}>
           <View style={{ flex: 1 }}>
-            <PillButton label={busy === 'decline' ? 'Declining…' : 'Decline'} icon="close" tone="white" disabled={busy !== null} onPress={() => void answer('decline')} />
+            <PillButton
+              label={busy === 'decline' ? 'Declining…' : 'Decline'}
+              icon="close"
+              tone="white"
+              disabled={busy !== null}
+              onPress={() => void answer('decline')}
+            />
           </View>
           <View style={{ flex: 1 }}>
             <PillButton
@@ -267,7 +327,15 @@ export function Choice<T extends string | number>({
   )
 }
 
-export function MoneyField({ value, onChange, label }: { value: string; onChange: (value: string) => void; label: string }) {
+export function MoneyField({
+  value,
+  onChange,
+  label,
+}: {
+  value: string
+  onChange: (value: string) => void
+  label: string
+}) {
   return (
     <View style={styles.money}>
       <Txt weight="heavy" size={17} color={colors.muted}>
@@ -276,7 +344,9 @@ export function MoneyField({ value, onChange, label }: { value: string; onChange
       <TextInput
         accessibilityLabel={label}
         value={value}
-        onChangeText={(text) => onChange(text.replace(/[^\d.]/g, '').replace(/^(\d*\.\d{0,2}).*$/, '$1'))}
+        onChangeText={(text) =>
+          onChange(text.replace(/[^\d.]/g, '').replace(/^(\d*\.\d{0,2}).*$/, '$1'))
+        }
         keyboardType="decimal-pad"
         style={styles.moneyInput}
       />
@@ -300,7 +370,12 @@ export function Snippet({ text, strong }: { text: string; strong?: boolean }) {
   const [copied, setCopied] = useState(false)
   return (
     <View style={styles.snippet}>
-      <Txt size={strong ? 14 : 12} color={strong ? colors.white : colors.tealSoft} style={styles.mono} selectable>
+      <Txt
+        size={strong ? 14 : 12}
+        color={strong ? colors.white : colors.tealSoft}
+        style={styles.mono}
+        selectable
+      >
         {text}
       </Txt>
       <Pressable
@@ -334,8 +409,13 @@ export function KeysHero() {
       <Txt weight="heavy" size={24} style={{ marginTop: 8, paddingRight: 88, lineHeight: 28 }}>
         Your dollars, your rules
       </Txt>
-      <Txt size={14} color={colors.onTint} style={{ marginTop: 6, paddingRight: 84, lineHeight: 20 }}>
-        Give an AI agent or a person a key with its own limit. Tempo enforces every limit, and any key freezes in one tap.
+      <Txt
+        size={14}
+        color={colors.onTint}
+        style={{ marginTop: 6, paddingRight: 84, lineHeight: 20 }}
+      >
+        Give an AI agent or a person a key with its own limit. Tempo enforces every limit, and any
+        key freezes in one tap.
       </Txt>
       <View style={styles.heroReni} pointerEvents="none">
         <Reni pose="key" size={96} />
@@ -345,26 +425,110 @@ export function KeysHero() {
 }
 
 const styles = StyleSheet.create({
-  cardRow: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingLeft: 14, paddingRight: 12 },
-  cardIcon: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  cardRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 12,
+  },
+  cardIcon: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   kicker: { letterSpacing: 1.2 },
-  answer: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.ink },
-  go: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  answer: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: colors.ink,
+  },
+  go: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   rowRule: { borderBottomWidth: 1, borderBottomColor: colors.sunken },
-  badge: { width: 42, height: 42, borderRadius: 21, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  badge: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   chip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 999 },
-  meter: { height: 6, marginTop: 4, borderRadius: 999, backgroundColor: colors.sunken, overflow: 'hidden' },
+  meter: {
+    height: 6,
+    marginTop: 4,
+    borderRadius: 999,
+    backgroundColor: colors.sunken,
+    overflow: 'hidden',
+  },
   meterFill: { height: '100%', borderRadius: 999, backgroundColor: colors.teal },
   askTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   choice: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  choiceItem: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.white },
-  money: { flexDirection: 'row', alignItems: 'center', width: 120, paddingLeft: 14, borderWidth: 2, borderColor: colors.ink, borderRadius: 16, backgroundColor: colors.white },
-  moneyInput: { flex: 1, paddingVertical: 10, paddingHorizontal: 6, fontFamily: fonts.heavy, fontSize: 18, color: colors.ink },
-  snippet: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 16, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.ink },
+  choiceItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.white,
+  },
+  money: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: 120,
+    paddingLeft: 14,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+  },
+  moneyInput: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 6,
+    fontFamily: fonts.heavy,
+    fontSize: 18,
+    color: colors.ink,
+  },
+  snippet: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 12,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.ink,
+  },
   mono: { flex: 1, fontFamily: 'Menlo', lineHeight: 18 },
   copy: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 1 },
-  hero: { marginTop: 8, padding: 18, paddingBottom: 20, borderRadius: 28, borderWidth: 2, borderColor: colors.ink, backgroundColor: '#FFF0B5', overflow: 'hidden' },
+  hero: {
+    marginTop: 8,
+    padding: 18,
+    paddingBottom: 20,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: '#FFF0B5',
+    overflow: 'hidden',
+  },
   heroLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   heroReni: { position: 'absolute', right: 8, bottom: -10, transform: [{ rotate: '-6deg' }] },
 })

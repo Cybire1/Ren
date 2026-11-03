@@ -6,7 +6,7 @@ import { getSummary, listCharges, type PaymentIntent, type Summary } from '@/lib
 import { formatLocal } from '@/lib/money'
 import { useShop } from '@/lib/shop'
 import { colors } from '@/lib/theme'
-import { Avatar, Reni, ReniPeek, peekEdge, ShopBadge } from '@/ui/art'
+import { Avatar, peekEdge, Reni, ReniPeek, ShopBadge } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Landing } from '@/ui/motion'
 import { Odometer } from '@/ui/Odometer'
@@ -29,14 +29,18 @@ const FRESH_MS = 120_000
 
 /** Where a sale came from, the way the counter talks about it. */
 function source(c: PaymentIntent) {
-  if (c.order?.stall) return c.order.customer_name ? `${c.order.stall.name}, for ${c.order.customer_name}` : c.order.stall.name
+  if (c.order?.stall)
+    return c.order.customer_name
+      ? `${c.order.stall.name}, for ${c.order.customer_name}`
+      : c.order.stall.name
   if (c.order) return c.terminal ? `Till, ${c.terminal.name}` : 'Till'
   return c.terminal?.name ?? 'Online'
 }
 
 const PEEK = 150
 
-const money = (amount: number) => `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+const money = (amount: number) =>
+  `$${amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
 /**
  * The day at a glance: what came in, rolling into place like the till's counter; the day so far,
@@ -50,7 +54,9 @@ export default function Today() {
   const [refreshing, setRefreshing] = useState(false)
 
   const load = useCallback(async () => {
-    const [s, c] = await Promise.all([getSummary(), listCharges(60)]).catch(() => [null, []] as const)
+    const [s, c] = await Promise.all([getSummary(), listCharges(60)]).catch(
+      () => [null, []] as const,
+    )
     if (s) setSummary(s)
     const midnight = new Date()
     midnight.setHours(0, 0, 0, 0)
@@ -67,14 +73,19 @@ export default function Today() {
   const total = Number(summary?.today?.total ?? paid.reduce((sum, c) => sum + Number(c.amount), 0))
   const count = summary?.today?.count ?? paid.length
   const [whole, cents] = money(total).slice(1).split('.')
-  const freshId = paid[0] && Date.now() - new Date(paid[0].created_at).getTime() < FRESH_MS ? paid[0].id : null
+  const freshId =
+    paid[0] && Date.now() - new Date(paid[0].created_at).getTime() < FRESH_MS ? paid[0].id : null
 
   return (
     <FlatList
       style={{ flex: 1, backgroundColor: colors.paper }}
       data={charges}
       keyExtractor={(c) => c.id}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: shopDockClearance + insets.bottom }}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8,
+        paddingHorizontal: 20,
+        paddingBottom: shopDockClearance + insets.bottom,
+      }}
       refreshControl={
         <RefreshControl
           refreshing={refreshing}
@@ -97,7 +108,13 @@ export default function Today() {
             {new Date().toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}
           </Txt>
 
-          <Sticker lift fill={colors.card} radius={26} style={{ marginTop: 16 }} innerStyle={styles.hero}>
+          <Sticker
+            lift
+            fill={colors.card}
+            radius={26}
+            style={{ marginTop: 16 }}
+            innerStyle={styles.hero}
+          >
             <View style={styles.reni} pointerEvents="none">
               <Reni pose="cheer" size={92} />
             </View>
@@ -105,7 +122,14 @@ export default function Today() {
               Taken today
             </Txt>
             <View style={styles.amount}>
-              <Txt weight="heavy" size={26} exact style={{ marginTop: 12, marginRight: 3 }} importantForAccessibility="no" accessibilityElementsHidden>
+              <Txt
+                weight="heavy"
+                size={26}
+                exact
+                style={{ marginTop: 12, marginRight: 3 }}
+                importantForAccessibility="no"
+                accessibilityElementsHidden
+              >
                 $
               </Txt>
               <Odometer value={whole} size={60} label={`Taken today, ${money(total)}`} />
@@ -149,15 +173,26 @@ export default function Today() {
       }
       renderItem={({ item, index }) => {
         // A charge nobody paid stays open until the API's expiry sweep runs; show it as expired.
-        const lapsed = item.status === 'requires_payment' && item.expires_at && new Date(item.expires_at) < new Date()
+        const lapsed =
+          item.status === 'requires_payment' &&
+          item.expires_at &&
+          new Date(item.expires_at) < new Date()
         const label = labels[lapsed ? 'expired' : item.status]
-        const price = item.metadata?.price && item.metadata.price_currency ? `${item.metadata.price} ${item.metadata.price_currency}` : null
+        const price =
+          item.metadata?.price && item.metadata.price_currency
+            ? `${item.metadata.price} ${item.metadata.price_currency}`
+            : null
         const buyer = item.order?.customer_name
         const first = index === 0
         const last = index === charges.length - 1
         return (
           <View style={[styles.paper, first && styles.paperTop, last && styles.paperBottom]}>
-            <Landing active={item.id === freshId} delay={600} rest={colors.card} style={[styles.row, !first && styles.perforated]}>
+            <Landing
+              active={item.id === freshId}
+              delay={600}
+              rest={colors.card}
+              style={[styles.row, !first && styles.perforated]}
+            >
               {buyer ? (
                 <Avatar name={buyer} size={40} />
               ) : item.order ? (
@@ -172,7 +207,11 @@ export default function Today() {
                   {item.reference ?? (price ? `Sale, ${price}` : 'Sale')}
                 </Txt>
                 <Txt weight="semi" size={12} color={colors.muted} numberOfLines={1}>
-                  {new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} · {source(item)}
+                  {new Date(item.created_at).toLocaleTimeString([], {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}{' '}
+                  · {source(item)}
                 </Txt>
               </View>
               <View style={{ alignItems: 'flex-end', gap: 3 }}>
@@ -180,7 +219,11 @@ export default function Today() {
                   weight="heavy"
                   size={16}
                   color={label.text === 'Paid' ? colors.ink : colors.muted}
-                  style={label.text === 'Expired' || label.text === 'Canceled' ? { textDecorationLine: 'line-through' } : undefined}
+                  style={
+                    label.text === 'Expired' || label.text === 'Canceled'
+                      ? { textDecorationLine: 'line-through' }
+                      : undefined
+                  }
                 >
                   ${item.amount}
                 </Txt>
@@ -212,13 +255,28 @@ export default function Today() {
   )
 }
 
-function Stat({ label, value, tone = colors.ink }: { label: string; value: string; tone?: string }) {
+function Stat({
+  label,
+  value,
+  tone = colors.ink,
+}: {
+  label: string
+  value: string
+  tone?: string
+}) {
   return (
     <View style={styles.stat}>
       <Txt weight="heavy" size={11} color={colors.muted}>
         {label}
       </Txt>
-      <Txt weight="heavy" size={18} color={tone} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
+      <Txt
+        weight="heavy"
+        size={18}
+        color={tone}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.8}
+      >
         {value}
       </Txt>
     </View>
@@ -245,16 +303,27 @@ function DaySoFar({ paid }: { paid: PaymentIntent[] }) {
   }, [paid])
   if (!paid.length) return null
   const peak = hours.reduce((best, h) => (h.total > best.total ? h : best), hours[0])
-  const label = (hour: number) => (hour === 0 ? '12am' : hour === 12 ? '12pm' : hour < 12 ? `${hour}am` : `${hour - 12}pm`)
+  const label = (hour: number) =>
+    hour === 0 ? '12am' : hour === 12 ? '12pm' : hour < 12 ? `${hour}am` : `${hour - 12}pm`
   return (
-    <Sticker lift fill={colors.card} radius={26} style={{ marginTop: 16 }} innerStyle={styles.chart}>
+    <Sticker
+      lift
+      fill={colors.card}
+      radius={26}
+      style={{ marginTop: 16 }}
+      innerStyle={styles.chart}
+    >
       <Txt weight="heavy" size={17} style={{ letterSpacing: -0.3 }}>
         The day so far
       </Txt>
       <Txt weight="semi" size={13} color={colors.muted}>
         Busiest at {label(peak.hour)}, {money(peak.total)}
       </Txt>
-      <View style={styles.bars} accessible accessibilityLabel={`The day so far. Busiest at ${label(peak.hour)}, ${money(peak.total)}`}>
+      <View
+        style={styles.bars}
+        accessible
+        accessibilityLabel={`The day so far. Busiest at ${label(peak.hour)}, ${money(peak.total)}`}
+      >
         {hours.map((h) => (
           <View key={h.hour} style={styles.barSlot}>
             {h === peak && peak.total > 0 ? (
@@ -277,7 +346,11 @@ function DaySoFar({ paid }: { paid: PaymentIntent[] }) {
           </View>
         ))}
       </View>
-      <View style={styles.axis} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden>
+      <View
+        style={styles.axis}
+        importantForAccessibility="no-hide-descendants"
+        accessibilityElementsHidden
+      >
         {hours.map((h, i) => (
           <View key={h.hour} style={styles.barSlot}>
             {h.now ? (
@@ -313,9 +386,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   chart: { padding: 18, paddingBottom: 14 },
-  bars: { flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: 128, marginTop: 10, borderBottomWidth: 2, borderColor: colors.ink },
+  bars: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 4,
+    height: 128,
+    marginTop: 10,
+    borderBottomWidth: 2,
+    borderColor: colors.ink,
+  },
   barSlot: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
-  bar: { width: '100%', maxWidth: 22, borderWidth: 2, borderBottomWidth: 0, borderColor: colors.ink, borderTopLeftRadius: 7, borderTopRightRadius: 7 },
+  bar: {
+    width: '100%',
+    maxWidth: 22,
+    borderWidth: 2,
+    borderBottomWidth: 0,
+    borderColor: colors.ink,
+    borderTopLeftRadius: 7,
+    borderTopRightRadius: 7,
+  },
   peak: {
     marginBottom: 4,
     paddingHorizontal: 6,
@@ -327,12 +416,42 @@ const styles = StyleSheet.create({
   },
   axis: { flexDirection: 'row', gap: 4, marginTop: 6, height: 18 },
   nowPill: { paddingHorizontal: 5, borderRadius: 999, backgroundColor: colors.coral },
-  tapeHead: { marginTop: 24, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  paper: { backgroundColor: colors.card, borderLeftWidth: 2, borderRightWidth: 2, borderColor: colors.ink, paddingHorizontal: 12 },
+  tapeHead: {
+    marginTop: 24,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  paper: {
+    backgroundColor: colors.card,
+    borderLeftWidth: 2,
+    borderRightWidth: 2,
+    borderColor: colors.ink,
+    paddingHorizontal: 12,
+  },
   paperTop: { borderTopWidth: 2, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingTop: 4 },
-  paperBottom: { borderBottomWidth: 2, borderBottomLeftRadius: 22, borderBottomRightRadius: 22, paddingBottom: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 11, paddingHorizontal: 4, borderRadius: 12 },
-  perforated: { borderTopWidth: 2, borderStyle: 'dashed', borderColor: colors.sunken, borderTopLeftRadius: 0, borderTopRightRadius: 0 },
+  paperBottom: {
+    borderBottomWidth: 2,
+    borderBottomLeftRadius: 22,
+    borderBottomRightRadius: 22,
+    paddingBottom: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 11,
+    paddingHorizontal: 4,
+    borderRadius: 12,
+  },
+  perforated: {
+    borderTopWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: colors.sunken,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
   status: { paddingHorizontal: 8, paddingVertical: 1, borderRadius: 999 },
   tillIcon: {
     width: 40,

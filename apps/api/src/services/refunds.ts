@@ -48,16 +48,14 @@ export async function refundTrip(tripId: string, reason: string) {
     if (already) continue
     const id = uuidv7()
     const memo = encodeMemo({ kind: 'refund', id })
-    await db
-      .insert(schema.refunds)
-      .values({
-        id,
-        paymentId: payment.id,
-        amount: payment.amount,
-        memo,
-        reason,
-        status: 'pending',
-      })
+    await db.insert(schema.refunds).values({
+      id,
+      paymentId: payment.id,
+      amount: payment.amount,
+      memo,
+      reason,
+      status: 'pending',
+    })
     const token = kit.tokenByAddress(payment.tokenAddress as Address)
     if (!treasury || !token) {
       console.warn('[refund] recorded for the treasury to send', id)

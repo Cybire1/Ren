@@ -58,7 +58,10 @@ export interface Privacy {
   open: () => Promise<void>
   moveIn: (amount: bigint) => Promise<{ hash: string; ms: number }>
   moveOut: (amount: bigint) => Promise<{ hash: string; ms: number }>
-  sendPrivately: (to: { address: Address; name: string }, amount: bigint) => Promise<{ hash: string; ms: number; opening: Hex }>
+  sendPrivately: (
+    to: { address: Address; name: string },
+    amount: bigint,
+  ) => Promise<{ hash: string; ms: number; opening: Hex }>
 }
 
 const refused = (error: unknown) => {
@@ -69,7 +72,8 @@ const refused = (error: unknown) => {
 
 function plain(error: unknown, fallback: string): Error {
   const message = error instanceof Error ? error.message : String(error)
-  if (/insufficient|exceeds balance/i.test(message)) return new Error('Not enough dollars for that. Nothing moved.')
+  if (/insufficient|exceeds balance/i.test(message))
+    return new Error('Not enough dollars for that. Nothing moved.')
   if (/cancel|denied|reject/i.test(message)) return new Error('Cancelled. Nothing moved.')
   return new Error(fallback)
 }
@@ -132,7 +136,9 @@ export function usePrivacy({
       setHeld(amount)
       if (history) setMoves(history)
       setStatus('ready')
-      void moveOutReserve(zone).then(setOutReserve).catch(() => {})
+      void moveOutReserve(zone)
+        .then(setOutReserve)
+        .catch(() => {})
     } catch (error) {
       setStatus(refused(error) ? 'locked' : 'unreachable')
     }
@@ -166,13 +172,22 @@ export function usePrivacy({
       const started = Date.now()
       let receipt: Awaited<ReturnType<typeof deposit>>
       try {
-        receipt = await deposit(walletClient(account) as never, zone, { amount, to, from: account.address })
+        receipt = await deposit(walletClient(account) as never, zone, {
+          amount,
+          to,
+          from: account.address,
+        })
       } catch (error) {
         explain('deposit failed', error)
         throw plain(error, 'The dollars didn’t move. Nothing left your wallet.')
       }
       spend(amount)
-      remember({ ...note, amount: amount.toString(), at: Date.now(), hash: receipt.transactionHash })
+      remember({
+        ...note,
+        amount: amount.toString(),
+        at: Date.now(),
+        hash: receipt.transactionHash,
+      })
       onMoved()
       return { account, receipt, hash: receipt.transactionHash as string, ms: Date.now() - started }
     },
@@ -194,7 +209,11 @@ export function usePrivacy({
 
   const sendPrivately = useCallback(
     async (to: { address: Address; name: string }, amount: bigint) => {
-      const { hash, ms, receipt } = await depositFor(amount, to.address, { kind: 'sent', name: to.name, to: to.address })
+      const { hash, ms, receipt } = await depositFor(amount, to.address, {
+        kind: 'sent',
+        name: to.name,
+        to: to.address,
+      })
       return { hash, ms, opening: receipt.opening }
     },
     [depositFor],
@@ -215,7 +234,13 @@ export function usePrivacy({
         throw plain(error, 'The zone didn’t take it. Your private balance hasn’t changed.')
       }
       spend(amount)
-      const note: PrivateNote = { kind: 'out', amount: amount.toString(), at: Date.now(), hash, landed: false }
+      const note: PrivateNote = {
+        kind: 'out',
+        amount: amount.toString(),
+        at: Date.now(),
+        hash,
+        landed: false,
+      }
       remember(note)
       void refresh()
       // The zone settles it on Tempo in its next batch, seconds later: watch it land.
@@ -272,15 +297,40 @@ export function usePrivacy({
     for (const n of notes) {
       if (used.has(n.hash)) continue
       if (n.kind === 'sent')
-        list.push({ id: n.hash, kind: 'sent', amount: BigInt(n.amount), name: n.name ?? 'Someone', detail: 'Sent privately', at: n.at })
+        list.push({
+          id: n.hash,
+          kind: 'sent',
+          amount: BigInt(n.amount),
+          name: n.name ?? 'Someone',
+          detail: 'Sent privately',
+          at: n.at,
+        })
       else if (n.kind === 'in' && Date.now() - n.at < 10 * 60_000)
-        list.push({ id: n.hash, kind: 'in', amount: BigInt(n.amount), name: 'Moving in', detail: 'Arriving in a moment', at: n.at, pending: true })
+        list.push({
+          id: n.hash,
+          kind: 'in',
+          amount: BigInt(n.amount),
+          name: 'Moving in',
+          detail: 'Arriving in a moment',
+          at: n.at,
+          pending: true,
+        })
     }
     return list.sort((a, b) => b.at - a.at)
   }, [moves, notes])
 
   return useMemo(
-    () => ({ zone, status: zone ? status : 'locked', balance: held, outReserve, entries, open, moveIn, moveOut, sendPrivately }),
+    () => ({
+      zone,
+      status: zone ? status : 'locked',
+      balance: held,
+      outReserve,
+      entries,
+      open,
+      moveIn,
+      moveOut,
+      sendPrivately,
+    }),
     [entries, held, moveIn, moveOut, open, outReserve, sendPrivately, status, zone],
   )
 }

@@ -1,6 +1,13 @@
 import { router } from 'expo-router'
 import { Fragment, useCallback, useEffect, useState } from 'react'
-import { Pressable, RefreshControl, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native'
+import {
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getSummary } from '@/lib/api'
 import { chainName, isTestnet } from '@/lib/config'
@@ -10,8 +17,6 @@ import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
 import { type Entry, isUnnamed, useWallet } from '@/lib/wallet'
-import { AllowanceCards, KeysCard } from '@/ui/keys'
-import { PrivateCard } from '@/ui/PrivateCard'
 import { ActionTile } from '@/ui/ActionTile'
 import { Awning } from '@/ui/Awning'
 import { Avatar, Flyer, ShopBadge } from '@/ui/art'
@@ -19,8 +24,10 @@ import { BalanceCard, type Fresh, ReadyCard } from '@/ui/BalanceCard'
 import { dockClearance } from '@/ui/Dock'
 import { EntryRow } from '@/ui/EntryRow'
 import { Icon } from '@/ui/Icon'
+import { AllowanceCards, KeysCard } from '@/ui/keys'
 import { TapMark } from '@/ui/Logo'
 import { PulseWaves } from '@/ui/motion'
+import { PrivateCard } from '@/ui/PrivateCard'
 import { Sticker, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
 
@@ -51,11 +58,20 @@ export default function Home() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.paper }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingBottom: dockClearance + insets.bottom, paddingHorizontal: 20 }}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8,
+        paddingBottom: dockClearance + insets.bottom,
+        paddingHorizontal: 20,
+      }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
       <View style={styles.header}>
-        <Pressable accessibilityRole="button" accessibilityLabel="Profile" onPress={() => router.push('/(tabs)/profile')} style={styles.face}>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Profile"
+          onPress={() => router.push('/(tabs)/profile')}
+          style={styles.face}
+        >
           <Avatar name={profile.name} id={profile.address} size={42} />
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -90,7 +106,11 @@ export default function Home() {
         </>
       ) : (
         <>
-          <BalanceCard balance={balance} currency={profile.currency} fresh={fresh ? { id: fresh.id, line: freshLine(fresh) } : null} />
+          <BalanceCard
+            balance={balance}
+            currency={profile.currency}
+            fresh={fresh ? { id: fresh.id, line: freshLine(fresh) } : null}
+          />
 
           <View style={styles.hero}>
             <PayTile />
@@ -124,7 +144,9 @@ export default function Home() {
                   {isTestnet ? 'Add test dollars to start' : 'Add money to start paying'}
                 </Txt>
                 <Txt size={13} color={colors.onTint}>
-                  {isTestnet ? `$5 a day, free on ${chainName} testnet. Arrives in about a second.` : 'From a card or a bank transfer.'}
+                  {isTestnet
+                    ? `$5 a day, free on ${chainName} testnet. Arrives in about a second.`
+                    : 'From a card or a bank transfer.'}
                 </Txt>
               </View>
               <View style={styles.noticeCta}>
@@ -140,7 +162,11 @@ export default function Home() {
               Recent
             </Txt>
             {activity.length > 3 ? (
-              <Pressable accessibilityRole="link" onPress={() => router.push('/(tabs)/activity')} hitSlop={10}>
+              <Pressable
+                accessibilityRole="link"
+                onPress={() => router.push('/(tabs)/activity')}
+                hitSlop={10}
+              >
                 <Txt weight="bold" size={14} style={{ textDecorationLine: 'underline' }}>
                   See all
                 </Txt>
@@ -171,7 +197,12 @@ export default function Home() {
             contentContainerStyle={{ gap: 14, paddingRight: 20 }}
             style={{ marginHorizontal: -20, paddingLeft: 20 }}
           >
-            <Pressable accessibilityRole="button" accessibilityLabel="Pay someone new" onPress={() => router.push('/send')} style={styles.person}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Pay someone new"
+              onPress={() => router.push('/send')}
+              style={styles.person}
+            >
               <View style={styles.newPerson}>
                 <Icon name="plus" />
               </View>
@@ -184,7 +215,12 @@ export default function Home() {
                 key={c.address}
                 accessibilityRole="button"
                 accessibilityLabel={`Send to ${c.name}`}
-                onPress={() => router.push({ pathname: '/send/[to]', params: { to: c.address, name: c.name, cur: c.currency ?? '' } })}
+                onPress={() =>
+                  router.push({
+                    pathname: '/send/[to]',
+                    params: { to: c.address, name: c.name, cur: c.currency ?? '' },
+                  })
+                }
                 style={styles.person}
               >
                 <Avatar name={c.name} id={c.address} size={56} />
@@ -208,7 +244,13 @@ export default function Home() {
               <Txt weight="heavy" size={20} style={{ letterSpacing: -0.4 }}>
                 Travel
               </Txt>
-              <Txt size={12} color={colors.onTint} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.85}>
+              <Txt
+                size={12}
+                color={colors.onTint}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.85}
+              >
                 Flights and hotels, paid in dollars
               </Txt>
             </View>
@@ -243,10 +285,16 @@ function useFresh(activity: Entry[]) {
   const [now, setNow] = useState(() => Date.now())
   // A new entry is judged against the time it arrived, not when Home last rendered.
   useEffect(() => setNow(Date.now()), [newest?.id])
-  const fresh = newest && (newest.kind === 'received' || newest.kind === 'added') && now - newest.at < FRESH_MS ? newest : null
+  const fresh =
+    newest && (newest.kind === 'received' || newest.kind === 'added') && now - newest.at < FRESH_MS
+      ? newest
+      : null
   useEffect(() => {
     if (!fresh) return
-    const timer = setTimeout(() => setNow(Date.now()), Math.max(0, fresh.at + FRESH_MS - Date.now()) + 50)
+    const timer = setTimeout(
+      () => setNow(Date.now()),
+      Math.max(0, fresh.at + FRESH_MS - Date.now()) + 50,
+    )
     return () => clearTimeout(timer)
   }, [fresh])
   return fresh
@@ -286,7 +334,12 @@ function PayTile() {
         <PulseWaves size={132} />
       </View>
       <View>
-        <Txt weight="heavy" size={42} color={colors.white} style={{ letterSpacing: -1.8, lineHeight: 48 }}>
+        <Txt
+          weight="heavy"
+          size={42}
+          color={colors.white}
+          style={{ letterSpacing: -1.8, lineHeight: 48 }}
+        >
           Pay
         </Txt>
         <Txt weight="semi" size={13} color={colors.onInk} style={{ lineHeight: 17 }}>
@@ -305,8 +358,16 @@ function FirstSteps() {
       line: isTestnet ? `$5 a day, free on ${chainName} testnet` : 'From a card or a bank transfer',
       go: () => router.push('/add-money'),
     },
-    { title: 'Pay at a shop', line: 'Scan their code or tap their phone', go: () => router.push('/scan') },
-    { title: 'Send to a friend', line: 'Type a name or paste their link', go: () => router.push('/send') },
+    {
+      title: 'Pay at a shop',
+      line: 'Scan their code or tap their phone',
+      go: () => router.push('/scan'),
+    },
+    {
+      title: 'Send to a friend',
+      line: 'Type a name or paste their link',
+      go: () => router.push('/send'),
+    },
   ]
   return (
     <>
@@ -328,9 +389,18 @@ function FirstSteps() {
                 accessibilityRole="button"
                 accessibilityLabel={`Step ${i + 1}. ${step.title}. ${step.line}`}
                 onPress={step.go}
-                style={({ pressed }) => [styles.step, next && { backgroundColor: colors.coralTint }, pressed && { opacity: 0.7 }]}
+                style={({ pressed }) => [
+                  styles.step,
+                  next && { backgroundColor: colors.coralTint },
+                  pressed && { opacity: 0.7 },
+                ]}
               >
-                <View style={[styles.stepNumber, { backgroundColor: next ? colors.coral : colors.paper }]}>
+                <View
+                  style={[
+                    styles.stepNumber,
+                    { backgroundColor: next ? colors.coral : colors.paper },
+                  ]}
+                >
                   <Txt weight="heavy" size={16}>
                     {i + 1}
                   </Txt>
@@ -406,10 +476,25 @@ function ShopCard() {
           go: () => enter('/terminal/today'),
         }
       : till
-        ? { label: 'Your till', title: till.merchantName, line: `This phone is ${till.name}`, go: () => enter('/terminal') }
+        ? {
+            label: 'Your till',
+            title: till.merchantName,
+            line: `This phone is ${till.name}`,
+            go: () => enter('/terminal'),
+          }
         : owned
-          ? { label: 'Your shop', title: 'Finish your shop', line: 'A step or two left', go: () => router.push('/open-stall') }
-          : { label: 'Run a shop?', title: 'Open a shop', line: 'Take payments into this wallet', go: () => router.push('/open-stall') }
+          ? {
+              label: 'Your shop',
+              title: 'Finish your shop',
+              line: 'A step or two left',
+              go: () => router.push('/open-stall'),
+            }
+          : {
+              label: 'Run a shop?',
+              title: 'Open a shop',
+              line: 'Take payments into this wallet',
+              go: () => router.push('/open-stall'),
+            }
 
   return (
     <Sticker
@@ -420,7 +505,12 @@ function ShopCard() {
       accessibilityLabel={`${card.title}. ${card.line}`}
       style={{ marginTop: 16 }}
     >
-      <Awning width={width - 44} height={20} stripe={17} tone={shop && !shop.open ? 'teal' : 'coral'} />
+      <Awning
+        width={width - 44}
+        height={20}
+        stripe={17}
+        tone={shop && !shop.open ? 'teal' : 'coral'}
+      />
       <View style={styles.shopBody}>
         <ShopBadge size={48} />
         <View style={{ flex: 1 }}>
@@ -478,11 +568,39 @@ const styles = StyleSheet.create({
   },
   hero: { flexDirection: 'row', gap: 12, height: 196, marginTop: 16 },
   pay: { padding: 16, justifyContent: 'space-between' },
-  payIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  payIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   payWaves: { position: 'absolute', right: -34, top: 40 },
-  shopBody: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 14, paddingRight: 12, paddingTop: 6, paddingBottom: 12 },
-  go: { width: 44, height: 44, borderRadius: 22, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
-  travel: { height: 76, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 18, paddingRight: 12 },
+  shopBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingLeft: 14,
+    paddingRight: 12,
+    paddingTop: 6,
+    paddingBottom: 12,
+  },
+  go: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  travel: {
+    height: 76,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingLeft: 18,
+    paddingRight: 12,
+  },
   travelPlane: { position: 'absolute', right: 58, top: -6, transform: [{ rotate: '-6deg' }] },
   notice: { padding: 12, paddingLeft: 14, flexDirection: 'row', alignItems: 'center', gap: 12 },
   noticeIcon: {
@@ -494,10 +612,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  noticeCta: { height: 40, paddingHorizontal: 18, borderRadius: 20, backgroundColor: colors.ink, justifyContent: 'center' },
+  noticeCta: {
+    height: 40,
+    paddingHorizontal: 18,
+    borderRadius: 20,
+    backgroundColor: colors.ink,
+    justifyContent: 'center',
+  },
   section: { marginTop: 26, marginBottom: 12 },
-  sectionRow: { marginTop: 24, marginBottom: 10, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
-  listCard: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.card, overflow: 'hidden' },
+  sectionRow: {
+    marginTop: 24,
+    marginBottom: 10,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'baseline',
+  },
+  listCard: {
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.card,
+    overflow: 'hidden',
+  },
   rule: { height: 2, marginHorizontal: 14, backgroundColor: colors.sunken },
   step: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12 },
   stepNumber: {

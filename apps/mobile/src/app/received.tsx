@@ -1,18 +1,23 @@
 import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { StyleSheet, useWindowDimensions, View } from 'react-native'
+import { chainName } from '@/lib/config'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import { Burst, CoinRain, PopIn } from '@/ui/motion'
 import { when } from '@/ui/EntryRow'
+import { Burst, CoinRain, PopIn } from '@/ui/motion'
 import { PrivateNote } from '@/ui/PrivateNote'
-import { Stage } from '@/ui/Stage'
 import { Chip, Header, PillButton, Rise, Screen, Sticker, Txt } from '@/ui/primitives'
-import { chainName } from '@/lib/config'
+import { Stage } from '@/ui/Stage'
 
 /** Money arrived: coins rain, Reni catches them, and the amount is the headline. */
 export default function Received() {
-  const params = useLocalSearchParams<{ amount: string; name: string; hash?: string; note?: string }>()
+  const params = useLocalSearchParams<{
+    amount: string
+    name: string
+    hash?: string
+    note?: string
+  }>()
   const { profile, contacts, activity } = useWallet()
   const { width } = useWindowDimensions()
   // Opened without an arrival (a stale link, a relaunch): show the latest money in instead.
@@ -26,7 +31,11 @@ export default function Received() {
 
   return (
     <Screen bg={colors.tealSoft}>
-      <Header backIcon="close" onBack={() => router.back()} right={<Chip label={latest ? when(latest.at) : 'Just now'} dot={colors.tealLight} />} />
+      <Header
+        backIcon="close"
+        onBack={() => router.back()}
+        right={<Chip label={latest ? when(latest.at) : 'Just now'} dot={colors.tealLight} />}
+      />
       <View style={{ height: 320 }}>
         <CoinRain width={width} height={320} />
         <View style={[styles.catch, { left: width / 2 - 100 }]}>
@@ -51,7 +60,13 @@ export default function Received() {
         <Txt weight="medium" size={20}>
           {name} paid you
         </Txt>
-        <Txt weight="bold" size={64} style={{ letterSpacing: -2.5 }} adjustsFontSizeToFit numberOfLines={1}>
+        <Txt
+          weight="bold"
+          size={64}
+          style={{ letterSpacing: -2.5 }}
+          adjustsFontSizeToFit
+          numberOfLines={1}
+        >
           {formatUsd(base, { sign: true })}
         </Txt>
         {profile && profile.currency !== 'USD' ? (
@@ -66,28 +81,36 @@ export default function Received() {
       </Rise>
       {note ? (
         <View style={{ marginTop: 22 }}>
-          <PrivateNote text={note} caption={`From ${name.split(' ')[0]}. Sealed by them; only you two can read it.`} />
+          <PrivateNote
+            text={note}
+            caption={`From ${name.split(' ')[0]}. Sealed by them; only you two can read it.`}
+          />
         </View>
       ) : (
-      <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
-        <Sticker radius={24} style={{ height: 66 }}>
-          <View style={styles.row}>
-            <Txt size={15} color={colors.muted}>
-              Arrived
-            </Txt>
-            <Txt weight="semi" size={15}>
-              On {chainName}, final in under a second
-            </Txt>
-          </View>
-        </Sticker>
-      </View>
+        <View style={{ paddingHorizontal: 20, marginTop: 24 }}>
+          <Sticker radius={24} style={{ height: 66 }}>
+            <View style={styles.row}>
+              <Txt size={15} color={colors.muted}>
+                Arrived
+              </Txt>
+              <Txt weight="semi" size={15}>
+                On {chainName}, final in under a second
+              </Txt>
+            </View>
+          </Sticker>
+        </View>
       )}
       <View style={styles.footer}>
         {known ? (
           <PillButton
             label={name.startsWith('0x') ? 'Send some back' : `Say thanks to ${name.split(' ')[0]}`}
             icon="send"
-            onPress={() => router.replace({ pathname: '/send/[to]', params: { to: known.address, name: known.name } })}
+            onPress={() =>
+              router.replace({
+                pathname: '/send/[to]',
+                params: { to: known.address, name: known.name },
+              })
+            }
           />
         ) : (
           <PillButton label="Done" icon="check" onPress={() => router.back()} />
@@ -124,6 +147,12 @@ const styles = StyleSheet.create({
     transform: [{ rotate: '45deg' }],
   },
   copy: { alignItems: 'center', paddingHorizontal: 24 },
-  row: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 18 },
+  row: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 18,
+  },
   footer: { paddingHorizontal: 20, paddingBottom: 12, marginTop: 'auto' },
 })

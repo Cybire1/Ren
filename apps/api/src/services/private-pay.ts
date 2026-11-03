@@ -1,5 +1,14 @@
 import { createDecipheriv, createECDH, hkdfSync } from 'node:crypto'
-import { type Address, decodeFunctionData, type Hex, hexToBytes, isAddressEqual, numberToBytes, parseAbi, type TransactionReceipt } from 'viem'
+import {
+  type Address,
+  decodeFunctionData,
+  type Hex,
+  hexToBytes,
+  isAddressEqual,
+  numberToBytes,
+  parseAbi,
+  type TransactionReceipt,
+} from 'viem'
 import { Abis, Actions } from 'viem/tempo'
 import { publicClient } from '../chain.js'
 import { config } from '../config.js'
@@ -44,13 +53,23 @@ function readDeposit(data: Hex): Deposit | null {
   try {
     const call = decodeFunctionData({ abi: Abis.zonePortal, data })
     if (call.functionName === 'depositEncrypted') {
-      const [token, amount, keyIndex, sealed] = call.args as unknown as [Address, bigint, bigint, Sealed]
+      const [token, amount, keyIndex, sealed] = call.args as unknown as [
+        Address,
+        bigint,
+        bigint,
+        Sealed,
+      ]
       return { token, amount, keyIndex, sealed, current: true }
     }
   } catch {}
   try {
     const call = decodeFunctionData({ abi: sandboxPortal, data })
-    const [token, amount, keyIndex, sealed] = call.args as unknown as [Address, bigint, bigint, Sealed]
+    const [token, amount, keyIndex, sealed] = call.args as unknown as [
+      Address,
+      bigint,
+      bigint,
+      Sealed,
+    ]
     return { token, amount, keyIndex, sealed, current: false }
   } catch {
     return null
@@ -88,7 +107,10 @@ function recipientOf(input: {
   try {
     const decipher = createDecipheriv('aes-256-gcm', key, bytes(input.deposit.sealed.nonce))
     decipher.setAuthTag(bytes(input.deposit.sealed.tag))
-    const plain = Buffer.concat([decipher.update(bytes(input.deposit.sealed.ciphertext)), decipher.final()])
+    const plain = Buffer.concat([
+      decipher.update(bytes(input.deposit.sealed.ciphertext)),
+      decipher.final(),
+    ])
     return `0x${plain.subarray(0, 20).toString('hex')}` as Address
   } catch {
     return null
@@ -98,14 +120,23 @@ function recipientOf(input: {
 export const privatePayReady = () => Boolean(config.KOVA_ZONE_PORTAL)
 
 /** Checks a private payment for this charge and settles it. Once per transaction, as any payment. */
-export async function settlePrivatePayment(intent: PaymentIntent, input: { txHash: Hex; opening: Hex }) {
+export async function settlePrivatePayment(
+  intent: PaymentIntent,
+  input: { txHash: Hex; opening: Hex },
+) {
   const portal = config.KOVA_ZONE_PORTAL as Address | undefined
-  if (!portal) throw new KovaError('conflict', 'Private payments aren’t switched on for this server.')
+  if (!portal)
+    throw new KovaError('conflict', 'Private payments aren’t switched on for this server.')
   if (intent.status === 'paid') return { status: 'paid' as const }
-  if (intent.status !== 'requires_payment') throw new KovaError('conflict', 'This charge isn’t open any more.')
+  if (intent.status !== 'requires_payment')
+    throw new KovaError('conflict', 'This charge isn’t open any more.')
 
-  const receipt = (await publicClient.waitForTransactionReceipt({ hash: input.txHash, timeout: 30_000 })) as TransactionReceipt
-  if (receipt.status !== 'success') throw new KovaError('invalid_request', 'That transaction didn’t go through.')
+  const receipt = (await publicClient.waitForTransactionReceipt({
+    hash: input.txHash,
+    timeout: 30_000,
+  })) as TransactionReceipt
+  if (receipt.status !== 'success')
+    throw new KovaError('invalid_request', 'That transaction didn’t go through.')
   const tx = (await publicClient.getTransaction({ hash: input.txHash })) as unknown as {
     from: Address
     calls?: { to?: Address; data?: Hex }[]
@@ -115,18 +146,36 @@ export async function settlePrivatePayment(intent: PaymentIntent, input: { txHas
   const calls = tx.calls ?? (tx.to && tx.input ? [{ to: tx.to, data: tx.input }] : [])
   const call = calls.find((c) => c.to && c.data && isAddressEqual(c.to, portal))
   const deposit = call?.data ? readDeposit(call.data) : null
-  if (!deposit) throw new KovaError('invalid_request', 'That transaction isn’t a deposit into the private zone.')
-  if (!isAddressEqual(deposit.token, intent.tokenAddress as Address) || deposit.amount !== intent.amount)
+  if (!deposit)
+    throw new KovaError(
+      'invalid_request',
+      'That transaction isn’t a deposit into the private zone.',
+    )
+  if (
+    !isAddressEqual(deposit.token, intent.tokenAddress as Address) ||
+    deposit.amount !== intent.amount
+  )
     throw new KovaError('invalid_request', 'That deposit isn’t this charge’s amount.')
 
-  const { keyIndex, publicKey } = await Actions.zone.getEncryptionKey(publicClient as never, {
-    portalAddress: portal,
-    zoneId: config.KOVA_ZONE_ID,
-  } as never)
-  if (keyIndex !== deposit.keyIndex) throw new KovaError('conflict', 'The zone changed its key since. Pay again.')
-  const to = recipientOf({ deposit, opening: input.opening, sequencer: publicKey as { prefix: number; x: Hex }, portal, sender: tx.from })
+  const { keyIndex, publicKey } = await Actions.zone.getEncryptionKey(
+    publicClient as never,
+    {
+      portalAddress: portal,
+      zoneId: config.KOVA_ZONE_ID,
+    } as never,
+  )
+  if (keyIndex !== deposit.keyIndex)
+    throw new KovaError('conflict', 'The zone changed its key since. Pay again.')
+  const to = recipientOf({
+    deposit,
+    opening: input.opening,
+    sequencer: publicKey as { prefix: number; x: Hex },
+    portal,
+    sender: tx.from,
+  })
   if (!to) throw new KovaError('invalid_request', 'That opening doesn’t open this deposit.')
-  if (!isAddressEqual(to, intent.payTo as Address)) throw new KovaError('invalid_request', 'That deposit is for someone else.')
+  if (!isAddressEqual(to, intent.payTo as Address))
+    throw new KovaError('invalid_request', 'That deposit is for someone else.')
 
   const settled = await settleVerified(intent, receipt, tx.from)
   return { status: settled.status }

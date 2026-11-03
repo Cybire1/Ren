@@ -142,8 +142,7 @@ export function PasskeyOwner({
       ) : !wallet ? (
         <div className="owner-actions">
           <p className="field-help">
-            Open your Ren wallet on this browser first, then come back here from its Your shop
-            card.
+            Open your Ren wallet on this browser first, then come back here from its Your shop card.
           </p>
           <Link href="/wallet" className="mini mini-ink">
             <Icon name="card" size={14} /> Open my wallet

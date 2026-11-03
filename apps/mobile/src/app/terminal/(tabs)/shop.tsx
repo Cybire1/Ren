@@ -49,7 +49,11 @@ export default function ShopTab() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.paper }}
-      contentContainerStyle={{ paddingTop: insets.top + 8, paddingHorizontal: 20, paddingBottom: shopDockClearance + insets.bottom }}
+      contentContainerStyle={{
+        paddingTop: insets.top + 8,
+        paddingHorizontal: 20,
+        paddingBottom: shopDockClearance + insets.bottom,
+      }}
     >
       <View style={{ marginBottom: 10 }}>
         <WalletBack />
@@ -64,7 +68,13 @@ export default function ShopTab() {
             <ShopBadge size={60} />
           </View>
           <View style={{ flex: 1 }}>
-            <Txt weight="bold" size={22} color={colors.white} numberOfLines={1} style={{ letterSpacing: -0.4 }}>
+            <Txt
+              weight="bold"
+              size={22}
+              color={colors.white}
+              numberOfLines={1}
+              style={{ letterSpacing: -0.4 }}
+            >
               {shop.name}
             </Txt>
             <Txt size={13} color={colors.onInk} numberOfLines={1}>
@@ -74,7 +84,14 @@ export default function ShopTab() {
         </View>
         <View style={styles.passFacts}>
           <Fact label="This phone" value={shop.terminal} />
-          <Fact label="Settles to" value={owned && profile ? `Your wallet, ${profile.address.slice(0, 6)}…${profile.address.slice(-4)}` : 'The shop’s wallet'} />
+          <Fact
+            label="Settles to"
+            value={
+              owned && profile
+                ? `Your wallet, ${profile.address.slice(0, 6)}…${profile.address.slice(-4)}`
+                : 'The shop’s wallet'
+            }
+          />
           <Fact label="Card fees" value="None" last />
         </View>
       </View>
@@ -82,7 +99,8 @@ export default function ShopTab() {
       <Group title="Prices">
         <View style={styles.pad}>
           <Txt size={14} color={colors.muted} style={{ lineHeight: 20 }}>
-            The keypad takes prices in this currency. Customers always pay the dollar amount, at a reference rate they can see.
+            The keypad takes prices in this currency. Customers always pay the dollar amount, at a
+            reference rate they can see.
           </Txt>
           <View style={styles.chips}>
             {priceCurrencies.map((c) => {
@@ -114,7 +132,13 @@ export default function ShopTab() {
           {ownerLinked === false ? (
             <Row
               icon="face"
-              label={linking === 'working' ? 'Waiting for Face ID…' : linking === 'failed' ? 'That didn’t work. Try again' : 'Sign in on the web with Face ID'}
+              label={
+                linking === 'working'
+                  ? 'Waiting for Face ID…'
+                  : linking === 'failed'
+                    ? 'That didn’t work. Try again'
+                    : 'Sign in on the web with Face ID'
+              }
               value={`Your passkey opens ${shop.name} on Ren’s website`}
               onPress={async () => {
                 if (linking === 'working') return
@@ -132,7 +156,11 @@ export default function ShopTab() {
           <Row
             icon="web"
             label="Open your shop on the web"
-            value={ownerLinked ? 'Your passkey signs you in there' : 'Payments, stalls and terminals on a big screen'}
+            value={
+              ownerLinked
+                ? 'Your passkey signs you in there'
+                : 'Payments, stalls and terminals on a big screen'
+            }
             onPress={() => void WebBrowser.openBrowserAsync(`${webUrl}/wallet`)}
           />
           <Row
@@ -170,7 +198,11 @@ export default function ShopTab() {
                   : `Its key stops working at once. To use it again, pair it with a new code from ${shop.name}.`}
               </Txt>
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                <Pressable accessibilityRole="button" onPress={() => setConfirmUnpair(false)} style={[styles.small, { backgroundColor: colors.surface }]}>
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => setConfirmUnpair(false)}
+                  style={[styles.small, { backgroundColor: colors.surface }]}
+                >
                   <Txt weight="semi" size={15}>
                     Keep it
                   </Txt>
@@ -181,7 +213,10 @@ export default function ShopTab() {
                     await terminal.unpair()
                     router.replace('/terminal/setup')
                   }}
-                  style={[styles.small, { backgroundColor: colors.danger, borderColor: colors.danger }]}
+                  style={[
+                    styles.small,
+                    { backgroundColor: colors.danger, borderColor: colors.danger },
+                  ]}
                 >
                   <Txt weight="semi" size={15} color={colors.white}>
                     Unpair
@@ -190,7 +225,14 @@ export default function ShopTab() {
               </View>
             </View>
           ) : (
-            <Row icon="terminal" label={`Unpair ${terminal.paired.name}`} value="This phone stops taking payments" danger onPress={() => setConfirmUnpair(true)} last />
+            <Row
+              icon="terminal"
+              label={`Unpair ${terminal.paired.name}`}
+              value="This phone stops taking payments"
+              danger
+              onPress={() => setConfirmUnpair(true)}
+              last
+            />
           )
         ) : null}
       </Group>
@@ -204,7 +246,13 @@ function Fact({ label, value, last }: { label: string; value: string; last?: boo
       <Txt size={13} color={colors.onInk}>
         {label}
       </Txt>
-      <Txt weight="semi" size={14} color={colors.white} numberOfLines={1} style={{ flexShrink: 1, textAlign: 'right' }}>
+      <Txt
+        weight="semi"
+        size={14}
+        color={colors.white}
+        numberOfLines={1}
+        style={{ flexShrink: 1, textAlign: 'right' }}
+      >
         {value}
       </Txt>
     </View>
@@ -222,10 +270,31 @@ function Group({ title, children }: { title: string; children: ReactNode }) {
   )
 }
 
-function Row({ icon, label, value, onPress, last, danger }: { icon: IconName; label: string; value?: string; onPress: () => void; last?: boolean; danger?: boolean }) {
+function Row({
+  icon,
+  label,
+  value,
+  onPress,
+  last,
+  danger,
+}: {
+  icon: IconName
+  label: string
+  value?: string
+  onPress: () => void
+  last?: boolean
+  danger?: boolean
+}) {
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={({ pressed }) => [styles.row, !last && styles.rowRule, pressed && { opacity: 0.7 }]}>
-      <View style={[styles.rowIcon, { backgroundColor: danger ? colors.coralSoft : colors.tealSoft }]}>
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, !last && styles.rowRule, pressed && { opacity: 0.7 }]}
+    >
+      <View
+        style={[styles.rowIcon, { backgroundColor: danger ? colors.coralSoft : colors.tealSoft }]}
+      >
         <Icon name={icon} size={19} />
       </View>
       <View style={{ flex: 1 }}>
@@ -246,17 +315,62 @@ function Row({ icon, label, value, onPress, last, danger }: { icon: IconName; la
 const styles = StyleSheet.create({
   pass: { marginTop: 16, borderRadius: 28, backgroundColor: colors.ink, overflow: 'hidden' },
   passTop: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, paddingBottom: 14 },
-  badge: { borderRadius: 36, borderWidth: 3, borderColor: colors.yellow, padding: 2, backgroundColor: colors.surface },
+  badge: {
+    borderRadius: 36,
+    borderWidth: 3,
+    borderColor: colors.yellow,
+    padding: 2,
+    backgroundColor: colors.surface,
+  },
   passFacts: { marginHorizontal: 18, marginBottom: 12 },
-  fact: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  fact: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 10,
+  },
   factRule: { borderBottomWidth: 1, borderColor: 'rgba(255,255,255,0.12)' },
-  group: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, overflow: 'hidden' },
+  group: {
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
   pad: { padding: 14 },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
-  chip: { height: 36, paddingHorizontal: 14, borderRadius: 18, borderWidth: 2, borderColor: colors.ink, justifyContent: 'center' },
+  chip: {
+    height: 36,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    justifyContent: 'center',
+  },
   chipOn: { backgroundColor: colors.ink },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 12 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
   rowRule: { borderBottomWidth: 1, borderColor: colors.sunken },
-  rowIcon: { width: 38, height: 38, borderRadius: 19, alignItems: 'center', justifyContent: 'center' },
-  small: { flex: 1, height: 44, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  rowIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  small: {
+    flex: 1,
+    height: 44,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 })

@@ -91,8 +91,8 @@ export function CashOut() {
         {stage.at === 'problem' ? <p className="form-error">{stage.message}</p> : null}
         {settings && !settings.live ? (
           <p className="w-fine w-center">
-            Opens on Monad mainnet, where Ramp buys AUSD on Monad. Testnet holds only test
-            dollars, so there’s nothing to cash out.
+            Opens on Monad mainnet, where Ramp buys AUSD on Monad. Testnet holds only test dollars,
+            so there’s nothing to cash out.
           </p>
         ) : null}
         {stage.at === 'sent' ? (

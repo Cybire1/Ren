@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { Icon } from '@/components/brand'
+import { chainName, homeSite, onTempo } from '@/lib/chain'
 import { personLink } from '@/lib/wallet/links'
 import {
   applyKey,
@@ -15,7 +16,6 @@ import {
 import { ScreenHead } from './activity'
 import { short, useWallet } from './provider'
 import { CopyButton, Keypad, QR, ShareButton } from './ui'
-import { chainName, homeSite, onTempo } from '@/lib/chain'
 
 function useOrigin() {
   const [origin, setOrigin] = useState(homeSite)
@@ -58,8 +58,8 @@ export function Request() {
             <QR value={link} size={220} label={`Code to pay ${profile.name} ${amount} dollars`} />
           </div>
           <p className="w-fine w-center">
-            They can scan it with the Ren app or any phone camera. It opens on the web if they
-            don’t have Ren, and they can pay with email or Google.
+            They can scan it with the Ren app or any phone camera. It opens on the web if they don’t
+            have Ren, and they can pay with email or Google.
           </p>
           <ShareButton
             title={`Pay ${profile.name}`}
@@ -137,7 +137,9 @@ export function Receive() {
           </span>
           <CopyButton text={profile.address} />
         </div>
-        <p className="w-fine w-center">{chainName} address. Send only {onTempo ? 'USDC' : 'AUSD'} on {chainName} to it.</p>
+        <p className="w-fine w-center">
+          {chainName} address. Send only {onTempo ? 'USDC' : 'AUSD'} on {chainName} to it.
+        </p>
         <ShareButton
           title={`Pay ${profile.name}`}
           text="Pay me on Ren:"

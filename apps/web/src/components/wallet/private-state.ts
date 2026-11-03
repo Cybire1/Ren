@@ -64,7 +64,10 @@ export interface PrivateValue {
   open: () => Promise<void>
   moveIn: (amount: bigint) => Promise<Moved>
   moveOut: (amount: bigint) => Promise<Moved>
-  sendPrivately: (to: { address: string; name: string }, amount: bigint) => Promise<Moved & { opening?: `0x${string}` }>
+  sendPrivately: (
+    to: { address: string; name: string },
+    amount: bigint,
+  ) => Promise<Moved & { opening?: `0x${string}` }>
   /** What this wallet did with a Tempo transaction into or out of the zone, for public history. */
   noteFor: (hash: string) => PrivateNote | undefined
   /** Every private move this browser made. */

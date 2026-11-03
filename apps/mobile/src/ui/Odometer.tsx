@@ -43,11 +43,25 @@ export function Odometer({
   // Keyed from the right, so a column keeps its place (and rolls) when the amount gains a digit.
   const chars = value.split('')
   return (
-    <View accessible accessibilityRole="text" accessibilityLabel={label} style={[styles.row, style]}>
+    <View
+      accessible
+      accessibilityRole="text"
+      accessibilityLabel={label}
+      style={[styles.row, style]}
+    >
       {chars.map((ch, i) => {
         const key = chars.length - i
         return /\d/.test(ch) ? (
-          <Column key={key} figure={Number(ch)} order={i} size={size} line={line} color={color} weight={weight} delay={delay} />
+          <Column
+            key={key}
+            figure={Number(ch)}
+            order={i}
+            size={size}
+            line={line}
+            color={color}
+            weight={weight}
+            delay={delay}
+          />
         ) : (
           <Txt
             key={key}
@@ -91,7 +105,10 @@ function Column({
       y.value = -figure * line
       return
     }
-    y.value = withDelay(delay + order * 90, withTiming(-figure * line, { duration: 1150, easing: Easing.out(Easing.exp) }))
+    y.value = withDelay(
+      delay + order * 90,
+      withTiming(-figure * line, { duration: 1150, easing: Easing.out(Easing.exp) }),
+    )
   }, [figure, line, order, delay, reduced, y])
   const strip = useAnimatedStyle(() => ({ transform: [{ translateY: y.value }] }))
   return (
@@ -102,7 +119,14 @@ function Column({
     >
       <Animated.View style={strip}>
         {FIGURES.map((f) => (
-          <Txt key={f} weight={weight} size={size} exact color={color} style={{ height: line, lineHeight: line }}>
+          <Txt
+            key={f}
+            weight={weight}
+            size={size}
+            exact
+            color={color}
+            style={{ height: line, lineHeight: line }}
+          >
             {f}
           </Txt>
         ))}

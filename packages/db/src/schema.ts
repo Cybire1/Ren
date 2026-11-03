@@ -321,7 +321,10 @@ export const cashOuts = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('cash_outs_wallet_idx').on(t.walletAddress, t.createdAt), uniqueIndex('cash_outs_tx_idx').on(t.txHash)],
+  (t) => [
+    index('cash_outs_wallet_idx').on(t.walletAddress, t.createdAt),
+    uniqueIndex('cash_outs_tx_idx').on(t.txHash),
+  ],
 )
 
 /**
@@ -350,7 +353,10 @@ export const nairaPayIns = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [uniqueIndex('naira_pay_ins_reference_idx').on(t.reference), index('naira_pay_ins_intent_idx').on(t.intentId)],
+  (t) => [
+    uniqueIndex('naira_pay_ins_reference_idx').on(t.reference),
+    index('naira_pay_ins_intent_idx').on(t.intentId),
+  ],
 )
 
 // --- Payments -------------------------------------------------------------
@@ -1118,5 +1124,8 @@ export const cardTaps = pgTable(
     createdAt: createdAt(),
     updatedAt: updatedAt(),
   },
-  (t) => [index('card_taps_card_idx').on(t.cardAddress, t.createdAt), index('card_taps_intent_idx').on(t.intentId)],
+  (t) => [
+    index('card_taps_card_idx').on(t.cardAddress, t.createdAt),
+    index('card_taps_intent_idx').on(t.intentId),
+  ],
 )

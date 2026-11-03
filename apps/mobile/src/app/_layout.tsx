@@ -16,9 +16,9 @@ import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { PrefsProvider, usePrefs } from '@/lib/prefs'
 import { useLiveRates } from '@/lib/rates'
 import { StallProvider } from '@/lib/stall'
-import { TravelProvider } from '@/lib/travel'
 import { TerminalProvider } from '@/lib/terminal'
 import { colors } from '@/lib/theme'
+import { TravelProvider } from '@/lib/travel'
 import { useWallet, WalletProvider } from '@/lib/wallet'
 import { OrderWatcher } from '@/lib/watch'
 
@@ -50,7 +50,12 @@ function ArrivalWatcher() {
     if (!arrival || mode !== 'pay') return
     router.push({
       pathname: '/received',
-      params: { amount: arrival.amount.toString(), name: arrival.name, hash: arrival.hash, ...(arrival.note ? { note: arrival.note } : {}) },
+      params: {
+        amount: arrival.amount.toString(),
+        name: arrival.name,
+        hash: arrival.hash,
+        ...(arrival.note ? { note: arrival.note } : {}),
+      },
     })
     clearArrival()
   }, [arrival, clearArrival, mode])
@@ -67,7 +72,13 @@ const sendSheet = {
 } as const
 
 export default function RootLayout() {
-  const [loaded] = useFonts({ Manrope_400Regular, Manrope_500Medium, Manrope_600SemiBold, Manrope_700Bold, Manrope_800ExtraBold })
+  const [loaded] = useFonts({
+    Manrope_400Regular,
+    Manrope_500Medium,
+    Manrope_600SemiBold,
+    Manrope_700Bold,
+    Manrope_800ExtraBold,
+  })
   // Local prices on the first screen should already use today's rates.
   const ratesReady = useLiveRates()
 
@@ -85,29 +96,64 @@ export default function RootLayout() {
             <WalletProvider>
               <StallProvider>
                 <TravelProvider>
-                <StatusBar style="dark" />
-                <ArrivalWatcher />
-                <OrderWatcher />
-                <DevLaunch />
-                <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
-                  <Stack.Screen name="index" options={{ animation: 'none' }} />
-                  <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
-                  <Stack.Screen name="scan" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="received" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
-                  <Stack.Screen name="ready/[id]" options={{ presentation: 'fullScreenModal', animation: 'fade' }} />
-                  <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
-                  <Stack.Screen name="open-stall" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="card/link" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="card/pin" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="cash-out" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="keys/agent" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="keys/card" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="keys/allowance" options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />
-                  <Stack.Screen name="send/index" options={sendSheet} />
-                  <Stack.Screen name="send/[to]" options={sendSheet} />
-                </Stack>
+                  <StatusBar style="dark" />
+                  <ArrivalWatcher />
+                  <OrderWatcher />
+                  <DevLaunch />
+                  <Stack
+                    screenOptions={{
+                      headerShown: false,
+                      contentStyle: { backgroundColor: colors.paper },
+                    }}
+                  >
+                    <Stack.Screen name="index" options={{ animation: 'none' }} />
+                    <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
+                    <Stack.Screen
+                      name="scan"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen
+                      name="received"
+                      options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+                    />
+                    <Stack.Screen
+                      name="ready/[id]"
+                      options={{ presentation: 'fullScreenModal', animation: 'fade' }}
+                    />
+                    <Stack.Screen name="terminal" options={{ animation: 'fade' }} />
+                    <Stack.Screen
+                      name="open-stall"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen
+                      name="card/link"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen
+                      name="card/pin"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen
+                      name="cash-out"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen
+                      name="keys/agent"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen
+                      name="keys/card"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen
+                      name="keys/allowance"
+                      options={{ presentation: 'fullScreenModal', animation: 'slide_from_bottom' }}
+                    />
+                    <Stack.Screen name="s/[slug]" options={{ animation: 'slide_from_bottom' }} />
+                    <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />
+                    <Stack.Screen name="send/index" options={sendSheet} />
+                    <Stack.Screen name="send/[to]" options={sendSheet} />
+                  </Stack>
                 </TravelProvider>
               </StallProvider>
             </WalletProvider>

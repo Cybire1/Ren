@@ -28,19 +28,31 @@ const oxRoot = path.join(projectRoot, 'node_modules/ox')
 const oxExports = require(path.join(oxRoot, 'package.json')).exports
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
-  if (moduleName === '@kova/monad') return { type: 'sourceFile', filePath: path.join(monadSource, 'index.ts') }
+  if (moduleName === '@kova/monad')
+    return { type: 'sourceFile', filePath: path.join(monadSource, 'index.ts') }
   if (moduleName.startsWith('ox/')) {
     const entry = oxExports[`./${moduleName.slice(3)}`]
     const target = typeof entry === 'string' ? entry : entry?.default
     if (target) return { type: 'sourceFile', filePath: path.join(oxRoot, target) }
   }
-  if (context.originModulePath.startsWith(monadSource) && moduleName.startsWith('.') && moduleName.endsWith('.js')) {
-    const ts = path.resolve(path.dirname(context.originModulePath), moduleName.replace(/\.js$/, '.ts'))
+  if (
+    context.originModulePath.startsWith(monadSource) &&
+    moduleName.startsWith('.') &&
+    moduleName.endsWith('.js')
+  ) {
+    const ts = path.resolve(
+      path.dirname(context.originModulePath),
+      moduleName.replace(/\.js$/, '.ts'),
+    )
     if (fs.existsSync(ts)) return { type: 'sourceFile', filePath: ts }
   }
   const root = moduleName.split('/')[0]
   if (shared.includes(root) || context.originModulePath.startsWith(monadSource))
-    return context.resolveRequest({ ...context, originModulePath: appPackage }, moduleName, platform)
+    return context.resolveRequest(
+      { ...context, originModulePath: appPackage },
+      moduleName,
+      platform,
+    )
   return context.resolveRequest(context, moduleName, platform)
 }
 

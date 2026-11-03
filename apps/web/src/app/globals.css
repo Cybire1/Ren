@@ -151,7 +151,9 @@ p {
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.4s var(--spring), background-color 0.3s var(--spring);
+  transition:
+    transform 0.4s var(--spring),
+    background-color 0.3s var(--spring);
 }
 
 .pill[data-tone="coral"] {
@@ -257,7 +259,9 @@ p {
   background: color-mix(in srgb, var(--ink) 7%, transparent);
   cursor: pointer;
   text-decoration: none;
-  transition: transform 0.4s var(--spring), background-color 0.2s;
+  transition:
+    transform 0.4s var(--spring),
+    background-color 0.2s;
 }
 
 .round:hover {
@@ -745,7 +749,9 @@ p {
   font-size: 1.75rem;
   font-weight: 500;
   cursor: pointer;
-  transition: transform 0.35s var(--spring), background-color 0.2s;
+  transition:
+    transform 0.35s var(--spring),
+    background-color 0.2s;
 }
 
 .key:hover {
@@ -1017,7 +1023,9 @@ p {
   text-align: left;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.4s var(--spring), background-color 0.3s var(--spring);
+  transition:
+    transform 0.4s var(--spring),
+    background-color 0.3s var(--spring);
 }
 
 .wallet-list button > span:nth-child(2),
@@ -1109,7 +1117,9 @@ p {
 
 .shop-wallet-make {
   cursor: pointer;
-  transition: transform 0.4s var(--spring), background-color 0.3s var(--spring);
+  transition:
+    transform 0.4s var(--spring),
+    background-color 0.3s var(--spring);
 }
 
 .shop-wallet-make:hover {

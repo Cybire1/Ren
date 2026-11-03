@@ -29,7 +29,8 @@ export default function PrivateScreen() {
             Private dollars aren’t on this build
           </Txt>
           <Txt color={colors.muted} style={{ textAlign: 'center' }}>
-            Ren keeps private balances on a Tempo Zone. Your wallet works exactly the same without it.
+            Ren keeps private balances on a Tempo Zone. Your wallet works exactly the same without
+            it.
           </Txt>
         </View>
       </Screen>
@@ -114,7 +115,12 @@ export default function PrivateScreen() {
         ) : null}
 
         <View style={styles.actions}>
-          <Action icon="down" label="Move in" sub="From your balance" onPress={() => router.push('/private/move?dir=in')} />
+          <Action
+            icon="down"
+            label="Move in"
+            sub="From your balance"
+            onPress={() => router.push('/private/move?dir=in')}
+          />
           <Action
             icon="send"
             label="Send privately"
@@ -123,7 +129,12 @@ export default function PrivateScreen() {
             disc={colors.coral}
             onPress={() => router.push({ pathname: '/send', params: { privately: '1' } })}
           />
-          <Action icon="up" label="Move out" sub="Back to your balance" onPress={() => router.push('/private/move?dir=out')} />
+          <Action
+            icon="up"
+            label="Move out"
+            sub="Back to your balance"
+            onPress={() => router.push('/private/move?dir=out')}
+          />
         </View>
 
         <Txt weight="heavy" size={20} style={styles.section}>
@@ -190,7 +201,14 @@ function Action({
   disc?: string
 }) {
   return (
-    <Sticker onPress={onPress} lift fill={fill} radius={22} style={{ flex: 1 }} accessibilityLabel={label}>
+    <Sticker
+      onPress={onPress}
+      lift
+      fill={fill}
+      radius={22}
+      style={{ flex: 1 }}
+      accessibilityLabel={label}
+    >
       <View style={styles.action}>
         <View style={[styles.disc, { backgroundColor: disc }]}>
           <Icon name={icon} size={18} color={colors.white} />
@@ -198,7 +216,11 @@ function Action({
         <Txt weight="heavy" size={15} style={{ lineHeight: 18 }}>
           {label}
         </Txt>
-        <Txt size={12} color={fill === colors.surface ? colors.muted : colors.onTint} style={{ lineHeight: 15 }}>
+        <Txt
+          size={12}
+          color={fill === colors.surface ? colors.muted : colors.onTint}
+          style={{ lineHeight: 15 }}
+        >
           {sub}
         </Txt>
       </View>
@@ -227,21 +249,31 @@ function Fact({ icon, title, text }: { icon: IconName; title: string; text: stri
 function when(at: number) {
   const d = new Date(at)
   const time = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-  return d.toDateString() === new Date().toDateString() ? time : d.toLocaleDateString([], { day: 'numeric', month: 'short' })
+  return d.toDateString() === new Date().toDateString()
+    ? time
+    : d.toLocaleDateString([], { day: 'numeric', month: 'short' })
 }
 
 /** One line of private history. A private send came from your balance, so it isn't signed. */
 function Row({ entry, last }: { entry: PrivateEntry; last: boolean }) {
   const incoming = entry.kind === 'in' || entry.kind === 'arrived'
   const amount =
-    entry.kind === 'sent' ? formatUsd(entry.amount) : entry.kind === 'out' ? formatUsd(-entry.amount) : formatUsd(entry.amount, { sign: true })
+    entry.kind === 'sent'
+      ? formatUsd(entry.amount)
+      : entry.kind === 'out'
+        ? formatUsd(-entry.amount)
+        : formatUsd(entry.amount, { sign: true })
   return (
     <View style={[styles.row, !last && styles.rowRule, entry.pending && { opacity: 0.6 }]}>
       {entry.kind === 'sent' ? (
         <Avatar name={entry.name} id={entry.name} size={40} />
       ) : (
         <View style={styles.badge}>
-          <Icon name={entry.kind === 'out' ? 'up' : entry.kind === 'in' ? 'down' : 'lock'} size={18} color={colors.tealSoft} />
+          <Icon
+            name={entry.kind === 'out' ? 'up' : entry.kind === 'in' ? 'down' : 'lock'}
+            size={18}
+            color={colors.tealSoft}
+          />
         </View>
       )}
       <View style={{ flex: 1 }}>
@@ -255,7 +287,11 @@ function Row({ entry, last }: { entry: PrivateEntry; last: boolean }) {
           </Txt>
         </View>
       </View>
-      <Txt weight="bold" size={15} color={incoming ? colors.positive : entry.kind === 'sent' ? colors.muted : colors.ink}>
+      <Txt
+        weight="bold"
+        size={15}
+        color={incoming ? colors.positive : entry.kind === 'sent' ? colors.muted : colors.ink}
+      >
         {amount}
       </Txt>
     </View>
@@ -277,14 +313,28 @@ const styles = StyleSheet.create({
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, borderWidth: 2, borderColor: 'rgba(255,255,255,0.3)', backgroundColor: '#1E3557' },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.3)',
+    backgroundColor: '#1E3557',
+  },
   amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 10, paddingRight: 90 },
   locked: { marginTop: 8, gap: 10, paddingRight: 90 },
   where: { marginTop: 12, paddingRight: 90 },
   cardReni: { position: 'absolute', right: 10, bottom: -6, transform: [{ rotate: '-4deg' }] },
   actions: { flexDirection: 'row', gap: 10, marginTop: 16 },
   action: { padding: 12, paddingBottom: 14, gap: 2, minHeight: 118 },
-  disc: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  disc: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
   section: { marginTop: 26, marginBottom: 10 },
   fact: {
     flexDirection: 'row',
@@ -296,10 +346,30 @@ const styles = StyleSheet.create({
     borderColor: colors.ink,
     backgroundColor: colors.surface,
   },
-  factIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
-  list: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.card, paddingHorizontal: 14 },
+  factIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  list: {
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.card,
+    paddingHorizontal: 14,
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
   rowRule: { borderBottomWidth: 1, borderBottomColor: colors.sunken },
-  badge: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  badge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 24 },
 })

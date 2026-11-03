@@ -4,7 +4,14 @@ import { schema, uuidv7 } from '@kova/db'
 import { approvalMessage, formatAmount } from '@kova/tempo'
 import { and, desc, eq, inArray, lt } from 'drizzle-orm'
 import { Mppx, tempo } from 'mppx/client'
-import { type Address, getAddress, type Hex, isAddress, isAddressEqual, recoverMessageAddress } from 'viem'
+import {
+  type Address,
+  getAddress,
+  type Hex,
+  isAddress,
+  isAddressEqual,
+  recoverMessageAddress,
+} from 'viem'
 import { Account, Actions, createClient, http } from 'viem/tempo'
 import { feePayerAccount, network, rpcUrl } from '../chain.js'
 import { isProduction } from '../config.js'
@@ -12,8 +19,8 @@ import { db } from '../db.js'
 import { KovaError } from '../errors.js'
 import { decodeId } from '../ids.js'
 import { openAgentKey, sameSecret, tokenHash } from '../secrets.js'
-import { settleFromReceipt } from './settle.js'
 import { type KeyPaymentRow, type KeyRow, keyRow, onChainKey, requireKeys } from './keys.js'
+import { settleFromReceipt } from './settle.js'
 
 /**
  * What an AI agent does with its key, through Ren.
@@ -44,7 +51,10 @@ const FETCH_TIMEOUT_MS = 25_000
 export async function agentForToken(token: string | undefined): Promise<KeyRow> {
   requireKeys()
   if (!token?.startsWith('ren_agent_') || token.length < 40)
-    throw new KovaError('unauthorized', 'Send your Ren agent token as `Authorization: Bearer ren_agent_…`.')
+    throw new KovaError(
+      'unauthorized',
+      'Send your Ren agent token as `Authorization: Bearer ren_agent_…`.',
+    )
   const row = await db.query.walletKeys.findFirst({
     where: eq(schema.walletKeys.tokenPrefix, token.slice(0, TOKEN_PREFIX)),
   })
@@ -55,7 +65,11 @@ export async function agentForToken(token: string | undefined): Promise<KeyRow> 
 
 export async function describeAgent(row: KeyRow) {
   const chain = row.keyId
-    ? await onChainKey(getAddress(row.ownerAddress), getAddress(row.keyId), getAddress(row.token)).catch(() => null)
+    ? await onChainKey(
+        getAddress(row.ownerAddress),
+        getAddress(row.keyId),
+        getAddress(row.token),
+      ).catch(() => null)
     : null
   const rules = row.rules
   return {
@@ -77,7 +91,9 @@ export async function describeAgent(row: KeyRow) {
 
 function agentAccount(row: KeyRow) {
   if (!row.sealedKey) throw new KovaError('forbidden', 'This key was removed by its owner.')
-  return Account.fromSecp256k1(openAgentKey(row.sealedKey, row.id), { access: getAddress(row.ownerAddress) })
+  return Account.fromSecp256k1(openAgentKey(row.sealedKey, row.id), {
+    access: getAddress(row.ownerAddress),
+  })
 }
 
 function agentClient(row: KeyRow) {
@@ -94,23 +110,41 @@ function agentClient(row: KeyRow) {
 type Verdict = { kind: 'pay' } | { kind: 'ask' } | { kind: 'deny'; reason: string }
 
 /** Whether this key may pay this much to this wallet now: pay, ask the owner first, or no. */
-async function judge(row: KeyRow, amount: bigint, to: Address, approved: boolean): Promise<Verdict> {
+async function judge(
+  row: KeyRow,
+  amount: bigint,
+  to: Address,
+  approved: boolean,
+): Promise<Verdict> {
   if (row.status === 'frozen') return { kind: 'deny', reason: 'This key is frozen by its owner.' }
   if (row.status !== 'active') return { kind: 'deny', reason: 'This key isn’t switched on.' }
-  if (row.expiresAt < new Date()) return { kind: 'deny', reason: 'This key has expired. Its owner can make a new one.' }
+  if (row.expiresAt < new Date())
+    return { kind: 'deny', reason: 'This key has expired. Its owner can make a new one.' }
   if (amount <= 0n) return { kind: 'deny', reason: 'A payment has to move some money.' }
   const rules = row.rules
   if (!rules) return { kind: 'deny', reason: 'This key has no rules, so it pays nothing.' }
   if (amount > BigInt(rules.perPayment))
-    return { kind: 'deny', reason: `That’s over this key’s limit of $${formatAmount(BigInt(rules.perPayment))} a payment.` }
+    return {
+      kind: 'deny',
+      reason: `That’s over this key’s limit of $${formatAmount(BigInt(rules.perPayment))} a payment.`,
+    }
   if (rules.payees !== 'anyone' && !rules.payees.some((p) => isAddressEqual(p as Address, to)))
     return { kind: 'deny', reason: 'This key may only pay the wallets its owner listed.' }
   if (!row.keyId) return { kind: 'deny', reason: 'This key isn’t on Tempo.' }
-  const chain = await onChainKey(getAddress(row.ownerAddress), getAddress(row.keyId), getAddress(row.token))
+  const chain = await onChainKey(
+    getAddress(row.ownerAddress),
+    getAddress(row.keyId),
+    getAddress(row.token),
+  )
   if (!chain.live) return { kind: 'deny', reason: 'This key isn’t on Tempo any more.' }
   if (chain.remaining < amount) {
-    const renews = chain.periodEnd ? ` It renews ${new Date(chain.periodEnd * 1000).toISOString()}.` : ''
-    return { kind: 'deny', reason: `That’s over what this key has left: $${formatAmount(chain.remaining)}.${renews}` }
+    const renews = chain.periodEnd
+      ? ` It renews ${new Date(chain.periodEnd * 1000).toISOString()}.`
+      : ''
+    return {
+      kind: 'deny',
+      reason: `That’s over what this key has left: $${formatAmount(chain.remaining)}.${renews}`,
+    }
   }
   if (!approved && amount > BigInt(rules.approveAbove)) return { kind: 'ask' }
   return { kind: 'pay' }
@@ -125,18 +159,27 @@ async function record(
     .values({ id: uuidv7(), walletKeyId: row.id, ...values })
     .returning()
   if (values.status === 'paid')
-    await db.update(schema.walletKeys).set({ lastUsedAt: new Date() }).where(eq(schema.walletKeys.id, row.id))
+    await db
+      .update(schema.walletKeys)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(schema.walletKeys.id, row.id))
   return payment as KeyPaymentRow
 }
 
-async function settle(payment: KeyPaymentRow, values: Partial<typeof schema.keyPayments.$inferInsert>) {
+async function settle(
+  payment: KeyPaymentRow,
+  values: Partial<typeof schema.keyPayments.$inferInsert>,
+) {
   const [updated] = await db
     .update(schema.keyPayments)
     .set({ ...values, updatedAt: new Date() })
     .where(eq(schema.keyPayments.id, payment.id))
     .returning()
   if (values.status === 'paid')
-    await db.update(schema.walletKeys).set({ lastUsedAt: new Date() }).where(eq(schema.walletKeys.id, payment.walletKeyId))
+    await db
+      .update(schema.walletKeys)
+      .set({ lastUsedAt: new Date() })
+      .where(eq(schema.walletKeys.id, payment.walletKeyId))
   return updated as KeyPaymentRow
 }
 
@@ -148,14 +191,17 @@ const why = (error: unknown) => {
 // ── Paying a wallet ─────────────────────────────────────────────────────────────────────────
 
 async function send(row: KeyRow, to: Address, amount: bigint, memo?: Hex): Promise<Hex> {
-  const { receipt } = await Actions.token.transferSync(agentClient(row) as never, {
-    token: getAddress(row.token),
-    to,
-    amount,
-    ...(memo ? { memo } : {}),
-    // Ren pays the network fee, so the key spends exactly the amount.
-    feePayer: feePayerAccount,
-  } as never)
+  const { receipt } = await Actions.token.transferSync(
+    agentClient(row) as never,
+    {
+      token: getAddress(row.token),
+      to,
+      amount,
+      ...(memo ? { memo } : {}),
+      // Ren pays the network fee, so the key spends exactly the amount.
+      feePayer: feePayerAccount,
+    } as never,
+  )
   if (receipt.status !== 'success') throw new Error('Tempo reverted the payment')
   // A Ren charge's memo settles it: the shop's till turns to paid now, not when the watcher looks.
   if (memo) await settleFromReceipt(receipt as never).catch(() => {})
@@ -173,12 +219,20 @@ export async function agentPay(
     amount: input.amount,
     description: input.note?.slice(0, 200) ?? null,
   }
-  if (verdict.kind === 'deny') return record(row, { ...base, status: 'denied', reason: verdict.reason })
+  if (verdict.kind === 'deny')
+    return record(row, { ...base, status: 'denied', reason: verdict.reason })
   if (verdict.kind === 'ask')
-    return record(row, { ...base, status: 'pending_approval', request: { to: input.to, amount: input.amount.toString() } })
+    return record(row, {
+      ...base,
+      status: 'pending_approval',
+      request: { to: input.to, amount: input.amount.toString() },
+    })
   const payment = await record(row, { ...base, status: 'paying' })
   try {
-    return await settle(payment, { status: 'paid', txHash: await send(row, input.to, input.amount) })
+    return await settle(payment, {
+      status: 'paid',
+      txHash: await send(row, input.to, input.amount),
+    })
   } catch (error) {
     return settle(payment, { status: 'failed', reason: why(error) })
   }
@@ -193,13 +247,22 @@ export function chargeIdFrom(text: string): string | null {
 
 async function openCharge(row: KeyRow, chargeId: string) {
   const uuid = decodeId('paymentIntent', chargeId)
-  const intent = uuid ? await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, uuid) }) : undefined
+  const intent = uuid
+    ? await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, uuid) })
+    : undefined
   if (!intent) throw new KovaError('not_found', 'No such Ren charge.')
-  if (intent.status !== 'requires_payment') throw new KovaError('conflict', `This charge is ${intent.status.replace('_', ' ')}.`)
-  if (intent.expiresAt < new Date()) throw new KovaError('conflict', 'This charge has expired. Ask the shop for a new one.')
+  if (intent.status !== 'requires_payment')
+    throw new KovaError('conflict', `This charge is ${intent.status.replace('_', ' ')}.`)
+  if (intent.expiresAt < new Date())
+    throw new KovaError('conflict', 'This charge has expired. Ask the shop for a new one.')
   if (!isAddressEqual(intent.tokenAddress as Address, row.token as Address))
-    throw new KovaError('invalid_request', 'This charge is in a different dollar than this key pays in.')
-  const merchant = await db.query.merchants.findFirst({ where: eq(schema.merchants.id, intent.merchantId) })
+    throw new KovaError(
+      'invalid_request',
+      'This charge is in a different dollar than this key pays in.',
+    )
+  const merchant = await db.query.merchants.findFirst({
+    where: eq(schema.merchants.id, intent.merchantId),
+  })
   return { intent, shop: merchant?.name ?? 'A Ren shop' }
 }
 
@@ -218,11 +281,15 @@ export async function agentPayCharge(row: KeyRow, chargeId: string): Promise<Key
     request: { charge: chargeId },
   }
   const verdict = await judge(row, intent.amount, to, false)
-  if (verdict.kind === 'deny') return record(row, { ...base, status: 'denied', reason: verdict.reason })
+  if (verdict.kind === 'deny')
+    return record(row, { ...base, status: 'denied', reason: verdict.reason })
   if (verdict.kind === 'ask') return record(row, { ...base, status: 'pending_approval' })
   const payment = await record(row, { ...base, status: 'paying' })
   try {
-    return await settle(payment, { status: 'paid', txHash: await send(row, to, intent.amount, intent.memo as Hex) })
+    return await settle(payment, {
+      status: 'paid',
+      txHash: await send(row, to, intent.amount, intent.memo as Hex),
+    })
   } catch (error) {
     return settle(payment, { status: 'failed', reason: why(error) })
   }
@@ -242,16 +309,31 @@ export interface FetchInput {
 export interface FetchResult {
   status: 'free' | 'paid' | 'pending_approval' | 'denied' | 'failed'
   payment: KeyPaymentRow | null
-  response: { status: number; content_type: string | null; body: string; encoding: 'utf8' | 'base64'; truncated: boolean } | null
+  response: {
+    status: number
+    content_type: string | null
+    body: string
+    encoding: 'utf8' | 'base64'
+    truncated: boolean
+  } | null
   /** Why it didn't go through, when it didn't. */
   reason?: string
 }
 
-const PRIVATE_V4 = [/^10\./, /^127\./, /^169\.254\./, /^172\.(1[6-9]|2\d|3[01])\./, /^192\.168\./, /^0\./, /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./]
+const PRIVATE_V4 = [
+  /^10\./,
+  /^127\./,
+  /^169\.254\./,
+  /^172\.(1[6-9]|2\d|3[01])\./,
+  /^192\.168\./,
+  /^0\./,
+  /^100\.(6[4-9]|[7-9]\d|1[01]\d|12[0-7])\./,
+]
 const privateAddress = (ip: string): boolean =>
   isIP(ip) === 4
     ? PRIVATE_V4.some((r) => r.test(ip))
-    : /^(::1|::|fc|fd|fe80)/i.test(ip) || ip.toLowerCase().startsWith('::ffff:') && privateAddress(ip.slice(7))
+    : /^(::1|::|fc|fd|fe80)/i.test(ip) ||
+      (ip.toLowerCase().startsWith('::ffff:') && privateAddress(ip.slice(7)))
 
 /**
  * Ren calls the URL from its own servers, so it must be a public site: never Ren's own network or
@@ -266,8 +348,10 @@ async function checkUrl(raw: string): Promise<URL> {
   }
   const local = url.hostname === 'localhost' || url.hostname === '127.0.0.1'
   if (!isProduction && local && (url.protocol === 'http:' || url.protocol === 'https:')) return url
-  if (url.protocol !== 'https:') throw new KovaError('invalid_request', 'Ren only pays for https URLs.')
-  if (url.username || url.password) throw new KovaError('invalid_request', 'A URL with a password in it isn’t allowed.')
+  if (url.protocol !== 'https:')
+    throw new KovaError('invalid_request', 'Ren only pays for https URLs.')
+  if (url.username || url.password)
+    throw new KovaError('invalid_request', 'A URL with a password in it isn’t allowed.')
   const addresses = isIP(url.hostname)
     ? [{ address: url.hostname }]
     : await lookup(url.hostname, { all: true }).catch(() => [])
@@ -296,7 +380,9 @@ function receiptReference(response: Response): string | null {
   const header = response.headers.get('payment-receipt')
   if (!header) return null
   try {
-    const receipt = JSON.parse(Buffer.from(header, 'base64url').toString('utf8')) as { reference?: string }
+    const receipt = JSON.parse(Buffer.from(header, 'base64url').toString('utf8')) as {
+      reference?: string
+    }
     return receipt.reference ?? null
   } catch {
     return null
@@ -307,13 +393,19 @@ function receiptReference(response: Response): string | null {
  * Calls the URL; if it asks for payment, reads the price, checks it, and pays only if the key's
  * rules allow (or the owner already approved this payment).
  */
-export async function agentFetch(row: KeyRow, input: FetchInput, approved?: KeyPaymentRow): Promise<FetchResult> {
+export async function agentFetch(
+  row: KeyRow,
+  input: FetchInput,
+  approved?: KeyPaymentRow,
+): Promise<FetchResult> {
   const url = await checkUrl(input.url)
   const method = input.method.toUpperCase()
   const init: RequestInit = {
     method,
     headers: input.headers,
-    ...(input.body !== undefined && method !== 'GET' && method !== 'HEAD' ? { body: input.body } : {}),
+    ...(input.body !== undefined && method !== 'GET' && method !== 'HEAD'
+      ? { body: input.body }
+      : {}),
     signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   }
   const mppx = Mppx.create({
@@ -329,39 +421,69 @@ export async function agentFetch(row: KeyRow, input: FetchInput, approved?: KeyP
 
   let prepared: Awaited<ReturnType<typeof mppx.prepareRequest>>
   try {
-    prepared = await mppx.prepareRequest(url, init, { maxRedirects: 0, acceptPayment: 'tempo/charge' })
+    prepared = await mppx.prepareRequest(url, init, {
+      maxRedirects: 0,
+      acceptPayment: 'tempo/charge',
+    })
   } catch (error) {
     if (approved) await settle(approved, { status: 'failed', reason: why(error) })
     return { status: 'failed', payment: null, response: null, reason: why(error) }
   }
-  if (!prepared.payment) return { status: 'free', payment: null, response: await readBody(prepared.response) }
+  if (!prepared.payment)
+    return { status: 'free', payment: null, response: await readBody(prepared.response) }
 
   const challenge = prepared.payment.challenge
-  const terms = challenge.request as { amount?: string; currency?: string; recipient?: string; description?: string }
+  const terms = challenge.request as {
+    amount?: string
+    currency?: string
+    recipient?: string
+    description?: string
+  }
   const base = {
     kind: 'mpp',
     origin: url.origin,
     url: url.toString().slice(0, 500),
     description: (challenge.description ?? terms.description ?? null)?.slice(0, 200) ?? null,
   }
-  const refuse = async (reason: string, amount = 0n, to: string = row.ownerAddress): Promise<FetchResult> => ({
+  const refuse = async (
+    reason: string,
+    amount = 0n,
+    to: string = row.ownerAddress,
+  ): Promise<FetchResult> => ({
     status: 'denied',
     payment: approved
       ? await settle(approved, { status: 'failed', reason })
-      : await record(row, { ...base, recipient: to.toLowerCase(), amount, status: 'denied', reason }),
+      : await record(row, {
+          ...base,
+          recipient: to.toLowerCase(),
+          amount,
+          status: 'denied',
+          reason,
+        }),
     response: null,
     reason,
   })
   if (challenge.method !== 'tempo' || challenge.intent !== 'charge')
-    return refuse(`This site asks for ${challenge.method} ${challenge.intent}; Ren pays one-off Tempo charges only.`)
-  if (!terms.amount || !/^\d+$/.test(terms.amount) || !terms.recipient || !isAddress(terms.recipient))
+    return refuse(
+      `This site asks for ${challenge.method} ${challenge.intent}; Ren pays one-off Tempo charges only.`,
+    )
+  if (
+    !terms.amount ||
+    !/^\d+$/.test(terms.amount) ||
+    !terms.recipient ||
+    !isAddress(terms.recipient)
+  )
     return refuse('This site’s price isn’t readable.')
   const amount = BigInt(terms.amount)
   const to = getAddress(terms.recipient)
   if (!terms.currency || !isAddressEqual(terms.currency as Address, row.token as Address))
     return refuse('This site wants a different dollar than this key pays in.', amount, to)
   if (input.maxAmount !== undefined && amount > input.maxAmount)
-    return refuse(`It costs $${formatAmount(amount)}, more than the $${formatAmount(input.maxAmount)} you allowed.`, amount, to)
+    return refuse(
+      `It costs $${formatAmount(amount)}, more than the $${formatAmount(input.maxAmount)} you allowed.`,
+      amount,
+      to,
+    )
   if (approved && (amount > approved.amount || !isAddressEqual(to, approved.recipient as Address)))
     return refuse('The price changed since the owner approved it. Ask again.', amount, to)
 
@@ -381,13 +503,17 @@ export async function agentFetch(row: KeyRow, input: FetchInput, approved?: KeyP
     }
 
   const payment =
-    approved ?? (await record(row, { ...base, recipient: to.toLowerCase(), amount, status: 'paying' }))
+    approved ??
+    (await record(row, { ...base, recipient: to.toLowerCase(), amount, status: 'paying' }))
   try {
     const response = await prepared.payment.pay()
     const body = await readBody(response)
     const reference = receiptReference(response)
     if (response.status >= 400 && !reference) {
-      const settled = await settle(payment, { status: 'failed', reason: `The site answered ${response.status} and didn’t take the payment.` })
+      const settled = await settle(payment, {
+        status: 'failed',
+        reason: `The site answered ${response.status} and didn’t take the payment.`,
+      })
       return { status: 'failed', payment: settled, response: body }
     }
     const settled = await settle(payment, {
@@ -405,9 +531,14 @@ export async function agentFetch(row: KeyRow, input: FetchInput, approved?: KeyP
 // ── The owner's answer ──────────────────────────────────────────────────────────────────────
 
 /** Payments waiting for this owner, across all their keys. Ones nobody answered in time lapse. */
-export async function approvalsFor(owner: Address): Promise<{ payment: KeyPaymentRow; key: KeyRow }[]> {
+export async function approvalsFor(
+  owner: Address,
+): Promise<{ payment: KeyPaymentRow; key: KeyRow }[]> {
   const keys = await db.query.walletKeys.findMany({
-    where: and(eq(schema.walletKeys.ownerAddress, owner.toLowerCase()), eq(schema.walletKeys.network, network.id)),
+    where: and(
+      eq(schema.walletKeys.ownerAddress, owner.toLowerCase()),
+      eq(schema.walletKeys.network, network.id),
+    ),
   })
   if (keys.length === 0) return []
   const ids = keys.map((k) => k.id)
@@ -422,10 +553,16 @@ export async function approvalsFor(owner: Address): Promise<{ payment: KeyPaymen
       ),
     )
   const waiting = await db.query.keyPayments.findMany({
-    where: and(inArray(schema.keyPayments.walletKeyId, ids), eq(schema.keyPayments.status, 'pending_approval')),
+    where: and(
+      inArray(schema.keyPayments.walletKeyId, ids),
+      eq(schema.keyPayments.status, 'pending_approval'),
+    ),
     orderBy: [desc(schema.keyPayments.createdAt)],
   })
-  return waiting.map((payment) => ({ payment, key: keys.find((k) => k.id === payment.walletKeyId) as KeyRow }))
+  return waiting.map((payment) => ({
+    payment,
+    key: keys.find((k) => k.id === payment.walletKeyId) as KeyRow,
+  }))
 }
 
 export async function paymentRow(id: string): Promise<KeyPaymentRow | undefined> {
@@ -448,7 +585,10 @@ export async function answerApproval(input: {
   if (!payment || !key || !isAddressEqual(key.ownerAddress as Address, input.owner))
     throw new KovaError('not_found', 'No such payment waiting for this wallet.')
   if (payment.status !== 'pending_approval')
-    throw new KovaError('conflict', `This payment is ${payment.status.replace('_', ' ')}, not waiting.`)
+    throw new KovaError(
+      'conflict',
+      `This payment is ${payment.status.replace('_', ' ')}, not waiting.`,
+    )
   const message = approvalMessage({
     address: getAddress(input.owner),
     paymentId: payment.id,
@@ -456,24 +596,36 @@ export async function answerApproval(input: {
     amount: formatAmount(payment.amount),
     to: payment.origin ?? getAddress(payment.recipient),
   })
-  const signer = await recoverMessageAddress({ message, signature: input.signature }).catch(() => null)
+  const signer = await recoverMessageAddress({ message, signature: input.signature }).catch(
+    () => null,
+  )
   if (!signer || !isAddressEqual(signer, input.owner))
     throw new KovaError('forbidden', 'Only the wallet that owns this key can answer for it.')
 
   // Claim it, so two answers can't both act.
   const [claimed] = await db
     .update(schema.keyPayments)
-    .set({ status: input.decision === 'approve' ? 'approved' : 'declined', decidedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(schema.keyPayments.id, payment.id), eq(schema.keyPayments.status, 'pending_approval')))
+    .set({
+      status: input.decision === 'approve' ? 'approved' : 'declined',
+      decidedAt: new Date(),
+      updatedAt: new Date(),
+    })
+    .where(
+      and(eq(schema.keyPayments.id, payment.id), eq(schema.keyPayments.status, 'pending_approval')),
+    )
     .returning()
   if (!claimed) throw new KovaError('conflict', 'This payment was already answered.')
   if (input.decision === 'decline') return { payment: claimed }
 
   if (payment.kind === 'charge') {
     try {
-      const { intent } = await openCharge(key, String((payment.request as { charge?: string } | null)?.charge ?? ''))
+      const { intent } = await openCharge(
+        key,
+        String((payment.request as { charge?: string } | null)?.charge ?? ''),
+      )
       const verdict = await judge(key, intent.amount, getAddress(intent.payTo), true)
-      if (verdict.kind === 'deny') return { payment: await settle(claimed, { status: 'failed', reason: verdict.reason }) }
+      if (verdict.kind === 'deny')
+        return { payment: await settle(claimed, { status: 'failed', reason: verdict.reason }) }
       const txHash = await send(key, getAddress(intent.payTo), intent.amount, intent.memo as Hex)
       return { payment: await settle(claimed, { status: 'paid', txHash }) }
     } catch (error) {
@@ -482,17 +634,33 @@ export async function answerApproval(input: {
   }
   if (payment.kind === 'pay') {
     const verdict = await judge(key, payment.amount, getAddress(payment.recipient), true)
-    if (verdict.kind === 'deny') return { payment: await settle(claimed, { status: 'failed', reason: verdict.reason }) }
+    if (verdict.kind === 'deny')
+      return { payment: await settle(claimed, { status: 'failed', reason: verdict.reason }) }
     try {
-      return { payment: await settle(claimed, { status: 'paid', txHash: await send(key, getAddress(payment.recipient), payment.amount) }) }
+      return {
+        payment: await settle(claimed, {
+          status: 'paid',
+          txHash: await send(key, getAddress(payment.recipient), payment.amount),
+        }),
+      }
     } catch (error) {
       return { payment: await settle(claimed, { status: 'failed', reason: why(error) }) }
     }
   }
-  const request = (payment.request ?? {}) as { url?: string; method?: string; headers?: Record<string, string>; body?: string | null }
+  const request = (payment.request ?? {}) as {
+    url?: string
+    method?: string
+    headers?: Record<string, string>
+    body?: string | null
+  }
   const result = await agentFetch(
     key,
-    { url: request.url ?? '', method: request.method ?? 'GET', headers: request.headers, body: request.body ?? undefined },
+    {
+      url: request.url ?? '',
+      method: request.method ?? 'GET',
+      headers: request.headers,
+      body: request.body ?? undefined,
+    },
     claimed,
   )
   return { payment: result.payment ?? claimed, result }

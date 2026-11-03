@@ -3,7 +3,7 @@ import { View } from 'react-native'
 import { colors } from '@/lib/theme'
 import { Reni, type ReniPose, reniFeet } from './art'
 import { Floor } from './Floor'
-import { Bounce, Bob } from './motion'
+import { Bob, Bounce } from './motion'
 
 /**
  * Reni standing on his paper-cut floor. The floor stays put while he moves, so a bounce reads
@@ -28,7 +28,9 @@ export function Stage({
   const reni = <Reni pose={pose} size={size} />
   return (
     <View style={{ width: size, height: size * feet + floorH * 0.55, alignItems: 'center' }}>
-      <View style={{ position: 'absolute', top: size * feet - floorH * 0.5, left: (size - floorW) / 2 }}>
+      <View
+        style={{ position: 'absolute', top: size * feet - floorH * 0.5, left: (size - floorW) / 2 }}
+      >
         <Floor width={floorW} top={floor} />
       </View>
       {motion === 'bounce' ? <Bounce>{reni}</Bounce> : motion === 'bob' ? <Bob>{reni}</Bob> : reni}

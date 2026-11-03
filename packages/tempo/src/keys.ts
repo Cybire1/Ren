@@ -46,14 +46,19 @@ export function keyScopes(terms: KeyTerms) {
 }
 
 /** What's wrong with these terms, if anything, in words for the person setting them. */
-export function keyTermsProblem(terms: KeyTerms, now = Math.floor(Date.now() / 1000)): string | null {
+export function keyTermsProblem(
+  terms: KeyTerms,
+  now = Math.floor(Date.now() / 1000),
+): string | null {
   if (terms.limit <= 0n) return 'Give it a limit of at least a cent.'
   if (terms.limit > MAX_KEY_LIMIT) return 'A key can spend $1,000 a period at most.'
   if (terms.period !== DAY && terms.period !== WEEK) return 'A limit renews daily or weekly.'
   if (terms.expiry <= now + 60) return 'Pick an end date in the future.'
   if (terms.expiry > now + MAX_KEY_DAYS * DAY) return `A key lasts ${MAX_KEY_DAYS} days at most.`
-  if (terms.payees !== 'anyone' && terms.payees.length === 0) return 'Add someone it may pay, or let it pay anyone.'
-  if (terms.payees !== 'anyone' && terms.payees.length > 20) return 'A key may list 20 payees at most.'
+  if (terms.payees !== 'anyone' && terms.payees.length === 0)
+    return 'Add someone it may pay, or let it pay anyone.'
+  if (terms.payees !== 'anyone' && terms.payees.length > 20)
+    return 'A key may list 20 payees at most.'
   return null
 }
 
@@ -61,7 +66,11 @@ export function keyTermsProblem(terms: KeyTerms, now = Math.floor(Date.now() / 1
  * The message a wallet signs to sign in to its keys on Ren's API for a while. The purpose and the
  * time are in the words, so it can't be mistaken for anything else or used much later.
  */
-export function walletSignInMessage(params: { address: Address; issuedAt: string; nonce: string }): string {
+export function walletSignInMessage(params: {
+  address: Address
+  issuedAt: string
+  nonce: string
+}): string {
   return [
     'Sign in to your keys on Ren.',
     '',

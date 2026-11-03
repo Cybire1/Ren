@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { Art, Icon } from '@/components/brand'
+import { chainName, onTempo } from '@/lib/chain'
 import { formatUsd } from '@/lib/wallet/money'
 import { ScreenHead } from './activity'
 import { useWallet } from './provider'
-import { chainName, onTempo } from '@/lib/chain'
 
 type Stage =
   | { at: 'ready' }

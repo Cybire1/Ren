@@ -29,7 +29,9 @@ import { type KeyPaymentRow, type KeyRow, paymentsOf } from '../services/keys.js
  */
 
 const MAX_TEXT = 60_000
-const text = (value: string) => ({ content: [{ type: 'text' as const, text: value.slice(0, MAX_TEXT) }] })
+const text = (value: string) => ({
+  content: [{ type: 'text' as const, text: value.slice(0, MAX_TEXT) }],
+})
 
 function said(payment: KeyPaymentRow): string {
   const amount = `$${formatAmount(payment.amount)}`
@@ -74,7 +76,9 @@ function serverFor(key: KeyRow): McpServer {
     async ({ to, amount, note }) => {
       if (!isAddress(to)) return text('That isn’t a wallet address. Nothing was paid.')
       limit(`agent-pay:${key.id}`, 60, 60_000, 'Too many payments this minute.')
-      return text(said(await agentPay(key, { to: getAddress(to), amount: parseAmount(amount), note })))
+      return text(
+        said(await agentPay(key, { to: getAddress(to), amount: parseAmount(amount), note })),
+      )
     },
   )
 
@@ -93,7 +97,9 @@ function serverFor(key: KeyRow): McpServer {
       try {
         return text(said(await agentPayCharge(key, id)))
       } catch (error) {
-        return text(`${error instanceof Error ? error.message : 'It didn’t go through.'} Nothing was paid.`)
+        return text(
+          `${error instanceof Error ? error.message : 'It didn’t go through.'} Nothing was paid.`,
+        )
       }
     },
   )
@@ -108,8 +114,14 @@ function serverFor(key: KeyRow): McpServer {
         url: z.string().url(),
         method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']).default('GET'),
         headers: z.record(z.string(), z.string()).optional(),
-        body: z.string().optional().describe('The request body, for POST and the like (often JSON).'),
-        max_amount: z.string().optional().describe('The most you agree to pay for this request, in dollars.'),
+        body: z
+          .string()
+          .optional()
+          .describe('The request body, for POST and the like (often JSON).'),
+        max_amount: z
+          .string()
+          .optional()
+          .describe('The most you agree to pay for this request, in dollars.'),
       },
     },
     async ({ url, method, headers, body, max_amount }) => {
@@ -145,7 +157,11 @@ function serverFor(key: KeyRow): McpServer {
     async ({ payment_id }) => {
       const payment = await paymentRow(payment_id)
       if (!payment || payment.walletKeyId !== key.id) return text('No such payment for this key.')
-      const response = payment.response as { status?: number; body?: string; encoding?: string } | null
+      const response = payment.response as {
+        status?: number
+        body?: string
+        encoding?: string
+      } | null
       return text(
         said(payment) +
           (response?.body
@@ -167,7 +183,10 @@ function serverFor(key: KeyRow): McpServer {
       if (rows.length === 0) return text('This key hasn’t paid anything yet.')
       return text(
         rows
-          .map((p) => `${p.createdAt.toISOString()}  ${p.status.padEnd(16)} $${formatAmount(p.amount).padStart(8)}  ${p.description ?? p.origin ?? p.recipient}${p.reason ? `  (${p.reason})` : ''}`)
+          .map(
+            (p) =>
+              `${p.createdAt.toISOString()}  ${p.status.padEnd(16)} $${formatAmount(p.amount).padStart(8)}  ${p.description ?? p.origin ?? p.recipient}${p.reason ? `  (${p.reason})` : ''}`,
+          )
           .join('\n'),
       )
     },
@@ -185,13 +204,20 @@ mcpRoutes.all('/mcp', async (c) => {
     key = await agentForToken(header.startsWith('Bearer ') ? header.slice(7).trim() : undefined)
   } catch (error) {
     if (error instanceof KovaError)
-      return c.json({ jsonrpc: '2.0', id: null, error: { code: -32001, message: error.message } }, 401, {
-        'WWW-Authenticate': 'Bearer realm="ren", error="invalid_token"',
-      })
+      return c.json(
+        { jsonrpc: '2.0', id: null, error: { code: -32001, message: error.message } },
+        401,
+        {
+          'WWW-Authenticate': 'Bearer realm="ren", error="invalid_token"',
+        },
+      )
     throw error
   }
   const server = serverFor(key)
-  const transport = new WebStandardStreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true })
+  const transport = new WebStandardStreamableHTTPServerTransport({
+    sessionIdGenerator: undefined,
+    enableJsonResponse: true,
+  })
   await server.connect(transport)
   try {
     return await transport.handleRequest(c.req.raw)

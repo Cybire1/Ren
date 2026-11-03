@@ -17,7 +17,11 @@ export const tempoCards = onTempo
 
 /** Reads a card to link it: the chip's key, as an address and an uncompressed public key. */
 export function readCardToLink() {
-  return withCard('Hold your Ren Card to the top of the iPhone', (transceive) => readCardKey(transceive), 'Card read')
+  return withCard(
+    'Hold your Ren Card to the top of the iPhone',
+    (transceive) => readCardKey(transceive),
+    'Card read',
+  )
 }
 
 interface TillCard {
@@ -30,8 +34,14 @@ interface TillCard {
 
 async function cardAt(keyId: Address): Promise<TillCard> {
   const response = await fetch(`${apiUrl}/v1/key-cards/${keyId}`)
-  const body = (await response.json().catch(() => ({}))) as TillCard & { error?: { message?: string } }
-  if (!response.ok) throw new CardError(body.error?.message ?? 'This card isn’t linked to a Ren wallet.', response.status)
+  const body = (await response.json().catch(() => ({}))) as TillCard & {
+    error?: { message?: string }
+  }
+  if (!response.ok)
+    throw new CardError(
+      body.error?.message ?? 'This card isn’t linked to a Ren wallet.',
+      response.status,
+    )
   return body
 }
 
@@ -39,17 +49,26 @@ async function cardAt(keyId: Address): Promise<TillCard> {
  * A tap at the till pays a Ren charge from the card's wallet: exactly the charge, with its memo, so
  * it settles like any other payment. The chip signs the transaction's own digest.
  */
-export async function tapToPay(charge: { amount: string; pay_to: string; memo: string }): Promise<Hex> {
+export async function tapToPay(charge: {
+  amount: string
+  pay_to: string
+  memo: string
+}): Promise<Hex> {
   return withCard(
     'Hold the Ren Card to the top of the iPhone',
     async (transceive) => {
       const { address: keyId, publicKey } = await readCardKey(transceive)
       const card = await cardAt(keyId)
-      if (card.status === 'frozen') throw new CardError('This card is frozen. Its owner can unfreeze it in Ren.', 403)
-      if (card.status !== 'active') throw new CardError('This card can’t pay any more. Its owner can link it again.', 403)
+      if (card.status === 'frozen')
+        throw new CardError('This card is frozen. Its owner can unfreeze it in Ren.', 403)
+      if (card.status !== 'active')
+        throw new CardError('This card can’t pay any more. Its owner can link it again.', 403)
       const amount = parseUnits(charge.amount, 6)
       if (Number(card.left_today) < Number(charge.amount))
-        throw new CardError(`That’s over this card’s daily limit. It can spend $${card.left_today} more today.`, 403)
+        throw new CardError(
+          `That’s over this card’s daily limit. It can spend $${card.left_today} more today.`,
+          403,
+        )
       const account = Account.from({
         access: card.holder,
         keyType: 'secp256k1',
@@ -71,7 +90,8 @@ export async function tapToPay(charge: { amount: string; pay_to: string; memo: s
         memo: charge.memo as Hex,
         feePayer: true,
       } as never)
-      if (receipt.status !== 'success') throw new CardError('Tempo didn’t take the payment. Nothing moved.', 0)
+      if (receipt.status !== 'success')
+        throw new CardError('Tempo didn’t take the payment. Nothing moved.', 0)
       return receipt.transactionHash as Hex
     },
     'Paid',

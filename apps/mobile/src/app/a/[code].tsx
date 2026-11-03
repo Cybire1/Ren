@@ -55,7 +55,10 @@ export default function AcceptAllowance() {
     setBusy(true)
     setProblem(null)
     try {
-      await keys.claim(code, profile?.name && !profile.name.startsWith('0x') ? profile.name : undefined)
+      await keys.claim(
+        code,
+        profile?.name && !profile.name.startsWith('0x') ? profile.name : undefined,
+      )
       void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
       setAccepted(true)
     } catch (error) {
@@ -97,7 +100,11 @@ export default function AcceptAllowance() {
                 {dollars(invite.limit)}
               </Txt>
               <Txt size={14} color={colors.onTeal} style={{ paddingRight: 96 }}>
-                a {invite.period}, from their dollars, until {new Date(invite.expires_at).toLocaleDateString([], { day: 'numeric', month: 'long' })}
+                a {invite.period}, from their dollars, until{' '}
+                {new Date(invite.expires_at).toLocaleDateString([], {
+                  day: 'numeric',
+                  month: 'long',
+                })}
               </Txt>
               <View style={styles.reni} pointerEvents="none">
                 <Reni pose="wave" size={96} />
@@ -119,7 +126,9 @@ export default function AcceptAllowance() {
                   It’s on
                 </Txt>
                 <Txt size={14} color={colors.onTint}>
-                  You can spend up to {dollars((Number(held.remaining) / 1e6).toString())} {held.period === 'week' ? 'this week' : 'today'}. Pick it under “From” when you send.
+                  You can spend up to {dollars((Number(held.remaining) / 1e6).toString())}{' '}
+                  {held.period === 'week' ? 'this week' : 'today'}. Pick it under “From” when you
+                  send.
                 </Txt>
                 <PillButton label="Go to your wallet" onPress={() => router.replace('/(tabs)')} />
               </View>
@@ -129,7 +138,8 @@ export default function AcceptAllowance() {
                   Accepted
                 </Txt>
                 <Txt size={14} color={colors.onTint}>
-                  {giver(invite.from)} switches it on with their passkey. You’ll see it on Home as soon as they do.
+                  {giver(invite.from)} switches it on with their passkey. You’ll see it on Home as
+                  soon as they do.
                 </Txt>
               </View>
             ) : invite.claimed ? (
@@ -144,12 +154,28 @@ export default function AcceptAllowance() {
               <>
                 <View style={styles.facts}>
                   <Fact label="From" value={giver(invite.from)} />
-                  <Fact label="You can spend" value={`${dollars(invite.limit)} a ${invite.period}`} hint={`${chainName} enforces it`} icon="lock" />
-                  <Fact label="Your key" value="Made on this phone" hint="It never leaves it, and Ren never sees it" last />
+                  <Fact
+                    label="You can spend"
+                    value={`${dollars(invite.limit)} a ${invite.period}`}
+                    hint={`${chainName} enforces it`}
+                    icon="lock"
+                  />
+                  <Fact
+                    label="Your key"
+                    value="Made on this phone"
+                    hint="It never leaves it, and Ren never sees it"
+                    last
+                  />
                 </View>
                 {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
                 <View style={{ marginTop: 14, gap: 8 }}>
-                  <PillButton label={busy ? 'Accepting…' : 'Accept'} icon="check" loading={busy} disabled={busy} onPress={() => void accept()} />
+                  <PillButton
+                    label={busy ? 'Accepting…' : 'Accept'}
+                    icon="check"
+                    loading={busy}
+                    disabled={busy}
+                    onPress={() => void accept()}
+                  />
                   <Txt size={13} color={colors.muted} style={{ textAlign: 'center' }}>
                     Face ID says it’s you. Nothing moves until they switch it on.
                   </Txt>
@@ -163,9 +189,23 @@ export default function AcceptAllowance() {
   )
 }
 
-function Fact({ label, value, hint, icon, last }: { label: string; value: string; hint?: string; icon?: IconName; last?: boolean }) {
+function Fact({
+  label,
+  value,
+  hint,
+  icon,
+  last,
+}: {
+  label: string
+  value: string
+  hint?: string
+  icon?: IconName
+  last?: boolean
+}) {
   return (
-    <View style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}>
+    <View
+      style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}
+    >
       <Txt size={14} color={colors.muted}>
         {label}
       </Txt>
@@ -189,10 +229,35 @@ function Fact({ label, value, hint, icon, last }: { label: string; value: string
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 20, paddingBottom: 48 },
   center: { alignItems: 'center', gap: 10, paddingTop: 40, paddingHorizontal: 20 },
-  hero: { marginTop: 8, padding: 18, paddingBottom: 20, minHeight: 178, borderRadius: 28, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealDeep, overflow: 'hidden' },
+  hero: {
+    marginTop: 8,
+    padding: 18,
+    paddingBottom: 20,
+    minHeight: 178,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.tealDeep,
+    overflow: 'hidden',
+  },
   label: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   reni: { position: 'absolute', right: 10, bottom: -6, transform: [{ rotate: '-4deg' }] },
-  call: { marginTop: 14, padding: 16, gap: 8, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: '#FFF0B5' },
-  facts: { marginTop: 16, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 14 },
+  call: {
+    marginTop: 14,
+    padding: 16,
+    gap: 8,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: '#FFF0B5',
+  },
+  facts: {
+    marginTop: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+  },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
 })

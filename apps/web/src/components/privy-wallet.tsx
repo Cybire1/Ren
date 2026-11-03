@@ -45,7 +45,8 @@ export default function PrivyWallet({
   title = 'Your Ren wallet',
   fresh = false,
 }: Props) {
-  const chain = [tempo, tempoModerato, monad, monadTestnet].find((c) => c.id === chainId) ?? tempoModerato
+  const chain =
+    [tempo, tempoModerato, monad, monadTestnet].find((c) => c.id === chainId) ?? tempoModerato
   return (
     <PrivyProvider
       appId={appId}

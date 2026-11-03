@@ -2,6 +2,7 @@
 
 import {
   approvalMessage,
+  getNetwork,
   getToken,
   type KeyTerms,
   keyLimits,
@@ -12,7 +13,6 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { type Address, getAddress, type Hex, http, type LocalAccount } from 'viem'
 import { Actions, createClient } from 'viem/tempo'
-import { getNetwork } from '@kova/tempo'
 import { relayedClient } from '@/lib/wallet/chain-tempo'
 import { heldKey, heldKeys, keepKey, makeKey, spendingAccount } from '@/lib/wallet/device-keys'
 
@@ -58,7 +58,15 @@ export interface KeyPaymentView {
   origin: string | null
   url: string | null
   description: string | null
-  status: 'paid' | 'denied' | 'pending_approval' | 'approved' | 'declined' | 'failed' | 'expired' | 'paying'
+  status:
+    | 'paid'
+    | 'denied'
+    | 'pending_approval'
+    | 'approved'
+    | 'declined'
+    | 'failed'
+    | 'expired'
+    | 'paying'
   reason: string | null
   tx_hash: string | null
   created_at: string
@@ -120,7 +128,12 @@ export interface KeysValue {
   /** Allowances given to this wallet that this browser holds the key for, as the chain sees them now. */
   held: HeldAllowance[]
   /** Pays from an allowance: the giver's dollars, signed for by this browser's key. */
-  spend: (allowance: HeldAllowance, to: Address, amount: bigint, memo?: Hex) => Promise<{ hash: Hex; ms: number }>
+  spend: (
+    allowance: HeldAllowance,
+    to: Address,
+    amount: bigint,
+    memo?: Hex,
+  ) => Promise<{ hash: Hex; ms: number }>
 }
 
 /** An allowance this browser can spend: read from the chain, so it needs no sign-in to show. */
@@ -150,7 +163,10 @@ class KeysError extends Error {
   }
 }
 
-async function call<T>(path: string, init: { method?: 'GET' | 'POST'; body?: unknown; token?: string } = {}): Promise<T> {
+async function call<T>(
+  path: string,
+  init: { method?: 'GET' | 'POST'; body?: unknown; token?: string } = {},
+): Promise<T> {
   const response = await fetch(`/api/keys/${path}`, {
     method: init.method ?? 'GET',
     headers: {
@@ -160,12 +176,18 @@ async function call<T>(path: string, init: { method?: 'GET' | 'POST'; body?: unk
     ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
   })
   const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
-  if (!response.ok) throw new KeysError(body.error?.message ?? `Ren is unreachable (${response.status})`, response.status)
+  if (!response.ok)
+    throw new KeysError(
+      body.error?.message ?? `Ren is unreachable (${response.status})`,
+      response.status,
+    )
   return body as T
 }
 
 const randomHex = (bytes: number) =>
-  Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) => b.toString(16).padStart(2, '0')).join('')
+  Array.from(crypto.getRandomValues(new Uint8Array(bytes)), (b) =>
+    b.toString(16).padStart(2, '0'),
+  ).join('')
 
 const daysFromNow = (days: number) => new Date(Date.now() + days * 86_400_000).toISOString()
 
@@ -195,7 +217,10 @@ export function useKeys({
     setStatus('signed-out')
     if (!address) return
     try {
-      const saved = JSON.parse(sessionStorage.getItem(STORE(address)) ?? 'null') as { token: string; expires: number } | null
+      const saved = JSON.parse(sessionStorage.getItem(STORE(address)) ?? 'null') as {
+        token: string
+        expires: number
+      } | null
       if (saved && saved.expires > Date.now() + 60_000) {
         session.current = saved
         setStatus('ready')
@@ -206,7 +231,9 @@ export function useKeys({
   }, [address])
 
   useEffect(() => {
-    void call<{ api_url: string; mcp_url: string }>('connect').then(setConnect).catch(() => {})
+    void call<{ api_url: string; mcp_url: string }>('connect')
+      .then(setConnect)
+      .catch(() => {})
   }, [])
 
   // The allowances this browser holds the key for, and what the chain says each can spend now.
@@ -214,12 +241,23 @@ export function useKeys({
     if (!address) return setHeld([])
     const mine = (await heldKeys()).filter((k) => k.holder.toLowerCase() === address.toLowerCase())
     if (mine.length === 0) return setHeld([])
-    const reader = createClient({ testnet: network === 'testnet', transport: http(getNetwork(network).rpcUrl) })
+    const reader = createClient({
+      testnet: network === 'testnet',
+      transport: http(getNetwork(network).rpcUrl),
+    })
     const read = await Promise.all(
       mine.map(async (k): Promise<HeldAllowance> => {
         const [meta, limit] = await Promise.all([
-          Actions.accessKey.getMetadata(reader as never, { account: k.owner, accessKey: k.keyId }).catch(() => null),
-          Actions.accessKey.getRemainingLimit(reader as never, { account: k.owner, accessKey: k.keyId, token: k.token }).catch(() => null),
+          Actions.accessKey
+            .getMetadata(reader as never, { account: k.owner, accessKey: k.keyId })
+            .catch(() => null),
+          Actions.accessKey
+            .getRemainingLimit(reader as never, {
+              account: k.owner,
+              accessKey: k.keyId,
+              token: k.token,
+            })
+            .catch(() => null),
         ])
         const live = Boolean(meta && Number(meta.expiry) > Date.now() / 1000 && !meta.isRevoked)
         return {
@@ -249,15 +287,23 @@ export function useKeys({
 
   const token = useCallback(async (): Promise<string> => {
     if (!address) throw new Error('Open your wallet first.')
-    if (session.current && session.current.expires > Date.now() + 60_000) return session.current.token
+    if (session.current && session.current.expires > Date.now() + 60_000)
+      return session.current.token
     setStatus('signing-in')
     try {
       const account = await unlock(0n)
-      const message = walletSignInMessage({ address, issuedAt: new Date().toISOString(), nonce: randomHex(16) })
-      const signed = await call<{ token: string; expires_at: string }>(`wallets/${address}/keys/sign-in`, {
-        method: 'POST',
-        body: { message, signature: await account.signMessage({ message }) },
+      const message = walletSignInMessage({
+        address,
+        issuedAt: new Date().toISOString(),
+        nonce: randomHex(16),
       })
+      const signed = await call<{ token: string; expires_at: string }>(
+        `wallets/${address}/keys/sign-in`,
+        {
+          method: 'POST',
+          body: { message, signature: await account.signMessage({ message }) },
+        },
+      )
       session.current = { token: signed.token, expires: Date.parse(signed.expires_at) }
       try {
         sessionStorage.setItem(STORE(address), JSON.stringify(session.current))
@@ -273,7 +319,7 @@ export function useKeys({
   }, [address, unlock])
 
   const authed = useCallback(
-    async <T,>(path: string, init: { method?: 'GET' | 'POST'; body?: unknown } = {}): Promise<T> => {
+    async <T>(path: string, init: { method?: 'GET' | 'POST'; body?: unknown } = {}): Promise<T> => {
       try {
         return await call<T>(path, { ...init, token: await token() })
       } catch (error) {
@@ -291,9 +337,11 @@ export function useKeys({
 
   const refresh = useCallback(async () => {
     if (!address || !session.current) return
-    const list = await authed<{ given: KeyView[]; received: KeyView[]; approvals: KeyPaymentView[] }>(
-      `wallets/${address}/keys`,
-    )
+    const list = await authed<{
+      given: KeyView[]
+      received: KeyView[]
+      approvals: KeyPaymentView[]
+    }>(`wallets/${address}/keys`)
     setGiven(list.given)
     setReceived(list.received)
     setApprovals(list.approvals)
@@ -325,14 +373,18 @@ export function useKeys({
         expiry: authorization.expiry,
         payees: authorization.payees,
       }
-      const { receipt } = await Actions.accessKey.authorizeSync(relayedClient(network, account) as never, {
-        accessKey: { address: authorization.key_id, type: authorization.key_type },
-        expiry: terms.expiry,
-        limits: keyLimits(terms),
-        scopes: keyScopes(terms),
-        feePayer: true,
-      } as never)
-      if (receipt.status !== 'success') throw new Error('Tempo didn’t take the key. Nothing changed.')
+      const { receipt } = await Actions.accessKey.authorizeSync(
+        relayedClient(network, account) as never,
+        {
+          accessKey: { address: authorization.key_id, type: authorization.key_type },
+          expiry: terms.expiry,
+          limits: keyLimits(terms),
+          scopes: keyScopes(terms),
+          feePayer: true,
+        } as never,
+      )
+      if (receipt.status !== 'success')
+        throw new Error('Tempo didn’t take the key. Nothing changed.')
       return receipt.transactionHash as Hex
     },
     [network, unlock],
@@ -342,24 +394,28 @@ export function useKeys({
     async (input: AgentInput) => {
       if (!address) throw new Error('Open your wallet first.')
       const started = Date.now()
-      const made = await authed<{ key: KeyView; authorize: Authorization }>(`wallets/${address}/keys/agents`, {
-        method: 'POST',
-        body: {
-          label: input.label,
-          limit: input.limit,
-          period: input.period,
-          expires_at: daysFromNow(input.days),
-          per_payment: input.perPayment,
-          approve_above: input.approveAbove,
-          payees: input.payees,
+      const made = await authed<{ key: KeyView; authorize: Authorization }>(
+        `wallets/${address}/keys/agents`,
+        {
+          method: 'POST',
+          body: {
+            label: input.label,
+            limit: input.limit,
+            period: input.period,
+            expires_at: daysFromNow(input.days),
+            per_payment: input.perPayment,
+            approve_above: input.approveAbove,
+            payees: input.payees,
+          },
         },
-      })
+      )
       const txHash = await authorizeOnChain(made.authorize)
       const confirmed = await authed<{ key: KeyView; agent_token?: string }>(
         `wallets/${address}/keys/${made.key.id}/confirm`,
         { method: 'POST', body: { tx_hash: txHash } },
       )
-      if (!confirmed.agent_token) throw new Error('The key is on Tempo, but Ren didn’t switch it on. Try again.')
+      if (!confirmed.agent_token)
+        throw new Error('The key is on Tempo, but Ren didn’t switch it on. Try again.')
       await refresh()
       return { key: confirmed.key, token: confirmed.agent_token, ms: Date.now() - started }
     },
@@ -369,10 +425,18 @@ export function useKeys({
   const createAllowance = useCallback(
     async (input: AllowanceInput) => {
       if (!address) throw new Error('Open your wallet first.')
-      const made = await authed<{ key: KeyView; code: string }>(`wallets/${address}/keys/allowances`, {
-        method: 'POST',
-        body: { label: input.label, limit: input.limit, period: input.period, expires_at: daysFromNow(input.days) },
-      })
+      const made = await authed<{ key: KeyView; code: string }>(
+        `wallets/${address}/keys/allowances`,
+        {
+          method: 'POST',
+          body: {
+            label: input.label,
+            limit: input.limit,
+            period: input.period,
+            expires_at: daysFromNow(input.days),
+          },
+        },
+      )
       await refresh()
       return { key: made.key, link: `${window.location.origin}/a/${made.code}` }
     },
@@ -382,12 +446,17 @@ export function useKeys({
   const switchOn = useCallback(
     async (key: KeyView) => {
       if (!address) throw new Error('Open your wallet first.')
-      const authorization = await authed<Authorization>(`wallets/${address}/keys/${key.id}/authorize`)
+      const authorization = await authed<Authorization>(
+        `wallets/${address}/keys/${key.id}/authorize`,
+      )
       const txHash = await authorizeOnChain(authorization)
-      const confirmed = await authed<{ key: KeyView }>(`wallets/${address}/keys/${key.id}/confirm`, {
-        method: 'POST',
-        body: { tx_hash: txHash },
-      })
+      const confirmed = await authed<{ key: KeyView }>(
+        `wallets/${address}/keys/${key.id}/confirm`,
+        {
+          method: 'POST',
+          body: { tx_hash: txHash },
+        },
+      )
       await refresh()
       return confirmed.key
     },
@@ -400,12 +469,15 @@ export function useKeys({
       if (!address || !key.key_id) return
       await authed(`wallets/${address}/keys/${key.id}/freeze`, { method: 'POST', body: {} })
       const account = await unlock(0n)
-      await Actions.accessKey.updateLimitSync(relayedClient(network, account) as never, {
-        accessKey: key.key_id,
-        token: key.token,
-        limit: 0n,
-        feePayer: true,
-      } as never)
+      await Actions.accessKey.updateLimitSync(
+        relayedClient(network, account) as never,
+        {
+          accessKey: key.key_id,
+          token: key.token,
+          limit: 0n,
+          feePayer: true,
+        } as never,
+      )
       await refresh()
     },
     [address, authed, network, refresh, unlock],
@@ -416,12 +488,15 @@ export function useKeys({
       if (!address || !key.key_id) return
       const account = await unlock(0n)
       const units = BigInt(Math.round(Number(key.limit) * 1e6))
-      await Actions.accessKey.updateLimitSync(relayedClient(network, account) as never, {
-        accessKey: key.key_id,
-        token: key.token,
-        limit: units,
-        feePayer: true,
-      } as never)
+      await Actions.accessKey.updateLimitSync(
+        relayedClient(network, account) as never,
+        {
+          accessKey: key.key_id,
+          token: key.token,
+          limit: units,
+          feePayer: true,
+        } as never,
+      )
       await authed(`wallets/${address}/keys/${key.id}/unfreeze`, { method: 'POST', body: {} })
       await refresh()
     },
@@ -435,10 +510,13 @@ export function useKeys({
       await authed(`wallets/${address}/keys/${key.id}/revoke`, { method: 'POST', body: {} })
       if (key.key_id && key.status !== 'pending') {
         const account = await unlock(0n)
-        const { receipt } = await Actions.accessKey.revokeSync(relayedClient(network, account) as never, {
-          accessKey: key.key_id,
-          feePayer: true,
-        } as never)
+        const { receipt } = await Actions.accessKey.revokeSync(
+          relayedClient(network, account) as never,
+          {
+            accessKey: key.key_id,
+            feePayer: true,
+          } as never,
+        )
         await authed(`wallets/${address}/keys/${key.id}/revoke`, {
           method: 'POST',
           body: { tx_hash: receipt.transactionHash },
@@ -452,8 +530,12 @@ export function useKeys({
   const newToken = useCallback(
     async (key: KeyView) => {
       if (!address) throw new Error('Open your wallet first.')
-      return (await authed<{ agent_token: string }>(`wallets/${address}/keys/${key.id}/token`, { method: 'POST', body: {} }))
-        .agent_token
+      return (
+        await authed<{ agent_token: string }>(`wallets/${address}/keys/${key.id}/token`, {
+          method: 'POST',
+          body: {},
+        })
+      ).agent_token
     },
     [address, authed],
   )
@@ -461,7 +543,9 @@ export function useKeys({
   const payments = useCallback(
     async (key: KeyView) => {
       if (!address) return []
-      return (await authed<{ data: KeyPaymentView[] }>(`wallets/${address}/keys/${key.id}/payments`)).data
+      return (
+        await authed<{ data: KeyPaymentView[] }>(`wallets/${address}/keys/${key.id}/payments`)
+      ).data
     },
     [address, authed],
   )
@@ -477,10 +561,13 @@ export function useKeys({
         amount: payment.amount,
         to: payment.origin ?? getAddress(payment.to),
       })
-      const answered = await authed<{ payment: KeyPaymentView }>(`wallets/${address}/approvals/${payment.id}`, {
-        method: 'POST',
-        body: { decision, signature: await account.signMessage({ message }) },
-      })
+      const answered = await authed<{ payment: KeyPaymentView }>(
+        `wallets/${address}/approvals/${payment.id}`,
+        {
+          method: 'POST',
+          body: { decision, signature: await account.signMessage({ message }) },
+        },
+      )
       await refresh()
       return answered.payment
     },
@@ -494,7 +581,13 @@ export function useKeys({
       const claimed = await call<{ key: KeyView }>(`allowances/${code}/claim`, {
         method: 'POST',
         token: await token(),
-        body: { holder: address, holder_name: name, key_id: key.keyId, key_type: 'p256', public_key: key.publicKey },
+        body: {
+          holder: address,
+          holder_name: name,
+          key_id: key.keyId,
+          key_type: 'p256',
+          public_key: key.publicKey,
+        },
       })
       await keepKey({
         id: claimed.key.id,
@@ -518,7 +611,10 @@ export function useKeys({
       if (!local) throw new Error('This browser doesn’t hold the key for that allowance.')
       if (amount > allowance.remaining) throw new Error('That’s more than the allowance has left.')
       const started = performance.now()
-      const { receipt } = await relayedClient(network, spendingAccount(local) as never).token.transferSync({
+      const { receipt } = await relayedClient(
+        network,
+        spendingAccount(local) as never,
+      ).token.transferSync({
         token: allowance.token,
         to,
         amount,
@@ -555,7 +651,28 @@ export function useKeys({
       answer,
       token,
     }),
-    [answer, approvals, claim, connect, createAgent, createAllowance, freeze, given, held, newToken, payments, received, refresh, remove, signIn, spend, status, switchOn, token, unfreeze],
+    [
+      answer,
+      approvals,
+      claim,
+      connect,
+      createAgent,
+      createAllowance,
+      freeze,
+      given,
+      held,
+      newToken,
+      payments,
+      received,
+      refresh,
+      remove,
+      signIn,
+      spend,
+      status,
+      switchOn,
+      token,
+      unfreeze,
+    ],
   )
 }
 

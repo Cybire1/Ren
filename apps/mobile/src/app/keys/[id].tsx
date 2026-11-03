@@ -8,7 +8,17 @@ import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Reni } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
-import { dollars, ended, KIND, Meter, meter, shortAddress, shortDate, Snippet, standing } from '@/ui/keys'
+import {
+  dollars,
+  ended,
+  KIND,
+  Meter,
+  meter,
+  Snippet,
+  shortAddress,
+  shortDate,
+  standing,
+} from '@/ui/keys'
 import { Header, PillButton, Screen, TextLink, Txt } from '@/ui/primitives'
 
 /** One key: what it can still spend, its rules, connecting an agent, freezing it, and what it paid. */
@@ -30,7 +40,11 @@ export default function KeyScreen() {
   useEffect(() => {
     if (!key || !mine) return
     let live = true
-    const load = () => void keys.payments(key).then((rows) => live && setPayments(rows)).catch(() => {})
+    const load = () =>
+      void keys
+        .payments(key)
+        .then((rows) => live && setPayments(rows))
+        .catch(() => {})
     load()
     const timer = setInterval(load, 8000)
     return () => {
@@ -80,7 +94,19 @@ export default function KeyScreen() {
     <Screen>
       <Header title={key.label} />
       <ScrollView contentContainerStyle={styles.body}>
-        <View style={[styles.hero, { backgroundColor: key.kind === 'allowance' ? colors.tealDeep : key.kind === 'card' ? colors.coralDeep : colors.ink }]}>
+        <View
+          style={[
+            styles.hero,
+            {
+              backgroundColor:
+                key.kind === 'allowance'
+                  ? colors.tealDeep
+                  : key.kind === 'card'
+                    ? colors.coralDeep
+                    : colors.ink,
+            },
+          ]}
+        >
           <View style={styles.heroTop}>
             <View style={styles.label}>
               <Icon name={kind.icon} size={15} color={colors.tealSoft} />
@@ -88,9 +114,22 @@ export default function KeyScreen() {
                 {(mine ? kind.noun : `From ${shortAddress(key.owner)}`).toUpperCase()}
               </Txt>
             </View>
-            <View style={[styles.chip, { backgroundColor: live ? colors.tealSoft : 'rgba(255,255,255,0.18)' }]}>
+            <View
+              style={[
+                styles.chip,
+                { backgroundColor: live ? colors.tealSoft : 'rgba(255,255,255,0.18)' },
+              ]}
+            >
               <Txt weight="bold" size={12} color={live ? colors.ink : colors.white}>
-                {key.status === 'revoked' ? 'Removed' : ended(key) ? 'Ended' : key.status === 'frozen' ? 'Frozen' : key.status === 'pending' ? 'Not on yet' : 'Active'}
+                {key.status === 'revoked'
+                  ? 'Removed'
+                  : ended(key)
+                    ? 'Ended'
+                    : key.status === 'frozen'
+                      ? 'Frozen'
+                      : key.status === 'pending'
+                        ? 'Not on yet'
+                        : 'Active'}
               </Txt>
             </View>
           </View>
@@ -127,7 +166,9 @@ export default function KeyScreen() {
         {mine && key.kind === 'allowance' && key.status === 'pending' ? (
           <View style={styles.call}>
             <Txt weight="heavy" size={16}>
-              {key.holder ? `${key.holder_name ?? shortAddress(key.holder)} accepted` : 'Waiting for them'}
+              {key.holder
+                ? `${key.holder_name ?? shortAddress(key.holder)} accepted`
+                : 'Waiting for them'}
             </Txt>
             <Txt size={14} color={colors.onTint}>
               {key.holder
@@ -147,25 +188,54 @@ export default function KeyScreen() {
         ) : null}
 
         <View style={styles.facts}>
-          <Fact label="Limit" value={`${dollars(key.limit)} a ${key.period}`} hint={`${chainName} enforces it`} icon="lock" />
+          <Fact
+            label="Limit"
+            value={`${dollars(key.limit)} a ${key.period}`}
+            hint={`${chainName} enforces it`}
+            icon="lock"
+          />
           {key.rules ? (
             <>
               <Fact label="Most per payment" value={dollars(key.rules.per_payment)} />
               <Fact
                 label="Asks you above"
-                value={Number(key.rules.approve_above) >= Number(key.rules.per_payment) ? 'Never asks' : dollars(key.rules.approve_above)}
+                value={
+                  Number(key.rules.approve_above) >= Number(key.rules.per_payment)
+                    ? 'Never asks'
+                    : dollars(key.rules.approve_above)
+                }
               />
               <Fact
                 label="May pay"
-                value={key.rules.payees === 'anyone' ? 'Anyone' : `${key.rules.payees.length} wallet${key.rules.payees.length === 1 ? '' : 's'} you listed`}
+                value={
+                  key.rules.payees === 'anyone'
+                    ? 'Anyone'
+                    : `${key.rules.payees.length} wallet${key.rules.payees.length === 1 ? '' : 's'} you listed`
+                }
               />
             </>
           ) : null}
           {key.kind === 'allowance' && key.holder ? (
-            <Fact label="Held by" value={key.holder_name ? `${key.holder_name} (${shortAddress(key.holder)})` : shortAddress(key.holder)} />
+            <Fact
+              label="Held by"
+              value={
+                key.holder_name
+                  ? `${key.holder_name} (${shortAddress(key.holder)})`
+                  : shortAddress(key.holder)
+              }
+            />
           ) : null}
-          <Fact label="Ends" value={new Date(key.expires_at).toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' })} />
-          {key.key_id ? <Fact label={`Key on ${chainName}`} value={shortAddress(key.key_id)} last /> : null}
+          <Fact
+            label="Ends"
+            value={new Date(key.expires_at).toLocaleDateString([], {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}
+          />
+          {key.key_id ? (
+            <Fact label={`Key on ${chainName}`} value={shortAddress(key.key_id)} last />
+          ) : null}
         </View>
         {key.key_id && key.status !== 'pending' ? (
           <View style={{ marginTop: 8 }}>
@@ -183,7 +253,8 @@ export default function KeyScreen() {
               Connect your agent
             </Txt>
             <Txt color={colors.muted}>
-              Your agent pays through Ren’s MCP server with this key’s token. Ren keeps the key itself; the token only lets the agent ask.
+              Your agent pays through Ren’s MCP server with this key’s token. Ren keeps the key
+              itself; the token only lets the agent ask.
             </Txt>
             <Snippet text={command} />
             {token ? (
@@ -235,7 +306,12 @@ export default function KeyScreen() {
               </Txt>
               <View style={{ flexDirection: 'row', gap: 10 }}>
                 <View style={{ flex: 1 }}>
-                  <PillButton label="Keep it" icon="close" tone="white" onPress={() => setConfirmRemove(false)} />
+                  <PillButton
+                    label="Keep it"
+                    icon="close"
+                    tone="white"
+                    onPress={() => setConfirmRemove(false)}
+                  />
                 </View>
                 <View style={{ flex: 1 }}>
                   <PillButton
@@ -255,7 +331,11 @@ export default function KeyScreen() {
             </View>
           ) : (
             <View style={{ alignItems: 'center', marginTop: 16 }}>
-              <TextLink label="Remove this key" color={colors.danger} onPress={() => setConfirmRemove(true)} />
+              <TextLink
+                label="Remove this key"
+                color={colors.danger}
+                onPress={() => setConfirmRemove(true)}
+              />
             </View>
           )
         ) : null}
@@ -291,7 +371,19 @@ export default function KeyScreen() {
   )
 }
 
-function Fact({ label, value, hint, icon, last }: { label: string; value: string; hint?: string; icon?: IconName; last?: boolean }) {
+function Fact({
+  label,
+  value,
+  hint,
+  icon,
+  last,
+}: {
+  label: string
+  value: string
+  hint?: string
+  icon?: IconName
+  last?: boolean
+}) {
   return (
     <View style={[styles.fact, !last && styles.rule]}>
       <Txt size={14} color={colors.muted}>
@@ -333,12 +425,27 @@ function PaymentRow({ payment, last }: { payment: KeyPaymentView; last: boolean 
       : payment.kind === 'charge'
         ? (payment.description ?? 'A Ren shop')
         : shortAddress(payment.to)
-  const what = payment.kind === 'mpp' ? 'Paid request' : payment.kind === 'charge' ? 'Shop charge' : 'Payment'
-  const when = new Date(payment.created_at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  const what =
+    payment.kind === 'mpp' ? 'Paid request' : payment.kind === 'charge' ? 'Shop charge' : 'Payment'
+  const when = new Date(payment.created_at).toLocaleString([], {
+    day: 'numeric',
+    month: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+  })
   return (
     <View style={[styles.payment, !last && styles.rule]}>
-      <View style={[styles.payBadge, { backgroundColor: payment.kind === 'mpp' ? colors.ink : colors.teal }]}>
-        <Icon name={payment.kind === 'mpp' ? 'web' : payment.kind === 'charge' ? 'stall' : 'send'} size={16} color={colors.white} />
+      <View
+        style={[
+          styles.payBadge,
+          { backgroundColor: payment.kind === 'mpp' ? colors.ink : colors.teal },
+        ]}
+      >
+        <Icon
+          name={payment.kind === 'mpp' ? 'web' : payment.kind === 'charge' ? 'stall' : 'send'}
+          size={16}
+          color={colors.white}
+        />
       </View>
       <View style={{ flex: 1 }}>
         <Txt weight="bold" size={15} numberOfLines={1}>
@@ -364,18 +471,56 @@ function PaymentRow({ payment, last }: { payment: KeyPaymentView; last: boolean 
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 20, paddingBottom: 48 },
-  hero: { marginTop: 8, padding: 18, paddingBottom: 20, minHeight: 178, borderRadius: 28, borderWidth: 2, borderColor: colors.ink, overflow: 'hidden' },
+  hero: {
+    marginTop: 8,
+    padding: 18,
+    paddingBottom: 20,
+    minHeight: 178,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    overflow: 'hidden',
+  },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   chip: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 10 },
   heroReni: { position: 'absolute', right: 10, bottom: -6, transform: [{ rotate: '-4deg' }] },
-  call: { marginTop: 14, padding: 16, gap: 8, borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: '#FFF0B5' },
-  facts: { marginTop: 16, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 14 },
+  call: {
+    marginTop: 14,
+    padding: 16,
+    gap: 8,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: '#FFF0B5',
+  },
+  facts: {
+    marginTop: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+  },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
   rule: { borderBottomWidth: 1, borderBottomColor: colors.sunken },
-  list: { borderRadius: 22, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.card, paddingHorizontal: 14 },
+  list: {
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.card,
+    paddingHorizontal: 14,
+  },
   payment: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 },
-  payBadge: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  payBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   empty: { alignItems: 'center', gap: 8, paddingVertical: 24, paddingHorizontal: 24 },
 })

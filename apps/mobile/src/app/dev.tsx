@@ -2,7 +2,17 @@ import { Redirect, router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
 import { Image, View } from 'react-native'
 import { getAddress, isAddress } from 'viem'
-import { createItem, getCatalog, getCheckout, listOrders, lookupBarcode, ringUp, setOrderStatus, updateStall, uploadImage } from '@/lib/api'
+import {
+  createItem,
+  getCatalog,
+  getCheckout,
+  listOrders,
+  lookupBarcode,
+  ringUp,
+  setOrderStatus,
+  updateStall,
+  uploadImage,
+} from '@/lib/api'
 import { finishTap, forgetDevCard, linkCard, readTap } from '@/lib/card'
 import { readCardToLink } from '@/lib/card-tempo'
 import type { KeyView } from '@/lib/keys-state'
@@ -275,16 +285,27 @@ export default function Dev() {
               console.log(`[dev] agent ${made.key.id} token ${made.token}`)
             }
             if (kind === 'allowance') {
-              const made = await wallet.keys.createAllowance({ label: name || 'Mum', limit: '30', period: 'week', days: 30 })
+              const made = await wallet.keys.createAllowance({
+                label: name || 'Mum',
+                limit: '30',
+                period: 'week',
+                days: 30,
+              })
               console.log(`[dev] allowance ${made.key.id} ${made.link}`)
             }
             // The card linked in this link, else the newest one Keys already listed.
-            const card = () => linked ?? wallet.keys.given.find((k) => k.kind === 'card' && k.status !== 'revoked')
+            const card = () =>
+              linked ?? wallet.keys.given.find((k) => k.kind === 'card' && k.status !== 'revoked')
             if (kind === 'card') {
               // newcard=1: a fresh software card, when this install's last one is linked to an old wallet.
               if (params.newcard) await forgetDevCard()
               const read = await readCardToLink()
-              linked = await wallet.keys.createCard({ label: name || 'Ren Card', keyId: read.address, limit: params.limit || '50', days: 90 })
+              linked = await wallet.keys.createCard({
+                label: name || 'Ren Card',
+                keyId: read.address,
+                limit: params.limit || '50',
+                days: 90,
+              })
               opensCard = true
             }
             if (kind === 'cardlimit' && name) {
@@ -365,7 +386,8 @@ export default function Dev() {
         if (params.order) {
           setStep(`marking the newest order ${params.order}`)
           const [newest] = await listOrders('open', 1)
-          if (newest) await setOrderStatus(newest.id, params.order as Parameters<typeof setOrderStatus>[1])
+          if (newest)
+            await setOrderStatus(newest.id, params.order as Parameters<typeof setOrderStatus>[1])
         }
         if (params.till) await save('kova.till.mode', params.till)
         if (params.sell) {

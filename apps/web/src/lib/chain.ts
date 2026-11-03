@@ -75,4 +75,5 @@ export const walletChains: Record<
 }
 
 /** A wallet's page on the chain's explorer. */
-export const explorerAddressUrl = (id: NetworkId, address: string) => `${networkOf(id).explorerUrl}/address/${address}`
+export const explorerAddressUrl = (id: NetworkId, address: string) =>
+  `${networkOf(id).explorerUrl}/address/${address}`

@@ -4,6 +4,9 @@
  */
 import { config } from '../config.js'
 
-const impl = config.KOVA_CHAIN === 'tempo' ? await import('./customer-tempo.js') : await import('./customer.js')
+const impl =
+  config.KOVA_CHAIN === 'tempo'
+    ? await import('./customer-tempo.js')
+    : await import('./customer.js')
 
 export const { fund, getCheckout, newCustomer, pay } = impl

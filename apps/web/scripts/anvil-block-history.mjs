@@ -5,8 +5,14 @@ const RPC = process.argv[2] ?? 'http://127.0.0.1:8545'
 const HISTORY = '0x0000F90827F1C53a10cb7A02335B175320002935'
 let id = 0
 const rpc = async (method, params) => {
-  const r = await fetch(RPC, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ jsonrpc: '2.0', id: ++id, method, params }) })
-  const j = await r.json(); if (j.error) throw new Error(j.error.message); return j.result
+  const r = await fetch(RPC, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: ++id, method, params }),
+  })
+  const j = await r.json()
+  if (j.error) throw new Error(j.error.message)
+  return j.result
 }
 let next = 1n
 for (;;) {
@@ -18,6 +24,8 @@ for (;;) {
       const slot = '0x' + (next % 8191n).toString(16).padStart(64, '0')
       await rpc('anvil_setStorageAt', [HISTORY, slot, block.hash])
     }
-  } catch (e) { console.error(String(e.message ?? e)) }
+  } catch (e) {
+    console.error(String(e.message ?? e))
+  }
   await new Promise((r) => setTimeout(r, 300))
 }

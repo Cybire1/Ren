@@ -32,7 +32,10 @@ export default function NewAllowanceScreen() {
   }, [keys])
 
   const setupProblem = !label.trim() ? 'Say who it’s for' : !amountOk(limit) ? 'Set how much' : null
-  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], { day: 'numeric', month: 'long' })
+  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], {
+    day: 'numeric',
+    month: 'long',
+  })
   const from = profile?.name && !profile.name.startsWith('0x') ? profile.name : 'Someone'
 
   const go = async () => {
@@ -55,13 +58,22 @@ export default function NewAllowanceScreen() {
       <Header
         title={step === 'done' ? undefined : 'Give an allowance'}
         backIcon={step === 'review' ? 'back' : 'close'}
-        onBack={step === 'review' && !busy ? () => setStep('setup') : busy ? null : () => router.back()}
+        onBack={
+          step === 'review' && !busy ? () => setStep('setup') : busy ? null : () => router.back()
+        }
       />
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
         {step === 'setup' ? (
           <ScrollView contentContainerStyle={styles.form} keyboardShouldPersistTaps="handled">
             <Field label="Who it’s for">
-              <TextInput value={label} onChangeText={setLabel} maxLength={40} placeholder="Mum" placeholderTextColor={colors.muted} style={styles.input} />
+              <TextInput
+                value={label}
+                onChangeText={setLabel}
+                maxLength={40}
+                placeholder="Mum"
+                placeholderTextColor={colors.muted}
+                style={styles.input}
+              />
             </Field>
             <Field label="They can spend">
               <View style={styles.row}>
@@ -87,7 +99,11 @@ export default function NewAllowanceScreen() {
                 ]}
               />
             </Field>
-            <PillButton label={setupProblem ?? 'Review'} disabled={Boolean(setupProblem)} onPress={() => setStep('review')} />
+            <PillButton
+              label={setupProblem ?? 'Review'}
+              disabled={Boolean(setupProblem)}
+              onPress={() => setStep('review')}
+            />
           </ScrollView>
         ) : null}
 
@@ -105,9 +121,21 @@ export default function NewAllowanceScreen() {
               </Txt>
             </View>
             <View style={styles.facts}>
-              <Fact label="How" value="A link you send them" hint="They open it in Ren and accept on their phone" />
-              <Fact label="Then" value="You switch it on" hint="With Face ID, once they’ve accepted" />
-              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} last />
+              <Fact
+                label="How"
+                value="A link you send them"
+                hint="They open it in Ren and accept on their phone"
+              />
+              <Fact
+                label="Then"
+                value="You switch it on"
+                hint="With Face ID, once they’ve accepted"
+              />
+              <Fact
+                label={`${chainName} enforces`}
+                value={`${dollars(limit)} a ${period}, dollars only`}
+                last
+              />
             </View>
             {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
             <View style={{ flex: 1 }} />
@@ -122,7 +150,8 @@ export default function NewAllowanceScreen() {
               Send {label.trim()} the link
             </Txt>
             <Txt color={colors.muted} style={{ textAlign: 'center' }}>
-              When they open it in Ren and accept, you’ll switch it on here. The link works once, for seven days.
+              When they open it in Ren and accept, you’ll switch it on here. The link works once,
+              for seven days.
             </Txt>
             <View style={{ alignSelf: 'stretch', gap: 10 }}>
               <PillButton
@@ -136,7 +165,10 @@ export default function NewAllowanceScreen() {
               />
               <Snippet text={made.link} />
             </View>
-            <TextLink label="Done" onPress={() => router.replace({ pathname: '/keys/[id]', params: { id: made.id } })} />
+            <TextLink
+              label="Done"
+              onPress={() => router.replace({ pathname: '/keys/[id]', params: { id: made.id } })}
+            />
           </ScrollView>
         ) : null}
       </KeyboardAvoidingView>
@@ -144,9 +176,21 @@ export default function NewAllowanceScreen() {
   )
 }
 
-function Fact({ label, value, hint, last }: { label: string; value: string; hint?: string; last?: boolean }) {
+function Fact({
+  label,
+  value,
+  hint,
+  last,
+}: {
+  label: string
+  value: string
+  hint?: string
+  last?: boolean
+}) {
   return (
-    <View style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}>
+    <View
+      style={[styles.fact, !last && { borderBottomWidth: 1, borderBottomColor: colors.sunken }]}
+    >
       <Txt size={14} color={colors.muted}>
         {label}
       </Txt>
@@ -167,9 +211,25 @@ function Fact({ label, value, hint, last }: { label: string; value: string; hint
 const styles = StyleSheet.create({
   form: { paddingHorizontal: 20, paddingBottom: 40, gap: 18 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap' },
-  input: { paddingHorizontal: 14, paddingVertical: 12, borderWidth: 2, borderColor: colors.ink, borderRadius: 16, backgroundColor: colors.white, fontFamily: fonts.semi, fontSize: 16, color: colors.ink },
+  input: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    fontFamily: fonts.semi,
+    fontSize: 16,
+    color: colors.ink,
+  },
   flow: { flex: 1, paddingHorizontal: 20, paddingBottom: 12, gap: 12 },
-  facts: { borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 14 },
+  facts: {
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+  },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
   done: { alignItems: 'center', gap: 12, paddingHorizontal: 24, paddingBottom: 40 },
 })

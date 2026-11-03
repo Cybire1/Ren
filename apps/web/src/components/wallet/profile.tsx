@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Icon } from '@/components/brand'
+import { chainName, homeSite, onTempo } from '@/lib/chain'
 import { personLink } from '@/lib/wallet/links'
 import {
   currencyInfo,
@@ -16,7 +17,6 @@ import { SESSION_LIMIT, TAP_LIMIT, useSessionState } from '@/lib/wallet/session'
 import { ScreenHead } from './activity'
 import { short, useWallet } from './provider'
 import { CopyButton, QR } from './ui'
-import { chainName, homeSite, onTempo } from '@/lib/chain'
 
 /** "$50", for limits that are always whole dollars. */
 const whole = (base: bigint) => formatUsd(base).replace(/\.00$/, '')
@@ -173,8 +173,8 @@ export function Profile() {
       {forgetting ? (
         <div className="w-forget">
           <p>
-            This browser forgets your wallet. Your money stays on {chainName}, and your passkey opens it
-            again here or in the Ren app: choose <em>Open my Ren wallet</em>.
+            This browser forgets your wallet. Your money stays on {chainName}, and your passkey
+            opens it again here or in the Ren app: choose <em>Open my Ren wallet</em>.
           </p>
           <div className="w-forget-actions">
             <button type="button" className="mini" onClick={() => setForgetting(false)}>

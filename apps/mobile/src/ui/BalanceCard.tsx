@@ -17,7 +17,8 @@ import { Sticker, Txt } from './primitives'
 export type Fresh = { id: string; line: string }
 
 /** The amount's size: as large as the figures allow on a phone, smaller as the balance grows. */
-const amountSize = (figures: number) => (figures <= 4 ? 68 : figures <= 6 ? 56 : figures <= 8 ? 46 : 38)
+const amountSize = (figures: number) =>
+  figures <= 4 ? 68 : figures <= 6 ? 56 : figures <= 8 ? 46 : 38
 
 /**
  * The balance, as the first thing on Home: money at rest on a solid teal card, standing on the
@@ -40,7 +41,8 @@ export function BalanceCard({
   const whole = usd === null ? null : usd.slice(1, point)
   const cents = usd === null ? '' : usd.slice(point)
   const size = amountSize(whole?.length ?? 1)
-  const local = balance !== null && currency !== 'USD' ? formatLocal(baseToNumber(balance), currency) : null
+  const local =
+    balance !== null && currency !== 'USD' ? formatLocal(baseToNumber(balance), currency) : null
 
   return (
     <Sticker lift fill={colors.teal} radius={28} style={styles.frame} innerStyle={styles.card}>
@@ -96,14 +98,27 @@ export function BalanceCard({
           </Txt>
         ) : whole === null ? (
           <View accessible accessibilityLabel="Balance loading" style={styles.waiting}>
-            <Txt weight="heavy" size={30} style={styles.sign} importantForAccessibility="no" accessibilityElementsHidden>
+            <Txt
+              weight="heavy"
+              size={30}
+              style={styles.sign}
+              importantForAccessibility="no"
+              accessibilityElementsHidden
+            >
               $
             </Txt>
             <Breathe style={styles.waitBar} />
           </View>
         ) : (
           <>
-            <Txt weight="heavy" size={30} exact style={[styles.sign, { marginTop: size * 0.2 }]} importantForAccessibility="no" accessibilityElementsHidden>
+            <Txt
+              weight="heavy"
+              size={30}
+              exact
+              style={[styles.sign, { marginTop: size * 0.2 }]}
+              importantForAccessibility="no"
+              accessibilityElementsHidden
+            >
               $
             </Txt>
             <Odometer value={whole} size={size} label={`Available, ${usd}`} />
@@ -124,7 +139,13 @@ export function BalanceCard({
 
       <View style={styles.chips}>
         {fresh ? (
-          <Landing key={fresh.id} active delay={1500} rest={colors.onTeal} style={[styles.chip, styles.fresh]}>
+          <Landing
+            key={fresh.id}
+            active
+            delay={1500}
+            rest={colors.onTeal}
+            style={[styles.chip, styles.fresh]}
+          >
             <Icon name="upRight" size={15} strokeWidth={2.8} />
             <Txt weight="heavy" size={13} numberOfLines={1}>
               {fresh.line}
@@ -159,7 +180,13 @@ export function BalanceCard({
  */
 export function ReadyCard() {
   return (
-    <Sticker lift fill={colors.teal} radius={28} style={styles.frame} innerStyle={[styles.card, styles.ready]}>
+    <Sticker
+      lift
+      fill={colors.teal}
+      radius={28}
+      style={styles.frame}
+      innerStyle={[styles.card, styles.ready]}
+    >
       <Waves />
       <View pointerEvents="none" style={styles.reni}>
         <Bob distance={6} duration={4500}>
@@ -187,14 +214,24 @@ export function ReadyCard() {
           </View>
         ) : null}
       </View>
-      <View style={[styles.amount, { marginTop: 2 }]} accessible accessibilityLabel="Available, $0.00">
+      <View
+        style={[styles.amount, { marginTop: 2 }]}
+        accessible
+        accessibilityLabel="Available, $0.00"
+      >
         <Txt weight="heavy" size={30} exact style={[styles.sign, { marginTop: 14 }]}>
           $
         </Txt>
         <Txt weight="heavy" size={68} exact style={{ lineHeight: 79, letterSpacing: -2.4 }}>
           0
         </Txt>
-        <Txt weight="heavy" size={30} exact color={colors.onTint} style={[styles.cents, { marginTop: 14 }]}>
+        <Txt
+          weight="heavy"
+          size={30}
+          exact
+          color={colors.onTint}
+          style={[styles.cents, { marginTop: 14 }]}
+        >
           .00
         </Txt>
       </View>
@@ -227,7 +264,14 @@ function Waves() {
   return (
     <Svg width={200} height={200} viewBox="0 0 200 200" style={styles.waves} pointerEvents="none">
       {WAVES.map((d) => (
-        <Path key={d} d={d} stroke={colors.ink} strokeWidth={11} strokeLinecap="round" fill="none" />
+        <Path
+          key={d}
+          d={d}
+          stroke={colors.ink}
+          strokeWidth={11}
+          strokeLinecap="round"
+          fill="none"
+        />
       ))}
     </Svg>
   )
@@ -256,12 +300,26 @@ const styles = StyleSheet.create({
   coinBack: { position: 'absolute', right: 0, top: 4 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   label: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44 },
-  add: { height: 40, flexDirection: 'row', alignItems: 'center', gap: 6, paddingLeft: 12, paddingRight: 16 },
+  add: {
+    height: 40,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingLeft: 12,
+    paddingRight: 16,
+  },
   amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8, paddingRight: 64 },
   sign: { marginRight: 3 },
   cents: { marginLeft: 5, letterSpacing: -0.6 },
   hidden: { letterSpacing: 4, lineHeight: 72 },
-  chips: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12, paddingRight: 88, minHeight: 30 },
+  chips: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 12,
+    paddingRight: 88,
+    minHeight: 30,
+  },
   chip: {
     height: 30,
     paddingHorizontal: 12,
@@ -278,7 +336,14 @@ const styles = StyleSheet.create({
   sparkA: { position: 'absolute', right: 128, bottom: 124 },
   sparkB: { position: 'absolute', right: 16, bottom: 140 },
   readyRow: { flexDirection: 'row', marginTop: 16 },
-  readyButton: { height: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingLeft: 18, paddingRight: 5 },
+  readyButton: {
+    height: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingLeft: 18,
+    paddingRight: 5,
+  },
   readyDisc: {
     width: 36,
     height: 36,

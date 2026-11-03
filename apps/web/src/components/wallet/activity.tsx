@@ -3,10 +3,10 @@
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { Icon } from '@/components/brand'
+import { chainName, explorerName, onTempo } from '@/lib/chain'
 import { baseToNumber, formatLocal, formatUsd } from '@/lib/wallet/money'
 import { type Entry, isUnnamed, useWallet } from './provider'
 import { Avatar, EntryBadge, EntryRow, incoming, signed } from './ui'
-import { chainName, explorerName, onTempo } from '@/lib/chain'
 
 /** A screen's title, with the way back. */
 export function ScreenHead({
@@ -224,7 +224,8 @@ export function Receipt({ id }: { id: string }) {
         <div className="w-empty">
           <strong>Looking for this payment</strong>
           <span>
-            It shows here as soon as Ren’s record of {chainName} has it, usually within a second or two.
+            It shows here as soon as Ren’s record of {chainName} has it, usually within a second or
+            two.
           </span>
         </div>
       </div>
@@ -338,7 +339,9 @@ export function Receipt({ id }: { id: string }) {
           </div>
           <div>
             <dt>Amount</dt>
-            <dd>{formatUsd(BigInt(entry.amount))} {onTempo ? 'USDC' : 'AUSD'}</dd>
+            <dd>
+              {formatUsd(BigInt(entry.amount))} {onTempo ? 'USDC' : 'AUSD'}
+            </dd>
           </div>
         </dl>
         {entry.explorer ? (

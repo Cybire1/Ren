@@ -33,7 +33,8 @@ export function parseScanned(text: string): Scanned | null {
   const charge =
     /\/pay\/([A-Za-z0-9_]+)/.exec(value) ?? /^kova:\/\/pay\/([A-Za-z0-9_]+)/.exec(value)
   if (charge?.[1]) return { kind: 'charge', id: charge[1] }
-  const stall = /^(?:https?:\/\/[^/]+|kova:\/)\/s\/([a-z0-9-]{1,64})\/?(?:\?([^#]*))?(?:#.*)?$/.exec(value)
+  const stall =
+    /^(?:https?:\/\/[^/]+|kova:\/)\/s\/([a-z0-9-]{1,64})\/?(?:\?([^#]*))?(?:#.*)?$/.exec(value)
   if (stall?.[1]) {
     const table = tableFrom(new URLSearchParams(stall[2] ?? '').get('table'))
     return { kind: 'stall', slug: stall[1], ...(table ? { table } : {}) }

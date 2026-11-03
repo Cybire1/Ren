@@ -256,8 +256,8 @@ function EmailSignIn({ appId, chainId }: { appId: string; chainId: number }) {
         <div className="signin-panel" role="status">
           <p className="signin-panel-title">No shop uses {step.wallet.signedInAs} yet</p>
           <p className="signin-panel-body">
-            New shops open in the Ren app: your wallet first, then your shop. It takes a passkey
-            and a name.
+            New shops open in the Ren app: your wallet first, then your shop. It takes a passkey and
+            a name.
           </p>
           <Pill href="/wallet/shop?go=open" icon="arrow" tone="coral" wide>
             Open a shop in the Ren app

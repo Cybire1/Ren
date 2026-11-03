@@ -2,9 +2,9 @@ import { router } from 'expo-router'
 import { Pressable, StyleSheet, View } from 'react-native'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
-import { Icon } from './Icon'
 import type { Entry } from '@/lib/wallet'
 import { AddBadge, Avatar, ShopBadge } from './art'
+import { Icon } from './Icon'
 import { Landing } from './motion'
 import { Txt } from './primitives'
 
@@ -24,7 +24,15 @@ const verbs = { paid: 'Paid', sent: 'Sent', received: 'Received', added: 'Added'
  * One line of money: who, what, when, and how much, signed by direction. `inset` pads it for a
  * card; `fresh` drops it in with a mint glow, for money that has only just landed.
  */
-export function EntryRow({ entry, inset, fresh }: { entry: Entry; inset?: boolean; fresh?: boolean }) {
+export function EntryRow({
+  entry,
+  inset,
+  fresh,
+}: {
+  entry: Entry
+  inset?: boolean
+  fresh?: boolean
+}) {
   const incoming = entry.kind === 'received' || entry.kind === 'added'
   return (
     <Landing active={!!fresh} delay={1800} rest={inset ? colors.card : 'rgba(255,255,255,0)'}>
@@ -56,7 +64,11 @@ export function EntryRow({ entry, inset, fresh }: { entry: Entry; inset?: boolea
             </Txt>
           </View>
         </View>
-        <Txt weight={inset ? 'heavy' : 'semi'} size={16} color={incoming ? colors.positive : colors.ink}>
+        <Txt
+          weight={inset ? 'heavy' : 'semi'}
+          size={16}
+          color={incoming ? colors.positive : colors.ink}
+        >
           {signed(entry)}
         </Txt>
       </Pressable>
@@ -66,11 +78,20 @@ export function EntryRow({ entry, inset, fresh }: { entry: Entry; inset?: boolea
 
 export function signed(entry: Entry) {
   const amount = BigInt(entry.amount)
-  return entry.kind === 'received' || entry.kind === 'added' ? formatUsd(amount, { sign: true }) : formatUsd(-amount)
+  return entry.kind === 'received' || entry.kind === 'added'
+    ? formatUsd(amount, { sign: true })
+    : formatUsd(-amount)
 }
 
 const styles = StyleSheet.create({
-  lockBadge: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  lockBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8 },
   inset: { paddingVertical: 10, paddingLeft: 10, paddingRight: 14 },
 })

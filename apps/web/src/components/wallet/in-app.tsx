@@ -50,8 +50,8 @@ export function InAppNote() {
     <div className="w-inapp" role="note">
       <strong>Open Ren in {browser}</strong>
       <span>
-        Ren opens with a passkey, and {where.app ? `${where.app}’s built-in browser` : 'this browser'}{' '}
-        often can’t use one.
+        Ren opens with a passkey, and{' '}
+        {where.app ? `${where.app}’s built-in browser` : 'this browser'} often can’t use one.
       </span>
       <div className="w-inapp-actions">
         {open ? (

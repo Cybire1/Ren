@@ -19,7 +19,10 @@ const ALLOWED = [
 async function forward(request: Request, path: string[]) {
   const joined = path.join('/')
   if (!ALLOWED.some((pattern) => pattern.test(joined)))
-    return Response.json({ error: { code: 'not_found', message: 'No such endpoint' } }, { status: 404 })
+    return Response.json(
+      { error: { code: 'not_found', message: 'No such endpoint' } },
+      { status: 404 },
+    )
   const secret = process.env.KOVA_PROXY_SECRET
   const ip = (await headers()).get('x-forwarded-for')?.split(',')[0]?.trim()
   const authorization = request.headers.get('authorization')
@@ -35,7 +38,10 @@ async function forward(request: Request, path: string[]) {
     cache: 'no-store',
   }).catch(() => null)
   if (!response)
-    return Response.json({ error: { code: 'internal', message: 'Ren is unreachable right now.' } }, { status: 502 })
+    return Response.json(
+      { error: { code: 'internal', message: 'Ren is unreachable right now.' } },
+      { status: 502 },
+    )
   return new Response(await response.text(), {
     status: response.status,
     headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },

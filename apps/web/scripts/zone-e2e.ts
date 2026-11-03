@@ -154,7 +154,10 @@ async function main() {
     `Bob's Tempo balance went ${usd(before)} → ${usd(after)} in ${((Date.now() - started) / 1000).toFixed(1)} s`,
   )
   const left = await privateBalance(access, bob.address)
-  check(left <= reserve, `Bob’s private balance is down to ${usd(left)}, at most the gas he kept back`)
+  check(
+    left <= reserve,
+    `Bob’s private balance is down to ${usd(left)}, at most the gas he kept back`,
+  )
 
   step('Bob’s private history, as the zone shows him')
   const moves = await privateMoves(access, bob.address)

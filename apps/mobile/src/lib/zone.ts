@@ -190,7 +190,13 @@ export async function deposit(
     zoneId: zone.id,
   })
   const sandbox = zone.runtime === 'sandbox'
-  const { encrypted, opening } = seal(publicKey, parameters.to, zone.portal, keyIndex, sandbox ? null : parameters.from)
+  const { encrypted, opening } = seal(
+    publicKey,
+    parameters.to,
+    zone.portal,
+    keyIndex,
+    sandbox ? null : parameters.from,
+  )
   const depositData = sandbox
     ? encodeFunctionData({
         abi: sandboxPortal,
@@ -203,20 +209,23 @@ export async function deposit(
         // A bounce refunds the depositor.
         args: [zone.token, parameters.amount, keyIndex, encrypted as never, parameters.from],
       })
-  const receipt = await sendTransactionSync(client as never, {
-    calls: [
-      {
-        to: zone.token,
-        data: encodeFunctionData({
-          abi: Abis.tip20,
-          functionName: 'approve',
-          args: [zone.portal, parameters.amount],
-        }),
-      },
-      { to: zone.portal, data: depositData },
-    ],
-    feePayer: true,
-  } as never)
+  const receipt = await sendTransactionSync(
+    client as never,
+    {
+      calls: [
+        {
+          to: zone.token,
+          data: encodeFunctionData({
+            abi: Abis.tip20,
+            functionName: 'approve',
+            args: [zone.portal, parameters.amount],
+          }),
+        },
+        { to: zone.portal, data: depositData },
+      ],
+      feePayer: true,
+    } as never,
+  )
   if (receipt.status !== 'success') throw new Error('The deposit didn’t go through.')
   // The one-time key it was sealed with: proof, for Ren alone, of whom a private payment was for.
   return Object.assign(receipt as TransactionReceipt, { opening })
@@ -242,21 +251,31 @@ export async function withdraw(
   parameters: { amount: bigint; to?: Address },
 ): Promise<TransactionReceipt> {
   const client = zoneClient(zone, account)
-  const request = { token: zone.token, amount: parameters.amount, to: parameters.to ?? account.address }
+  const request = {
+    token: zone.token,
+    amount: parameters.amount,
+    to: parameters.to ?? account.address,
+  }
   const fees =
     zone.runtime === 'current'
       ? { maxFeePerGas: 0n, maxPriorityFeePerGas: 0n }
       : {
           gas:
-            ((await estimateGas(client as never, {
-              account,
-              calls: Actions.zone.requestWithdrawal.calls(request as never),
-            } as never)) *
+            ((await estimateGas(
+              client as never,
+              {
+                account,
+                calls: Actions.zone.requestWithdrawal.calls(request as never),
+              } as never,
+            )) *
               12n) /
             10n,
         }
   // Not the Sync variant: the private RPC hides the outbox's event from receipts.
-  const hash = await Actions.zone.requestWithdrawal(client as never, { ...request, ...fees } as never)
+  const hash = await Actions.zone.requestWithdrawal(
+    client as never,
+    { ...request, ...fees } as never,
+  )
   const receipt = await waitForTransactionReceipt(client, { hash, timeout: 30_000 })
   if (receipt.status !== 'success') throw new Error('The zone didn’t take the withdrawal.')
   return receipt
@@ -277,7 +296,9 @@ export interface PrivateMove {
   at: number
 }
 
-const transfer = parseAbiItem('event Transfer(address indexed from, address indexed to, uint256 amount)')
+const transfer = parseAbiItem(
+  'event Transfer(address indexed from, address indexed to, uint256 amount)',
+)
 /** Zones cap a log query at a million blocks: about three days, at a block every 250 ms. */
 const HISTORY_BLOCKS = 900_000n
 
@@ -287,12 +308,26 @@ export async function privateMoves(zone: ZoneInfo, address: Address): Promise<Pr
   const head = await getBlockNumber(client)
   const fromBlock = head > HISTORY_BLOCKS ? head - HISTORY_BLOCKS : 0n
   const [incoming, outgoing] = await Promise.all([
-    getLogs(client, { address: zone.token, event: transfer, args: { to: address }, fromBlock, toBlock: head }),
-    getLogs(client, { address: zone.token, event: transfer, args: { from: address }, fromBlock, toBlock: head }),
+    getLogs(client, {
+      address: zone.token,
+      event: transfer,
+      args: { to: address },
+      fromBlock,
+      toBlock: head,
+    }),
+    getLogs(client, {
+      address: zone.token,
+      event: transfer,
+      args: { from: address },
+      fromBlock,
+      toBlock: head,
+    }),
   ])
   const zero = /^0x0{40}$/i
   const moves = [
-    ...incoming.filter((l) => l.args.from && zero.test(l.args.from)).map((l) => ({ kind: 'in' as const, log: l })),
+    ...incoming
+      .filter((l) => l.args.from && zero.test(l.args.from))
+      .map((l) => ({ kind: 'in' as const, log: l })),
     // The transfer to the outbox is the move out; a sandbox zone's gas goes to its fee manager.
     ...outgoing
       .filter((l) => l.args.to && isAddressEqual(l.args.to, Addresses.zoneOutbox))

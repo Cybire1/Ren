@@ -13,7 +13,9 @@ import type { ConfigContext, ExpoConfig } from 'expo/config'
 export default ({ config }: ConfigContext): ExpoConfig => {
   const tempo = process.env.EXPO_PUBLIC_KOVA_CHAIN !== 'monad'
   const bundle = tempo ? 'xyz.kova.pay' : 'xyz.kova.pay.monad'
-  const site = new URL(process.env.EXPO_PUBLIC_KOVA_TEMPO_WEB_URL ?? 'https://web-production-acdb.up.railway.app').hostname
+  const site = new URL(
+    process.env.EXPO_PUBLIC_KOVA_TEMPO_WEB_URL ?? 'https://web-production-acdb.up.railway.app',
+  ).hostname
   const passkeys = process.env.EXPO_PUBLIC_KOVA_PASSKEY_DOMAIN
   const domains = tempo
     ? [...new Set([site, ...(passkeys ? [passkeys] : [])])]

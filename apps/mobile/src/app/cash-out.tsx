@@ -1,7 +1,14 @@
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { KeyboardAvoidingView, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import {
+  KeyboardAvoidingView,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native'
 import type { Address, Hex } from 'viem'
 import { apiUrl, chainName } from '@/lib/config'
 import { applyKey, formatUsd, groupTyped, type Key, toBase } from '@/lib/money'
@@ -38,14 +45,21 @@ interface CashOut {
 
 type Step = 'amount' | 'account' | 'review' | 'done'
 
-async function nairaApi<T>(path: string, init: { method?: 'GET' | 'POST'; body?: unknown; token?: string } = {}): Promise<T> {
+async function nairaApi<T>(
+  path: string,
+  init: { method?: 'GET' | 'POST'; body?: unknown; token?: string } = {},
+): Promise<T> {
   const response = await fetch(`${apiUrl}/v1/${path}`, {
     method: init.method ?? 'GET',
-    headers: { 'content-type': 'application/json', ...(init.token ? { authorization: `Bearer ${init.token}` } : {}) },
+    headers: {
+      'content-type': 'application/json',
+      ...(init.token ? { authorization: `Bearer ${init.token}` } : {}),
+    },
     ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
   })
   const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
-  if (!response.ok) throw new Error(body.error?.message ?? `Ren is unreachable (${response.status})`)
+  if (!response.ok)
+    throw new Error(body.error?.message ?? `Ren is unreachable (${response.status})`)
   return body as T
 }
 
@@ -95,7 +109,9 @@ export default function CashOutScreen() {
 
   useEffect(() => {
     if (step !== 'account' || banks) return
-    void nairaApi<{ data: Bank[] }>('naira/banks').then((b) => setBanks(b.data)).catch((e: Error) => setProblem(e.message))
+    void nairaApi<{ data: Bank[] }>('naira/banks')
+      .then((b) => setBanks(b.data))
+      .catch((e: Error) => setProblem(e.message))
   }, [banks, step])
 
   useEffect(() => {
@@ -103,7 +119,10 @@ export default function CashOutScreen() {
     if (!bank || !/^\d{10}$/.test(account)) return
     setLooking(true)
     setProblem(null)
-    void nairaApi<{ account_name: string }>('naira/account', { method: 'POST', body: { account_number: account, bank_code: bank.code } })
+    void nairaApi<{ account_name: string }>('naira/account', {
+      method: 'POST',
+      body: { account_number: account, bank_code: bank.code },
+    })
       .then((r) => setNamed({ number: account, name: r.account_name }))
       .catch((e: Error) => setProblem(e.message))
       .finally(() => setLooking(false))
@@ -124,7 +143,11 @@ export default function CashOutScreen() {
         await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs`, {
           method: 'POST',
           token: await keys.token(),
-          body: { amount: (Number(amount) / 1e6).toFixed(2), bank_code: bank.code, account_number: named.number },
+          body: {
+            amount: (Number(amount) / 1e6).toFixed(2),
+            bank_code: bank.code,
+            account_number: named.number,
+          },
         }),
       )
       setStep('review')
@@ -148,17 +171,26 @@ export default function CashOutScreen() {
         name: quote.bank_name,
         detail: `Cash out to ••••${quote.account_last4}`,
       })
-      let result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}/sent`, {
-        method: 'POST',
-        token: await keys.token(),
-        body: { tx_hash: sent.txHash },
-      })
-      void Haptics.notificationAsync(result.status === 'failed' ? Haptics.NotificationFeedbackType.Warning : Haptics.NotificationFeedbackType.Success)
+      let result = await nairaApi<CashOut>(
+        `wallets/${profile.address}/cash-outs/${quote.id}/sent`,
+        {
+          method: 'POST',
+          token: await keys.token(),
+          body: { tx_hash: sent.txHash },
+        },
+      )
+      void Haptics.notificationAsync(
+        result.status === 'failed'
+          ? Haptics.NotificationFeedbackType.Warning
+          : Haptics.NotificationFeedbackType.Success,
+      )
       setQuote(result)
       setStep('done')
       for (let i = 0; i < 20 && (result.status === 'paying' || result.status === 'received'); i++) {
         await wait(3000)
-        result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}`, { token: await keys.token() })
+        result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}`, {
+          token: await keys.token(),
+        })
         setQuote(result)
       }
     } catch (error) {
@@ -225,7 +257,9 @@ export default function CashOutScreen() {
             <Keypad onKey={onKey} />
             <View style={{ marginTop: 14 }}>
               <PillButton
-                label={over ? 'More than you have' : tooSmall ? 'At least $1' : 'Choose the account'}
+                label={
+                  over ? 'More than you have' : tooSmall ? 'At least $1' : 'Choose the account'
+                }
                 disabled={amount === 0n || over || tooSmall}
                 onPress={() => setStep('account')}
               />
@@ -254,7 +288,13 @@ export default function CashOutScreen() {
               </Pressable>
             ) : (
               <Field label="Bank">
-                <TextInput value={search} onChangeText={setSearch} placeholder="Search your bank" placeholderTextColor={colors.muted} style={styles.input} />
+                <TextInput
+                  value={search}
+                  onChangeText={setSearch}
+                  placeholder="Search your bank"
+                  placeholderTextColor={colors.muted}
+                  style={styles.input}
+                />
                 <View style={styles.bankList}>
                   {banks === null ? (
                     <Txt color={colors.muted} style={{ padding: 12 }}>
@@ -262,7 +302,11 @@ export default function CashOutScreen() {
                     </Txt>
                   ) : (
                     shown.map((b, i) => (
-                      <Pressable key={`${b.code}-${b.name}`} onPress={() => setBank(b)} style={[styles.bankRow, i < shown.length - 1 && styles.rule]}>
+                      <Pressable
+                        key={`${b.code}-${b.name}`}
+                        onPress={() => setBank(b)}
+                        style={[styles.bankRow, i < shown.length - 1 && styles.rule]}
+                      >
                         <Txt size={15}>{b.name}</Txt>
                       </Pressable>
                     ))
@@ -292,7 +336,12 @@ export default function CashOutScreen() {
               </View>
             ) : null}
             {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
-            <PillButton label={busy ? 'Getting a quote…' : 'Review'} loading={busy} disabled={!named || busy} onPress={() => void review()} />
+            <PillButton
+              label={busy ? 'Getting a quote…' : 'Review'}
+              loading={busy}
+              disabled={!named || busy}
+              onPress={() => void review()}
+            />
           </ScrollView>
         ) : null}
 
@@ -310,11 +359,20 @@ export default function CashOutScreen() {
               </Txt>
             </View>
             <View style={styles.facts}>
-              <Fact label="You send" value={`$${quote.amount}`} hint={`From your balance on ${chainName}`} />
+              <Fact
+                label="You send"
+                value={`$${quote.amount}`}
+                hint={`From your balance on ${chainName}`}
+              />
               <Fact label="Rate" value={`₦${quote.rate} per dollar`} />
               <Fact label="Bank fee" value={quote.fee} hint="Taken from the naira" />
               <Fact label="Network fee" value="$0.00, Ren covers it" />
-              <Fact label="Arrives" value="In minutes" hint="If the bank can’t take it, your dollars come back" last />
+              <Fact
+                label="Arrives"
+                value="In minutes"
+                hint="If the bank can’t take it, your dollars come back"
+                last
+              />
             </View>
             {quote.test_mode ? (
               <Txt size={13} color={colors.muted}>
@@ -323,9 +381,15 @@ export default function CashOutScreen() {
             ) : null}
             {problem ? <Txt color={colors.danger}>{problem}</Txt> : null}
             <View style={{ flex: 1 }} />
-            <SlideToSend label={problem ? 'Slide to try again' : `Slide to cash out $${quote.amount}`} busy={busy} onSend={() => void go()} />
+            <SlideToSend
+              label={problem ? 'Slide to try again' : `Slide to cash out $${quote.amount}`}
+              busy={busy}
+              onSend={() => void go()}
+            />
             <Txt size={13} color={colors.muted} style={{ textAlign: 'center', marginTop: 8 }}>
-              {quick ? 'Your wallet is open, so this one needs no Face ID.' : 'Face ID approves it.'}
+              {quick
+                ? 'Your wallet is open, so this one needs no Face ID.'
+                : 'Face ID approves it.'}
             </Txt>
           </View>
         ) : null}
@@ -334,11 +398,16 @@ export default function CashOutScreen() {
           <View style={styles.done}>
             <Reni pose={quote.status === 'failed' ? 'oops' : 'cheer'} size={150} />
             <Txt weight="heavy" size={26} style={{ textAlign: 'center' }}>
-              {quote.status === 'paid' ? 'In their account' : quote.status === 'failed' ? 'It didn’t reach the bank' : 'On its way to the bank'}
+              {quote.status === 'paid'
+                ? 'In their account'
+                : quote.status === 'failed'
+                  ? 'It didn’t reach the bank'
+                  : 'On its way to the bank'}
             </Txt>
             <Txt color={colors.muted} style={{ textAlign: 'center' }}>
               {quote.status === 'failed'
-                ? (quote.failure ?? 'The bank couldn’t take it. Your dollars came back to your wallet.')
+                ? (quote.failure ??
+                  'The bank couldn’t take it. Your dollars came back to your wallet.')
                 : `${quote.naira} to ${quote.account_name}, ${quote.bank_name} ••••${quote.account_last4}.`}
             </Txt>
             <View style={{ alignSelf: 'stretch', marginTop: 8 }}>
@@ -351,7 +420,17 @@ export default function CashOutScreen() {
   )
 }
 
-function Fact({ label, value, hint, last }: { label: string; value: string; hint?: string; last?: boolean }) {
+function Fact({
+  label,
+  value,
+  hint,
+  last,
+}: {
+  label: string
+  value: string
+  hint?: string
+  last?: boolean
+}) {
   return (
     <View style={[styles.fact, !last && styles.rule]}>
       <Txt size={14} color={colors.muted}>
@@ -375,18 +454,90 @@ const styles = StyleSheet.create({
   flow: { flex: 1, paddingHorizontal: 20, paddingBottom: 12 },
   form: { paddingHorizontal: 20, paddingBottom: 40, gap: 16 },
   route: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  naira: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.tealDeep, alignItems: 'center', justifyContent: 'center' },
-  typed: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', marginTop: 28 },
-  pills: { flexDirection: 'row', justifyContent: 'center', flexWrap: 'wrap', gap: 8, marginTop: 10 },
-  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.sunken },
-  input: { paddingHorizontal: 14, paddingVertical: 12, borderWidth: 2, borderColor: colors.ink, borderRadius: 16, backgroundColor: colors.white, fontFamily: fonts.semi, fontSize: 16, color: colors.ink },
-  bankList: { maxHeight: 300, borderWidth: 2, borderColor: colors.ink, borderRadius: 16, backgroundColor: colors.white, overflow: 'hidden' },
+  naira: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.tealDeep,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  typed: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginTop: 28,
+  },
+  pills: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  pill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: colors.sunken,
+  },
+  input: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    fontFamily: fonts.semi,
+    fontSize: 16,
+    color: colors.ink,
+  },
+  bankList: {
+    maxHeight: 300,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    borderRadius: 16,
+    backgroundColor: colors.white,
+    overflow: 'hidden',
+  },
   bankRow: { paddingHorizontal: 14, paddingVertical: 12 },
   rule: { borderBottomWidth: 1, borderBottomColor: colors.sunken },
-  bankPick: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 12, borderRadius: 18, borderWidth: 2, borderColor: colors.ink, backgroundColor: '#CFF5E6' },
-  bankBadge: { width: 38, height: 38, borderRadius: 19, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.teal, alignItems: 'center', justifyContent: 'center' },
-  named: { flexDirection: 'row', alignItems: 'center', gap: 6, padding: 12, borderRadius: 14, backgroundColor: '#CFF5E6' },
-  facts: { marginTop: 16, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 14 },
+  bankPick: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: '#CFF5E6',
+  },
+  bankBadge: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.teal,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  named: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    padding: 12,
+    borderRadius: 14,
+    backgroundColor: '#CFF5E6',
+  },
+  facts: {
+    marginTop: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+  },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
   done: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 28 },
 })

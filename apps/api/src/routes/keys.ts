@@ -10,19 +10,19 @@ import {
   agentPay,
   agentPayCharge,
   answerApproval,
-  chargeIdFrom,
   approvalsFor,
+  chargeIdFrom,
   describeAgent,
   paymentRow,
 } from '../services/agents.js'
 import {
   authorizationFor,
   cardForTill,
-  createCardKey,
   claimAllowance,
   confirmKey,
   createAgentKey,
   createAllowance,
+  createCardKey,
   inviteFor,
   keysOf,
   keysReady,
@@ -71,11 +71,18 @@ const addr = z.string().refine((v) => isAddress(v), 'Expected an address')
 const hex = z.string().refine((v) => isHex(v), 'Expected hex')
 const money = z.string().regex(/^\d{1,7}(\.\d{1,6})?$/, 'Expected dollars, like 50 or 12.50')
 const period = z.enum(['day', 'week']).transform((p) => (p === 'week' ? WEEK : DAY))
-const until = z.string().datetime().transform((v) => new Date(v))
+const until = z
+  .string()
+  .datetime()
+  .transform((v) => new Date(v))
 
-const bodyOf = async <T extends z.ZodTypeAny>(c: { req: { json: () => Promise<unknown> } }, shape: T): Promise<z.infer<T>> => {
+const bodyOf = async <T extends z.ZodTypeAny>(
+  c: { req: { json: () => Promise<unknown> } },
+  shape: T,
+): Promise<z.infer<T>> => {
   const parsed = shape.safeParse(await c.req.json().catch(() => ({})))
-  if (!parsed.success) throw new KovaError('invalid_request', 'Invalid request body', { issues: parsed.error.issues })
+  if (!parsed.success)
+    throw new KovaError('invalid_request', 'Invalid request body', { issues: parsed.error.issues })
   return parsed.data
 }
 
@@ -138,14 +145,20 @@ keyRoutes.post('/wallets/:address/keys/agents', async (c) => {
     approveAbove: parseAmount(body.approve_above),
     payees: body.payees === 'anyone' ? 'anyone' : body.payees.map((p) => getAddress(p)),
   })
-  return c.json({ key: await serializeKey(row, { chain: false }), authorize: authorizationFor(row) }, 201)
+  return c.json(
+    { key: await serializeKey(row, { chain: false }), authorize: authorizationFor(row) },
+    201,
+  )
 })
 
 keyRoutes.post('/wallets/:address/keys/allowances', async (c) => {
   needKeys()
   const owner = requireWallet(c, c.req.param('address'))
   limit(`keys-new:${owner}`, 20, 60 * 60_000, 'That’s a lot of new keys. Try again later.')
-  const body = await bodyOf(c, z.object({ label: z.string().min(1).max(40), limit: money, period, expires_at: until }))
+  const body = await bodyOf(
+    c,
+    z.object({ label: z.string().min(1).max(40), limit: money, period, expires_at: until }),
+  )
   const { row, code } = await createAllowance(owner, {
     label: body.label,
     limit: parseAmount(body.limit),
@@ -159,14 +172,25 @@ keyRoutes.post('/wallets/:address/keys/cards', async (c) => {
   needKeys()
   const owner = requireWallet(c, c.req.param('address'))
   limit(`keys-new:${owner}`, 20, 60 * 60_000, 'That’s a lot of new keys. Try again later.')
-  const body = await bodyOf(c, z.object({ label: z.string().max(40).default('Ren Card'), key_id: addr, limit: money, expires_at: until }))
+  const body = await bodyOf(
+    c,
+    z.object({
+      label: z.string().max(40).default('Ren Card'),
+      key_id: addr,
+      limit: money,
+      expires_at: until,
+    }),
+  )
   const row = await createCardKey(owner, {
     label: body.label,
     keyId: getAddress(body.key_id),
     limit: parseAmount(body.limit),
     expiresAt: body.expires_at,
   })
-  return c.json({ key: await serializeKey(row, { chain: false }), authorize: authorizationFor(row) }, 201)
+  return c.json(
+    { key: await serializeKey(row, { chain: false }), authorize: authorizationFor(row) },
+    201,
+  )
 })
 
 /** A till just read a card: whose wallet it spends and whether it can pay now. Public, like a tap. */
@@ -189,8 +213,15 @@ keyRoutes.post('/wallets/:address/keys/:id/confirm', async (c) => {
   const owner = requireWallet(c, c.req.param('address'))
   const body = await bodyOf(c, z.object({ tx_hash: hex.optional() }))
   const row = await ownedKey(owner, c.req.param('id'))
-  const { row: confirmed, agentToken } = await confirmKey(owner, row, body.tx_hash as Hex | undefined)
-  return c.json({ key: await serializeKey(confirmed), ...(agentToken ? { agent_token: agentToken } : {}) })
+  const { row: confirmed, agentToken } = await confirmKey(
+    owner,
+    row,
+    body.tx_hash as Hex | undefined,
+  )
+  return c.json({
+    key: await serializeKey(confirmed),
+    ...(agentToken ? { agent_token: agentToken } : {}),
+  })
 })
 
 for (const action of ['freeze', 'unfreeze'] as const)
@@ -234,7 +265,10 @@ keyRoutes.get('/wallets/:address/keys/:id/payments', async (c) => {
 keyRoutes.post('/wallets/:address/approvals/:id', async (c) => {
   needKeys()
   const owner = requireWallet(c, c.req.param('address'))
-  const body = await bodyOf(c, z.object({ decision: z.enum(['approve', 'decline']), signature: hex }))
+  const body = await bodyOf(
+    c,
+    z.object({ decision: z.enum(['approve', 'decline']), signature: hex }),
+  )
   const { payment } = await answerApproval({
     owner,
     paymentId: c.req.param('id'),
@@ -292,9 +326,23 @@ keyRoutes.get('/agent', async (c) => {
 keyRoutes.post('/agent/pay', async (c) => {
   const row = await agentForToken(bearer(c))
   limit(`agent-pay:${row.id}`, 60, 60_000, 'Too many payments this minute. Slow down.')
-  const body = await bodyOf(c, z.object({ to: addr, amount: money, note: z.string().max(200).optional() }))
-  const payment = await agentPay(row, { to: getAddress(body.to) as Address, amount: parseAmount(body.amount), note: body.note })
-  const status = payment.status === 'paid' ? 200 : payment.status === 'pending_approval' ? 202 : payment.status === 'denied' ? 403 : 502
+  const body = await bodyOf(
+    c,
+    z.object({ to: addr, amount: money, note: z.string().max(200).optional() }),
+  )
+  const payment = await agentPay(row, {
+    to: getAddress(body.to) as Address,
+    amount: parseAmount(body.amount),
+    note: body.note,
+  })
+  const status =
+    payment.status === 'paid'
+      ? 200
+      : payment.status === 'pending_approval'
+        ? 202
+        : payment.status === 'denied'
+          ? 403
+          : 502
   return c.json({ payment: serializePayment(payment, row) }, status)
 })
 
@@ -303,9 +351,20 @@ keyRoutes.post('/agent/pay-charge', async (c) => {
   limit(`agent-pay:${row.id}`, 60, 60_000, 'Too many payments this minute. Slow down.')
   const body = await bodyOf(c, z.object({ charge: z.string().min(3).max(500) }))
   const charge = chargeIdFrom(body.charge)
-  if (!charge) throw new KovaError('invalid_request', 'That isn’t a Ren charge or pay link (it has a pi_… id).')
+  if (!charge)
+    throw new KovaError(
+      'invalid_request',
+      'That isn’t a Ren charge or pay link (it has a pi_… id).',
+    )
   const payment = await agentPayCharge(row, charge)
-  const status = payment.status === 'paid' ? 200 : payment.status === 'pending_approval' ? 202 : payment.status === 'denied' ? 403 : 502
+  const status =
+    payment.status === 'paid'
+      ? 200
+      : payment.status === 'pending_approval'
+        ? 202
+        : payment.status === 'denied'
+          ? 403
+          : 502
   return c.json({ payment: serializePayment(payment, row) }, status)
 })
 
@@ -318,7 +377,10 @@ keyRoutes.post('/agent/fetch', async (c) => {
       url: z.string().url().max(2000),
       method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD']).default('GET'),
       headers: z.record(z.string(), z.string().max(2000)).optional(),
-      body: z.string().max(256 * 1024).optional(),
+      body: z
+        .string()
+        .max(256 * 1024)
+        .optional(),
       max_amount: money.optional(),
     }),
   )
@@ -329,7 +391,14 @@ keyRoutes.post('/agent/fetch', async (c) => {
     body: body.body,
     maxAmount: body.max_amount ? parseAmount(body.max_amount) : undefined,
   })
-  const status = result.status === 'pending_approval' ? 202 : result.status === 'denied' ? 403 : result.status === 'failed' ? 502 : 200
+  const status =
+    result.status === 'pending_approval'
+      ? 202
+      : result.status === 'denied'
+        ? 403
+        : result.status === 'failed'
+          ? 502
+          : 200
   return c.json(
     {
       status: result.status,
@@ -350,6 +419,7 @@ keyRoutes.get('/agent/payments', async (c) => {
 keyRoutes.get('/agent/payments/:id', async (c) => {
   const row = await agentForToken(bearer(c))
   const payment = await paymentRow(c.req.param('id'))
-  if (!payment || payment.walletKeyId !== row.id) throw new KovaError('not_found', 'No such payment for this key.')
+  if (!payment || payment.walletKeyId !== row.id)
+    throw new KovaError('not_found', 'No such payment for this key.')
   return c.json({ payment: serializePayment(payment, row), response: payment.response ?? null })
 })

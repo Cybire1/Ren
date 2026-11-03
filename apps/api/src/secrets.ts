@@ -1,4 +1,12 @@
-import { createCipheriv, createDecipheriv, createHash, hkdfSync, randomBytes, scrypt, timingSafeEqual } from 'node:crypto'
+import {
+  createCipheriv,
+  createDecipheriv,
+  createHash,
+  hkdfSync,
+  randomBytes,
+  scrypt,
+  timingSafeEqual,
+} from 'node:crypto'
 import type { Hex } from 'viem'
 import { config } from './config.js'
 
@@ -65,7 +73,13 @@ export async function secretMatches(secret: string, stored: string): Promise<boo
 export function keysSubkey(purpose: 'agent-seal' | 'wallet-token' | 'mpp-challenge'): Buffer {
   if (!config.KOVA_KEYS_MASTER_KEY) throw new Error('KOVA_KEYS_MASTER_KEY is not set')
   return Buffer.from(
-    hkdfSync('sha256', Buffer.from(config.KOVA_KEYS_MASTER_KEY, 'hex'), Buffer.alloc(0), `ren.keys.${purpose}`, 32),
+    hkdfSync(
+      'sha256',
+      Buffer.from(config.KOVA_KEYS_MASTER_KEY, 'hex'),
+      Buffer.alloc(0),
+      `ren.keys.${purpose}`,
+      32,
+    ),
   )
 }
 

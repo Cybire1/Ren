@@ -251,7 +251,9 @@ export function PayCharge({ id }: { id: string }) {
         <p className="w-moment-big">
           {formatUsd(amount)} to {place}
         </p>
-        {order?.reward ? <p className="w-moment-reward">One {order.reward.name} free with your stamp card</p> : null}
+        {order?.reward ? (
+          <p className="w-moment-reward">One {order.reward.name} free with your stamp card</p>
+        ) : null}
         <div className="w-stats w-stats-moment">
           <span>
             <strong>{(stage.ms / 1000).toFixed(1)}s</strong> Took
@@ -266,7 +268,11 @@ export function PayCharge({ id }: { id: string }) {
         {order?.stall && order.status && !order.pay_for_me ? (
           <div className="w-moment-order">
             <OrderReady checkoutId={charge.id} order={order} shop={order.stall.name} />
-            <StampsAfterPay slug={order.stall.slug} shop={order.stall.name} usedReward={Boolean(order.reward)} />
+            <StampsAfterPay
+              slug={order.stall.slug}
+              shop={order.stall.name}
+              usedReward={Boolean(order.reward)}
+            />
           </div>
         ) : null}
         <div className="w-moment-actions">
@@ -285,16 +291,24 @@ export function PayCharge({ id }: { id: string }) {
 
   /** A deposit into the shop's private balance, then its proof to Ren, which settles the charge. */
   const payPrivately = async (c: Charge) => {
-    const sent = await privacy.sendPrivately({ address: c.pay_to, name: place }, BigInt(c.amount_base))
+    const sent = await privacy.sendPrivately(
+      { address: c.pay_to, name: place },
+      BigInt(c.amount_base),
+    )
     if (!sent.opening) throw new Error('This zone can’t take private payments to a shop yet.')
     const response = await fetch(`/api/naira/checkout/${encodeURIComponent(c.id)}/private`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ tx_hash: sent.hash, opening: sent.opening }),
     })
-    const body = (await response.json().catch(() => ({}))) as { status?: string; error?: { message?: string } }
+    const body = (await response.json().catch(() => ({}))) as {
+      status?: string
+      error?: { message?: string }
+    }
     if (!response.ok || body.status !== 'paid')
-      throw new Error(`${body.error?.message ?? 'The shop didn’t see it yet.'} Your dollars went through; the shop can still match them.`)
+      throw new Error(
+        `${body.error?.message ?? 'The shop didn’t see it yet.'} Your dollars went through; the shop can still match them.`,
+      )
     return sent
   }
 
@@ -418,7 +432,9 @@ export function PayCharge({ id }: { id: string }) {
               }}
             >
               <span className="pill-label">
-                {stage.at === 'paying' ? 'Paying…' : `Pay ${formatUsd(amount)}${secret ? ' privately' : ''}`}
+                {stage.at === 'paying'
+                  ? 'Paying…'
+                  : `Pay ${formatUsd(amount)}${secret ? ' privately' : ''}`}
               </span>
               <span className="pill-cap">
                 <Icon name={sessionCovers(amount) ? 'bolt' : 'face'} size={18} />

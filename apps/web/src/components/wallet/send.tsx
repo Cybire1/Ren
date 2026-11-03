@@ -57,7 +57,8 @@ type Leg = 'waiting' | 'flying' | 'landed'
 export function SendSheet({ to, privately = false }: { to?: string; privately?: boolean }) {
   const router = useRouter()
   const params = useSearchParams()
-  const { contacts, balance, send, rates, liveRates, profile, noteReaches, privacy, keys } = useWallet()
+  const { contacts, balance, send, rates, liveRates, profile, noteReaches, privacy, keys } =
+    useWallet()
   const giver = useGiverName()
   // Private: into their private balance on the site's zone. On from Private; a switch from Send.
   const [secret, setSecret] = useState(privately)
@@ -259,6 +260,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                 {allowances.length && !privately ? (
                   <div className="w-from" role="radiogroup" aria-label="Pay from">
                     <span className="w-from-label">From</span>
+                    {/* biome-ignore lint/a11y/useSemanticElements: a pill in a styled one-of group; an <input type="radio"> can't take this shape */}
                     <button
                       type="button"
                       role="radio"
@@ -269,6 +271,7 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                       Your balance
                     </button>
                     {allowances.map((h) => (
+                      // biome-ignore lint/a11y/useSemanticElements: a pill in a styled one-of group; an <input type="radio"> can't take this shape
                       <button
                         key={h.id}
                         type="button"
@@ -280,7 +283,8 @@ export function SendSheet({ to, privately = false }: { to?: string; privately?: 
                           setSecret(false)
                         }}
                       >
-                        <Icon name="user" size={14} /> {giver(h.owner)}’s allowance · {formatUsd(h.remaining)}
+                        <Icon name="user" size={14} /> {giver(h.owner)}’s allowance ·{' '}
+                        {formatUsd(h.remaining)}
                       </button>
                     ))}
                   </div>

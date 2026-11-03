@@ -231,7 +231,7 @@ export default async function Landing() {
             Get API keys
           </Pill>
         </div>
-        <pre className="lp-code" aria-label="Example: create a charge">
+        <pre className="lp-code" title="Example: create a charge">
           <code>
             <span className="c-dim">$</span> curl{' '}
             <span className="c-str">https://api.ren…/v1/payment_intents</span> \{'\n'}

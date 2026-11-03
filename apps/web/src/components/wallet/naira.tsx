@@ -42,14 +42,21 @@ interface CashOut {
 
 type Step = 'amount' | 'account' | 'review' | 'done'
 
-async function nairaApi<T>(path: string, init: { method?: 'GET' | 'POST'; body?: unknown; token?: string } = {}): Promise<T> {
+async function nairaApi<T>(
+  path: string,
+  init: { method?: 'GET' | 'POST'; body?: unknown; token?: string } = {},
+): Promise<T> {
   const response = await fetch(`/api/naira/${path}`, {
     method: init.method ?? 'GET',
-    headers: { 'content-type': 'application/json', ...(init.token ? { authorization: `Bearer ${init.token}` } : {}) },
+    headers: {
+      'content-type': 'application/json',
+      ...(init.token ? { authorization: `Bearer ${init.token}` } : {}),
+    },
     ...(init.body !== undefined ? { body: JSON.stringify(init.body) } : {}),
   })
   const body = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
-  if (!response.ok) throw new Error(body.error?.message ?? `Ren is unreachable (${response.status})`)
+  if (!response.ok)
+    throw new Error(body.error?.message ?? `Ren is unreachable (${response.status})`)
   return body as T
 }
 
@@ -70,7 +77,9 @@ export function NairaCashOut() {
   const [enabled, setEnabled] = useState<boolean | null>(null)
 
   useEffect(() => {
-    void nairaApi<{ enabled: boolean }>('naira').then((n) => setEnabled(n.enabled)).catch(() => setEnabled(false))
+    void nairaApi<{ enabled: boolean }>('naira')
+      .then((n) => setEnabled(n.enabled))
+      .catch(() => setEnabled(false))
   }, [])
 
   const onKey = useCallback((key: Key) => setTyped((v) => applyKey(v, key, 2)), [])
@@ -97,7 +106,9 @@ export function NairaCashOut() {
 
   useEffect(() => {
     if (step !== 'account' || banks) return
-    void nairaApi<{ data: Bank[] }>('naira/banks').then((b) => setBanks(b.data)).catch((e: Error) => setProblem(e.message))
+    void nairaApi<{ data: Bank[] }>('naira/banks')
+      .then((b) => setBanks(b.data))
+      .catch((e: Error) => setProblem(e.message))
   }, [banks, step])
 
   // The bank says whose account it is, once all ten digits are in.
@@ -106,7 +117,10 @@ export function NairaCashOut() {
     if (!bank || !/^\d{10}$/.test(account)) return
     setLooking(true)
     setProblem(null)
-    void nairaApi<{ account_name: string }>('naira/account', { method: 'POST', body: { account_number: account, bank_code: bank.code } })
+    void nairaApi<{ account_name: string }>('naira/account', {
+      method: 'POST',
+      body: { account_number: account, bank_code: bank.code },
+    })
       .then((r) => setNamed({ number: account, name: r.account_name }))
       .catch((e: Error) => setProblem(e.message))
       .finally(() => setLooking(false))
@@ -129,7 +143,11 @@ export function NairaCashOut() {
         await nairaApi<CashOut>(`wallets/${profile?.address}/cash-outs`, {
           method: 'POST',
           token,
-          body: { amount: (Number(amount) / 1e6).toFixed(2), bank_code: bank.code, account_number: named.number },
+          body: {
+            amount: (Number(amount) / 1e6).toFixed(2),
+            bank_code: bank.code,
+            account_number: named.number,
+          },
         }),
       )
       setStep('review')
@@ -154,17 +172,22 @@ export function NairaCashOut() {
         name: quote.bank_name,
         detail: `Cash out to ••••${quote.account_last4}`,
       })
-      let result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}/sent`, {
-        method: 'POST',
-        token: await keys.token(),
-        body: { tx_hash: moved.hash },
-      })
+      let result = await nairaApi<CashOut>(
+        `wallets/${profile.address}/cash-outs/${quote.id}/sent`,
+        {
+          method: 'POST',
+          token: await keys.token(),
+          body: { tx_hash: moved.hash },
+        },
+      )
       await wait(Math.max(0, 900 - (Date.now() - started)))
       setQuote(result)
       setStep('done')
       for (let i = 0; i < 20 && (result.status === 'paying' || result.status === 'received'); i++) {
         await wait(3000)
-        result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}`, { token: await keys.token() })
+        result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}`, {
+          token: await keys.token(),
+        })
         setQuote(result)
       }
     } catch (error) {
@@ -206,7 +229,9 @@ export function NairaCashOut() {
             {groupTyped(typed)}
           </p>
           <div className="w-sheet-pills">
-            {preview && !over ? <span className="w-sheet-pill w-sheet-pill-teal">They get ≈ {preview}</span> : null}
+            {preview && !over ? (
+              <span className="w-sheet-pill w-sheet-pill-teal">They get ≈ {preview}</span>
+            ) : null}
             {balance !== null ? (
               <span className={`w-sheet-pill${over ? ' w-sheet-pill-over' : ''}`}>
                 {over ? `You have ${formatUsd(balance)}` : `${formatUsd(balance)} available`}
@@ -221,7 +246,9 @@ export function NairaCashOut() {
             disabled={amount === 0n || over || tooSmall}
             onClick={() => setStep('account')}
           >
-            <span className="pill-label">{over ? 'More than you have' : tooSmall ? 'At least $1' : 'Choose the account'}</span>
+            <span className="pill-label">
+              {over ? 'More than you have' : tooSmall ? 'At least $1' : 'Choose the account'}
+            </span>
             <span className="pill-cap">
               <Icon name="arrow" size={18} />
             </span>
@@ -232,7 +259,12 @@ export function NairaCashOut() {
       {step === 'account' ? (
         <div className="w-cashout-step w-keyform">
           <div className="w-sheet-top">
-            <button type="button" className="round" aria-label="Change the amount" onClick={() => setStep('amount')}>
+            <button
+              type="button"
+              className="round"
+              aria-label="Change the amount"
+              onClick={() => setStep('amount')}
+            >
               <Icon name="back" size={20} />
             </button>
             <strong className="w-sheet-title">Which account?</strong>
@@ -250,13 +282,25 @@ export function NairaCashOut() {
           ) : (
             <div className="w-field">
               <span>Bank</span>
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search your bank" autoFocus />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search your bank"
+                // biome-ignore lint/a11y/noAutofocus: this step of the cash-out is only the bank search
+                autoFocus
+              />
               <div className="w-banklist" role="listbox" aria-label="Banks">
                 {banks === null ? (
                   <p className="w-quiet">Loading banks…</p>
                 ) : (
                   shown.map((b) => (
-                    <button key={`${b.code}-${b.name}`} type="button" role="option" aria-selected={false} onClick={() => setBank(b)}>
+                    <button
+                      key={`${b.code}-${b.name}`}
+                      type="button"
+                      role="option"
+                      aria-selected={false}
+                      onClick={() => setBank(b)}
+                    >
                       {b.name}
                     </button>
                   ))
@@ -273,6 +317,7 @@ export function NairaCashOut() {
                 value={account}
                 onChange={(e) => setAccount(e.target.value.replace(/\D/g, '').slice(0, 10))}
                 placeholder="10 digits"
+                // biome-ignore lint/a11y/noAutofocus: this step of the cash-out is only the account number
                 autoFocus
               />
             </label>
@@ -289,7 +334,13 @@ export function NairaCashOut() {
               {problem}
             </p>
           ) : null}
-          <button type="button" className="pill pill-block" data-tone="ink" disabled={!named || busy} onClick={() => void review()}>
+          <button
+            type="button"
+            className="pill pill-block"
+            data-tone="ink"
+            disabled={!named || busy}
+            onClick={() => void review()}
+          >
             <span className="pill-label">{busy ? 'Getting a quote…' : 'Review'}</span>
             <span className="pill-cap">
               <Icon name="arrow" size={18} />
@@ -301,7 +352,13 @@ export function NairaCashOut() {
       {step === 'review' && quote ? (
         <div className="w-cashout-step">
           <div className="w-sheet-top">
-            <button type="button" className="round" aria-label="Change the account" disabled={busy} onClick={() => setStep('account')}>
+            <button
+              type="button"
+              className="round"
+              aria-label="Change the account"
+              disabled={busy}
+              onClick={() => setStep('account')}
+            >
               <Icon name="back" size={20} />
             </button>
             <strong className="w-sheet-title">{busy ? 'Cashing out' : 'Check and cash out'}</strong>
@@ -313,22 +370,40 @@ export function NairaCashOut() {
             </span>
           </div>
           <dl className="w-facts">
-            <Fact label="You send" value={`$${quote.amount}`} hint={`From your balance on ${chainName}`} />
+            <Fact
+              label="You send"
+              value={`$${quote.amount}`}
+              hint={`From your balance on ${chainName}`}
+            />
             <Fact label="Rate" value={`₦${quote.rate} per dollar`} />
             <Fact label="Bank fee" value={quote.fee} hint="Taken from the naira" />
             <Fact label="Network fee" value="$0.00, Ren covers it" />
-            <Fact label="Arrives" value="In minutes" icon="bolt" hint="If the bank can’t take it, your dollars come back" />
+            <Fact
+              label="Arrives"
+              value="In minutes"
+              icon="bolt"
+              hint="If the bank can’t take it, your dollars come back"
+            />
           </dl>
-          {quote.test_mode ? <p className="w-fine">Paystack test mode: no real naira moves.</p> : null}
+          {quote.test_mode ? (
+            <p className="w-fine">Paystack test mode: no real naira moves.</p>
+          ) : null}
           {problem ? (
             <p className="w-sheet-problem" role="alert">
               <Icon name="info" size={18} />
               {problem}
             </p>
           ) : null}
-          <SlideToSend label={problem ? 'Slide to try again' : `Slide to cash out $${quote.amount}`} busy={busy} busyLabel="Cashing out" onSend={() => void go()} />
+          <SlideToSend
+            label={problem ? 'Slide to try again' : `Slide to cash out $${quote.amount}`}
+            busy={busy}
+            busyLabel="Cashing out"
+            onSend={() => void go()}
+          />
           <p className="w-fine w-center">
-            {sessionCovers(amount) ? 'Your wallet is open, so this one needs no passkey.' : 'Your passkey approves it.'}
+            {sessionCovers(amount)
+              ? 'Your wallet is open, so this one needs no passkey.'
+              : 'Your passkey approves it.'}
           </p>
         </div>
       ) : null}
@@ -347,7 +422,8 @@ export function NairaCashOut() {
           </h2>
           <p>
             {quote.status === 'failed'
-              ? (quote.failure ?? 'The bank couldn’t take it. Your dollars came back to your wallet.')
+              ? (quote.failure ??
+                'The bank couldn’t take it. Your dollars came back to your wallet.')
               : `${quote.naira} to ${quote.account_name}, ${quote.bank_name} ••••${quote.account_last4}.`}
           </p>
           <Link href="/wallet" className="pill pill-block" data-tone="ink">

@@ -57,7 +57,10 @@ function takeKeyChange(from: Address): boolean {
 }
 
 const ZERO = '0x0000000000000000000000000000000000000000'
-const KEYCHAIN_CHANGES = [Selectors.accountKeychain.updateSpendingLimit, Selectors.accountKeychain.revokeKey]
+const KEYCHAIN_CHANGES = [
+  Selectors.accountKeychain.updateSpendingLimit,
+  Selectors.accountKeychain.revokeKey,
+]
 
 /**
  * A wallet looking after its own keys (services/keys.ts): putting an access key on-chain (a key
@@ -71,11 +74,21 @@ function keyChangeProblem(
 ): string | null | undefined {
   const [call] = calls
   if (request.keyAuthorization) {
-    if (calls.length !== 1 || !call || (call.to && !isAddressEqual(call.to, ZERO)) || (call.data && call.data !== '0x'))
+    if (
+      calls.length !== 1 ||
+      !call ||
+      (call.to && !isAddressEqual(call.to, ZERO)) ||
+      (call.data && call.data !== '0x')
+    )
       return 'a key authorization is sponsored on its own'
     return null
   }
-  if (calls.length === 1 && call?.to && call.data && isAddressEqual(call.to, Addresses.accountKeychain)) {
+  if (
+    calls.length === 1 &&
+    call?.to &&
+    call.data &&
+    isAddressEqual(call.to, Addresses.accountKeychain)
+  ) {
     if (!KEYCHAIN_CHANGES.some((selector) => call.data?.startsWith(selector)))
       return 'only limit changes and revokes on the keychain are sponsored'
     return null
@@ -162,7 +175,13 @@ export async function shouldSponsor(
   }
   // A cash-out: exactly its dollars, to Ren's treasury, from the wallet that asked (services/naira.ts).
   if (kova.kind === 'cashout') {
-    const problem = await cashOutSponsorProblem({ id: kova.id, to, amount, token: call.to, from: request.from })
+    const problem = await cashOutSponsorProblem({
+      id: kova.id,
+      to,
+      amount,
+      token: call.to,
+      from: request.from,
+    })
     if (problem) return { sponsor: false, reason: problem }
     return { sponsor: true, kind: 'cashout' }
   }

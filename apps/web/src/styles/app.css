@@ -29,7 +29,9 @@
   font-size: 0.875rem;
   font-weight: 700;
   text-decoration: none;
-  transition: background-color 0.3s var(--spring), transform 0.4s var(--spring);
+  transition:
+    background-color 0.3s var(--spring),
+    transform 0.4s var(--spring);
 }
 
 .shop-back:hover {
@@ -356,7 +358,9 @@
 .row-go {
   color: var(--muted);
   opacity: 0.5;
-  transition: transform 0.35s var(--spring), opacity 0.2s;
+  transition:
+    transform 0.35s var(--spring),
+    opacity 0.2s;
 }
 
 .row:hover .row-go {
@@ -698,7 +702,9 @@
   opacity: 0;
   pointer-events: none;
   transform: translate(-50%, 0.3rem);
-  transition: opacity 0.2s, transform 0.3s var(--spring);
+  transition:
+    opacity 0.2s,
+    transform 0.3s var(--spring);
 }
 
 .dc-tip strong {
@@ -1420,18 +1426,24 @@
   margin-top: 0.15rem;
   border-radius: 50%;
   background: var(--teal);
-  box-shadow: inset 0 0 0 3px var(--surface), 0 0 0 2px var(--teal);
+  box-shadow:
+    inset 0 0 0 3px var(--surface),
+    0 0 0 2px var(--teal);
 }
 
 .timeline li[data-state="now"] .timeline-dot {
   background: var(--coral);
-  box-shadow: inset 0 0 0 3px var(--surface), 0 0 0 2px var(--coral);
+  box-shadow:
+    inset 0 0 0 3px var(--surface),
+    0 0 0 2px var(--coral);
   animation: breathe 2.2s var(--spring) infinite;
 }
 
 .timeline li[data-state="off"] .timeline-dot {
   background: var(--sunken);
-  box-shadow: inset 0 0 0 3px var(--surface), 0 0 0 2px var(--muted);
+  box-shadow:
+    inset 0 0 0 3px var(--surface),
+    0 0 0 2px var(--muted);
 }
 
 .timeline strong {
@@ -1531,6 +1543,10 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--muted);
@@ -1633,7 +1649,9 @@
   color: var(--ink);
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 0.2s, border-color 0.2s;
+  transition:
+    background-color 0.2s,
+    border-color 0.2s;
 }
 
 .tcard-add:hover {

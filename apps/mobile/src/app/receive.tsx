@@ -2,20 +2,24 @@ import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { useState } from 'react'
 import { Pressable, Share, StyleSheet, View } from 'react-native'
+import { chainName, settlementToken } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { CodeCard } from '@/ui/CodeCard'
 import { Icon } from '@/ui/Icon'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
-import { chainName, settlementToken } from '@/lib/config'
 
 /** Your code: anyone with Kova scans it to pay you. Any wallet on the same chain can use the address. */
 export default function Receive() {
   const { profile } = useWallet()
   const [copied, setCopied] = useState(false)
   if (!profile) return null
-  const link = personLink({ address: profile.address, name: profile.name, currency: profile.currency })
+  const link = personLink({
+    address: profile.address,
+    name: profile.name,
+    currency: profile.currency,
+  })
 
   return (
     <Screen bg={colors.tealLight}>

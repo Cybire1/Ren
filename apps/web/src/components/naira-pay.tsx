@@ -13,7 +13,9 @@ import type { Checkout } from '@/lib/api'
  */
 export function NairaPay({ checkout }: { checkout: Checkout }) {
   const router = useRouter()
-  const [offer, setOffer] = useState<{ naira: string; rate: string; test_mode: boolean } | null>(null)
+  const [offer, setOffer] = useState<{ naira: string; rate: string; test_mode: boolean } | null>(
+    null,
+  )
   const [open, setOpen] = useState(false)
   const [email, setEmail] = useState('')
   const [busy, setBusy] = useState(false)
@@ -22,7 +24,15 @@ export function NairaPay({ checkout }: { checkout: Checkout }) {
 
   useEffect(() => {
     void fetch(`/api/naira/checkout/${checkout.id}/naira`)
-      .then((r) => r.json() as Promise<{ enabled: boolean; naira: string; rate: string; test_mode: boolean }>)
+      .then(
+        (r) =>
+          r.json() as Promise<{
+            enabled: boolean
+            naira: string
+            rate: string
+            test_mode: boolean
+          }>,
+      )
       .then((body) => (body.enabled ? setOffer(body) : null))
       .catch(() => {})
   }, [checkout.id])
@@ -40,7 +50,11 @@ export function NairaPay({ checkout }: { checkout: Checkout }) {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ reference }),
       })
-      const body = (await response.json().catch(() => ({}))) as { status?: string; failure?: string | null; error?: { message?: string } }
+      const body = (await response.json().catch(() => ({}))) as {
+        status?: string
+        failure?: string | null
+        error?: { message?: string }
+      }
       if (body.status === 'settled') {
         setReturning('Paid. The shop has its dollars.')
         window.history.replaceState(null, '', window.location.pathname)
@@ -53,7 +67,11 @@ export function NairaPay({ checkout }: { checkout: Checkout }) {
         return
       }
       if (tries < 20) {
-        setReturning(body.status === 'paid' ? 'Paid. Sending the shop its dollars…' : 'Waiting for Paystack to confirm…')
+        setReturning(
+          body.status === 'paid'
+            ? 'Paid. Sending the shop its dollars…'
+            : 'Waiting for Paystack to confirm…',
+        )
         setTimeout(() => void check(), 2500)
       } else setReturning('Paystack hasn’t confirmed it yet. This page updates when it does.')
     }
@@ -69,7 +87,10 @@ export function NairaPay({ checkout }: { checkout: Checkout }) {
       const response = await fetch(`/api/naira/checkout/${checkout.id}/naira`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), return_url: `${window.location.origin}/pay/${checkout.id}` }),
+        body: JSON.stringify({
+          email: email.trim(),
+          return_url: `${window.location.origin}/pay/${checkout.id}`,
+        }),
       })
       const body = (await response.json()) as { url?: string; error?: { message?: string } }
       if (!response.ok || !body.url) throw new Error(body.error?.message ?? 'Paystack didn’t open.')
@@ -110,17 +131,32 @@ export function NairaPay({ checkout }: { checkout: Checkout }) {
         >
           <label>
             <span>Your email, for the receipt</span>
-            <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" />
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              autoComplete="email"
+            />
           </label>
-          <button type="submit" className="pill pill-block" data-tone="ink" disabled={busy || !/^\S+@\S+\.\S+$/.test(email.trim())}>
+          <button
+            type="submit"
+            className="pill pill-block"
+            data-tone="ink"
+            disabled={busy || !/^\S+@\S+\.\S+$/.test(email.trim())}
+          >
             <span className="pill-label">{busy ? 'Opening Paystack…' : `Pay ${offer.naira}`}</span>
             <span className="pill-cap">
               <Icon name="arrow" size={18} />
             </span>
           </button>
           <p className="wallet-sub">
-            ₦{offer.rate} to the dollar. {checkout.merchant_name} gets {`$${checkout.amount}`} on Tempo.
-            {offer.test_mode ? ' Test mode: use Paystack’s test card, nothing real is charged.' : ''}
+            ₦{offer.rate} to the dollar. {checkout.merchant_name} gets {`$${checkout.amount}`} on
+            Tempo.
+            {offer.test_mode
+              ? ' Test mode: use Paystack’s test card, nothing real is charged.'
+              : ''}
           </p>
         </form>
       ) : null}

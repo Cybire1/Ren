@@ -1,20 +1,32 @@
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useRef, useState } from 'react'
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native'
+import { chainName, settlementToken } from '@/lib/config'
 import { usePrefs } from '@/lib/prefs'
 import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
-import { useWallet } from '@/lib/wallet'
 import { colors, fonts } from '@/lib/theme'
+import { useWallet } from '@/lib/wallet'
 import { Reni, ShopBadge } from '@/ui/art'
 import { Icon, type IconName } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
-import { chainName, settlementToken } from '@/lib/config'
 
 const LENGTH = 6
-const clean = (s: string) => s.toUpperCase().replace(/[^0-9A-Z]/g, '').slice(0, LENGTH)
+const clean = (s: string) =>
+  s
+    .toUpperCase()
+    .replace(/[^0-9A-Z]/g, '')
+    .slice(0, LENGTH)
 
 /**
  * Turns this phone into a shop's terminal. The owner opens the Kova dashboard, taps
@@ -70,7 +82,11 @@ export default function TerminalSetup() {
               <Reni pose="cheer" size={92} />
             </View>
           </View>
-          <Txt weight="bold" size={32} style={{ marginTop: 18, letterSpacing: -1, textAlign: 'center' }}>
+          <Txt
+            weight="bold"
+            size={32}
+            style={{ marginTop: 18, letterSpacing: -1, textAlign: 'center' }}
+          >
             {paired.name}
           </Txt>
           <Txt size={16} color={colors.muted} style={{ marginTop: 4 }}>
@@ -78,8 +94,15 @@ export default function TerminalSetup() {
           </Txt>
           <View style={styles.facts}>
             <Fact icon="tap" text={`Takes payments for ${paired.merchantName}`} />
-            <Fact icon="check" text={`Settles in ${settlementToken.symbol} on ${chainName}, in about a second`} />
-            <Fact icon="lock" text="Only this phone's key. Remove it from the dashboard any time" last />
+            <Fact
+              icon="check"
+              text={`Settles in ${settlementToken.symbol} on ${chainName}, in about a second`}
+            />
+            <Fact
+              icon="lock"
+              text="Only this phone's key. Remove it from the dashboard any time"
+              last
+            />
           </View>
         </View>
         <View style={styles.footer}>
@@ -90,7 +113,10 @@ export default function TerminalSetup() {
 
   return (
     <Screen bg={colors.paper}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
         <Header />
         <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
           <View style={styles.art}>
@@ -104,7 +130,11 @@ export default function TerminalSetup() {
               <Txt weight="semi" size={17}>
                 {stall.owned.name} is yours
               </Txt>
-              <Txt size={14} color={colors.muted} style={{ marginTop: 2, marginBottom: 12, lineHeight: 20 }}>
+              <Txt
+                size={14}
+                color={colors.muted}
+                style={{ marginTop: 2, marginBottom: 12, lineHeight: 20 }}
+              >
                 This phone opened it. Make it the till again with one tap, no code needed.
               </Txt>
               <PillButton
@@ -115,11 +145,17 @@ export default function TerminalSetup() {
                   setBusy(true)
                   setProblem(null)
                   try {
-                    await stall.open({ name: stall.owned?.name ?? 'My stall', phone: `${profile?.name.split(' ')[0] ?? 'My'}’s phone`, settleTo: profile?.address ?? '' })
+                    await stall.open({
+                      name: stall.owned?.name ?? 'My stall',
+                      phone: `${profile?.name.split(' ')[0] ?? 'My'}’s phone`,
+                      settleTo: profile?.address ?? '',
+                    })
                     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
                     start()
                   } catch (error) {
-                    setProblem(error instanceof Error ? error.message : 'That didn’t work. Try again.')
+                    setProblem(
+                      error instanceof Error ? error.message : 'That didn’t work. Try again.',
+                    )
                   } finally {
                     setBusy(false)
                   }
@@ -132,7 +168,11 @@ export default function TerminalSetup() {
               <Txt weight="semi" size={17}>
                 No shop yet?
               </Txt>
-              <Txt size={14} color={colors.muted} style={{ marginTop: 2, marginBottom: 12, lineHeight: 20 }}>
+              <Txt
+                size={14}
+                color={colors.muted}
+                style={{ marginTop: 2, marginBottom: 12, lineHeight: 20 }}
+              >
                 {profile
                   ? 'Open one from your wallet in a minute. Payments land in your wallet, and this phone becomes the till.'
                   : 'Make a Ren wallet first: your shop’s money lands in it. Then open your shop from Home.'}
@@ -152,12 +192,25 @@ export default function TerminalSetup() {
           </Txt>
 
           {/* The code, as six boxes over one hidden input */}
-          <Pressable accessibilityRole="button" accessibilityLabel="Pairing code" onPress={() => input.current?.focus()} style={styles.boxes}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Pairing code"
+            onPress={() => input.current?.focus()}
+            style={styles.boxes}
+          >
             {Array.from({ length: LENGTH }, (_, i) => {
               const ch = code[i] ?? ''
               const active = i === code.length
               return (
-                <View key={i} style={[styles.box, ch ? styles.boxFilled : null, active ? styles.boxActive : null, i === 2 ? { marginRight: 12 } : null]}>
+                <View
+                  key={i}
+                  style={[
+                    styles.box,
+                    ch ? styles.boxFilled : null,
+                    active ? styles.boxActive : null,
+                    i === 2 ? { marginRight: 12 } : null,
+                  ]}
+                >
                   <Txt weight="bold" size={26} color={ch ? colors.ink : colors.muted}>
                     {ch}
                   </Txt>
@@ -184,20 +237,42 @@ export default function TerminalSetup() {
             </Txt>
           ) : null}
 
-          <Pressable accessibilityRole="button" onPress={() => router.push('/scan')} style={styles.scan}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push('/scan')}
+            style={styles.scan}
+          >
             <Icon name="scan" size={18} />
             <Txt weight="semi" size={15}>
               Scan the code instead
             </Txt>
           </Pressable>
 
-          <Txt weight="semi" size={14} color={colors.muted} style={{ marginTop: 26, marginBottom: 8, marginLeft: 4 }}>
+          <Txt
+            weight="semi"
+            size={14}
+            color={colors.muted}
+            style={{ marginTop: 26, marginBottom: 8, marginLeft: 4 }}
+          >
             Name this terminal
           </Txt>
-          <TextInput value={name} onChangeText={setName} maxLength={40} placeholder="Front counter" placeholderTextColor="#8C9799" style={styles.name} />
+          <TextInput
+            value={name}
+            onChangeText={setName}
+            maxLength={40}
+            placeholder="Front counter"
+            placeholderTextColor="#8C9799"
+            style={styles.name}
+          />
         </ScrollView>
         <View style={styles.footer}>
-          <PillButton label="Pair this phone" icon="terminal" disabled={code.length < LENGTH} loading={busy} onPress={submit} />
+          <PillButton
+            label="Pair this phone"
+            icon="terminal"
+            disabled={code.length < LENGTH}
+            loading={busy}
+            onPress={submit}
+          />
         </View>
       </KeyboardAvoidingView>
     </Screen>
@@ -219,7 +294,14 @@ function Fact({ icon, text, last }: { icon: IconName; text: string; last?: boole
 
 const styles = StyleSheet.create({
   body: { paddingHorizontal: 24, paddingBottom: 24 },
-  own: { marginBottom: 26, padding: 16, borderRadius: 24, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.tealSoft },
+  own: {
+    marginBottom: 26,
+    padding: 16,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.tealSoft,
+  },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 20 },
   pairedArt: { width: 200, height: 150, alignItems: 'center', justifyContent: 'flex-end' },
   pairedReni: { position: 'absolute', right: -6, top: -18 },
@@ -234,7 +316,14 @@ const styles = StyleSheet.create({
   },
   fact: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14 },
   factRule: { borderBottomWidth: 1, borderColor: colors.sunken },
-  factIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.tealSoft, alignItems: 'center', justifyContent: 'center' },
+  factIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: colors.tealSoft,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   art: { height: 120, justifyContent: 'center', marginBottom: 12 },
   reni: { position: 'absolute', left: 64, top: 8 },
   boxes: { flexDirection: 'row', gap: 8, marginTop: 26 },

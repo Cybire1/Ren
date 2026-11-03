@@ -11,12 +11,21 @@ import {
   eip3009Abi,
   getToken,
   randomNonce,
-  toSignedAuthorization,
-  tokenByAddress,
-  transferAuthorizationTypedData,
   type SealedNote,
+  tokenByAddress,
+  toSignedAuthorization,
+  transferAuthorizationTypedData,
 } from '@kova/monad'
-import { type Address, createPublicClient, fallback, type Hash, type Hex, http, isAddressEqual, type LocalAccount } from 'viem'
+import {
+  type Address,
+  createPublicClient,
+  fallback,
+  type Hash,
+  type Hex,
+  http,
+  isAddressEqual,
+  type LocalAccount,
+} from 'viem'
 import { monad, monadTestnet } from 'viem/chains'
 import { apiUrl, isTestnet, network, networkId } from './config'
 import { sealNote } from './notes-core'
@@ -40,10 +49,15 @@ async function kova<T>(path: string, body?: unknown): Promise<T> {
     `${apiUrl}${path}`,
     body === undefined
       ? undefined
-      : { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) },
+      : {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify(body),
+        },
   )
   const json = (await response.json().catch(() => ({}))) as { error?: { message?: string } }
-  if (!response.ok) throw new Error(json.error?.message ?? `Ren is unreachable (${response.status})`)
+  if (!response.ok)
+    throw new Error(json.error?.message ?? `Ren is unreachable (${response.status})`)
   return json as T
 }
 
@@ -103,12 +117,15 @@ export async function payCharge(account: LocalAccount, charge: Charge): Promise<
     validBefore: seconds(Date.parse(charge.expires_at)),
     nonce: charge.memo,
   }
-  const signature = await account.signTypedData(transferAuthorizationTypedData(token, network.chainId, authorization))
+  const signature = await account.signTypedData(
+    transferAuthorizationTypedData(token, network.chainId, authorization),
+  )
   const paid = await kova<{ status: string; payment?: { tx_hash: Hash } }>(
     `/v1/checkout/${charge.id}/authorize`,
     toSignedAuthorization(token.address, authorization, signature),
   )
-  if (paid.status !== 'paid' || !paid.payment) throw new Error('The payment didn’t go through. No money moved.')
+  if (paid.status !== 'paid' || !paid.payment)
+    throw new Error('The payment didn’t go through. No money moved.')
   return { hash: paid.payment.tx_hash, ms: Date.now() - started }
 }
 
@@ -123,7 +140,12 @@ export interface NoteToSeal {
  * Sends dollars to a person. Ren submits it and pays the gas, so they get every cent sent. A
  * private note is sealed against this send's authorization, for them and for you.
  */
-export async function sendMoney(account: LocalAccount, to: Address, amount: bigint, note?: NoteToSeal): Promise<Sent> {
+export async function sendMoney(
+  account: LocalAccount,
+  to: Address,
+  amount: bigint,
+  note?: NoteToSeal,
+): Promise<Sent> {
   const started = Date.now()
   const authorization = {
     from: account.address,
@@ -133,8 +155,12 @@ export async function sendMoney(account: LocalAccount, to: Address, amount: bigi
     validBefore: seconds(Date.now() + 10 * 60_000),
     nonce: randomNonce(),
   }
-  const signature = await account.signTypedData(transferAuthorizationTypedData(settlementToken, network.chainId, authorization))
-  const sealed = note ? sealNote(note.text, authorization, { mine: note.mine, theirs: note.theirs }) : undefined
+  const signature = await account.signTypedData(
+    transferAuthorizationTypedData(settlementToken, network.chainId, authorization),
+  )
+  const sealed = note
+    ? sealNote(note.text, authorization, { mine: note.mine, theirs: note.theirs })
+    : undefined
   const sent = await kova<{ tx_hash: Hash }>('/v1/transfers', {
     ...toSignedAuthorization(settlementToken.address, authorization, signature),
     ...(sealed ? { note: sealed } : {}),
@@ -209,14 +235,19 @@ export interface ChainDeposit {
   at: string
 }
 
-export const depositSources = (address: Address) => kova<DepositSources>(`/v1/wallets/${address}/deposit-sources`)
+export const depositSources = (address: Address) =>
+  kova<DepositSources>(`/v1/wallets/${address}/deposit-sources`)
 
 /** This wallet's permanent deposit address for one kind of chain. */
 export const depositAddressFor = (address: Address, source: string) =>
-  kova<{ address: string; memo: string | null }>(`/v1/wallets/${address}/deposit-address`, { source })
+  kova<{ address: string; memo: string | null }>(`/v1/wallets/${address}/deposit-address`, {
+    source,
+  })
 
 export const depositsTo = (address: Address, depositAddress: string) =>
-  kova<{ data: ChainDeposit[] }>(`/v1/wallets/${address}/deposits?address=${encodeURIComponent(depositAddress)}`).then((r) => r.data)
+  kova<{ data: ChainDeposit[] }>(
+    `/v1/wallets/${address}/deposits?address=${encodeURIComponent(depositAddress)}`,
+  ).then((r) => r.data)
 
 /** A card or bank top-up (Ramp Network, buying AUSD on Monad), or why it isn't open yet. */
 export const topUpLink = (address: Address, currency: string, returnTo: string) =>

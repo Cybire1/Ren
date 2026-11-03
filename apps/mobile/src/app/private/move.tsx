@@ -104,13 +104,19 @@ export default function MoveScreen() {
       <Header
         title={step === 'done' ? undefined : title}
         backIcon={step === 'review' ? 'back' : 'close'}
-        onBack={step === 'review' && !busy ? () => setStep('amount') : busy ? null : () => router.back()}
+        onBack={
+          step === 'review' && !busy ? () => setStep('amount') : busy ? null : () => router.back()
+        }
       />
       {step === 'amount' ? (
         <View style={styles.flow}>
           <View style={styles.route}>
             <View style={[styles.badge, !into && styles.badgeOut]}>
-              <Icon name={into ? 'down' : 'up'} size={20} color={into ? colors.tealSoft : colors.white} />
+              <Icon
+                name={into ? 'down' : 'up'}
+                size={20}
+                color={into ? colors.tealSoft : colors.white}
+              />
             </View>
             <Txt size={14} color={colors.muted}>
               {from} to {to.toLowerCase()}
@@ -136,7 +142,11 @@ export default function MoveScreen() {
             ) : null}
             {available !== null && available > 0n ? (
               <View style={[styles.pill, { backgroundColor: colors.tealSoft }]}>
-                <Txt weight="semi" size={14} onPress={() => setTyped((Number(available) / 1e6).toFixed(2))}>
+                <Txt
+                  weight="semi"
+                  size={14}
+                  onPress={() => setTyped((Number(available) / 1e6).toFixed(2))}
+                >
                   All of it
                 </Txt>
               </View>
@@ -145,7 +155,11 @@ export default function MoveScreen() {
           <View style={{ flex: 1 }} />
           <Keypad onKey={onKey} />
           <View style={{ marginTop: 14 }}>
-            <PillButton label={over ? 'More than you have' : 'Review'} disabled={amount === 0n || over} onPress={() => setStep('review')} />
+            <PillButton
+              label={over ? 'More than you have' : 'Review'}
+              disabled={amount === 0n || over}
+              onPress={() => setStep('review')}
+            />
           </View>
         </View>
       ) : null}
@@ -194,7 +208,11 @@ export default function MoveScreen() {
           ) : null}
           <View style={{ flex: 1 }} />
           <SlideToSend
-            label={problem ? 'Slide to try again' : `Slide to move ${formatUsd(amount)} ${into ? 'in' : 'out'}`}
+            label={
+              problem
+                ? 'Slide to try again'
+                : `Slide to move ${formatUsd(amount)} ${into ? 'in' : 'out'}`
+            }
             busy={busy}
             disabled={over || amount === 0n}
             onSend={() => void go()}
@@ -268,15 +286,44 @@ function Fact({ label, value, hint }: { label: string; value: string; hint?: str
 
 const styles = StyleSheet.create({
   flow: { flex: 1, paddingHorizontal: 20, paddingBottom: 12 },
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12, paddingHorizontal: 28 },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 28,
+  },
   route: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4 },
-  badge: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.ink, alignItems: 'center', justifyContent: 'center' },
+  badge: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.ink,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badgeOut: { backgroundColor: colors.teal },
-  typed: { flexDirection: 'row', justifyContent: 'center', alignItems: 'flex-start', marginTop: 28 },
+  typed: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    marginTop: 28,
+  },
   pills: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginTop: 10 },
-  pill: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: colors.sunken },
+  pill: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: colors.sunken,
+  },
   pillOver: { backgroundColor: colors.coralSoft },
-  arc: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginTop: 18, marginBottom: 6 },
+  arc: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginTop: 18,
+    marginBottom: 6,
+  },
   end: {
     width: 54,
     height: 54,
@@ -287,9 +334,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dots: { flex: 1, flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center', height: 54 },
+  dots: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    height: 54,
+  },
   dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink, opacity: 0.55 },
-  facts: { marginTop: 16, borderRadius: 20, borderWidth: 2, borderColor: colors.ink, backgroundColor: colors.surface, paddingHorizontal: 14 },
+  facts: {
+    marginTop: 16,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: colors.ink,
+    backgroundColor: colors.surface,
+    paddingHorizontal: 14,
+  },
   fact: { flexDirection: 'row', alignItems: 'flex-start', gap: 12, paddingVertical: 12 },
-  time: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, backgroundColor: colors.ink },
+  time: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: colors.ink,
+  },
 })

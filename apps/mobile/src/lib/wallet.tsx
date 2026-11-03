@@ -3,22 +3,40 @@ import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { base64urlnopad } from '@scure/base'
 import * as SecureStore from 'expo-secure-store'
-import { createContext, type ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createContext,
+  type ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { AppState } from 'react-native'
-import { type Address, getAddress, type Hex, hexToBytes, isAddress, isAddressEqual, type LocalAccount, type TypedDataDefinition } from 'viem'
+import {
+  type Address,
+  getAddress,
+  type Hex,
+  hexToBytes,
+  isAddress,
+  isAddressEqual,
+  type LocalAccount,
+  type TypedDataDefinition,
+} from 'viem'
 import { type Checkout, demoSignIn } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
 import { walletClient } from './chain-tempo'
 import { chainKey, notesTravel, passkeyDomain, settlementToken, zone } from './config'
 import { openSigningSession } from './keys'
+import { type Keys, useKeys } from './keys-state'
 import { type DisplayCurrency, formatUsd } from './money'
+import { ensureNoteKey, myNoteKeys, readNote, theirNoteKey } from './notes'
 import { kovaWebAuthnClient, takeVaultOutput } from './passkey'
+import { type Privacy, usePrivacy } from './private'
 import { endSession, sessionAccount, spend, startSession } from './session'
 import { load, remove, save } from './storage'
 import { forgetVaultSecret, keepVaultSecret, openVault, saveVault } from './vault'
-import { ensureNoteKey, myNoteKeys, readNote, theirNoteKey } from './notes'
-import { type Keys, useKeys } from './keys-state'
-import { type Privacy, usePrivacy } from './private'
 
 /**
  * The wallet is a passkey. Creating it takes one Face ID: the passkey, which iCloud Keychain
@@ -148,7 +166,13 @@ interface Wallet {
   /** Your private balance on a Tempo Zone, when this build has one (private.ts). */
   privacy: Privacy
   /** Dollars to Ren itself with a Ren memo: a cash-out to a bank (app/cash-out.tsx). */
-  sendToRen: (input: { to: Address; amount: bigint; memo: Hex; name: string; detail: string }) => Promise<Entry>
+  sendToRen: (input: {
+    to: Address
+    amount: bigint
+    memo: Hex
+    name: string
+    detail: string
+  }) => Promise<Entry>
   /** Everything that can spend this wallet's dollars short of the wallet itself (app/keys). */
   keys: Keys
 }
@@ -192,7 +216,8 @@ async function begin(prf: Uint8Array, expected?: Address): Promise<LocalAccount>
   // So people can send this wallet private notes. Quiet: a note key is a nicety, not a payment.
   if (notesTravel)
     void ensureNoteKey(account).catch((error) => {
-      if (__DEV__) console.log('[notes] key not published', error instanceof Error ? error.message : error)
+      if (__DEV__)
+        console.log('[notes] key not published', error instanceof Error ? error.message : error)
     })
   return account
 }
@@ -224,7 +249,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const record = useCallback(async (entry: Entry) => {
     setActivity((prev) => {
-      if (entry.txHash && prev.some((e) => e.txHash === entry.txHash && e.kind === entry.kind)) return prev
+      if (entry.txHash && prev.some((e) => e.txHash === entry.txHash && e.kind === entry.kind))
+        return prev
       const next = [entry, ...prev].slice(0, 200)
       void save(ACTIVITY, next)
       return next
@@ -240,8 +266,21 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       // Offline: keep showing the last known balance.
       if (__DEV__) {
-        const e = error as { shortMessage?: string; details?: string; cause?: { message?: string; details?: string } }
-        console.log('[wallet] balance refresh failed', e.shortMessage, '|', e.details, '|', e.cause?.message, '|', e.cause?.details)
+        const e = error as {
+          shortMessage?: string
+          details?: string
+          cause?: { message?: string; details?: string }
+        }
+        console.log(
+          '[wallet] balance refresh failed',
+          e.shortMessage,
+          '|',
+          e.details,
+          '|',
+          e.cause?.message,
+          '|',
+          e.cause?.details,
+        )
       }
     }
   }, [profile])
@@ -252,7 +291,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const zero = '0x0000000000000000000000000000000000000000'
     for (const e of activity) {
       if (e.address?.toLowerCase() === zero) continue
-      if ((e.kind === 'sent' || e.kind === 'received') && e.address && !seen.has(e.address.toLowerCase()))
+      if (
+        (e.kind === 'sent' || e.kind === 'received') &&
+        e.address &&
+        !seen.has(e.address.toLowerCase())
+      )
         seen.set(e.address.toLowerCase(), { address: e.address, name: e.name })
     }
     for (const c of savedContacts) {
@@ -269,7 +312,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     if (!edited.current || !profile?.name) return
     const timer = setTimeout(() => {
       edited.current = false
-      void saveVault({ v: 1, name: profile.name, currency: profile.currency, contacts: savedContacts }).catch(() => {})
+      void saveVault({
+        v: 1,
+        name: profile.name,
+        currency: profile.currency,
+        contacts: savedContacts,
+      }).catch(() => {})
     }, 1500)
     return () => clearTimeout(timer)
   }, [profile?.name, profile?.currency, savedContacts])
@@ -283,7 +331,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const shownActivity = useMemo(
     () =>
       activity.map((e) => {
-        const name = (e.kind === 'sent' || e.kind === 'received') && e.address ? named.get(e.address.toLowerCase()) : undefined
+        const name =
+          (e.kind === 'sent' || e.kind === 'received') && e.address
+            ? named.get(e.address.toLowerCase())
+            : undefined
         return name && name !== e.name ? { ...e, name } : e
       }),
     [activity, named],
@@ -324,26 +375,45 @@ export function WalletProvider({ children }: { children: ReactNode }) {
             })
             continue
           }
-          const note = t.note ? await readNote(t.note, { from: t.from, to: profile.address, value: t.amount }) : null
+          const note = t.note
+            ? await readNote(t.note, { from: t.from, to: profile.address, value: t.amount })
+            : null
           const refund = t.kind === 'refund'
-          const name = t.faucet ? 'Test dollars' : refund ? 'Refund' : (nameFor(t.from) ?? `${t.from.slice(0, 6)}…${t.from.slice(-4)}`)
+          const name = t.faucet
+            ? 'Test dollars'
+            : refund
+              ? 'Refund'
+              : (nameFor(t.from) ?? `${t.from.slice(0, 6)}…${t.from.slice(-4)}`)
           await record({
             id: newId(),
             kind: t.faucet ? 'added' : 'received',
             amount: t.amount.toString(),
             name,
-            detail: note ?? (t.faucet ? TEST_DOLLARS_DETAIL : refund ? 'Money back from a booking' : 'Arrived'),
+            detail:
+              note ??
+              (t.faucet ? TEST_DOLLARS_DETAIL : refund ? 'Money back from a booking' : 'Arrived'),
             address: t.from,
             txHash: t.hash,
             at: Date.now(),
             ...(note ? { private: 'both' as const } : {}),
           })
-          if (!t.faucet) setArrival({ amount: t.amount, name, address: t.from, hash: t.hash, ...(note ? { note } : {}) })
+          if (!t.faucet)
+            setArrival({
+              amount: t.amount,
+              name,
+              address: t.from,
+              hash: t.hash,
+              ...(note ? { note } : {}),
+            })
         }
         if (transfers.length) void refresh()
       } catch (error) {
         // Try again on the next tick.
-        if (__DEV__) console.log('[wallet] incoming scan failed', error instanceof Error ? error.message.split('\n')[0] : error)
+        if (__DEV__)
+          console.log(
+            '[wallet] incoming scan failed',
+            error instanceof Error ? error.message.split('\n')[0] : error,
+          )
       } finally {
         busy = false
       }
@@ -428,7 +498,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
       currency,
       protected: true,
       createdAt: Date.now(),
-      passkey: { credentialId: created.credentialId, ...(created.transports ? { transports: created.transports } : {}) },
+      passkey: {
+        credentialId: created.credentialId,
+        ...(created.transports ? { transports: created.transports } : {}),
+      },
     }
     await save(PROFILE, next)
     setProfile(next)
@@ -438,7 +511,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const restore = useCallback(async () => {
-    const asserted = await getPasskeyPrfOutput({ rpId: passkeyDomain, webAuthnClient: kovaWebAuthnClient }).catch((error) => {
+    const asserted = await getPasskeyPrfOutput({
+      rpId: passkeyDomain,
+      webAuthnClient: kovaWebAuthnClient,
+    }).catch((error) => {
       throw new Error(passkeyProblem(error))
     })
     const vault = takeVaultOutput()
@@ -447,7 +523,9 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     const account = await begin(asserted.prfOutput)
     // Who you are comes back from the vault this passkey sealed, if it sealed one.
     const backup = vault ? await openVault(vault).catch(() => null) : null
-    const restoredContacts = (backup?.contacts ?? []).filter((c) => isAddress(c.address)) as Contact[]
+    const restoredContacts = (backup?.contacts ?? []).filter((c) =>
+      isAddress(c.address),
+    ) as Contact[]
     if (restoredContacts.length) {
       setSavedContacts(restoredContacts)
       await save(CONTACTS, restoredContacts)
@@ -527,9 +605,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setSavedContacts((prev) => {
       const before = prev.find((c) => isAddressEqual(c.address, contact.address))
       // Paying someone by address must not wipe the name you gave them.
-      const name = isUnnamed(contact.name) && before && !isUnnamed(before.name) ? before.name : contact.name
+      const name =
+        isUnnamed(contact.name) && before && !isUnnamed(before.name) ? before.name : contact.name
       const merged = { ...before, ...contact, name, currency: contact.currency ?? before?.currency }
-      const next = [merged, ...prev.filter((c) => !isAddressEqual(c.address, contact.address))].slice(0, 50)
+      const next = [
+        merged,
+        ...prev.filter((c) => !isAddressEqual(c.address, contact.address)),
+      ].slice(0, 50)
       void save(CONTACTS, next)
       edited.current = true
       return next
@@ -595,7 +677,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         memo: input.memo,
         feePayer: true,
       } as never)
-      if (receipt.status !== 'success') throw new Error('Tempo didn’t take it. Nothing left your wallet.')
+      if (receipt.status !== 'success')
+        throw new Error('Tempo didn’t take it. Nothing left your wallet.')
       spend(input.amount)
       const entry: Entry = {
         id: newId(),
@@ -630,7 +713,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setStatus('none')
   }, [])
 
-  const signMessage = useCallback(async (message: string) => (await unlock(0n)).signMessage({ message }), [unlock])
+  const signMessage = useCallback(
+    async (message: string) => (await unlock(0n)).signMessage({ message }),
+    [unlock],
+  )
   const signTypedData = useCallback(
     async (typedData: TypedDataDefinition) => (await unlock(0n)).signTypedData(typedData),
     [unlock],
@@ -643,7 +729,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     // A stand-in for the passkey's second secret, so private notes work on a simulator too.
     await keepVaultSecret(crypto.getRandomValues(new Uint8Array(32)))
     const account = await begin(entropy)
-    const next: Profile = { name: name.trim(), address: account.address, currency, protected: false, createdAt: Date.now() }
+    const next: Profile = {
+      name: name.trim(),
+      address: account.address,
+      currency,
+      protected: false,
+      createdAt: Date.now(),
+    }
     await save(PROFILE, next)
     setProfile(next)
     setBalance(0n)
@@ -678,7 +770,12 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     setStatus('ready')
   }, [])
 
-  const base = usePrivacy({ zone, address: profile?.address ?? null, unlock, onMoved: () => void refresh() })
+  const base = usePrivacy({
+    zone,
+    address: profile?.address ?? null,
+    unlock,
+    onMoved: () => void refresh(),
+  })
   // Private moves show in the wallet's own history too: what Tempo saw, named for what it was.
   const privacy = useMemo<Privacy>(
     () => ({

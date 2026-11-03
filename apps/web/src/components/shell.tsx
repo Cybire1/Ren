@@ -3,8 +3,8 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { Art, Icon, type IconName } from './brand'
 import { chainName } from '@/lib/chain'
+import { Art, Icon, type IconName } from './brand'
 import { DockBrand } from './wallet/shell'
 
 const TABS: { href: string; label: string; icon: IconName; also?: string[] }[] = [

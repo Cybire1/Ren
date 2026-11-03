@@ -32,7 +32,17 @@ export type Leg = 'waiting' | 'flying' | 'landed'
  * send. While waiting Reni hovers at the top of the arc; on send Reni flies it, the dots marching
  * underneath, and lands on their face, which gets a tick.
  */
-export function ArcRoute({ width, you, them, leg }: { width: number; you: { name: string; id: string }; them: { name: string; id: string }; leg: Leg }) {
+export function ArcRoute({
+  width,
+  you,
+  them,
+  leg,
+}: {
+  width: number
+  you: { name: string; id: string }
+  them: { name: string; id: string }
+  leg: Leg
+}) {
   const reduced = useReducedMotion()
   const from = { x: FACE / 2 + 4, y: BASE - FACE / 2 - 6 }
   const to = { x: width - FACE / 2 - 4, y: BASE - FACE / 2 - 6 }
@@ -52,16 +62,26 @@ export function ArcRoute({ width, you, them, leg }: { width: number; you: { name
     }
     if (leg === 'waiting') {
       t.value = withSpring(0.5, { damping: 16, stiffness: 120 })
-      hover.value = withRepeat(withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.sin) }), -1, true)
+      hover.value = withRepeat(
+        withTiming(1, { duration: 1300, easing: Easing.inOut(Easing.sin) }),
+        -1,
+        true,
+      )
       tick.value = 0
     } else if (leg === 'flying') {
       hover.value = withTiming(0, { duration: 200 })
       // Back to your side for a run-up, then most of the way across, waiting there for the chain.
-      t.value = withSequence(withTiming(0.04, { duration: 260, easing: Easing.out(Easing.quad) }), withTiming(0.82, { duration: 1100, easing: Easing.bezier(0.3, 0, 0.2, 1) }))
+      t.value = withSequence(
+        withTiming(0.04, { duration: 260, easing: Easing.out(Easing.quad) }),
+        withTiming(0.82, { duration: 1100, easing: Easing.bezier(0.3, 0, 0.2, 1) }),
+      )
       march.value = withRepeat(withTiming(1, { duration: 420, easing: Easing.linear }), -1)
     } else {
       t.value = withTiming(1, { duration: 260, easing: Easing.out(Easing.cubic) })
-      tick.value = withSequence(withTiming(0, { duration: 200 }), withSpring(1, { damping: 9, stiffness: 180 }))
+      tick.value = withSequence(
+        withTiming(0, { duration: 200 }),
+        withSpring(1, { damping: 9, stiffness: 180 }),
+      )
       march.value = 0
     }
   }, [leg, reduced, t, hover, march, tick])
@@ -77,17 +97,35 @@ export function ArcRoute({ width, you, them, leg }: { width: number; you: { name
     const land = Math.max(0, (u - 0.9) / 0.1)
     return {
       opacity: 1 - land,
-      transform: [{ translateX: x - FLYER / 2 }, { translateY: y - FLYER / 2 }, { rotate: `${Math.atan2(dy, dx) * 0.8}rad` }, { scale: 1 - land * 0.6 }],
+      transform: [
+        { translateX: x - FLYER / 2 },
+        { translateY: y - FLYER / 2 },
+        { rotate: `${Math.atan2(dy, dx) * 0.8}rad` },
+        { scale: 1 - land * 0.6 },
+      ],
     }
   })
   const dots = useAnimatedProps(() => ({ strokeDashoffset: -march.value * 14 }))
-  const badge = useAnimatedStyle(() => ({ opacity: Math.min(1, tick.value * 2), transform: [{ scale: tick.value }] }))
-  const theirFace = useAnimatedStyle(() => ({ transform: [{ scale: 1 + Math.sin(Math.min(1, tick.value) * Math.PI) * 0.12 }] }))
+  const badge = useAnimatedStyle(() => ({
+    opacity: Math.min(1, tick.value * 2),
+    transform: [{ scale: tick.value }],
+  }))
+  const theirFace = useAnimatedStyle(() => ({
+    transform: [{ scale: 1 + Math.sin(Math.min(1, tick.value) * Math.PI) * 0.12 }],
+  }))
 
   return (
     <View style={{ width, height: HEIGHT }} accessibilityLabel={`From you to ${them.name}`}>
       <Svg width={width} height={BASE} style={StyleSheet.absoluteFill}>
-        <AnimatedPath d={d} stroke={colors.ink} strokeWidth={3} strokeLinecap="round" strokeDasharray="0.1 14" fill="none" animatedProps={dots} />
+        <AnimatedPath
+          d={d}
+          stroke={colors.ink}
+          strokeWidth={3}
+          strokeLinecap="round"
+          strokeDasharray="0.1 14"
+          fill="none"
+          animatedProps={dots}
+        />
       </Svg>
       <View style={[styles.person, { left: 0 }]}>
         <Avatar name={you.name} id={you.id} size={FACE} />
@@ -114,7 +152,13 @@ export function ArcRoute({ width, you, them, leg }: { width: number; you: { name
 }
 
 const styles = StyleSheet.create({
-  person: { position: 'absolute', top: BASE - FACE - 2, alignItems: 'center', gap: 4, width: FACE + 8 },
+  person: {
+    position: 'absolute',
+    top: BASE - FACE - 2,
+    alignItems: 'center',
+    gap: 4,
+    width: FACE + 8,
+  },
   tick: {
     position: 'absolute',
     right: -4,

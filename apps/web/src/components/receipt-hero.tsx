@@ -1,8 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Art, type ArtName, Icon, LogoMark } from './brand'
 import { chainName } from '@/lib/chain'
+import { Art, type ArtName, Icon, LogoMark } from './brand'
 
 type Currency = 'gbp' | 'eur'
 
@@ -196,7 +196,13 @@ export function ReceiptHero() {
               <defs>
                 <path id="rh-ring" d="M64 64 m-41 0 a41 41 0 1 1 82 0 a41 41 0 1 1 -82 0" />
               </defs>
-              <circle cx="64" cy="64" r="61" style={{ fill: 'var(--coral)', stroke: 'var(--ink)' }} strokeWidth="3" />
+              <circle
+                cx="64"
+                cy="64"
+                r="61"
+                style={{ fill: 'var(--coral)', stroke: 'var(--ink)' }}
+                strokeWidth="3"
+              />
               <circle
                 cx="64"
                 cy="64"
@@ -206,7 +212,12 @@ export function ReceiptHero() {
                 strokeWidth="2"
                 strokeDasharray="4 5"
               />
-              <text fontSize="9.5" fontWeight="800" style={{ fill: 'var(--ink)' }} letterSpacing="1.4">
+              <text
+                fontSize="9.5"
+                fontWeight="800"
+                style={{ fill: 'var(--ink)' }}
+                letterSpacing="1.4"
+              >
                 <textPath href="#rh-ring" textLength="252" lengthAdjust="spacing">
                   {`SETTLED ON ${chainName.toUpperCase()} • SETTLED ON ${chainName.toUpperCase()} •`}
                 </textPath>

@@ -2,9 +2,23 @@ import { randomBytes } from 'node:crypto'
 import { schema, uuidv7 } from '@kova/db'
 import { encodeMemo, formatAmount } from '@kova/tempo'
 import { and, desc, eq, inArray, lt } from 'drizzle-orm'
-import { type Address, decodeEventLog, getAddress, type Hex, isAddressEqual, type TransactionReceipt } from 'viem'
+import {
+  type Address,
+  decodeEventLog,
+  getAddress,
+  type Hex,
+  isAddressEqual,
+  type TransactionReceipt,
+} from 'viem'
 import { Abis } from 'viem/tempo'
-import { feePayerAddress, onTempo, publicClient, sendFromTreasury, settlementToken, treasuryClient } from '../chain.js'
+import {
+  feePayerAddress,
+  onTempo,
+  publicClient,
+  sendFromTreasury,
+  settlementToken,
+  treasuryClient,
+} from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
@@ -42,7 +56,8 @@ import { settleFromReceipt } from './settle.js'
 export type CashOutRow = typeof schema.cashOuts.$inferSelect
 export type PayInRow = typeof schema.nairaPayIns.$inferSelect
 
-export const nairaReady = () => onTempo && paystackReady() && Boolean(treasuryClient && feePayerAddress)
+export const nairaReady = () =>
+  onTempo && paystackReady() && Boolean(treasuryClient && feePayerAddress)
 
 function requireNaira() {
   if (!nairaReady()) throw new KovaError('conflict', 'Naira isn’t switched on for this server yet.')
@@ -56,7 +71,8 @@ const MAX_PAY_IN = 500_000_000n // $500
 /** The market's naira per dollar, now. */
 async function marketRate(): Promise<number> {
   const ngn = (await rateBook()).rates.NGN?.perUsd
-  if (!ngn || !(ngn > 0)) throw new KovaError('internal', 'Ren can’t read the naira rate right now. Try again soon.')
+  if (!ngn || !(ngn > 0))
+    throw new KovaError('internal', 'Ren can’t read the naira rate right now. Try again soon.')
   return ngn
 }
 
@@ -91,7 +107,8 @@ export async function quotePayIn(units: bigint) {
 
 // ── Cashing out ─────────────────────────────────────────────────────────────────────────────
 
-export const cashOutMemo = (row: Pick<CashOutRow, 'id'>) => encodeMemo({ kind: 'cashout', id: row.id })
+export const cashOutMemo = (row: Pick<CashOutRow, 'id'>) =>
+  encodeMemo({ kind: 'cashout', id: row.id })
 
 export function serializeCashOut(row: CashOutRow) {
   return {
@@ -125,12 +142,14 @@ export async function createCashOut(
 ): Promise<CashOutRow> {
   requireNaira()
   if (input.amount < MIN_CASH_OUT) throw new KovaError('invalid_request', 'Cash out at least $1.')
-  if (input.amount > MAX_CASH_OUT) throw new KovaError('invalid_request', 'Cash out up to $500 at a time.')
+  if (input.amount > MAX_CASH_OUT)
+    throw new KovaError('invalid_request', 'Cash out up to $500 at a time.')
   const bank = await bankNamed(input.bankCode)
   if (!bank) throw new KovaError('invalid_request', 'Pick your bank from the list.')
   const name = await accountName(input.accountNumber, bank.code)
   const quote = await quoteCashOut(input.amount)
-  if (quote.naira <= 0n) throw new KovaError('invalid_request', 'That’s too little to send to a bank.')
+  if (quote.naira <= 0n)
+    throw new KovaError('invalid_request', 'That’s too little to send to a bank.')
   const [row] = await db
     .insert(schema.cashOuts)
     .values({
@@ -180,10 +199,13 @@ export async function cashOutSponsorProblem(input: {
   if (!row) return 'no matching cash-out'
   if (row.status !== 'quoted') return `cash-out is ${row.status}`
   if (row.expiresAt < new Date()) return 'cash-out quote expired'
-  if (!feePayerAddress || !isAddressEqual(input.to, feePayerAddress)) return 'cash-out must go to Ren’s treasury'
+  if (!feePayerAddress || !isAddressEqual(input.to, feePayerAddress))
+    return 'cash-out must go to Ren’s treasury'
   if (input.amount !== row.amount) return 'amount does not match the cash-out'
-  if (!isAddressEqual(input.token, settlementToken.address)) return 'token does not match the cash-out'
-  if (!input.from || !isAddressEqual(input.from, row.walletAddress as Address)) return 'cash-out is another wallet’s'
+  if (!isAddressEqual(input.token, settlementToken.address))
+    return 'token does not match the cash-out'
+  if (!input.from || !isAddressEqual(input.from, row.walletAddress as Address))
+    return 'cash-out is another wallet’s'
   return null
 }
 
@@ -229,7 +251,10 @@ async function refundCashOut(row: CashOutRow, why: string): Promise<CashOutRow> 
       amount: row.amount,
       memo: encodeMemo({ kind: 'refund', id: row.id }),
     })
-    return update(row, { status: 'failed', failure: `${why} Your dollars went back to your wallet.` })
+    return update(row, {
+      status: 'failed',
+      failure: `${why} Your dollars went back to your wallet.`,
+    })
   } catch (error) {
     console.error('[naira] refund failed', row.id, error)
     return update(row, { status: 'failed', failure: `${why} Ren will send your dollars back.` })
@@ -240,13 +265,23 @@ async function refundCashOut(row: CashOutRow, why: string): Promise<CashOutRow> 
  * The wallet sent the dollars: check the transaction did exactly that, then pay the naira out. It
  * happens once: the transfer's hash can only settle one cash-out, and the status moves only forward.
  */
-export async function cashOutSent(wallet: Address, row: CashOutRow, txHash: Hex): Promise<CashOutRow> {
+export async function cashOutSent(
+  wallet: Address,
+  row: CashOutRow,
+  txHash: Hex,
+): Promise<CashOutRow> {
   requireNaira()
-  if (!isAddressEqual(row.walletAddress as Address, wallet)) throw new KovaError('not_found', 'No such cash-out.')
+  if (!isAddressEqual(row.walletAddress as Address, wallet))
+    throw new KovaError('not_found', 'No such cash-out.')
   if (row.status !== 'quoted') return row
-  const receipt = await publicClient.waitForTransactionReceipt({ hash: txHash, timeout: 30_000 }).catch(() => null)
+  const receipt = await publicClient
+    .waitForTransactionReceipt({ hash: txHash, timeout: 30_000 })
+    .catch(() => null)
   if (!receipt || receipt.status !== 'success' || !paidIn(receipt as TransactionReceipt, row))
-    throw new KovaError('invalid_request', 'That transaction didn’t send this cash-out’s dollars to Ren.')
+    throw new KovaError(
+      'invalid_request',
+      'That transaction didn’t send this cash-out’s dollars to Ren.',
+    )
 
   const [received] = await db
     .update(schema.cashOuts)
@@ -261,7 +296,11 @@ async function payOut(row: CashOutRow): Promise<CashOutRow> {
   try {
     const recipient =
       row.recipientCode ??
-      (await transferRecipient({ name: row.accountName, accountNumber: row.accountNumber, bankCode: row.bankCode }))
+      (await transferRecipient({
+        name: row.accountName,
+        accountNumber: row.accountNumber,
+        bankCode: row.bankCode,
+      }))
     if (!row.recipientCode) row = await update(row, { recipientCode: recipient })
     const sent = await transfer({
       kobo: row.naira,
@@ -269,9 +308,18 @@ async function payOut(row: CashOutRow): Promise<CashOutRow> {
       reference: row.id,
       reason: 'Ren cash-out',
     })
-    if (sent.status === 'success') return update(row, { status: 'paid', transferCode: sent.code, paidAt: new Date() })
-    if (sent.status === 'failed' || sent.status === 'reversed' || sent.status === 'rejected' || sent.status === 'blocked')
-      return refundCashOut(await update(row, { transferCode: sent.code }), 'The bank transfer didn’t go through.')
+    if (sent.status === 'success')
+      return update(row, { status: 'paid', transferCode: sent.code, paidAt: new Date() })
+    if (
+      sent.status === 'failed' ||
+      sent.status === 'reversed' ||
+      sent.status === 'rejected' ||
+      sent.status === 'blocked'
+    )
+      return refundCashOut(
+        await update(row, { transferCode: sent.code }),
+        'The bank transfer didn’t go through.',
+      )
     return update(row, { status: 'paying', transferCode: sent.code })
   } catch (error) {
     const said = error instanceof Error ? error.message : String(error)
@@ -288,34 +336,50 @@ async function payOut(row: CashOutRow): Promise<CashOutRow> {
 /** Cash-outs the bank hasn't confirmed yet: ask Paystack how each went. */
 export async function checkPayingCashOuts(): Promise<void> {
   if (!nairaReady()) return
-  const paying = await db.query.cashOuts.findMany({ where: eq(schema.cashOuts.status, 'paying'), limit: 20 })
+  const paying = await db.query.cashOuts.findMany({
+    where: eq(schema.cashOuts.status, 'paying'),
+    limit: 20,
+  })
   for (const row of paying) {
     const state = await transferStatus(row.id).catch(() => null)
     if (state === 'success') await update(row, { status: 'paid', paidAt: new Date() })
-    else if (state === 'failed' || state === 'reversed') await refundCashOut(row, 'The bank sent it back.')
+    else if (state === 'failed' || state === 'reversed')
+      await refundCashOut(row, 'The bank sent it back.')
   }
   await db
     .update(schema.cashOuts)
     .set({ status: 'expired', updatedAt: new Date() })
-    .where(and(eq(schema.cashOuts.status, 'quoted'), lt(schema.cashOuts.expiresAt, new Date(Date.now() - 60 * 60_000))))
+    .where(
+      and(
+        eq(schema.cashOuts.status, 'quoted'),
+        lt(schema.cashOuts.expiresAt, new Date(Date.now() - 60 * 60_000)),
+      ),
+    )
 }
 
 export async function cashOutTransferEvent(reference: string, event: string): Promise<void> {
   const row = await cashOutRow(reference)
   if (!row || (row.status !== 'paying' && row.status !== 'received')) return
   if (event === 'transfer.success') await update(row, { status: 'paid', paidAt: new Date() })
-  else if (event === 'transfer.failed' || event === 'transfer.reversed') await refundCashOut(row, 'The bank sent it back.')
+  else if (event === 'transfer.failed' || event === 'transfer.reversed')
+    await refundCashOut(row, 'The bank sent it back.')
 }
 
 // ── Paying a shop in naira ──────────────────────────────────────────────────────────────────
 
-export async function startPayIn(intent: PaymentIntent, input: { email: string; callbackUrl: string; shop: string }) {
+export async function startPayIn(
+  intent: PaymentIntent,
+  input: { email: string; callbackUrl: string; shop: string },
+) {
   requireNaira()
-  if (intent.status !== 'requires_payment') throw new KovaError('conflict', 'This charge isn’t open any more.')
-  if (intent.expiresAt < new Date()) throw new KovaError('conflict', 'This charge has expired. Ask the shop for a new one.')
+  if (intent.status !== 'requires_payment')
+    throw new KovaError('conflict', 'This charge isn’t open any more.')
+  if (intent.expiresAt < new Date())
+    throw new KovaError('conflict', 'This charge has expired. Ask the shop for a new one.')
   if (!isAddressEqual(intent.tokenAddress as Address, settlementToken.address))
     throw new KovaError('invalid_request', 'This charge can’t be paid in naira.')
-  if (intent.amount > MAX_PAY_IN) throw new KovaError('invalid_request', 'Pay up to $500 in naira at a time.')
+  if (intent.amount > MAX_PAY_IN)
+    throw new KovaError('invalid_request', 'Pay up to $500 in naira at a time.')
   const quote = await quotePayIn(intent.amount)
   const reference = `ren_${intent.id.replace(/-/g, '')}_${randomBytes(4).toString('hex')}`
   await db.insert(schema.nairaPayIns).values({
@@ -342,7 +406,9 @@ export async function startPayIn(intent: PaymentIntent, input: { email: string; 
  */
 export async function settlePayIn(reference: string): Promise<PayInRow> {
   requireNaira()
-  const row = await db.query.nairaPayIns.findFirst({ where: eq(schema.nairaPayIns.reference, reference) })
+  const row = await db.query.nairaPayIns.findFirst({
+    where: eq(schema.nairaPayIns.reference, reference),
+  })
   if (!row) throw new KovaError('not_found', 'No such naira payment.')
   if (row.status === 'settled' || row.status === 'failed') return row
   const paid = await payment(reference)
@@ -365,20 +431,30 @@ export async function settlePayIn(reference: string): Promise<PayInRow> {
   const [claimed] = await db
     .update(schema.nairaPayIns)
     .set({ status: 'paid', updatedAt: new Date() })
-    .where(and(eq(schema.nairaPayIns.id, row.id), inArray(schema.nairaPayIns.status, ['initialized'])))
+    .where(
+      and(eq(schema.nairaPayIns.id, row.id), inArray(schema.nairaPayIns.status, ['initialized'])),
+    )
     .returning()
-  if (!claimed) return (await db.query.nairaPayIns.findFirst({ where: eq(schema.nairaPayIns.id, row.id) })) as PayInRow
+  if (!claimed)
+    return (await db.query.nairaPayIns.findFirst({
+      where: eq(schema.nairaPayIns.id, row.id),
+    })) as PayInRow
 
   return payShop(claimed)
 }
 
 /** Ren's treasury pays the shop the charge, with its memo, and settles it. */
 async function payShop(row: PayInRow): Promise<PayInRow> {
-  const intent = await db.query.paymentIntents.findFirst({ where: eq(schema.paymentIntents.id, row.intentId) })
+  const intent = await db.query.paymentIntents.findFirst({
+    where: eq(schema.paymentIntents.id, row.intentId),
+  })
   if (!intent || intent.status !== 'requires_payment') {
     const [held] = await db
       .update(schema.nairaPayIns)
-      .set({ failure: 'The charge was already paid or closed; Ren refunds the naira.', updatedAt: new Date() })
+      .set({
+        failure: 'The charge was already paid or closed; Ren refunds the naira.',
+        updatedAt: new Date(),
+      })
       .where(eq(schema.nairaPayIns.id, row.id))
       .returning()
     return held as PayInRow
@@ -402,7 +478,10 @@ async function payShop(row: PayInRow): Promise<PayInRow> {
     console.error('[naira] paying the shop failed', row.id, error)
     const [stuck] = await db
       .update(schema.nairaPayIns)
-      .set({ failure: 'Paying the shop didn’t go through yet; Ren retries.', updatedAt: new Date() })
+      .set({
+        failure: 'Paying the shop didn’t go through yet; Ren retries.',
+        updatedAt: new Date(),
+      })
       .where(eq(schema.nairaPayIns.id, row.id))
       .returning()
     return stuck as PayInRow
@@ -412,6 +491,9 @@ async function payShop(row: PayInRow): Promise<PayInRow> {
 /** Naira that arrived but whose shop isn't paid yet (a node hiccup): try again. */
 export async function retryPayIns(): Promise<void> {
   if (!nairaReady()) return
-  const stuck = await db.query.nairaPayIns.findMany({ where: eq(schema.nairaPayIns.status, 'paid'), limit: 10 })
+  const stuck = await db.query.nairaPayIns.findMany({
+    where: eq(schema.nairaPayIns.status, 'paid'),
+    limit: 10,
+  })
   for (const row of stuck) if (!row.txHash) await payShop(row)
 }

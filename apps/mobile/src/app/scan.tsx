@@ -21,9 +21,15 @@ export default function Scan() {
   const open = (scanned: Scanned) => {
     handled.current = true
     void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
-    if (scanned.kind === 'charge') router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
-    else if (scanned.kind === 'stall') router.replace({ pathname: '/s/[slug]', params: { slug: scanned.slug, ...(scanned.table ? { table: scanned.table } : {}) } })
-    else if (scanned.kind === 'pair') router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
+    if (scanned.kind === 'charge')
+      router.replace({ pathname: '/pay/[id]', params: { id: scanned.id } })
+    else if (scanned.kind === 'stall')
+      router.replace({
+        pathname: '/s/[slug]',
+        params: { slug: scanned.slug, ...(scanned.table ? { table: scanned.table } : {}) },
+      })
+    else if (scanned.kind === 'pair')
+      router.replace({ pathname: '/terminal/setup', params: { code: scanned.code } })
     else
       router.replace({
         pathname: '/send/[to]',
@@ -52,7 +58,12 @@ export default function Scan() {
   }
 
   const close = (
-    <RoundButton icon="close" label="Close" fill={colors.surface} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} />
+    <RoundButton
+      icon="close"
+      label="Close"
+      fill={colors.surface}
+      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+    />
   )
 
   return (
@@ -76,10 +87,48 @@ export default function Scan() {
 
       <View style={styles.frameWrap} pointerEvents="none">
         <View style={styles.frame}>
-          <View style={[styles.corner, { top: 0, left: 0, borderTopWidth: 6, borderLeftWidth: 6, borderTopLeftRadius: 28 }]} />
-          <View style={[styles.corner, { top: 0, right: 0, borderTopWidth: 6, borderRightWidth: 6, borderTopRightRadius: 28 }]} />
-          <View style={[styles.corner, { bottom: 0, left: 0, borderBottomWidth: 6, borderLeftWidth: 6, borderBottomLeftRadius: 28 }]} />
-          <View style={[styles.corner, { bottom: 0, right: 0, borderBottomWidth: 6, borderRightWidth: 6, borderBottomRightRadius: 28 }]} />
+          <View
+            style={[
+              styles.corner,
+              { top: 0, left: 0, borderTopWidth: 6, borderLeftWidth: 6, borderTopLeftRadius: 28 },
+            ]}
+          />
+          <View
+            style={[
+              styles.corner,
+              {
+                top: 0,
+                right: 0,
+                borderTopWidth: 6,
+                borderRightWidth: 6,
+                borderTopRightRadius: 28,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.corner,
+              {
+                bottom: 0,
+                left: 0,
+                borderBottomWidth: 6,
+                borderLeftWidth: 6,
+                borderBottomLeftRadius: 28,
+              },
+            ]}
+          />
+          <View
+            style={[
+              styles.corner,
+              {
+                bottom: 0,
+                right: 0,
+                borderBottomWidth: 6,
+                borderRightWidth: 6,
+                borderBottomRightRadius: 28,
+              },
+            ]}
+          />
           {permission?.granted ? null : <Reni pose="wave" size={150} />}
         </View>
       </View>
@@ -101,7 +150,8 @@ export default function Scan() {
               Point at a Ren code
             </Txt>
             <Txt size={15} color={problem ? colors.danger : colors.muted} style={styles.sheetBody}>
-              {problem ?? "A shop's QR, a stall's table poster, or a friend's code from their Receive screen."}
+              {problem ??
+                "A shop's QR, a stall's table poster, or a friend's code from their Receive screen."}
             </Txt>
           </>
         )}
@@ -112,7 +162,11 @@ export default function Scan() {
               Paste a link
             </Txt>
           </Pressable>
-          <Pressable accessibilityRole="button" onPress={() => router.replace('/receive')} style={styles.option}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.replace('/receive')}
+            style={styles.option}
+          >
             <Icon name="receive" size={20} />
             <Txt weight="semi" size={15}>
               Show my code

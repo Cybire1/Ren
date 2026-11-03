@@ -3,11 +3,11 @@
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import type { Checkout, OrderReward, OrderStatus, PublicStall } from '@/lib/api'
+import { chainName } from '@/lib/chain'
 import { usd } from '@/lib/format'
 import { type Currency, inCurrency, type LiveRates, RATES } from '@/lib/rates'
 import { Awning } from './awning'
 import { Art, Icon, LogoMark, Pill } from './brand'
-import { chainName } from '@/lib/chain'
 import { OrderReady } from './order-ready'
 import { StampCard, useStampCard } from './stamp-card'
 
@@ -351,6 +351,7 @@ export function Storefront({
       ) : null}
 
       {viewing ? (
+        // biome-ignore lint/a11y/noStaticElementInteractions: a backdrop click is a mouse shortcut; Escape and the Close button close the sheet from the keyboard
         <div
           className="overlay"
           onMouseDown={(e) => e.target === e.currentTarget && setViewing(null)}
@@ -366,6 +367,7 @@ export function Storefront({
               className="round sheet-close"
               aria-label="Close"
               onClick={() => setViewing(null)}
+              // biome-ignore lint/a11y/noAutofocus: focus moves into the sheet when it opens (WAI-ARIA dialog pattern)
               autoFocus
             >
               <Icon name="close" size={18} />
@@ -432,6 +434,7 @@ export function Storefront({
       ) : null}
 
       {bagOpen ? (
+        // biome-ignore lint/a11y/noStaticElementInteractions: a backdrop click is a mouse shortcut; Escape and the Close button close the sheet from the keyboard
         <div
           className="overlay store-drawer-overlay"
           onMouseDown={(e) => e.target === e.currentTarget && !busy && setBagOpen(false)}
@@ -447,6 +450,7 @@ export function Storefront({
               className="round sheet-close"
               aria-label="Close"
               onClick={() => setBagOpen(false)}
+              // biome-ignore lint/a11y/noAutofocus: focus moves into the sheet when it opens (WAI-ARIA dialog pattern)
               autoFocus
             >
               <Icon name="close" size={18} />

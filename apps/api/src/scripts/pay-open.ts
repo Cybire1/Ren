@@ -18,7 +18,10 @@ async function main() {
   const api = `http://localhost:${config.PORT}`
 
   const open = await db.query.paymentIntents.findMany({
-    where: and(eq(schema.paymentIntents.status, 'requires_payment'), eq(schema.paymentIntents.network, 'testnet')),
+    where: and(
+      eq(schema.paymentIntents.status, 'requires_payment'),
+      eq(schema.paymentIntents.network, 'testnet'),
+    ),
   })
   const payable = open.filter((intent) => intent.expiresAt.getTime() > Date.now())
   if (payable.length === 0) {
@@ -34,10 +37,14 @@ async function main() {
       await fund(api, customer.address)
       const checkout = await getCheckout(api, encodeId('paymentIntent', intent.id))
       const paid = await pay(api, checkout, customer)
-      console.log(`${name}: ${paid.status} in ${paid.roundTripMs}ms  ${paid.payment?.explorer_url ?? ''}`)
+      console.log(
+        `${name}: ${paid.status} in ${paid.roundTripMs}ms  ${paid.payment?.explorer_url ?? ''}`,
+      )
     } catch (error) {
       // One charge failing (more than the faucet gives, say) doesn't stop the rest.
-      console.log(`${name}: not paid, ${error instanceof Error ? error.message.split('\n')[0] : error}`)
+      console.log(
+        `${name}: not paid, ${error instanceof Error ? error.message.split('\n')[0] : error}`,
+      )
     }
   }
   process.exit(0)

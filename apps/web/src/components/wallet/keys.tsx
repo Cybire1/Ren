@@ -22,8 +22,10 @@ import { CopyButton, ShareButton } from './ui'
  */
 
 const dollars = (value: string | null | undefined) => `$${Number(value ?? 0).toFixed(2)}`
-const shortDate = (iso: string) => new Date(iso).toLocaleDateString([], { day: 'numeric', month: 'short' })
-const clock = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+const shortDate = (iso: string) =>
+  new Date(iso).toLocaleDateString([], { day: 'numeric', month: 'short' })
+const clock = (iso: string) =>
+  new Date(iso).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 const ended = (key: KeyView) => key.status === 'expired' || Date.parse(key.expires_at) < Date.now()
 
 const KIND: Record<KeyView['kind'], { icon: IconName; noun: string }> = {
@@ -49,7 +51,10 @@ function standing(key: KeyView): string {
         ? `${key.holder_name ?? 'They'} accepted. Switch it on`
         : 'Waiting for them to open your link'
       : 'Not on Tempo yet'
-  const left = key.remaining === null ? '' : `${dollars(key.remaining)} left ${key.period === 'week' ? 'this week' : 'today'} · `
+  const left =
+    key.remaining === null
+      ? ''
+      : `${dollars(key.remaining)} left ${key.period === 'week' ? 'this week' : 'today'} · `
   return `${left}until ${shortDate(key.expires_at)}`
 }
 
@@ -68,7 +73,11 @@ export function KeysCard() {
         <span className="w-keyscard-text">
           <small>{waiting.key.label ?? 'An agent'} asks</small>
           <strong>Pay {dollars(waiting.amount)}?</strong>
-          <span>{waiting.origin ? new URL(waiting.origin).host : (waiting.description ?? short(waiting.to))}</span>
+          <span>
+            {waiting.origin
+              ? new URL(waiting.origin).host
+              : (waiting.description ?? short(waiting.to))}
+          </span>
         </span>
         <span className="w-keyscard-go">
           {keys.approvals.length > 1 ? `${keys.approvals.length} waiting` : 'Answer'}
@@ -83,7 +92,10 @@ export function KeysCard() {
       ? 'For agents and people'
       : agents + people === 0
         ? 'None yet: only your passkey can spend'
-        : [agents ? `${agents} agent${agents === 1 ? '' : 's'}` : '', people ? `${people} allowance${people === 1 ? '' : 's'}` : '']
+        : [
+            agents ? `${agents} agent${agents === 1 ? '' : 's'}` : '',
+            people ? `${people} allowance${people === 1 ? '' : 's'}` : '',
+          ]
             .filter(Boolean)
             .join(' · ')
   return (
@@ -133,8 +145,8 @@ export function KeysScreen() {
         </span>
         <h2>Your dollars, your rules</h2>
         <p>
-          Give an AI agent or a person a key with its own limit. {chainName} enforces every limit, and
-          any key freezes in one tap.
+          Give an AI agent or a person a key with its own limit. {chainName} enforces every limit,
+          and any key freezes in one tap.
         </p>
         <Art name="reni-key" size={100} className="w-keys-hero-reni" />
       </section>
@@ -153,7 +165,9 @@ export function KeysScreen() {
             disabled={keys.status === 'signing-in'}
             onClick={() => void signIn()}
           >
-            <span className="pill-label">{keys.status === 'signing-in' ? 'Opening…' : 'Show your keys'}</span>
+            <span className="pill-label">
+              {keys.status === 'signing-in' ? 'Opening…' : 'Show your keys'}
+            </span>
             <span className="pill-cap">
               <Icon name="face" size={18} />
             </span>
@@ -175,8 +189,19 @@ export function KeysScreen() {
           ) : null}
 
           <div className="w-keys-new">
-            <NewTile href="/wallet/keys/agent" icon="code" label="New agent key" sub="For Claude or any AI agent" />
-            <NewTile href="/wallet/keys/allowance" icon="user" label="Give an allowance" sub="A weekly limit for someone" tone="teal" />
+            <NewTile
+              href="/wallet/keys/agent"
+              icon="code"
+              label="New agent key"
+              sub="For Claude or any AI agent"
+            />
+            <NewTile
+              href="/wallet/keys/allowance"
+              icon="user"
+              label="Give an allowance"
+              sub="A weekly limit for someone"
+              tone="teal"
+            />
           </div>
 
           <h2 className="w-section">Your keys</h2>
@@ -233,8 +258,8 @@ export function KeysScreen() {
             <span>
               <strong>{chainName} enforces the limit</strong>
               <span>
-                Each key is an access key on your wallet. It can only pay in dollars, up to its limit each
-                day or week, until its end date. Not even Ren can raise it.
+                Each key is an access key on your wallet. It can only pay in dollars, up to its
+                limit each day or week, until its end date. Not even Ren can raise it.
               </span>
             </span>
           </li>
@@ -245,8 +270,8 @@ export function KeysScreen() {
             <span>
               <strong>Agents ask before big payments</strong>
               <span>
-                Ren checks an agent’s rules before it signs: the most a payment can be, and above what it
-                waits for your yes.
+                Ren checks an agent’s rules before it signs: the most a payment can be, and above
+                what it waits for your yes.
               </span>
             </span>
           </li>
@@ -257,8 +282,8 @@ export function KeysScreen() {
             <span>
               <strong>Freeze in one tap</strong>
               <span>
-                Freezing stops a key at once and sets its limit on {chainName} to zero. Removing it is for
-                good.
+                Freezing stops a key at once and sets its limit on {chainName} to zero. Removing it
+                is for good.
               </span>
             </span>
           </li>
@@ -299,14 +324,15 @@ function KeyRow({ keyView: key, received }: { keyView: KeyView; received?: boole
   const kind = KIND[key.kind]
   const off = key.status !== 'active' || ended(key)
   return (
-    <Link href={`/wallet/keys/${key.id}`} className={`w-entry w-keyrow${off ? ' w-keyrow-off' : ''}`}>
+    <Link
+      href={`/wallet/keys/${key.id}`}
+      className={`w-entry w-keyrow${off ? ' w-keyrow-off' : ''}`}
+    >
       <span className={`w-keybadge w-keybadge-${key.kind}`} aria-hidden="true">
         <Icon name={key.status === 'frozen' ? 'lock' : kind.icon} size={18} />
       </span>
       <span className="w-entry-text">
-        <span className="w-entry-name">
-          {received ? `From ${short(key.owner)}` : key.label}
-        </span>
+        <span className="w-entry-name">{received ? `From ${short(key.owner)}` : key.label}</span>
         <span className="w-entry-sub">{standing(key)}</span>
         {key.status === 'active' && !ended(key) && key.remaining !== null ? (
           <span className="w-keymeter" aria-hidden="true">
@@ -348,7 +374,9 @@ function Ask({ payment }: { payment: KeyPaymentView }) {
       setBusy(null)
     }
   }
-  const where = payment.origin ? new URL(payment.origin).host : (payment.description ?? short(payment.to))
+  const where = payment.origin
+    ? new URL(payment.origin).host
+    : (payment.description ?? short(payment.to))
   return (
     <div className="w-ask">
       <div className="w-ask-top">
@@ -361,12 +389,26 @@ function Ask({ payment }: { payment: KeyPaymentView }) {
         </span>
         <span className="w-ask-amount">{dollars(payment.amount)}</span>
       </div>
-      {payment.description && payment.origin ? <p className="w-ask-what">“{payment.description}”</p> : null}
+      {payment.description && payment.origin ? (
+        <p className="w-ask-what">“{payment.description}”</p>
+      ) : null}
       <div className="w-ask-buttons">
-        <button type="button" className="pill" data-tone="light" disabled={busy !== null} onClick={() => void answer('decline')}>
+        <button
+          type="button"
+          className="pill"
+          data-tone="light"
+          disabled={busy !== null}
+          onClick={() => void answer('decline')}
+        >
           <span className="pill-label">{busy === 'decline' ? 'Declining…' : 'Decline'}</span>
         </button>
-        <button type="button" className="pill" data-tone="ink" disabled={busy !== null} onClick={() => void answer('approve')}>
+        <button
+          type="button"
+          className="pill"
+          data-tone="ink"
+          disabled={busy !== null}
+          onClick={() => void answer('approve')}
+        >
           <span className="pill-label">{busy === 'approve' ? 'Paying…' : 'Approve'}</span>
           <span className="pill-cap">
             <Icon name="face" size={16} />
@@ -398,7 +440,11 @@ export function KeyScreen({ id }: { id: string }) {
   useEffect(() => {
     if (!key || !mine) return
     let live = true
-    const load = () => void keys.payments(key).then((rows) => live && setPayments(rows)).catch(() => {})
+    const load = () =>
+      void keys
+        .payments(key)
+        .then((rows) => live && setPayments(rows))
+        .catch(() => {})
     load()
     const timer = setInterval(load, 8000)
     return () => {
@@ -434,7 +480,9 @@ export function KeyScreen({ id }: { id: string }) {
 
   const kind = KIND[key.kind]
   const live = key.status === 'active' && !ended(key)
-  const [whole, cents] = dollars(live ? key.remaining : key.status === 'frozen' ? '0' : key.limit).slice(1).split('.')
+  const [whole, cents] = dollars(live ? key.remaining : key.status === 'frozen' ? '0' : key.limit)
+    .slice(1)
+    .split('.')
   const command = keys.connect
     ? `claude mcp add --transport http ren ${keys.connect.mcp_url} --header "Authorization: Bearer ${token ?? 'YOUR_TOKEN'}"`
     : null
@@ -443,13 +491,24 @@ export function KeyScreen({ id }: { id: string }) {
     <div className="w-screen w-key-screen">
       <ScreenHead title={key.label} back="/wallet/keys" />
 
-      <section className={`w-keyhero w-keyhero-${key.kind}`} aria-label={`${key.label}, ${standing(key)}`}>
+      <section
+        className={`w-keyhero w-keyhero-${key.kind}`}
+        aria-label={`${key.label}, ${standing(key)}`}
+      >
         <div className="w-private-top">
           <span className="w-private-label">
             <Icon name={kind.icon} size={16} /> {mine ? kind.noun : `From ${short(key.owner)}`}
           </span>
           <span className={`w-chip ${live ? 'w-chip-teal' : 'w-chip-ink'}`}>
-            {key.status === 'revoked' ? 'Removed' : ended(key) ? 'Ended' : key.status === 'frozen' ? 'Frozen' : key.status === 'pending' ? 'Not on yet' : 'Active'}
+            {key.status === 'revoked'
+              ? 'Removed'
+              : ended(key)
+                ? 'Ended'
+                : key.status === 'frozen'
+                  ? 'Frozen'
+                  : key.status === 'pending'
+                    ? 'Not on yet'
+                    : 'Active'}
           </span>
         </div>
         <p className="w-private-amount">
@@ -469,7 +528,11 @@ export function KeyScreen({ id }: { id: string }) {
             <span style={{ width: `${Math.round(meter(key) * 100)}%` }} />
           </span>
         ) : null}
-        <Art name={key.kind === 'agent' ? 'reni-key' : 'reni-wave'} size={92} className="w-private-reni" />
+        <Art
+          name={key.kind === 'agent' ? 'reni-key' : 'reni-wave'}
+          size={92}
+          className="w-private-reni"
+        />
       </section>
 
       {problem ? (
@@ -483,7 +546,10 @@ export function KeyScreen({ id }: { id: string }) {
         key.holder ? (
           <div className="w-keycall">
             <strong>{key.holder_name ?? short(key.holder)} accepted</strong>
-            <span>Switch it on and they can spend up to {dollars(key.limit)} a {key.period} from your dollars.</span>
+            <span>
+              Switch it on and they can spend up to {dollars(key.limit)} a {key.period} from your
+              dollars.
+            </span>
             <button
               type="button"
               className="pill pill-block"
@@ -501,36 +567,66 @@ export function KeyScreen({ id }: { id: string }) {
           <div className="w-keycall">
             <strong>Waiting for them</strong>
             <span>
-              Once they open your link in Ren, you switch it on here. Lost the link? Remove this one and make
-              a new one.
+              Once they open your link in Ren, you switch it on here. Lost the link? Remove this one
+              and make a new one.
             </span>
           </div>
         )
       ) : null}
 
       <dl className="w-facts w-keyfacts">
-        <Fact label="Limit" value={`${dollars(key.limit)} a ${key.period}`} icon="lock" hint={`${chainName} enforces it`} />
+        <Fact
+          label="Limit"
+          value={`${dollars(key.limit)} a ${key.period}`}
+          icon="lock"
+          hint={`${chainName} enforces it`}
+        />
         {key.rules ? (
           <>
             <Fact label="Most per payment" value={dollars(key.rules.per_payment)} />
             <Fact
               label="Asks you above"
-              value={Number(key.rules.approve_above) >= Number(key.rules.per_payment) ? 'Never asks' : dollars(key.rules.approve_above)}
+              value={
+                Number(key.rules.approve_above) >= Number(key.rules.per_payment)
+                  ? 'Never asks'
+                  : dollars(key.rules.approve_above)
+              }
             />
             <Fact
               label="May pay"
-              value={key.rules.payees === 'anyone' ? 'Anyone' : `${key.rules.payees.length} wallet${key.rules.payees.length === 1 ? '' : 's'} you listed`}
+              value={
+                key.rules.payees === 'anyone'
+                  ? 'Anyone'
+                  : `${key.rules.payees.length} wallet${key.rules.payees.length === 1 ? '' : 's'} you listed`
+              }
             />
           </>
         ) : null}
         {key.kind === 'allowance' && key.holder ? (
-          <Fact label="Held by" value={key.holder_name ? `${key.holder_name} (${short(key.holder)})` : short(key.holder)} />
+          <Fact
+            label="Held by"
+            value={
+              key.holder_name ? `${key.holder_name} (${short(key.holder)})` : short(key.holder)
+            }
+          />
         ) : null}
-        <Fact label="Ends" value={new Date(key.expires_at).toLocaleDateString([], { day: 'numeric', month: 'long', year: 'numeric' })} />
+        <Fact
+          label="Ends"
+          value={new Date(key.expires_at).toLocaleDateString([], {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+          })}
+        />
         {key.key_id ? <Fact label={`Key on ${chainName}`} value={short(key.key_id)} /> : null}
       </dl>
       {key.key_id && key.status !== 'pending' ? (
-        <a className="w-keylink" href={explorerAddressUrl(network, key.owner)} target="_blank" rel="noreferrer">
+        <a
+          className="w-keylink"
+          href={explorerAddressUrl(network, key.owner)}
+          target="_blank"
+          rel="noreferrer"
+        >
           See the wallet on {chainName}’s explorer <Icon name="external" size={14} />
         </a>
       ) : null}
@@ -539,8 +635,8 @@ export function KeyScreen({ id }: { id: string }) {
         <section className="w-connect" aria-label="Connect your agent">
           <h2 className="w-section">Connect your agent</h2>
           <p className="w-quiet">
-            Your agent pays through Ren’s MCP server with this key’s token. Ren keeps the key itself; the
-            token only lets the agent ask.
+            Your agent pays through Ren’s MCP server with this key’s token. Ren keeps the key
+            itself; the token only lets the agent ask.
           </p>
           {command ? (
             <div className="w-snippet">
@@ -558,7 +654,9 @@ export function KeyScreen({ id }: { id: string }) {
               disabled={busy !== null}
               onClick={() => void act('token', async () => setToken(await keys.newToken(key)))}
             >
-              <span className="pill-label">{busy === 'token' ? 'Making…' : 'Make a new token'}</span>
+              <span className="pill-label">
+                {busy === 'token' ? 'Making…' : 'Make a new token'}
+              </span>
               <span className="pill-cap">
                 <Icon name="refresh" size={16} />
               </span>
@@ -590,14 +688,18 @@ export function KeyScreen({ id }: { id: string }) {
               disabled={busy !== null}
               onClick={() => void act('freeze', () => keys.freeze(key))}
             >
-              <span className="pill-label">{busy === 'freeze' ? 'Freezing…' : 'Freeze this key'}</span>
+              <span className="pill-label">
+                {busy === 'freeze' ? 'Freezing…' : 'Freeze this key'}
+              </span>
               <span className="pill-cap">
                 <Icon name="lock" size={18} />
               </span>
             </button>
           )}
           <p className="w-fine w-center">
-            {sessionCovers(0n) ? 'Your wallet is open, so this needs no passkey.' : 'Your passkey approves it.'}
+            {sessionCovers(0n)
+              ? 'Your wallet is open, so this needs no passkey.'
+              : 'Your passkey approves it.'}
           </p>
         </div>
       ) : null}
@@ -608,7 +710,12 @@ export function KeyScreen({ id }: { id: string }) {
             <strong>Remove {key.label} for good?</strong>
             <span>It stops at once and {chainName} revokes it. A removed key can’t come back.</span>
             <div className="w-ask-buttons">
-              <button type="button" className="pill" data-tone="light" onClick={() => setConfirmRemove(false)}>
+              <button
+                type="button"
+                className="pill"
+                data-tone="light"
+                onClick={() => setConfirmRemove(false)}
+              >
                 <span className="pill-label">Keep it</span>
               </button>
               <button
@@ -628,7 +735,11 @@ export function KeyScreen({ id }: { id: string }) {
             </div>
           </div>
         ) : (
-          <button type="button" className="w-textbutton w-textbutton-danger" onClick={() => setConfirmRemove(true)}>
+          <button
+            type="button"
+            className="w-textbutton w-textbutton-danger"
+            onClick={() => setConfirmRemove(true)}
+          >
             <Icon name="trash" size={16} /> Remove this key
           </button>
         )
@@ -677,16 +788,25 @@ function PaymentRow({ payment }: { payment: KeyPaymentView }) {
       : payment.kind === 'charge'
         ? (payment.description ?? 'A Ren shop')
         : short(payment.to)
-  const what = payment.kind === 'mpp' ? 'Paid request' : payment.kind === 'charge' ? 'Shop charge' : 'Payment'
+  const what =
+    payment.kind === 'mpp' ? 'Paid request' : payment.kind === 'charge' ? 'Shop charge' : 'Payment'
   return (
     <div className={`w-entry w-keypay${payment.status === 'paid' ? '' : ' w-keypay-quiet'}`}>
-      <span className={`w-keybadge w-keybadge-${payment.kind === 'mpp' ? 'agent' : 'allowance'}`} aria-hidden="true">
-        <Icon name={payment.kind === 'mpp' ? 'globe' : payment.kind === 'charge' ? 'stall' : 'send'} size={17} />
+      <span
+        className={`w-keybadge w-keybadge-${payment.kind === 'mpp' ? 'agent' : 'allowance'}`}
+        aria-hidden="true"
+      >
+        <Icon
+          name={payment.kind === 'mpp' ? 'globe' : payment.kind === 'charge' ? 'stall' : 'send'}
+          size={17}
+        />
       </span>
       <span className="w-entry-text">
         <span className="w-entry-name">{where}</span>
         <span className="w-entry-sub">
-          {payment.reason && payment.status !== 'paid' ? payment.reason : `${what}, ${new Date(payment.created_at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
+          {payment.reason && payment.status !== 'paid'
+            ? payment.reason
+            : `${what}, ${new Date(payment.created_at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}`}
         </span>
       </span>
       <span className="w-keyrow-end">
@@ -700,7 +820,15 @@ function PaymentRow({ payment }: { payment: KeyPaymentView }) {
 // ── Making keys ─────────────────────────────────────────────────────────────────────────────
 
 /** The sheet both "new" flows open in, over the Keys list. */
-function KeySheet({ label, busy, children }: { label: string; busy: boolean; children: ReactNode }) {
+function KeySheet({
+  label,
+  busy,
+  children,
+}: {
+  label: string
+  busy: boolean
+  children: ReactNode
+}) {
   const router = useRouter()
   const [closing, setClosing] = useState(false)
   const close = useCallback(() => {
@@ -723,8 +851,19 @@ function KeySheet({ label, busy, children }: { label: string; busy: boolean; chi
       <div aria-hidden="true" inert>
         <KeysScreen />
       </div>
-      <button type="button" tabIndex={-1} aria-label="Close" className={`w-sheet-scrim${closing ? ' w-sheet-out' : ''}`} onClick={close} />
-      <div role="dialog" aria-modal="true" aria-label={label} className={`w-sheet${closing ? ' w-sheet-out' : ''}`}>
+      <button
+        type="button"
+        tabIndex={-1}
+        aria-label="Close"
+        className={`w-sheet-scrim${closing ? ' w-sheet-out' : ''}`}
+        onClick={close}
+      />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={label}
+        className={`w-sheet${closing ? ' w-sheet-out' : ''}`}
+      >
         <button type="button" className="w-sheet-grab" aria-label="Close" onClick={close} />
         <Fit>{children}</Fit>
       </div>
@@ -746,6 +885,7 @@ function Choice<T extends string | number>({
   return (
     <div className="w-choice" role="radiogroup" aria-label={label}>
       {options.map((option) => (
+        // biome-ignore lint/a11y/useSemanticElements: a pill in a styled one-of group; an <input type="radio"> can't take this shape
         <button
           key={String(option.value)}
           type="button"
@@ -761,7 +901,15 @@ function Choice<T extends string | number>({
   )
 }
 
-function Money({ value, onChange, label }: { value: string; onChange: (value: string) => void; label: string }) {
+function Money({
+  value,
+  onChange,
+  label,
+}: {
+  value: string
+  onChange: (value: string) => void
+  label: string
+}) {
   return (
     <label className="w-moneyin">
       <span>$</span>
@@ -769,7 +917,9 @@ function Money({ value, onChange, label }: { value: string; onChange: (value: st
         inputMode="decimal"
         aria-label={label}
         value={value}
-        onChange={(e) => onChange(e.target.value.replace(/[^\d.]/g, '').replace(/^(\d*\.\d{0,2}).*$/, '$1'))}
+        onChange={(e) =>
+          onChange(e.target.value.replace(/[^\d.]/g, '').replace(/^(\d*\.\d{0,2}).*$/, '$1'))
+        }
       />
     </label>
   )
@@ -800,7 +950,10 @@ export function AgentSheet() {
   }, [keys])
 
   const payees = useMemo(() => {
-    const found = listed.split(/[\s,]+/).filter((a) => isAddress(a)).map((a) => getAddress(a) as Address)
+    const found = listed
+      .split(/[\s,]+/)
+      .filter((a) => isAddress(a))
+      .map((a) => getAddress(a) as Address)
     return [...new Set(found)]
   }, [listed])
   const askNever = Number(approveAbove) >= Number(perPayment)
@@ -841,7 +994,10 @@ export function AgentSheet() {
     }
   }
 
-  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], { day: 'numeric', month: 'long' })
+  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], {
+    day: 'numeric',
+    month: 'long',
+  })
   const command =
     made && keys.connect
       ? `claude mcp add --transport http ren ${keys.connect.mcp_url} --header "Authorization: Bearer ${made.token}"`
@@ -863,7 +1019,12 @@ export function AgentSheet() {
             </div>
             <label className="w-field">
               <span>Name</span>
-              <input value={label} maxLength={40} placeholder="Research agent" onChange={(e) => setLabel(e.target.value)} />
+              <input
+                value={label}
+                maxLength={40}
+                placeholder="Research agent"
+                onChange={(e) => setLabel(e.target.value)}
+              />
             </label>
             <div className="w-field">
               <span>It can spend</span>
@@ -887,11 +1048,19 @@ export function AgentSheet() {
             <div className="w-field">
               <span>Ask me first above</span>
               <div className="w-field-row">
-                <Money value={askNever ? perPayment : approveAbove} onChange={setApproveAbove} label="Ask above" />
+                <Money
+                  value={askNever ? perPayment : approveAbove}
+                  onChange={setApproveAbove}
+                  label="Ask above"
+                />
                 <Choice
                   label="Asking"
                   value={askNever ? 'never' : 'ask'}
-                  onChange={(v) => setApproveAbove(v === 'never' ? perPayment : String(Math.min(1, Number(perPayment))))}
+                  onChange={(v) =>
+                    setApproveAbove(
+                      v === 'never' ? perPayment : String(Math.min(1, Number(perPayment))),
+                    )
+                  }
                   options={[
                     { value: 'ask', label: 'Ask' },
                     { value: 'never', label: 'Never ask' },
@@ -934,7 +1103,13 @@ export function AgentSheet() {
                 />
               ) : null}
             </div>
-            <button type="button" className="pill pill-block" data-tone="ink" disabled={Boolean(setupProblem)} onClick={() => setStep('review')}>
+            <button
+              type="button"
+              className="pill pill-block"
+              data-tone="ink"
+              disabled={Boolean(setupProblem)}
+              onClick={() => setStep('review')}
+            >
               <span className="pill-label">{setupProblem ?? 'Review'}</span>
               <span className="pill-cap">
                 <Icon name="arrow" size={18} />
@@ -946,10 +1121,18 @@ export function AgentSheet() {
         {step === 'review' ? (
           <div>
             <div className="w-sheet-top">
-              <button type="button" className="round" aria-label="Change it" disabled={busy} onClick={() => setStep('setup')}>
+              <button
+                type="button"
+                className="round"
+                aria-label="Change it"
+                disabled={busy}
+                onClick={() => setStep('setup')}
+              >
                 <Icon name="back" size={20} />
               </button>
-              <strong className="w-sheet-title">{busy ? 'Making the key' : 'Check and create'}</strong>
+              <strong className="w-sheet-title">
+                {busy ? 'Making the key' : 'Check and create'}
+              </strong>
             </div>
             <div className="w-sheet-sum">
               <strong>{label.trim()}</strong>
@@ -958,9 +1141,23 @@ export function AgentSheet() {
               </span>
             </div>
             <dl className="w-facts">
-              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} icon="lock" hint={`Ends ${ends}. Not even Ren can raise it.`} />
-              <Fact label="Ren checks" value={`${dollars(perPayment)} a payment at most`} hint={askNever ? 'Never asks you first' : `Asks you above ${dollars(approveAbove)}`} />
-              <Fact label="May pay" value={onlyListed ? `${payees.length} wallet${payees.length === 1 ? '' : 's'}` : 'Anyone'} />
+              <Fact
+                label={`${chainName} enforces`}
+                value={`${dollars(limit)} a ${period}, dollars only`}
+                icon="lock"
+                hint={`Ends ${ends}. Not even Ren can raise it.`}
+              />
+              <Fact
+                label="Ren checks"
+                value={`${dollars(perPayment)} a payment at most`}
+                hint={askNever ? 'Never asks you first' : `Asks you above ${dollars(approveAbove)}`}
+              />
+              <Fact
+                label="May pay"
+                value={
+                  onlyListed ? `${payees.length} wallet${payees.length === 1 ? '' : 's'}` : 'Anyone'
+                }
+              />
               <Fact label="Fee" value="$0.00, Ren covers it" />
             </dl>
             {problem ? (
@@ -969,9 +1166,16 @@ export function AgentSheet() {
                 {problem}
               </p>
             ) : null}
-            <SlideToSend label={problem ? 'Slide to try again' : 'Slide to create the key'} busy={busy} busyLabel="Creating" onSend={() => void go()} />
+            <SlideToSend
+              label={problem ? 'Slide to try again' : 'Slide to create the key'}
+              busy={busy}
+              busyLabel="Creating"
+              onSend={() => void go()}
+            />
             <p className="w-fine w-center">
-              {sessionCovers(0n) ? 'Your wallet is open, so this one needs no passkey.' : 'Your passkey approves it.'}
+              {sessionCovers(0n)
+                ? 'Your wallet is open, so this one needs no passkey.'
+                : 'Your passkey approves it.'}
             </p>
           </div>
         ) : null}
@@ -984,7 +1188,10 @@ export function AgentSheet() {
               <Art name="sparkle-8" size={30} className="w-spark w-spark-2" />
             </div>
             <h2>{label.trim()} is ready</h2>
-            <p>Its key is on {chainName}. Give your agent this token: it’s shown once, so copy it now.</p>
+            <p>
+              Its key is on {chainName}. Give your agent this token: it’s shown once, so copy it
+              now.
+            </p>
             <div className="w-snippet w-snippet-token">
               <code>{made.token}</code>
               <CopyButton text={made.token} label="Copy" />
@@ -1002,7 +1209,12 @@ export function AgentSheet() {
               <Icon name="bolt" size={16} />
               On {chainName} in {(made.ms / 1000).toFixed(2)} s
             </span>
-            <button type="button" className="pill pill-block" data-tone="ink" onClick={() => router.push(`/wallet/keys/${made.id}`)}>
+            <button
+              type="button"
+              className="pill pill-block"
+              data-tone="ink"
+              onClick={() => router.push(`/wallet/keys/${made.id}`)}
+            >
               <span className="pill-label">Done</span>
               <span className="pill-cap">
                 <Icon name="check" size={18} />
@@ -1046,7 +1258,10 @@ export function AllowanceSheet() {
       setBusy(false)
     }
   }
-  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], { day: 'numeric', month: 'long' })
+  const ends = new Date(Date.now() + days * 86_400_000).toLocaleDateString([], {
+    day: 'numeric',
+    month: 'long',
+  })
   const from = profile?.name && !profile.name.startsWith('0x') ? profile.name : 'Someone'
 
   return (
@@ -1065,7 +1280,12 @@ export function AllowanceSheet() {
             </div>
             <label className="w-field">
               <span>Who it’s for</span>
-              <input value={label} maxLength={40} placeholder="Mum" onChange={(e) => setLabel(e.target.value)} />
+              <input
+                value={label}
+                maxLength={40}
+                placeholder="Mum"
+                onChange={(e) => setLabel(e.target.value)}
+              />
             </label>
             <div className="w-field">
               <span>They can spend</span>
@@ -1095,7 +1315,13 @@ export function AllowanceSheet() {
                 ]}
               />
             </div>
-            <button type="button" className="pill pill-block" data-tone="ink" disabled={Boolean(setupProblem)} onClick={() => setStep('review')}>
+            <button
+              type="button"
+              className="pill pill-block"
+              data-tone="ink"
+              disabled={Boolean(setupProblem)}
+              onClick={() => setStep('review')}
+            >
               <span className="pill-label">{setupProblem ?? 'Review'}</span>
               <span className="pill-cap">
                 <Icon name="arrow" size={18} />
@@ -1107,7 +1333,13 @@ export function AllowanceSheet() {
         {step === 'review' ? (
           <div>
             <div className="w-sheet-top">
-              <button type="button" className="round" aria-label="Change it" disabled={busy} onClick={() => setStep('setup')}>
+              <button
+                type="button"
+                className="round"
+                aria-label="Change it"
+                disabled={busy}
+                onClick={() => setStep('setup')}
+              >
                 <Icon name="back" size={20} />
               </button>
               <strong className="w-sheet-title">Check and make the link</strong>
@@ -1121,9 +1353,21 @@ export function AllowanceSheet() {
               </span>
             </div>
             <dl className="w-facts">
-              <Fact label="How" value="A link you send them" hint="They open it in Ren and accept on their phone" />
-              <Fact label="Then" value="You switch it on" hint="With your passkey, once they’ve accepted" />
-              <Fact label={`${chainName} enforces`} value={`${dollars(limit)} a ${period}, dollars only`} icon="lock" />
+              <Fact
+                label="How"
+                value="A link you send them"
+                hint="They open it in Ren and accept on their phone"
+              />
+              <Fact
+                label="Then"
+                value="You switch it on"
+                hint="With your passkey, once they’ve accepted"
+              />
+              <Fact
+                label={`${chainName} enforces`}
+                value={`${dollars(limit)} a ${period}, dollars only`}
+                icon="lock"
+              />
             </dl>
             {problem ? (
               <p className="w-sheet-problem" role="alert">
@@ -1131,7 +1375,12 @@ export function AllowanceSheet() {
                 {problem}
               </p>
             ) : null}
-            <SlideToSend label="Slide to make the link" busy={busy} busyLabel="Making" onSend={() => void go()} />
+            <SlideToSend
+              label="Slide to make the link"
+              busy={busy}
+              busyLabel="Making"
+              onSend={() => void go()}
+            />
           </div>
         ) : null}
 
@@ -1142,8 +1391,8 @@ export function AllowanceSheet() {
             </div>
             <h2>Send it to {label.trim()}</h2>
             <p>
-              When they open it in Ren and accept, you’ll switch it on here. The link works once, for seven
-              days.
+              When they open it in Ren and accept, you’ll switch it on here. The link works once,
+              for seven days.
             </p>
             <ShareButton
               title="An allowance on Ren"
@@ -1155,7 +1404,11 @@ export function AllowanceSheet() {
               <code>{made.link}</code>
               <CopyButton text={made.link} label="Copy" />
             </div>
-            <button type="button" className="w-textbutton" onClick={() => router.push(`/wallet/keys/${made.id}`)}>
+            <button
+              type="button"
+              className="w-textbutton"
+              onClick={() => router.push(`/wallet/keys/${made.id}`)}
+            >
               Done
             </button>
           </div>

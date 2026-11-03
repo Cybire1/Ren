@@ -59,7 +59,10 @@ export function AcceptAllowance({ code }: { code: string }) {
     setBusy(true)
     setProblem(null)
     try {
-      await keys.claim(code, profile?.name && !profile.name.startsWith('0x') ? profile.name : undefined)
+      await keys.claim(
+        code,
+        profile?.name && !profile.name.startsWith('0x') ? profile.name : undefined,
+      )
       setAccepted(true)
     } catch (error) {
       const message = error instanceof Error ? error.message : 'It didn’t go through.'
@@ -91,11 +94,16 @@ export function AcceptAllowance({ code }: { code: string }) {
             </span>
             <p className="w-allowhero-from">{giver(invite.from)} gives you</p>
             <p className="w-private-amount">
-              <span className="w-balance-whole">{formatUsd(BigInt(Math.round(Number(invite.limit) * 1e6)))}</span>
+              <span className="w-balance-whole">
+                {formatUsd(BigInt(Math.round(Number(invite.limit) * 1e6)))}
+              </span>
             </p>
             <p className="w-allowhero-sub">
               a {invite.period}, from their dollars, until{' '}
-              {new Date(invite.expires_at).toLocaleDateString([], { day: 'numeric', month: 'long' })}
+              {new Date(invite.expires_at).toLocaleDateString([], {
+                day: 'numeric',
+                month: 'long',
+              })}
             </p>
             <Art name="reni-wave" size={104} className="w-private-reni" />
           </section>
@@ -104,8 +112,9 @@ export function AcceptAllowance({ code }: { code: string }) {
             <div className="w-keycall">
               <strong>It’s on</strong>
               <span>
-                You can spend up to {formatUsd(held.remaining)} {held.period === 'week' ? 'this week' : 'today'}. Pick
-                it under “From” when you send or pay.
+                You can spend up to {formatUsd(held.remaining)}{' '}
+                {held.period === 'week' ? 'this week' : 'today'}. Pick it under “From” when you send
+                or pay.
               </span>
               <Link href="/wallet" className="pill pill-block" data-tone="ink">
                 <span className="pill-label">Go to your wallet</span>
@@ -118,7 +127,8 @@ export function AcceptAllowance({ code }: { code: string }) {
             <div className="w-keycall">
               <strong>Accepted</strong>
               <span>
-                {giver(invite.from)} switches it on with their passkey. You’ll see it on Home as soon as they do.
+                {giver(invite.from)} switches it on with their passkey. You’ll see it on Home as
+                soon as they do.
               </span>
             </div>
           ) : invite.claimed ? (
@@ -135,8 +145,18 @@ export function AcceptAllowance({ code }: { code: string }) {
             <>
               <dl className="w-facts">
                 <Fact label="From" value={giver(invite.from)} />
-                <Fact label="You can spend" value={`${formatUsd(BigInt(Math.round(Number(invite.limit) * 1e6)))} a ${invite.period}`} icon="lock" hint={`${chainName} enforces it`} />
-                <Fact label="Your key" value="Made in this browser" icon="lock" hint="It never leaves it, and Ren never sees it" />
+                <Fact
+                  label="You can spend"
+                  value={`${formatUsd(BigInt(Math.round(Number(invite.limit) * 1e6)))} a ${invite.period}`}
+                  icon="lock"
+                  hint={`${chainName} enforces it`}
+                />
+                <Fact
+                  label="Your key"
+                  value="Made in this browser"
+                  icon="lock"
+                  hint="It never leaves it, and Ren never sees it"
+                />
               </dl>
               {problem ? (
                 <p className="w-sheet-problem" role="alert">
@@ -144,13 +164,21 @@ export function AcceptAllowance({ code }: { code: string }) {
                   {problem}
                 </p>
               ) : null}
-              <button type="button" className="pill pill-block" data-tone="ink" disabled={busy} onClick={() => void accept()}>
+              <button
+                type="button"
+                className="pill pill-block"
+                data-tone="ink"
+                disabled={busy}
+                onClick={() => void accept()}
+              >
                 <span className="pill-label">{busy ? 'Accepting…' : 'Accept'}</span>
                 <span className="pill-cap">
                   <Icon name="check" size={18} />
                 </span>
               </button>
-              <p className="w-fine w-center">Your passkey says it’s you. Nothing moves until they switch it on.</p>
+              <p className="w-fine w-center">
+                Your passkey says it’s you. Nothing moves until they switch it on.
+              </p>
             </>
           )}
         </>
@@ -175,9 +203,14 @@ export function AllowanceCards() {
 }
 
 function AllowanceCard({ allowance, giver }: { allowance: HeldAllowance; giver: string }) {
-  const share = allowance.limit > 0n ? Number((allowance.remaining * 1000n) / allowance.limit) / 10 : 0
+  const share =
+    allowance.limit > 0n ? Number((allowance.remaining * 1000n) / allowance.limit) / 10 : 0
   return (
-    <Link href={`/wallet/send?from=${allowance.id}`} className="w-allowcard" aria-label={`Allowance from ${giver}, ${formatUsd(allowance.remaining)} left`}>
+    <Link
+      href={`/wallet/send?from=${allowance.id}`}
+      className="w-allowcard"
+      aria-label={`Allowance from ${giver}, ${formatUsd(allowance.remaining)} left`}
+    >
       <span className="w-keybadge w-keybadge-allowance" aria-hidden="true">
         <Icon name="user" size={18} />
       </span>

@@ -2,8 +2,8 @@
 
 import type { PasskeyCredentialMetadata } from '@category-labs/mera'
 import type { NetworkId } from '@kova/monad'
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { getNetwork, getToken } from '@kova/tempo'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { type Address, getAddress, type Hex, isAddress, type LocalAccount } from 'viem'
 import { onTempo } from '@/lib/chain'
 import {
@@ -23,6 +23,7 @@ import {
   sendMoney,
   transfersAfter,
 } from '@/lib/wallet/chain'
+import { relayedClient } from '@/lib/wallet/chain-tempo'
 import {
   type DisplayCurrency,
   guessCurrency,
@@ -33,10 +34,9 @@ import {
 } from '@/lib/wallet/money'
 import { fetchNoteKey, noteKeys, openNote, publishNoteKey } from '@/lib/wallet/notes'
 import { endSession, sessionAccount, spend, startSession } from '@/lib/wallet/session'
-import { relayedClient } from '@/lib/wallet/chain-tempo'
 import { lockZone, type ZoneConfig } from '@/lib/wallet/zone'
-import { isZonePortal, type PrivateValue, usePrivate } from './private-state'
 import { type KeysValue, useKeys } from './keys-state'
+import { isZonePortal, type PrivateValue, usePrivate } from './private-state'
 
 /**
  * Kova Pay on the web: your wallet, from your passkey, the one the Kova app uses.
@@ -156,7 +156,13 @@ interface WalletValue {
   readNotes: () => Promise<void>
   payCheckout: (charge: ChargeToPay) => Promise<Moved>
   /** Dollars to Ren itself with a Ren memo: a cash-out to a bank (components/wallet/naira.tsx). */
-  sendToRen: (input: { to: Address; amount: bigint; memo: Hex; name: string; detail: string }) => Promise<Moved>
+  sendToRen: (input: {
+    to: Address
+    amount: bigint
+    memo: Hex
+    name: string
+    detail: string
+  }) => Promise<Moved>
   addTestDollars: () => Promise<bigint>
   /** Signs a message with this wallet, such as Kova's shop sign-in (EIP-4361). Moves no money. */
   signMessage: (message: string) => Promise<`0x${string}`>
@@ -540,7 +546,8 @@ export function WalletProvider({
         memo: input.memo,
         feePayer: true,
       })
-      if (receipt.status !== 'success') throw new Error('Tempo didn’t take it. Nothing left your wallet.')
+      if (receipt.status !== 'success')
+        throw new Error('Tempo didn’t take it. Nothing left your wallet.')
       const moved: Moved = {
         hash: receipt.transactionHash,
         ms: Math.round(performance.now() - started),

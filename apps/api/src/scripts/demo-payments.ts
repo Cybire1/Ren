@@ -28,7 +28,9 @@ async function main() {
   if (config.KOVA_NETWORK !== 'testnet') throw new Error('demo:payments is testnet only')
   const api = `http://localhost:${config.PORT}`
 
-  const merchant = await db.query.merchants.findFirst({ where: eq(schema.merchants.slug, 'demo-merchant') })
+  const merchant = await db.query.merchants.findFirst({
+    where: eq(schema.merchants.slug, 'demo-merchant'),
+  })
   if (!merchant) throw new Error('run `pnpm setup:dev` first')
 
   const count = Math.min(Number(process.argv[2] ?? 4), basket.length)
@@ -48,7 +50,9 @@ async function main() {
     await fund(api, customer.address)
     const checkout = await getCheckout(api, encodeId('paymentIntent', intent.id))
     const paid = await pay(api, checkout, customer)
-    console.log(`${reference.padEnd(24)} ${amount.padStart(6)}  ${paid.status} in ${paid.roundTripMs}ms`)
+    console.log(
+      `${reference.padEnd(24)} ${amount.padStart(6)}  ${paid.status} in ${paid.roundTripMs}ms`,
+    )
     await new Promise((r) => setTimeout(r, 600))
   }
   process.exit(0)

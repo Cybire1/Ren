@@ -1,7 +1,14 @@
 import { createHmac, randomBytes } from 'node:crypto'
 import { walletSignInMessage } from '@kova/tempo'
 import type { Context } from 'hono'
-import { type Address, getAddress, type Hex, isAddress, isAddressEqual, recoverMessageAddress } from 'viem'
+import {
+  type Address,
+  getAddress,
+  type Hex,
+  isAddress,
+  isAddressEqual,
+  recoverMessageAddress,
+} from 'viem'
 import { network } from '../chain.js'
 import { KovaError } from '../errors.js'
 import { keysSubkey, sameSecret } from '../secrets.js'
@@ -37,8 +44,13 @@ export async function signInWallet(input: {
   const issued = /^Issued: (.+)$/m.exec(input.message)?.[1]
   const nonce = /^Nonce: ([0-9a-f]{16,64})$/m.exec(input.message)?.[1]
   if (!issued || !nonce) throw new KovaError('invalid_request', 'That sign-in message isn’t Ren’s.')
-  const expected = walletSignInMessage({ address: getAddress(input.address), issuedAt: issued, nonce })
-  if (input.message !== expected) throw new KovaError('invalid_request', 'That sign-in message isn’t Ren’s.')
+  const expected = walletSignInMessage({
+    address: getAddress(input.address),
+    issuedAt: issued,
+    nonce,
+  })
+  if (input.message !== expected)
+    throw new KovaError('invalid_request', 'That sign-in message isn’t Ren’s.')
   const age = Date.now() - Date.parse(issued)
   if (!(age > -60_000 && age < MESSAGE_MAX_AGE_MS))
     throw new KovaError('invalid_request', 'That sign-in ran out. Try again.')
@@ -47,14 +59,20 @@ export async function signInWallet(input: {
   for (const [n, at] of usedNonces) if (now - at > MESSAGE_MAX_AGE_MS * 2) usedNonces.delete(n)
   if (usedNonces.has(nonce)) throw new KovaError('conflict', 'That sign-in was already used.')
 
-  const signer = await recoverMessageAddress({ message: input.message, signature: input.signature }).catch(() => null)
+  const signer = await recoverMessageAddress({
+    message: input.message,
+    signature: input.signature,
+  }).catch(() => null)
   if (!signer || !isAddressEqual(signer, input.address))
     throw new KovaError('forbidden', 'Only the wallet itself can sign in to its keys.')
   usedNonces.set(nonce, now)
 
   const expires = now + TOKEN_TTL_MS
   const address = getAddress(input.address)
-  return { token: `rw.${address}.${expires}.${mac(address, expires)}`, expiresAt: new Date(expires) }
+  return {
+    token: `rw.${address}.${expires}.${mac(address, expires)}`,
+    expiresAt: new Date(expires),
+  }
 }
 
 /** The wallet a request's token signs in, which must be `address` when the route names one. */

@@ -21,7 +21,9 @@ export function PrivateCard() {
       fill={colors.ink}
       radius={26}
       style={styles.wrap}
-      accessibilityLabel={shown ? `Private balance ${formatUsd(privacy.balance ?? 0n)}` : 'Private balance, hidden'}
+      accessibilityLabel={
+        shown ? `Private balance ${formatUsd(privacy.balance ?? 0n)}` : 'Private balance, hidden'
+      }
     >
       <View style={styles.row}>
         <View style={styles.lock}>
@@ -32,7 +34,11 @@ export function PrivateCard() {
             PRIVATE
           </Txt>
           <Txt weight="heavy" size={21} color={colors.white}>
-            {shown ? formatUsd(privacy.balance ?? 0n) : privacy.status === 'opening' ? 'Opening…' : 'Hidden'}
+            {shown
+              ? formatUsd(privacy.balance ?? 0n)
+              : privacy.status === 'opening'
+                ? 'Opening…'
+                : 'Hidden'}
           </Txt>
           <Txt size={13} color={colors.onInk} numberOfLines={1}>
             {shown
@@ -57,7 +63,14 @@ export function PrivateCard() {
 
 const styles = StyleSheet.create({
   wrap: { marginTop: 12 },
-  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingLeft: 14, paddingRight: 12 },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 12,
+    paddingLeft: 14,
+    paddingRight: 12,
+  },
   lock: {
     width: 42,
     height: 42,
@@ -70,5 +83,12 @@ const styles = StyleSheet.create({
   },
   kicker: { letterSpacing: 1.2 },
   reni: { marginVertical: -10, transform: [{ rotate: '-6deg' }] },
-  go: { width: 38, height: 38, borderRadius: 19, backgroundColor: colors.white, alignItems: 'center', justifyContent: 'center' },
+  go: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 })
