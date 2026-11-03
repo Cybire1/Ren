@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@noble/curves": "1.9.1",
-    "viem": "2.56.8"
+    "viem": "2.57.12"
   },
   "devDependencies": {
     "@types/node": "^22",

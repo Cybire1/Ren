@@ -11,6 +11,8 @@ const schema = z.object({
   /** Override the default public RPC (use a provider endpoint in production). */
   TEMPO_RPC_URL: z.string().url().optional(),
   MONAD_RPC_URL: z.string().url().optional(),
+  /** Ren's site: shown as the sponsor of the fees Ren pays, and used in links the API writes. */
+  KOVA_PUBLIC_WEB_URL: z.string().url().default('https://renpay.app'),
   /**
    * Kova's fee payer. On Tempo it co-signs the fee half of payments people sign (it never signs a
    * payment); on Monad it submits the authorizations people sign and pays the MON gas. Either way
