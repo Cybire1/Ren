@@ -11,9 +11,6 @@ import { Sticker, Txt } from './primitives'
  * Your private balance on Home (lib/private.ts): a dark card, so it reads as the place out of
  * sight. Money at rest is green across Ren and paying is watermelon; private is ink.
  */
-/** Green that glows on the private card's dark ground, in either look. */
-const glow = pair(palette.light.tealSoft, palette.dark.teal)
-
 export function PrivateCard() {
   const { privacy } = useWallet()
   if (!privacy.zone) return null
@@ -30,10 +27,10 @@ export function PrivateCard() {
     >
       <View style={styles.row}>
         <View style={styles.lock}>
-          <Icon name="lock" size={18} color={glow} />
+          <Icon name="lock" size={18} color={colors.glow} />
         </View>
         <View style={{ flex: 1 }}>
-          <Txt weight="heavy" size={11} color={glow} style={styles.kicker}>
+          <Txt weight="heavy" size={11} color={colors.glow} style={styles.kicker}>
             PRIVATE
           </Txt>
           <Txt weight="bold" size={17} color={colors.white}>

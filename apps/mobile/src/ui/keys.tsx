@@ -52,9 +52,6 @@ export function standing(key: KeyView): string {
 }
 
 /** Keys on Home: a payment an agent is waiting on comes first; otherwise who can spend. */
-/** The Keys card's sand disc, deepened in the dark. */
-const sand = pair('#FFF0B5', '#2A2512')
-
 export function KeysCard() {
   const { keys } = useWallet()
   if (!keys.available) return null
@@ -114,7 +111,7 @@ export function KeysCard() {
       style={{ marginTop: 12 }}
     >
       <View style={styles.cardRow}>
-        <View style={[styles.cardIcon, { backgroundColor: sand }]}>
+        <View style={[styles.cardIcon, { backgroundColor: colors.sand }]}>
           <Icon name="lock" size={18} />
         </View>
         <View style={{ flex: 1 }}>
@@ -249,7 +246,7 @@ export function Ask({ payment }: { payment: KeyPaymentView }) {
       <View style={{ padding: 14, gap: 12 }}>
         <View style={styles.askTop}>
           <View style={[styles.badge, { backgroundColor: colors.fill }]}>
-            <Icon name="terminal" size={18} color={colors.tealSoft} />
+            <Icon name="terminal" size={18} color={colors.glow} />
           </View>
           <View style={{ flex: 1 }}>
             <Txt weight="heavy" size={15}>
@@ -527,7 +524,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 2,
     borderColor: colors.line,
-    backgroundColor: '#FFF0B5',
+    backgroundColor: colors.sand,
     overflow: 'hidden',
   },
   heroLabel: { flexDirection: 'row', alignItems: 'center', gap: 6 },

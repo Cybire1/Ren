@@ -44,7 +44,7 @@ export function EntryRow({
       >
         {entry.zone ? (
           <View style={styles.lockBadge}>
-            <Icon name="lock" size={18} color={colors.tealSoft} />
+            <Icon name="lock" size={18} color={colors.glow} />
           </View>
         ) : entry.kind === 'paid' ? (
           <ShopBadge size={38} />

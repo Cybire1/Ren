@@ -55,8 +55,8 @@ export default function PrivateScreen() {
         <View style={styles.card}>
           <View style={styles.cardTop}>
             <View style={styles.label}>
-              <Icon name="lock" size={15} color={colors.tealSoft} />
-              <Txt weight="heavy" size={12} color={colors.tealSoft} style={{ letterSpacing: 1.2 }}>
+              <Icon name="lock" size={15} color={colors.glow} />
+              <Txt weight="heavy" size={12} color={colors.glow} style={{ letterSpacing: 1.2 }}>
                 PRIVATE BALANCE
               </Txt>
             </View>
@@ -70,13 +70,13 @@ export default function PrivateScreen() {
           </View>
           {ready ? (
             <View style={styles.amount}>
-              <Txt weight="semi" size={24} color={colors.tealSoft} style={{ marginTop: 6 }}>
+              <Txt weight="semi" size={24} color={colors.glow} style={{ marginTop: 6 }}>
                 $
               </Txt>
               <Txt weight="heavy" size={46} color={colors.white} exact>
                 {usd.slice(1, usd.lastIndexOf('.'))}
               </Txt>
-              <Txt weight="semi" size={22} color={colors.tealSoft} style={{ marginTop: 6 }}>
+              <Txt weight="semi" size={22} color={colors.glow} style={{ marginTop: 6 }}>
                 {usd.slice(usd.lastIndexOf('.'))}
               </Txt>
             </View>
@@ -231,7 +231,7 @@ function Fact({ icon, title, text }: { icon: IconName; title: string; text: stri
   return (
     <View style={styles.fact}>
       <View style={styles.factIcon}>
-        <Icon name={icon} size={18} color={colors.tealSoft} />
+        <Icon name={icon} size={18} color={colors.glow} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Txt weight="heavy" size={15}>
@@ -271,7 +271,7 @@ function Row({ entry, last }: { entry: PrivateEntry; last: boolean }) {
           <Icon
             name={entry.kind === 'out' ? 'up' : entry.kind === 'in' ? 'down' : 'lock'}
             size={18}
-            color={colors.tealSoft}
+            color={colors.glow}
           />
         </View>
       )}

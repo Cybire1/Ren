@@ -65,6 +65,12 @@ const light = {
   danger: '#D2334B',
   /** White that lifts off a card: fields, the chosen tile, a filled stamp. Grey in the dark. */
   raised: '#FFFFFF',
+  /** The money card's green: Ren's green, and a deep green in the dark so its figures stay crisp. */
+  money: '#00A37A',
+  /** Light green on a dark fill (the private card, key badges): mint by day, Ren's green by night. */
+  glow: '#A6E8D2',
+  /** The Keys sand: the colour of who-can-spend, deepened in the dark. */
+  sand: '#FFF0B5',
   /** A faint ink wash: round buttons, pressed rows. */
   wash: 'rgba(16,35,63,0.07)',
   /** Hairlines and dividers. */
@@ -105,6 +111,9 @@ const dark: Record<Name, string> = {
   positive: '#3EC79B',
   danger: '#FF6B7D',
   raised: '#262626',
+  money: '#0E5C47',
+  glow: '#20B487',
+  sand: '#2A2512',
   wash: 'rgba(230,238,233,0.1)',
   rule: 'rgba(230,238,233,0.14)',
 }

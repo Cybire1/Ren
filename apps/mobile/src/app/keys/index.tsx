@@ -236,7 +236,7 @@ function Fact({ icon, title, text }: { icon: IconName; title: string; text: stri
   return (
     <View style={styles.fact}>
       <View style={styles.factIcon}>
-        <Icon name={icon} size={18} color={colors.tealSoft} />
+        <Icon name={icon} size={18} color={colors.glow} />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
         <Txt weight="heavy" size={15}>
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     borderWidth: 2,
     borderColor: colors.line,
-    backgroundColor: '#FFF0B5',
+    backgroundColor: colors.sand,
     alignItems: 'center',
     justifyContent: 'center',
   },

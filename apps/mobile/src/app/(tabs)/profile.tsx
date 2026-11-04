@@ -81,7 +81,7 @@ export default function Profile() {
       }}
     >
       <Txt weight="bold" size={32} style={{ letterSpacing: -1 }}>
-        Profile
+        You
       </Txt>
 
       {/* The pass */}
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     borderWidth: 2,
     borderColor: colors.line,
-    backgroundColor: colors.teal,
+    backgroundColor: colors.money,
     padding: 16,
   },
   moneyTop: { flexDirection: 'row', alignItems: 'center', gap: 12 },

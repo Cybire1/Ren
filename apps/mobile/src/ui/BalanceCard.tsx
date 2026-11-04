@@ -16,9 +16,6 @@ import { Sticker, Txt } from './primitives'
 /** Money that has only just arrived, shown on the card for a moment: "+$12.00 from Ade, just now". */
 export type Fresh = { id: string; line: string }
 
-/** The balance card's green: Ren's money green, and a deep green in the dark so its figures stay crisp. */
-const money = pair('#00A37A', '#0E5C47')
-
 /** The amount's size: as large as the figures allow on a phone, smaller as the balance grows. */
 const amountSize = (figures: number) =>
   figures <= 4 ? 54 : figures <= 6 ? 46 : figures <= 8 ? 40 : 34
@@ -48,7 +45,7 @@ export function BalanceCard({
     balance !== null && currency !== 'USD' ? formatLocal(baseToNumber(balance), currency) : null
 
   return (
-    <Sticker fill={money} radius={30} style={styles.frame} innerStyle={styles.card}>
+    <Sticker fill={colors.money} radius={30} style={styles.frame} innerStyle={styles.card}>
       <Waves />
       <View style={styles.coins} pointerEvents="none">
         <Bob distance={5} duration={5000} delay={900} style={styles.coinBack}>

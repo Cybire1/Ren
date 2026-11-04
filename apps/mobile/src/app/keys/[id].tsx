@@ -109,8 +109,8 @@ export default function KeyScreen() {
         >
           <View style={styles.heroTop}>
             <View style={styles.label}>
-              <Icon name={kind.icon} size={15} color={colors.tealSoft} />
-              <Txt weight="heavy" size={12} color={colors.tealSoft} style={{ letterSpacing: 1.2 }}>
+              <Icon name={kind.icon} size={15} color={colors.glow} />
+              <Txt weight="heavy" size={12} color={colors.glow} style={{ letterSpacing: 1.2 }}>
                 {(mine ? kind.noun : `From ${shortAddress(key.owner)}`).toUpperCase()}
               </Txt>
             </View>
@@ -134,13 +134,13 @@ export default function KeyScreen() {
             </View>
           </View>
           <View style={styles.amount}>
-            <Txt weight="semi" size={24} color={colors.tealSoft} style={{ marginTop: 6 }}>
+            <Txt weight="semi" size={24} color={colors.glow} style={{ marginTop: 6 }}>
               $
             </Txt>
             <Txt weight="heavy" size={46} color={colors.white} exact>
               {shown.slice(1, shown.indexOf('.'))}
             </Txt>
-            <Txt weight="semi" size={22} color={colors.tealSoft} style={{ marginTop: 6 }}>
+            <Txt weight="semi" size={22} color={colors.glow} style={{ marginTop: 6 }}>
               {shown.slice(shown.indexOf('.'))}
             </Txt>
           </View>
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     borderWidth: 2,
     borderColor: colors.line,
-    backgroundColor: '#FFF0B5',
+    backgroundColor: colors.sand,
   },
   facts: {
     marginTop: 16,
