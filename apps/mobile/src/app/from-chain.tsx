@@ -1,9 +1,9 @@
 import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { useEffect, useState } from 'react'
-import { Pressable, ScrollView, Share, StyleSheet, View } from 'react-native'
+import { type ColorValue, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
-import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
+import { FadeIn, FadeInDown } from 'react-native-reanimated'
 import {
   type ChainDeposit,
   type DepositSources,
@@ -11,15 +11,16 @@ import {
   depositSources,
   depositsTo,
 } from '@/lib/chain'
-import { colors, fonts } from '@/lib/theme'
+import { colors, fonts, palette } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
+import Animated from '@/ui/animated'
 import { Flyer } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
 import { Header, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /** Each kind of chain, drawn as a coloured disc with its mark, so it reads at a glance. */
-const LOOK: Record<string, { mark: string; fill: string; ink: string }> = {
+const LOOK: Record<string, { mark: string; fill: ColorValue; ink: ColorValue }> = {
   evm: { mark: 'Ξ', fill: '#8FA2E8', ink: colors.ink },
   sol: { mark: '◎', fill: '#B7A3EE', ink: colors.ink },
   tron: { mark: 'T', fill: '#E89A8F', ink: colors.ink },
@@ -187,8 +188,8 @@ export default function FromChain() {
                   <QRCode
                     value={address}
                     size={176}
-                    color={colors.ink}
-                    backgroundColor={colors.surface}
+                    color={palette.light.ink}
+                    backgroundColor="#FFFFFF"
                     ecl="M"
                   />
                 </View>
@@ -207,7 +208,7 @@ export default function FromChain() {
                       setCopied(true)
                       setTimeout(() => setCopied(false), 1600)
                     }}
-                    style={[styles.action, { backgroundColor: colors.ink }]}
+                    style={[styles.action, { backgroundColor: colors.fill }]}
                   >
                     <Icon name={copied ? 'check' : 'copy'} size={18} color={colors.white} />
                     <Txt weight="semi" size={15} color={colors.white}>
@@ -318,16 +319,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
   },
-  sourceOn: { backgroundColor: colors.ink },
+  sourceOn: { backgroundColor: colors.chosen },
   disc: {
     width: 38,
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -347,7 +348,7 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -356,7 +357,7 @@ const styles = StyleSheet.create({
   list: {
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     overflow: 'hidden',
   },

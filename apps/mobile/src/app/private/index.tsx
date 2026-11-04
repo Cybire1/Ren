@@ -1,6 +1,6 @@
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { ScrollView, StyleSheet, View } from 'react-native'
+import { type ColorValue, ScrollView, StyleSheet, View } from 'react-native'
 import { chainName, isTestnet } from '@/lib/config'
 import { formatUsd } from '@/lib/money'
 import type { PrivateEntry } from '@/lib/private'
@@ -191,14 +191,14 @@ function Action({
   sub,
   onPress,
   fill = colors.surface,
-  disc = colors.ink,
+  disc = colors.fill,
 }: {
   icon: IconName
   label: string
   sub: string
   onPress: () => void
-  fill?: string
-  disc?: string
+  fill?: ColorValue
+  disc?: ColorValue
 }) {
   return (
     <Sticker
@@ -306,8 +306,8 @@ const styles = StyleSheet.create({
     minHeight: 178,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.ink,
+    borderColor: colors.line,
+    backgroundColor: colors.fill,
     overflow: 'hidden',
   },
   cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -342,21 +342,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
   },
   factIcon: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },
   list: {
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.card,
     paddingHorizontal: 14,
   },
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },

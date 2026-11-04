@@ -34,7 +34,7 @@ const styles = StyleSheet.create({
   paper: {
     transform: [{ rotate: '-1.5deg' }],
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     borderRadius: 18,
     backgroundColor: '#F6E7C8',
     paddingHorizontal: 18,
@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     height: 26,
     paddingHorizontal: 10,
     borderRadius: 13,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
   },
   text: { letterSpacing: -0.4, lineHeight: 28 },
 })

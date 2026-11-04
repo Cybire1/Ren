@@ -253,7 +253,7 @@ export default function Till() {
             void Haptics.selectionAsync()
             setPicking((p) => !p)
           }}
-          style={[styles.currency, picking && { backgroundColor: colors.ink }]}
+          style={[styles.currency, picking && { backgroundColor: colors.fill }]}
         >
           <Txt weight="bold" size={15} color={picking ? colors.white : colors.ink}>
             {currencyInfo[shop.currency].symbol.trim()} {shop.currency}
@@ -758,7 +758,7 @@ function ItemsPanel({
               </View>
               {item.sold_out || (item.stock !== null && item.stock <= 5) ? (
                 <View
-                  style={[styles.stockTag, item.sold_out && { backgroundColor: colors.ink }]}
+                  style={[styles.stockTag, item.sold_out && { backgroundColor: colors.fill }]}
                   pointerEvents="none"
                 >
                   <Txt weight="bold" size={11} color={colors.white}>
@@ -1114,17 +1114,17 @@ function NotInCatalogue({
 }
 
 const styles = StyleSheet.create({
-  cart: { backgroundColor: colors.surface, borderLeftWidth: 2, borderLeftColor: colors.ink },
+  cart: { backgroundColor: colors.surface, borderLeftWidth: 2, borderLeftColor: colors.line },
   shelf: {
     height: 38,
     paddingHorizontal: 16,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     justifyContent: 'center',
   },
-  shelfOn: { backgroundColor: colors.ink },
+  shelfOn: { backgroundColor: colors.chosen },
   stockTag: {
     position: 'absolute',
     left: 14,
@@ -1155,7 +1155,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingTop: 14,
     borderTopWidth: 2,
-    borderTopColor: colors.ink,
+    borderTopColor: colors.line,
     gap: 10,
   },
   cartTotal: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' },
@@ -1172,7 +1172,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1187,7 +1187,7 @@ const styles = StyleSheet.create({
     padding: 6,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
   },
   currencyItem: {
@@ -1204,7 +1204,7 @@ const styles = StyleSheet.create({
     padding: 4,
     borderRadius: 26,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
   },
   mode: {
@@ -1216,7 +1216,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 6,
   },
-  modeOn: { backgroundColor: colors.ink },
+  modeOn: { backgroundColor: colors.chosen },
   modeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: colors.coral, marginLeft: 2 },
   entry: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 24, gap: 4 },
   big: { letterSpacing: -3 },
@@ -1253,7 +1253,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     borderRadius: 23,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1273,13 +1273,13 @@ const styles = StyleSheet.create({
   tile: {
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     padding: 6,
     paddingBottom: 10,
     gap: 4,
   },
-  tileIn: { backgroundColor: colors.white },
+  tileIn: { backgroundColor: colors.raised },
   tileName: { marginTop: 4, minHeight: 34, lineHeight: 17 },
   qty: {
     position: 'absolute',
@@ -1291,7 +1291,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: colors.coral,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1304,7 +1304,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1314,8 +1314,8 @@ const styles = StyleSheet.create({
     marginTop: 12,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.ink,
+    borderColor: colors.line,
+    backgroundColor: colors.fill,
     overflow: 'hidden',
   },
   beam: {
@@ -1364,14 +1364,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     letterSpacing: 1,
   },
   typeAdd: {
     height: 46,
     paddingHorizontal: 18,
     borderRadius: 23,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     justifyContent: 'center',
   },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 7 },

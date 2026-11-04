@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from 'react'
-import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
-import Animated, {
+import { type ColorValue, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
+import {
   Easing,
   interpolateColor,
   useAnimatedStyle,
@@ -14,6 +14,8 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
+import Animated from '@/ui/animated'
+import { plain, useLook } from './animated'
 import { Coin, Flake, Sparkle } from './art'
 import { WAVES } from './Logo'
 
@@ -139,7 +141,7 @@ export function Ping({
   delay = 0,
 }: {
   size: number
-  color?: string
+  color?: ColorValue
   delay?: number
 }) {
   const reduced = useReducedMotion()
@@ -353,7 +355,7 @@ function Falling({
 export function Burst({
   spots,
 }: {
-  spots: { x: number; y: number; size: number; fill: string; delay: number }[]
+  spots: { x: number; y: number; size: number; fill: ColorValue; delay: number }[]
 }) {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
@@ -406,7 +408,7 @@ export function PulseWaves({
   strokeWidth = 12,
 }: {
   size: number
-  color?: string
+  color?: ColorValue
   strokeWidth?: number
 }) {
   return (
@@ -428,7 +430,7 @@ function Wave({
   d: string
   order: number
   size: number
-  color: string
+  color: ColorValue
   strokeWidth: number
 }) {
   const reduced = useReducedMotion()
@@ -516,7 +518,7 @@ export function Landing({
   active: boolean
   delay?: number
   /** The colour the glow fades to: the ground the row sits on. */
-  rest?: string
+  rest?: ColorValue
   style?: StyleProp<ViewStyle>
 }) {
   const reduced = useReducedMotion()
@@ -536,10 +538,14 @@ export function Landing({
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+  // Reanimated blends plain colours only: the two ends as they are in this appearance.
+  const look = useLook()
+  const from = plain(rest, look) as string
+  const to = plain(colors.tealSoft, look) as string
   const anim = useAnimatedStyle(() => ({
     opacity: t.value,
     transform: [{ translateY: (1 - t.value) * -16 }, { scale: 0.97 + 0.03 * t.value }],
-    backgroundColor: interpolateColor(glow.value, [0, 1], [rest, colors.tealSoft]),
+    backgroundColor: interpolateColor(glow.value, [0, 1], [from, to]),
   }))
   return <Animated.View style={[anim, style]}>{children}</Animated.View>
 }

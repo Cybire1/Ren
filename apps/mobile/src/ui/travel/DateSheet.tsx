@@ -116,7 +116,7 @@ export function DateSheet({
                   onOneWay(o.v)
                   if (o.v) setB(null)
                 }}
-                style={[styles.toggleItem, single === o.v && { backgroundColor: colors.ink }]}
+                style={[styles.toggleItem, single === o.v && { backgroundColor: colors.fill }]}
               >
                 <Txt weight="semi" size={13} color={single === o.v ? colors.white : colors.ink}>
                   {o.label}
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     gap: 2,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
   },
   toggleItem: { height: 32, paddingHorizontal: 12, borderRadius: 16, justifyContent: 'center' },
@@ -229,5 +229,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dayOn: { backgroundColor: colors.ink },
+  dayOn: { backgroundColor: colors.chosen },
 })

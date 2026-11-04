@@ -4,7 +4,7 @@
  * design puts it, and frost with a lock when the card is frozen. Monad builds only (lib/card.ts
  * `cardsLive`): the rendered faces still carry Kova's wordmark and Kovi, and need rendering again.
  */
-import { Image, Pressable, ScrollView, View } from 'react-native'
+import { type ColorValue, Image, Pressable, ScrollView, View } from 'react-native'
 import { colors } from '@/lib/theme'
 import faces from '../../assets/cards/faces.json'
 import { Icon } from './Icon'
@@ -38,7 +38,7 @@ type Slot = {
   h: number
   size: number
   weight: string
-  color: string
+  color: ColorValue
   letterSpacing: number
 }
 type Face = { w: number; h: number; name: Slot | null }
@@ -107,7 +107,7 @@ export function CardFace({
               flexDirection: 'row',
               alignItems: 'center',
               gap: 8,
-              backgroundColor: colors.ink,
+              backgroundColor: colors.fill,
               borderRadius: 999,
               paddingHorizontal: 16,
               paddingVertical: 8,

@@ -297,7 +297,7 @@ export default function ItemEditor() {
                             )
                           setCurrency(c)
                         }}
-                        style={[styles.curItem, on && { backgroundColor: colors.ink }]}
+                        style={[styles.curItem, on && { backgroundColor: colors.fill }]}
                       >
                         <Txt weight="semi" size={14} color={on ? colors.white : colors.ink}>
                           {c}
@@ -487,7 +487,7 @@ export default function ItemEditor() {
                     await refresh().catch(() => {})
                     router.back()
                   }}
-                  style={[styles.twinButton, { backgroundColor: colors.ink }]}
+                  style={[styles.twinButton, { backgroundColor: colors.fill }]}
                 >
                   <Txt weight="semi" size={14} color={colors.white}>
                     {barcode && !twin.barcode
@@ -627,7 +627,7 @@ const styles = StyleSheet.create({
     height: 132,
     borderRadius: 32,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'center',
@@ -645,7 +645,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 21,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
@@ -656,7 +656,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     paddingHorizontal: 18,
     fontFamily: fonts.medium,
@@ -670,7 +670,7 @@ const styles = StyleSheet.create({
     gap: 2,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
   },
   curItem: { height: 44, paddingHorizontal: 12, borderRadius: 19, justifyContent: 'center' },
@@ -681,7 +681,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     borderStyle: 'dashed',
     flexDirection: 'row',
     alignItems: 'center',
@@ -702,7 +702,7 @@ const styles = StyleSheet.create({
     marginTop: 22,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     paddingHorizontal: 14,
   },
@@ -712,7 +712,7 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     padding: 16,
     backgroundColor: colors.surface,
   },
@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -731,7 +731,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.tealSoft,
   },
   twinButton: {
@@ -740,7 +740,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',

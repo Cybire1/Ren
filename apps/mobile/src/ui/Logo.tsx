@@ -1,3 +1,4 @@
+import type { ColorValue } from 'react-native'
 /**
  * The Ren logo: the R coin, a capital R whose bowl is a coin, and the "Ren" wordmark it begins.
  * The coin sits on a hard ink shadow, like everything you can press in Ren. The tap mark (a stem
@@ -26,8 +27,8 @@ export function LogoMark({
   shadow = colors.ink,
 }: {
   size?: number
-  ink?: string
-  shadow?: string
+  ink?: ColorValue
+  shadow?: ColorValue
 }) {
   const weight = size >= 40 ? 19 : 21
   return (
@@ -64,8 +65,8 @@ export function Wordmark({
   shadow = colors.ink,
 }: {
   height?: number
-  ink?: string
-  shadow?: string
+  ink?: ColorValue
+  shadow?: ColorValue
 }) {
   const line = {
     stroke: ink,
@@ -95,8 +96,8 @@ export function TapMark({
   wave = colors.coral,
 }: {
   size?: number
-  stem?: string
-  wave?: string
+  stem?: ColorValue
+  wave?: ColorValue
 }) {
   return (
     <Svg

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import type { ColorValue } from 'react-native'
 import { View } from 'react-native'
 import { colors } from '@/lib/theme'
 import { Reni, type ReniPose, reniFeet } from './art'
@@ -19,7 +20,7 @@ export function Stage({
   pose: ReniPose
   size?: number
   motion?: 'bounce' | 'bob' | 'still'
-  floor?: string
+  floor?: ColorValue
   children?: ReactNode
 }) {
   const floorW = size * 0.86

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
-import Animated, {
+import { type ColorValue, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
+import {
   Easing,
   useAnimatedStyle,
   useReducedMotion,
@@ -9,6 +9,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated'
 import { colors, type fonts } from '@/lib/theme'
+import Animated from '@/ui/animated'
 import { Txt } from './primitives'
 
 const FIGURES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
@@ -34,7 +35,7 @@ export function Odometer({
   value: string
   size: number
   label: string
-  color?: string
+  color?: ColorValue
   weight?: Weight
   delay?: number
   style?: StyleProp<ViewStyle>
@@ -94,7 +95,7 @@ function Column({
   order: number
   size: number
   line: number
-  color: string
+  color: ColorValue
   weight: Weight
   delay: number
 }) {

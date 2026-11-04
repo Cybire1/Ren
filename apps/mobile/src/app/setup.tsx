@@ -98,7 +98,7 @@ export default function Setup() {
 const styles = StyleSheet.create({
   steps: { flexDirection: 'row', gap: 6, marginRight: 4 },
   step: { width: 18, height: 8, borderRadius: 4, backgroundColor: 'rgba(13,13,18,0.2)' },
-  stepOn: { width: 36, backgroundColor: colors.ink },
+  stepOn: { width: 36, backgroundColor: colors.chosen },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   copy: { paddingHorizontal: 28, paddingBottom: 12 },
   title: { letterSpacing: -1, lineHeight: 40 },

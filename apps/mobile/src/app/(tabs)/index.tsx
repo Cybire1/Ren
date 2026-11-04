@@ -15,7 +15,7 @@ import { formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
 import { useStall } from '@/lib/stall'
 import { useTerminal } from '@/lib/terminal'
-import { colors } from '@/lib/theme'
+import { colors, pair } from '@/lib/theme'
 import { type Entry, isUnnamed, useWallet } from '@/lib/wallet'
 import { ActionTile } from '@/ui/ActionTile'
 import { Awning } from '@/ui/Awning'
@@ -312,11 +312,14 @@ function freshLine(entry: Entry): Fresh['line'] {
  * Pay: the biggest thing under the balance, in ink, with the logo's tap waves brightening in turn
  * as if a reader were waiting for a phone.
  */
+/** The tap disc on the Pay tile: navy on ink in light, a step above the fill in the dark. */
+const tapDisc = pair('#1E3557', '#2E2E2E')
+
 function PayTile() {
   return (
     <Sticker
       radius={30}
-      fill={colors.ink}
+      fill={colors.fill}
       onPress={() => router.push('/scan')}
       accessibilityLabel="Pay. Scan a code or tap a card"
       style={{ flex: 1.1 }}
@@ -326,7 +329,7 @@ function PayTile() {
         <View style={[styles.payIcon, { backgroundColor: colors.coral }]}>
           <Icon name="scan" strokeWidth={2.2} />
         </View>
-        <View style={[styles.payIcon, { backgroundColor: colors.onTint }]}>
+        <View style={[styles.payIcon, { backgroundColor: tapDisc }]}>
           <TapMark size={22} stem={colors.white} wave={colors.onInk} />
         </View>
       </View>
@@ -538,7 +541,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.coralSoft,
     alignItems: 'center',
     justifyContent: 'center',
@@ -549,7 +552,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -588,7 +591,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -607,7 +610,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -615,7 +618,7 @@ const styles = StyleSheet.create({
     height: 40,
     paddingHorizontal: 18,
     borderRadius: 20,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     justifyContent: 'center',
   },
   section: { marginTop: 26, marginBottom: 12 },
@@ -629,7 +632,7 @@ const styles = StyleSheet.create({
   listCard: {
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.card,
     overflow: 'hidden',
   },
@@ -640,7 +643,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -649,7 +652,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.card,
     alignItems: 'center',
     justifyContent: 'center',
@@ -660,7 +663,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',

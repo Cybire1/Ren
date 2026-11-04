@@ -1,11 +1,11 @@
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import { Pressable, StyleSheet, View } from 'react-native'
+import { type ColorValue, Pressable, StyleSheet, View } from 'react-native'
 import Svg, { Path } from 'react-native-svg'
 import { isTestnet } from '@/lib/config'
 import { baseToNumber, type DisplayCurrency, formatLocal, formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
-import { colors } from '@/lib/theme'
+import { colors, pair } from '@/lib/theme'
 import { Coin, Reni, Sparkle } from './art'
 import { Icon } from './Icon'
 import { WAVES } from './Logo'
@@ -15,6 +15,9 @@ import { Sticker, Txt } from './primitives'
 
 /** Money that has only just arrived, shown on the card for a moment: "+$12.00 from Ade, just now". */
 export type Fresh = { id: string; line: string }
+
+/** The balance card's green: Ren's money green, and a deep green in the dark so its figures stay crisp. */
+const money = pair('#00A37A', '#0E5C47')
 
 /** The amount's size: as large as the figures allow on a phone, smaller as the balance grows. */
 const amountSize = (figures: number) =>
@@ -45,7 +48,7 @@ export function BalanceCard({
     balance !== null && currency !== 'USD' ? formatLocal(baseToNumber(balance), currency) : null
 
   return (
-    <Sticker fill={colors.teal} radius={30} style={styles.frame} innerStyle={styles.card}>
+    <Sticker fill={money} radius={30} style={styles.frame} innerStyle={styles.card}>
       <Waves />
       <View style={styles.coins} pointerEvents="none">
         <Bob distance={5} duration={5000} delay={900} style={styles.coinBack}>
@@ -145,8 +148,8 @@ export function BalanceCard({
             rest={colors.onTeal}
             style={[styles.chip, styles.fresh]}
           >
-            <Icon name="upRight" size={15} strokeWidth={2.8} />
-            <Txt weight="heavy" size={13} numberOfLines={1}>
+            <Icon name="upRight" size={15} strokeWidth={2.8} color={colors.dark} />
+            <Txt weight="heavy" size={13} numberOfLines={1} color={colors.dark}>
               {fresh.line}
             </Txt>
           </Landing>
@@ -322,7 +325,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 15,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.onTeal,
     flexDirection: 'row',
     alignItems: 'center',
@@ -346,7 +349,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.coral,
     alignItems: 'center',
     justifyContent: 'center',

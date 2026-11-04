@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
-import Animated, {
+import {
   Easing,
   useAnimatedProps,
   useAnimatedStyle,
@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
+import Animated from '@/ui/animated'
 import { Avatar, Flyer } from '../art'
 import { Icon } from '../Icon'
 import { Txt } from '../primitives'

@@ -1,7 +1,7 @@
 import { router } from 'expo-router'
 import { StyleSheet, View } from 'react-native'
 import { formatUsd } from '@/lib/money'
-import { colors } from '@/lib/theme'
+import { colors, pair, palette } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Reni } from './art'
 import { Icon } from './Icon'
@@ -11,6 +11,9 @@ import { Sticker, Txt } from './primitives'
  * Your private balance on Home (lib/private.ts): a dark card, so it reads as the place out of
  * sight. Money at rest is green across Ren and paying is watermelon; private is ink.
  */
+/** Green that glows on the private card's dark ground, in either look. */
+const glow = pair(palette.light.tealSoft, palette.dark.teal)
+
 export function PrivateCard() {
   const { privacy } = useWallet()
   if (!privacy.zone) return null
@@ -18,7 +21,7 @@ export function PrivateCard() {
   return (
     <Sticker
       onPress={() => router.push('/private')}
-      fill={colors.ink}
+      fill={colors.fill}
       radius={26}
       style={styles.wrap}
       accessibilityLabel={
@@ -27,10 +30,10 @@ export function PrivateCard() {
     >
       <View style={styles.row}>
         <View style={styles.lock}>
-          <Icon name="lock" size={18} color={colors.tealSoft} />
+          <Icon name="lock" size={18} color={glow} />
         </View>
         <View style={{ flex: 1 }}>
-          <Txt weight="heavy" size={11} color={colors.tealSoft} style={styles.kicker}>
+          <Txt weight="heavy" size={11} color={glow} style={styles.kicker}>
             PRIVATE
           </Txt>
           <Txt weight="bold" size={17} color={colors.white}>
@@ -77,7 +80,7 @@ const styles = StyleSheet.create({
     borderRadius: 19,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.2)',
-    backgroundColor: '#1E3557',
+    backgroundColor: pair('#1E3557', '#262626'),
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -87,7 +90,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: colors.white,
+    backgroundColor: colors.raised,
     alignItems: 'center',
     justifyContent: 'center',
   },

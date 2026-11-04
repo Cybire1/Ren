@@ -313,7 +313,7 @@ function Row({
 }
 
 const styles = StyleSheet.create({
-  pass: { marginTop: 16, borderRadius: 28, backgroundColor: colors.ink, overflow: 'hidden' },
+  pass: { marginTop: 16, borderRadius: 28, backgroundColor: colors.fill, overflow: 'hidden' },
   passTop: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, paddingBottom: 14 },
   badge: {
     borderRadius: 36,
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
   group: {
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     overflow: 'hidden',
   },
@@ -345,10 +345,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     justifyContent: 'center',
   },
-  chipOn: { backgroundColor: colors.ink },
+  chipOn: { backgroundColor: colors.chosen },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },

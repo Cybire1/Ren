@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
   list: {
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.card,
     paddingHorizontal: 14,
   },
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
     height: 40,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.yellow,
     alignItems: 'center',
     justifyContent: 'center',
@@ -286,7 +286,7 @@ const styles = StyleSheet.create({
   facts: {
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     paddingHorizontal: 14,
   },
@@ -298,6 +298,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
   },
 })

@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 1,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
   },
   stepKey: { alignItems: 'center', justifyContent: 'center' },

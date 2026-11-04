@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   floatingBack: { position: 'absolute', left: 20 },
   dots: { position: 'absolute', bottom: 12, alignSelf: 'center', flexDirection: 'row', gap: 6 },
   dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.6)' },
-  dotOn: { backgroundColor: colors.white, width: 18 },
+  dotOn: { backgroundColor: colors.raised, width: 18 },
   score: {
     height: 24,
     paddingHorizontal: 8,
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     padding: 14,
     borderRadius: 24,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     gap: 4,
   },
@@ -336,7 +336,7 @@ const styles = StyleSheet.create({
     height: 38,
     paddingHorizontal: 18,
     borderRadius: 19,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     justifyContent: 'center',
   },
 })

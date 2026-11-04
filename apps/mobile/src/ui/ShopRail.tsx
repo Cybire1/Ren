@@ -102,7 +102,7 @@ export function ShopRail({ state, navigation }: BottomTabBarProps) {
 }
 
 const styles = StyleSheet.create({
-  rail: { width: RAIL, backgroundColor: colors.ink, alignItems: 'center', paddingHorizontal: 12 },
+  rail: { width: RAIL, backgroundColor: colors.fill, alignItems: 'center', paddingHorizontal: 12 },
   mark: {
     width: 56,
     height: 56,
@@ -131,7 +131,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
     backgroundColor: colors.coral,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },

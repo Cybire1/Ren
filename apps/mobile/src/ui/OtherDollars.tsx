@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.teal,
     alignItems: 'center',
     justifyContent: 'center',
@@ -79,6 +79,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
   },
 })

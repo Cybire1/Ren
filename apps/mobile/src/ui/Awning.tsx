@@ -45,7 +45,7 @@ export function Awning({
           </G>
         )
       })}
-      <Rect x={0} y={0} width={width} height={2} fill={colors.ink} />
+      <Rect x={0} y={0} width={width} height={2} fill={colors.fill} />
     </Svg>
   )
 }

@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     justifyContent: 'center',
   },
   bubbleTail: {
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRightWidth: 2,
     borderBottomWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     transform: [{ rotate: '45deg' }],
   },
   copy: { alignItems: 'center', paddingHorizontal: 24 },

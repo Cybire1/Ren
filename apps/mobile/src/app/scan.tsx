@@ -181,7 +181,7 @@ export default function Scan() {
 const FRAME = 250
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.ink },
+  screen: { flex: 1, backgroundColor: colors.fill },
   top: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     height: 46,
     borderRadius: 23,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

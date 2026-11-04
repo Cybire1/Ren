@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     borderRadius: 24,
     backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',

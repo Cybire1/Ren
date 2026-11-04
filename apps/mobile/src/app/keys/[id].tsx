@@ -1,7 +1,7 @@
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useEffect, useState } from 'react'
-import { Linking, ScrollView, StyleSheet, View } from 'react-native'
+import { type ColorValue, Linking, ScrollView, StyleSheet, View } from 'react-native'
 import { chainName, network } from '@/lib/config'
 import type { KeyPaymentView } from '@/lib/keys-state'
 import { colors } from '@/lib/theme'
@@ -406,7 +406,10 @@ function Fact({
   )
 }
 
-const STATUS: Record<KeyPaymentView['status'], { label: string; fill: string; ink: string }> = {
+const STATUS: Record<
+  KeyPaymentView['status'],
+  { label: string; fill: ColorValue; ink: ColorValue }
+> = {
   paid: { label: 'Paid', fill: colors.tealSoft, ink: colors.ink },
   paying: { label: 'Paying', fill: colors.sunken, ink: colors.ink },
   approved: { label: 'Approved', fill: colors.tealSoft, ink: colors.ink },
@@ -438,7 +441,7 @@ function PaymentRow({ payment, last }: { payment: KeyPaymentView; last: boolean 
       <View
         style={[
           styles.payBadge,
-          { backgroundColor: payment.kind === 'mpp' ? colors.ink : colors.teal },
+          { backgroundColor: payment.kind === 'mpp' ? colors.fill : colors.teal },
         ]}
       >
         <Icon
@@ -478,7 +481,7 @@ const styles = StyleSheet.create({
     minHeight: 178,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     overflow: 'hidden',
   },
   heroTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
@@ -492,14 +495,14 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: '#FFF0B5',
   },
   facts: {
     marginTop: 16,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     paddingHorizontal: 14,
   },
@@ -508,7 +511,7 @@ const styles = StyleSheet.create({
   list: {
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.card,
     paddingHorizontal: 14,
   },
@@ -518,7 +521,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },

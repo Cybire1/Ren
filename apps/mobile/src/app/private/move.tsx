@@ -254,7 +254,7 @@ export default function MoveScreen() {
 function End({ icon, label, ink }: { icon: 'eye' | 'lock'; label: string; ink: boolean }) {
   return (
     <View style={{ alignItems: 'center', gap: 6, width: 104 }}>
-      <View style={[styles.end, ink && { backgroundColor: colors.ink }]}>
+      <View style={[styles.end, ink && { backgroundColor: colors.fill }]}>
         <Icon name={icon} size={22} color={ink ? colors.tealSoft : colors.ink} />
       </View>
       <Txt weight="semi" size={13} color={colors.muted}>
@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
     height: 54,
     borderRadius: 27,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -341,12 +341,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 54,
   },
-  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.ink, opacity: 0.55 },
+  dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: colors.fill, opacity: 0.55 },
   facts: {
     marginTop: 16,
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     paddingHorizontal: 14,
   },
@@ -358,6 +358,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
   },
 })

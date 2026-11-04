@@ -313,9 +313,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     borderRadius: 16,
-    backgroundColor: colors.white,
+    backgroundColor: colors.raised,
     fontFamily: fonts.semi,
     fontSize: 16,
     color: colors.ink,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   facts: {
     borderRadius: 20,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.surface,
     paddingHorizontal: 14,
   },
@@ -345,6 +345,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
   },
 })

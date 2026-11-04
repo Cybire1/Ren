@@ -1,3 +1,4 @@
+import type { ColorValue } from 'react-native'
 import Svg, { Ellipse, Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
 
@@ -10,8 +11,8 @@ export function Floor({
   side = colors.sunken,
 }: {
   width?: number
-  top?: string
-  side?: string
+  top?: ColorValue
+  side?: ColorValue
 }) {
   const h = width * 0.2
   const rx = width / 2 - 3

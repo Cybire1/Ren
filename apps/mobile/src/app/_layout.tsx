@@ -9,20 +9,25 @@ import {
 import { router, Stack, useRootNavigationState } from 'expo-router'
 import * as SplashScreen from 'expo-splash-screen'
 import { StatusBar } from 'expo-status-bar'
+import * as SystemUI from 'expo-system-ui'
 import { useEffect } from 'react'
-import { Platform, Settings } from 'react-native'
+import { LogBox, Platform, Settings, useColorScheme } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
-import { PrefsProvider, usePrefs } from '@/lib/prefs'
+import { AFTER_RELOAD_KEY, PrefsProvider, usePrefs } from '@/lib/prefs'
 import { useLiveRates } from '@/lib/rates'
 import { StallProvider } from '@/lib/stall'
 import { TerminalProvider } from '@/lib/terminal'
-import { colors } from '@/lib/theme'
+import { colors, palette, readStartSetting, writeStartSetting } from '@/lib/theme'
 import { TravelProvider } from '@/lib/travel'
 import { useWallet, WalletProvider } from '@/lib/wallet'
 import { OrderWatcher } from '@/lib/watch'
 
 void SplashScreen.preventAutoHideAsync()
+
+// React Native's own Animated warns when a value updates with no listener left (a screen that
+// closed mid-animation). It's harmless, and in development its toast covers the dock.
+LogBox.ignoreLogs(['Sending `onAnimatedValueUpdate` with no listeners registered'])
 
 /**
  * Development only: `xcrun simctl launch <device> xyz.kova.pay.monad -KovaDevLink "name=Maya&fake=1&to=/"`
@@ -39,6 +44,36 @@ function DevLaunch() {
     const link = Settings.get('KovaDevLink')
     if (typeof link === 'string' && link) router.replace(`/dev?${link}` as never)
   }, [navigation?.key])
+  return null
+}
+
+/**
+ * After the app reloads in a new look (Appearance on You, lib/prefs.tsx), back to the screen that
+ * changed it, once the start route has sent the wallet home.
+ */
+let resumed = false
+function AfterReload() {
+  const navigation = useRootNavigationState()
+  const { status } = useWallet()
+  const { ready, mode } = usePrefs()
+  useEffect(() => {
+    if (resumed || !navigation?.key || !ready) return
+    if (status === 'loading') return
+    resumed = true
+    const to = readStartSetting(AFTER_RELOAD_KEY)
+    if (!to) return
+    writeStartSetting(AFTER_RELOAD_KEY, null)
+    if (status !== 'none' && mode === 'pay') setTimeout(() => router.navigate(to as never), 300)
+  }, [navigation?.key, status, ready, mode])
+  return null
+}
+
+/** The window's own ground, which shows behind sheets as they open: paper, or black in the dark. */
+function Ground() {
+  const scheme = useColorScheme()
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(palette[scheme === 'dark' ? 'dark' : 'light'].paper)
+  }, [scheme])
   return null
 }
 
@@ -96,7 +131,9 @@ export default function RootLayout() {
             <WalletProvider>
               <StallProvider>
                 <TravelProvider>
-                  <StatusBar style="dark" />
+                  <StatusBar style="auto" />
+                  <Ground />
+                  <AfterReload />
                   <ArrivalWatcher />
                   <OrderWatcher />
                   <DevLaunch />

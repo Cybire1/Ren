@@ -8,7 +8,7 @@ import { CardError, cardsLive, finishTap, isCancelled, type ReadTap, readTap } f
 import { tapToPay, tempoCards } from '@/lib/card-tempo'
 import { chainName, settlementToken } from '@/lib/config'
 import { useShop } from '@/lib/shop'
-import { colors } from '@/lib/theme'
+import { colors, palette } from '@/lib/theme'
 import { peekEdge, ReniPeek } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'
@@ -277,8 +277,8 @@ export default function CustomerDisplay() {
               <QRCode
                 value={payLinkFor(id)}
                 size={qr}
-                color={colors.ink}
-                backgroundColor={colors.surface}
+                color={palette.light.ink}
+                backgroundColor="#FFFFFF"
                 ecl="M"
               />
             </View>
@@ -369,7 +369,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.coral,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },

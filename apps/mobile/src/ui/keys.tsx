@@ -2,9 +2,9 @@ import * as Clipboard from 'expo-clipboard'
 import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { useState } from 'react'
-import { Pressable, StyleSheet, TextInput, View } from 'react-native'
+import { type ColorValue, Pressable, StyleSheet, TextInput, View } from 'react-native'
 import type { KeyPaymentView, KeyView } from '@/lib/keys-state'
-import { colors, fonts } from '@/lib/theme'
+import { colors, fonts, pair } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Reni } from './art'
 import { Icon, type IconName } from './Icon'
@@ -22,8 +22,8 @@ export const ended = (key: KeyView) =>
   key.status === 'expired' || Date.parse(key.expires_at) < Date.now()
 export const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`
 
-export const KIND: Record<KeyView['kind'], { icon: IconName; noun: string; fill: string }> = {
-  agent: { icon: 'terminal', noun: 'Agent', fill: colors.ink },
+export const KIND: Record<KeyView['kind'], { icon: IconName; noun: string; fill: ColorValue }> = {
+  agent: { icon: 'terminal', noun: 'Agent', fill: colors.fill },
   allowance: { icon: 'user', noun: 'Allowance', fill: colors.teal },
   card: { icon: 'card', noun: 'Card', fill: colors.coral },
 }
@@ -52,6 +52,9 @@ export function standing(key: KeyView): string {
 }
 
 /** Keys on Home: a payment an agent is waiting on comes first; otherwise who can spend. */
+/** The Keys card's sand disc, deepened in the dark. */
+const sand = pair('#FFF0B5', '#2A2512')
+
 export function KeysCard() {
   const { keys } = useWallet()
   if (!keys.available) return null
@@ -111,7 +114,7 @@ export function KeysCard() {
       style={{ marginTop: 12 }}
     >
       <View style={styles.cardRow}>
-        <View style={[styles.cardIcon, { backgroundColor: '#FFF0B5' }]}>
+        <View style={[styles.cardIcon, { backgroundColor: sand }]}>
           <Icon name="lock" size={18} />
         </View>
         <View style={{ flex: 1 }}>
@@ -181,7 +184,7 @@ export function KeyRow({
           </Txt>
         </View>
       ) : key.status === 'frozen' ? (
-        <View style={[styles.chip, { backgroundColor: colors.ink }]}>
+        <View style={[styles.chip, { backgroundColor: colors.fill }]}>
           <Txt weight="bold" size={12} color={colors.white}>
             Frozen
           </Txt>
@@ -245,7 +248,7 @@ export function Ask({ payment }: { payment: KeyPaymentView }) {
     <Sticker fill={colors.coralTint} radius={22} style={{ marginBottom: 10 }}>
       <View style={{ padding: 14, gap: 12 }}>
         <View style={styles.askTop}>
-          <View style={[styles.badge, { backgroundColor: colors.ink }]}>
+          <View style={[styles.badge, { backgroundColor: colors.fill }]}>
             <Icon name="terminal" size={18} color={colors.tealSoft} />
           </View>
           <View style={{ flex: 1 }}>
@@ -311,7 +314,7 @@ export function Choice<T extends string | number>({
               void Haptics.selectionAsync()
               onChange(option.value)
             }}
-            style={[styles.choiceItem, on && { backgroundColor: colors.ink }]}
+            style={[styles.choiceItem, on && { backgroundColor: colors.fill }]}
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}
           >
@@ -436,7 +439,7 @@ const styles = StyleSheet.create({
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -445,15 +448,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 999,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
   },
   go: {
     width: 38,
     height: 38,
     borderRadius: 19,
     borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.white,
+    borderColor: colors.line,
+    backgroundColor: colors.raised,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -464,7 +467,7 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -484,8 +487,8 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     borderRadius: 999,
     borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.white,
+    borderColor: colors.line,
+    backgroundColor: colors.raised,
   },
   money: {
     flexDirection: 'row',
@@ -493,9 +496,9 @@ const styles = StyleSheet.create({
     width: 120,
     paddingLeft: 14,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     borderRadius: 16,
-    backgroundColor: colors.white,
+    backgroundColor: colors.raised,
   },
   moneyInput: {
     flex: 1,
@@ -512,8 +515,8 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: colors.ink,
-    backgroundColor: colors.ink,
+    borderColor: colors.line,
+    backgroundColor: colors.fill,
   },
   mono: { flex: 1, fontFamily: 'Menlo', lineHeight: 18 },
   copy: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingTop: 1 },
@@ -523,7 +526,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: '#FFF0B5',
     overflow: 'hidden',
   },

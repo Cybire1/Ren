@@ -5,7 +5,7 @@
     "scheme": "kova",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "backgroundColor": "#E8F7EF",
     "newArchEnabled": true,
     "ios": {

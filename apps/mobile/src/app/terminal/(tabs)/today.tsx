@@ -1,6 +1,6 @@
 import { useFocusEffect } from 'expo-router'
 import { useCallback, useMemo, useState } from 'react'
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native'
+import { type ColorValue, FlatList, RefreshControl, StyleSheet, View } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getSummary, listCharges, type PaymentIntent, type Summary } from '@/lib/api'
 import { formatLocal } from '@/lib/money'
@@ -14,7 +14,10 @@ import { Sticker, Txt } from '@/ui/primitives'
 import { shopDockClearance } from '@/ui/ShopDock'
 import { WalletBack } from '@/ui/WalletBack'
 
-const labels: Record<PaymentIntent['status'], { text: string; color: string; fill: string }> = {
+const labels: Record<
+  PaymentIntent['status'],
+  { text: string; color: ColorValue; fill: ColorValue }
+> = {
   paid: { text: 'Paid', color: colors.ink, fill: colors.tealSoft },
   requires_payment: { text: 'Waiting', color: colors.ink, fill: colors.yellow },
   processing: { text: 'Confirming', color: colors.ink, fill: colors.yellow },
@@ -261,7 +264,7 @@ function Stat({
 }: {
   label: string
   value: string
-  tone?: string
+  tone?: ColorValue
 }) {
   return (
     <View style={styles.stat}>
@@ -386,7 +389,7 @@ const styles = StyleSheet.create({
     height: 128,
     marginTop: 10,
     borderBottomWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
   },
   barSlot: { flex: 1, alignItems: 'center', justifyContent: 'flex-end' },
   bar: {
@@ -394,7 +397,7 @@ const styles = StyleSheet.create({
     maxWidth: 22,
     borderWidth: 2,
     borderBottomWidth: 0,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     borderTopLeftRadius: 7,
     borderTopRightRadius: 7,
   },
@@ -403,7 +406,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 999,
-    backgroundColor: colors.ink,
+    backgroundColor: colors.fill,
     minWidth: 44,
     alignItems: 'center',
   },
@@ -420,7 +423,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderLeftWidth: 2,
     borderRightWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     paddingHorizontal: 12,
   },
   paperTop: { borderTopWidth: 2, borderTopLeftRadius: 22, borderTopRightRadius: 22, paddingTop: 4 },
@@ -452,7 +455,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: colors.tealSoft,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -463,7 +466,7 @@ const styles = StyleSheet.create({
     padding: 18,
     borderRadius: 22,
     borderWidth: 2,
-    borderColor: colors.ink,
+    borderColor: colors.line,
     backgroundColor: colors.card,
   },
 })
