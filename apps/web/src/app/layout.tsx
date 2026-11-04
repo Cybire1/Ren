@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { chainName, onTempo } from '@/lib/chain'
+import { BAR, THEME_SCRIPT } from '@/lib/theme'
 import './globals.css'
 import '../styles/app.css'
 import '../styles/auth.css'
@@ -35,13 +36,20 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#E8F7EF',
+  themeColor: BAR.light,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    // The theme script sets data-theme on <html> before React does, by design.
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {/* The wallet's theme, set before the first paint so a dark page never flashes light
+            (lib/theme.ts). */}
+        <script
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: our own constant script, no user input
+          dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }}
+        />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
         <link

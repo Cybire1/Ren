@@ -41,7 +41,7 @@
   min-width: 0;
   max-width: 100%;
   padding: 3px;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
 }
@@ -81,7 +81,7 @@
 }
 
 .w-switch .w-switch-on {
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -120,7 +120,7 @@
   height: var(--dock-h);
   padding: 0 0.375rem;
   border-radius: 999px;
-  background: var(--ink);
+  background: var(--fill);
   box-shadow: 0 18px 40px -18px color-mix(in srgb, var(--ink) 55%, transparent);
   transform: translateX(-50%);
 }
@@ -170,7 +170,7 @@
   padding: 0 1.125rem 0 0.875rem;
   border-radius: 999px;
   background: var(--coral);
-  color: var(--ink);
+  color: var(--dark);
   font-weight: 800;
   text-decoration: none;
   transition: transform 0.4s var(--spring);
@@ -224,7 +224,7 @@
   position: relative;
   margin-top: 0.875rem;
   padding: 0.875rem 1.125rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.5rem;
   background: var(--teal);
   color: #fff;
@@ -291,7 +291,7 @@
   gap: 0.25rem;
   height: 2rem;
   padding: 0 0.75rem 0 0.55rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
   color: var(--ink);
@@ -378,7 +378,7 @@
   justify-content: space-between;
   padding: 1rem;
   border-radius: 1.5rem;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   text-decoration: none;
   overflow: hidden;
@@ -442,7 +442,7 @@
   flex-direction: column;
   justify-content: space-between;
   padding: 0.7rem 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   color: var(--ink);
   text-decoration: none;
@@ -510,7 +510,7 @@
   gap: 0.75rem;
   margin-top: 1.25rem;
   padding: 0.75rem 0.75rem 0.75rem 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--sunken);
   color: var(--ink);
@@ -524,7 +524,7 @@
   place-items: center;
   width: 2.375rem;
   height: 2.375rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--teal-light);
 }
@@ -550,7 +550,7 @@
   height: 2.25rem;
   padding: 0 1rem;
   border-radius: 999px;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   font-weight: 650;
 }
@@ -615,7 +615,7 @@
   place-items: center;
   width: 3rem;
   height: 3rem;
-  border: 2px dashed var(--ink);
+  border: 2px dashed var(--line);
   border-radius: 50%;
 }
 
@@ -682,7 +682,7 @@
   position: relative;
   display: block;
   margin-top: 0.75rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--surface);
   color: var(--ink);
@@ -737,7 +737,7 @@
   width: 2.375rem;
   height: 2.375rem;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   transition: transform 0.4s var(--spring);
 }
@@ -751,7 +751,7 @@
   gap: 0.75rem;
   margin-top: 0.875rem;
   padding: 0.875rem 1rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--coral-soft);
 }
@@ -776,7 +776,7 @@
   min-width: 0;
   height: var(--pill-h);
   padding: 0 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
   font: inherit;
@@ -854,7 +854,7 @@
   display: grid;
   gap: 0.75rem;
   padding: 0.875rem 1.125rem 1.125rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.5rem;
   background: var(--coral-soft);
 }
@@ -872,7 +872,7 @@
   width: 100%;
   padding: 0.1rem 0 0.2rem;
   border: 0;
-  border-bottom: 2px dashed color-mix(in srgb, var(--ink) 35%, transparent);
+  border-bottom: 2px dashed color-mix(in srgb, var(--line) 35%, transparent);
   background: transparent;
   color: var(--ink);
   font: inherit;
@@ -899,7 +899,7 @@
 .w-namecard-currency select {
   height: 2.5rem;
   padding: 0 0.75rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
   color: var(--ink);
@@ -986,7 +986,7 @@
   margin-top: 0.25rem;
   padding: 1rem 1.125rem 1.125rem;
   border-radius: 1.5rem;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -1111,26 +1111,34 @@
 
 .w-filters {
   display: flex;
-  gap: 0.5rem;
+  height: 2.625rem;
   margin: 1rem 0 0.25rem;
+  padding: 3px;
+  border: 2px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
 }
 
 .w-filter {
-  height: 2.4rem;
+  flex: 1;
+  min-width: 0;
   padding: 0 0.5rem;
-  border: 2px solid var(--ink);
+  border: 0;
   border-radius: 999px;
-  background: var(--surface);
+  background: none;
   color: var(--ink);
   font: inherit;
   font-size: 0.875rem;
   font-weight: 650;
+  white-space: nowrap;
   cursor: pointer;
-  transition: background-color 0.3s var(--spring);
+  transition:
+    background-color 0.3s var(--spring),
+    color 0.3s var(--spring);
 }
 
 .w-filter-on {
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -1156,7 +1164,7 @@
 .w-day-card {
   display: grid;
   padding: 0.125rem 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--surface);
 }
@@ -1208,7 +1216,7 @@
   place-items: center;
   width: 1.75rem;
   height: 1.75rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--surface);
   color: var(--ink);
@@ -1223,7 +1231,7 @@
 .w-receipt-rename input {
   height: 2.5rem;
   padding: 0 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
   font: inherit;
@@ -1282,7 +1290,7 @@
   gap: 0.5rem;
   height: 3rem;
   padding: 0 0.3125rem 0 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
 }
@@ -1338,7 +1346,7 @@
   padding: 0.625rem 0.875rem 0.625rem 0.625rem;
   border: 0;
   border-radius: 1.375rem;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   font: inherit;
   text-align: left;
@@ -1394,7 +1402,7 @@
   padding: 0 0.85rem;
   border-radius: 999px;
   background: var(--coral);
-  color: var(--ink);
+  color: var(--dark);
   font-size: 0.875rem;
   font-weight: 700;
   line-height: 2rem;
@@ -1458,7 +1466,7 @@ button.w-person {
 .w-note {
   height: 2.75rem;
   padding: 0 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
   font: inherit;
@@ -1534,7 +1542,7 @@ button.w-person {
   width: 100%;
   margin: 0.625rem 0;
   padding: 0.875rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--surface);
   text-align: left;
@@ -1632,9 +1640,9 @@ button.w-person {
 .w-code-card {
   margin: 0.375rem 0;
   padding: 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
-  background: #fff;
+  background: var(--card);
 }
 
 .w-qr {
@@ -1654,7 +1662,7 @@ button.w-person {
   gap: 1rem;
   width: 100%;
   padding: 0.4375rem 0.4375rem 0.4375rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
   text-align: left;
@@ -1729,7 +1737,7 @@ button.w-person {
   gap: 0.875rem;
   padding: 1rem 1rem 1rem 1.125rem;
   border-radius: 1.5rem;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -1776,7 +1784,7 @@ button.w-person {
   flex: none;
   padding: 0.5rem;
   border-radius: 1rem;
-  background: #fff;
+  background: var(--card);
 }
 
 .w-stats {
@@ -1790,7 +1798,7 @@ button.w-person {
   display: grid;
   justify-items: center;
   padding: 0.625rem 0.25rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.125rem;
   background: var(--surface);
   color: var(--muted);
@@ -1816,7 +1824,7 @@ button.w-person {
   gap: 0.875rem;
   margin-top: 0.75rem;
   padding: 0.875rem 0.875rem 0.875rem 1.125rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--teal);
   color: #fff;
@@ -1843,7 +1851,7 @@ button.w-person {
   place-items: center;
   height: 2.25rem;
   padding: 0 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--surface);
   color: var(--ink);
@@ -1863,7 +1871,7 @@ button.w-person {
   gap: 0.625rem;
   margin-top: 0.75rem;
   padding: 0.875rem 1rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--surface);
 }
@@ -1890,7 +1898,7 @@ button.w-person {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -1925,7 +1933,7 @@ button.w-person {
 
 .w-rules span {
   padding: 0.1875rem 0.625rem;
-  border: 1.5px solid var(--ink);
+  border: 1.5px solid var(--line);
   border-radius: 999px;
   font-size: 0.6875rem;
   font-weight: 650;
@@ -1975,7 +1983,7 @@ button.w-person {
   max-height: 52vh;
   margin: 0 0 0.875rem;
   border-radius: 1.5rem;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   overflow: hidden;
 }
@@ -2076,7 +2084,7 @@ button.w-person {
   gap: 0.25rem;
   width: min(100%, 26rem);
   padding: 1.5rem 1.125rem 1.25rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.5rem;
   background: var(--surface);
   text-align: center;
@@ -2248,7 +2256,7 @@ button.w-person {
     position: sticky;
     top: 2rem;
     padding: 1.5rem 1.6rem 1.25rem;
-    border: 2px solid var(--ink);
+    border: 2px solid var(--line);
     border-radius: 1.75rem;
     background: var(--surface);
   }
@@ -2292,7 +2300,7 @@ button.w-person {
     padding: 3rem;
     box-sizing: border-box;
     object-fit: contain;
-    border: 2px solid var(--ink);
+    border: 2px solid var(--line);
     border-radius: 2rem;
     background: color-mix(in srgb, var(--teal-light) 45%, var(--paper));
   }
@@ -2330,7 +2338,7 @@ button.w-person {
 }
 
 .w-pay {
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
 }
 
 .w-hello-face {
@@ -2339,7 +2347,7 @@ button.w-person {
   width: 2.375rem;
   height: 2.375rem;
   box-sizing: border-box;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   overflow: hidden;
   background: var(--coral-soft);
@@ -2363,13 +2371,13 @@ button.w-person {
   width: var(--round-size, 2.25rem);
   height: var(--round-size, 2.25rem);
   box-sizing: border-box;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   background: var(--surface);
   color: var(--ink);
 }
 
 .w-hello-bell:hover {
-  background: #fff;
+  background: var(--card);
 }
 
 .w-balance {
@@ -2430,7 +2438,7 @@ button.w-person {
   height: 1.75rem;
   box-sizing: border-box;
   gap: 0.35rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   background: var(--on-teal);
   color: var(--ink);
   font-weight: 800;
@@ -2487,9 +2495,9 @@ button.w-person {
   height: 3rem;
   margin-top: 0.9rem;
   padding: 0 0.3rem 0 1.1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   font-weight: 800;
   text-decoration: none;
@@ -2501,7 +2509,7 @@ button.w-person {
   width: 2.25rem;
   height: 2.25rem;
   box-sizing: border-box;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--coral);
 }
@@ -2602,9 +2610,9 @@ button.w-person {
 
 .w-entries {
   padding: 0.25rem 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.4rem;
-  background: #fff;
+  background: var(--card);
 }
 
 .w-entries .w-entry {
@@ -2656,9 +2664,9 @@ button.w-person {
   list-style: none;
   margin: 0;
   padding: 0;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.4rem;
-  background: #fff;
+  background: var(--card);
   overflow: hidden;
 }
 
@@ -2692,7 +2700,7 @@ button.w-person {
   width: 2.375rem;
   height: 2.375rem;
   box-sizing: border-box;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--paper);
   font-weight: 800;
@@ -2730,9 +2738,9 @@ button.w-person {
   width: 2.25rem;
   height: 2.25rem;
   box-sizing: border-box;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
 }
 
 .w-steps + .w-shopcard {
@@ -2828,7 +2836,7 @@ button.w-person {
   height: 2.6rem;
   margin: 0.35rem 0 0.25rem 0.2rem;
   border-radius: 0.8rem;
-  background: color-mix(in srgb, var(--ink) 14%, transparent);
+  background: color-mix(in srgb, var(--fill) 14%, transparent);
   animation: wait-pulse 1.4s ease-in-out infinite;
 }
 
@@ -2927,7 +2935,7 @@ button.w-person {
   gap: 0.3rem;
   margin: 0.75rem 0 0.25rem;
   padding: 0.875rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--coral-soft);
   color: var(--ink);
@@ -2977,7 +2985,7 @@ button.w-person {
   border: 0;
   cursor: default;
   z-index: 40;
-  background: color-mix(in srgb, var(--ink) 32%, transparent);
+  background: color-mix(in srgb, var(--fill) 32%, transparent);
   animation: w-fade 0.3s ease both;
 }
 
@@ -2990,7 +2998,7 @@ button.w-person {
   max-height: calc(100dvh - 1rem);
   overflow: auto;
   padding: 0 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-bottom: 0;
   border-radius: 1.5rem 1.5rem 0 0;
   background: var(--paper);
@@ -3010,7 +3018,7 @@ button.w-person {
 @media (min-width: 40rem) {
   .w-sheet {
     bottom: 1.5rem;
-    border-bottom: 2px solid var(--ink);
+    border-bottom: 2px solid var(--line);
     border-radius: 1.75rem;
   }
 }
@@ -3041,7 +3049,7 @@ button.w-person {
   padding: 0;
   border: 0;
   border-radius: 1rem;
-  background: color-mix(in srgb, var(--ink) 25%, transparent);
+  background: color-mix(in srgb, var(--fill) 25%, transparent);
   cursor: pointer;
 }
 
@@ -3272,7 +3280,7 @@ button.w-person {
 .w-facts {
   margin: 0.875rem 0;
   padding: 0.25rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.25rem;
   background: var(--surface);
 }
@@ -3333,7 +3341,7 @@ button.w-person {
   position: relative;
   height: 52px;
   border-radius: 26px;
-  background: var(--ink);
+  background: var(--fill);
   overflow: hidden;
   user-select: none;
   touch-action: none;
@@ -3437,7 +3445,7 @@ button.w-person {
   width: 22px;
   height: 22px;
   border: 3px solid var(--sunken);
-  border-top-color: var(--ink);
+  border-top-color: var(--line);
   border-radius: 50%;
   animation: w-spin 0.8s linear infinite;
 }
@@ -3528,7 +3536,7 @@ button.w-person {
   margin-top: 0.5rem;
   padding: 0.375rem 0.8rem;
   border-radius: 999px;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   font-size: 0.8125rem;
   font-weight: 700;
@@ -3625,7 +3633,7 @@ button.w-person {
   gap: 0.75rem;
   margin: 0.875rem 0 0;
   padding: 0.75rem 0.75rem 0.75rem 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--tint-sand);
 }
@@ -3637,7 +3645,7 @@ button.w-person {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -3657,7 +3665,7 @@ button.w-person {
   padding: 0 1rem;
   border: 0;
   border-radius: 999px;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   font: inherit;
   font-weight: 700;
@@ -3672,7 +3680,7 @@ button.w-person {
   gap: 0.75rem;
   margin-top: 0.75rem;
   padding: 0.75rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--surface);
   color: var(--ink);
@@ -3705,7 +3713,7 @@ button.w-person {
   justify-items: center;
   gap: 0.4rem;
   padding: 0.7rem 0.25rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.125rem;
   background: var(--surface);
   color: var(--ink);
@@ -3723,7 +3731,7 @@ button.w-person {
 }
 
 .w-chain[aria-selected="true"] {
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -3732,7 +3740,7 @@ button.w-person {
   place-items: center;
   width: 2.375rem;
   height: 2.375rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: #8fa2e8;
   color: var(--ink);
@@ -3754,7 +3762,7 @@ button.w-person {
 
 .w-chain-soon {
   margin-top: 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.5rem;
   background: var(--surface);
 }
@@ -3765,7 +3773,7 @@ button.w-person {
   gap: 0.5rem;
   margin-top: 1rem;
   padding: 1.125rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.5rem;
   background: var(--surface);
   animation: w-fade 0.3s ease both;
@@ -3823,7 +3831,7 @@ button.w-add-chain {
 
 .w-moment-reward {
   padding: 0.3rem 0.85rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--coral-soft);
   font-size: 0.8125rem;
@@ -3840,8 +3848,8 @@ button.w-add-chain {
 .w-privcard,
 .w-private {
   position: relative;
-  border: 2px solid var(--ink);
-  background: var(--ink);
+  border: 2px solid var(--line);
+  background: var(--fill);
   color: #fff;
   overflow: hidden;
 }
@@ -3878,7 +3886,7 @@ button.w-add-chain {
   flex: none;
   place-items: center;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--fill);
   color: var(--teal-soft);
 }
 
@@ -3934,7 +3942,7 @@ button.w-add-chain {
   width: 2.25rem;
   height: 2.25rem;
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
 }
 
@@ -4025,7 +4033,7 @@ button.w-add-chain {
   justify-items: start;
   gap: 0.15rem;
   padding: 0.75rem 0.75rem 0.85rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.4rem;
   background: var(--surface);
   color: var(--ink);
@@ -4048,7 +4056,7 @@ button.w-add-chain {
   height: 2.25rem;
   margin-bottom: 0.35rem;
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -4090,7 +4098,7 @@ button.w-add-chain {
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.8rem 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.2rem;
   background: var(--surface);
 }
@@ -4143,7 +4151,7 @@ button.w-add-chain {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -4167,14 +4175,14 @@ button.w-add-chain {
 .w-movearc-end svg {
   box-sizing: content-box;
   padding: 0.85rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--surface);
   color: var(--ink);
 }
 
 .w-movearc-ink svg {
-  background: var(--ink);
+  background: var(--fill);
   color: var(--teal-soft);
 }
 
@@ -4197,7 +4205,7 @@ button.w-add-chain {
   right: 0;
   left: 0;
   height: 3px;
-  background: repeating-linear-gradient(90deg, var(--ink) 0 3px, transparent 3px 11px);
+  background: repeating-linear-gradient(90deg, var(--fill) 0 3px, transparent 3px 11px);
   opacity: 0.55;
   transform: translateY(-50%);
 }
@@ -4242,7 +4250,7 @@ button.w-add-chain {
   width: 100%;
   margin-top: 0.75rem;
   padding: 0.55rem 0.7rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.1rem;
   background: var(--surface);
   color: var(--ink);
@@ -4255,7 +4263,7 @@ button.w-add-chain {
 }
 
 .w-privswitch-on {
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -4301,7 +4309,7 @@ button.w-add-chain {
   flex: none;
   width: 2.6rem;
   height: 1.5rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
   background: var(--sunken);
   transition: background 0.2s;
@@ -4318,9 +4326,9 @@ button.w-add-chain {
   left: 2px;
   width: 1rem;
   height: 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
   transition: transform 0.25s var(--spring);
 }
 
@@ -4337,7 +4345,7 @@ button.w-add-chain {
   gap: 0.75rem;
   margin-top: 0.75rem;
   padding: 0.75rem 0.75rem 0.75rem 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--card);
   color: var(--ink);
@@ -4380,7 +4388,7 @@ button.w-add-chain {
   place-items: center;
   width: 2.375rem;
   height: 2.375rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--coral);
   color: #fff;
@@ -4428,7 +4436,7 @@ button.w-add-chain {
   flex: none;
   padding: 0 1rem;
   border-radius: 999px;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 700;
@@ -4438,7 +4446,7 @@ button.w-add-chain {
 }
 
 .w-keyscard-arrow {
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
 }
 
 .w-keys-hero {
@@ -4446,7 +4454,7 @@ button.w-add-chain {
   overflow: hidden;
   margin-top: 1rem;
   padding: 1.1rem 1.25rem 1.2rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.9rem;
   background: var(--tint-sand);
 }
@@ -4522,9 +4530,9 @@ button.w-add-chain {
   place-items: center;
   width: 1.75rem;
   height: 1.75rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
-  background: #fff;
+  background: var(--card);
 }
 
 .w-keyrow {
@@ -4546,9 +4554,9 @@ button.w-add-chain {
   place-items: center;
   width: 2.75rem;
   height: 2.75rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
-  background: var(--ink);
+  background: var(--fill);
   color: var(--teal-soft);
 }
 
@@ -4618,7 +4626,7 @@ button.w-add-chain {
 }
 
 .w-chip-ink {
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -4655,7 +4663,7 @@ button.w-add-chain {
   display: grid;
   gap: 0.7rem;
   padding: 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.4rem;
   background: var(--coral-tint);
 }
@@ -4712,9 +4720,9 @@ button.w-add-chain {
   min-height: 11rem;
   margin-top: 1rem;
   padding: 1rem 1.25rem 1.2rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.9rem;
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -4748,7 +4756,7 @@ button.w-add-chain {
   gap: 0.45rem;
   margin-top: 1rem;
   padding: 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.4rem;
   background: var(--tint-sand);
 }
@@ -4798,9 +4806,9 @@ button.w-add-chain {
   align-items: start;
   gap: 0.6rem;
   padding: 0.75rem 0.75rem 0.75rem 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.1rem;
-  background: var(--ink);
+  background: var(--fill);
   color: var(--teal-soft);
   text-align: left;
 }
@@ -4881,9 +4889,9 @@ button.w-add-chain {
 .w-field-area {
   width: 100%;
   padding: 0.75rem 0.9rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   font: inherit;
   font-size: 1rem;
@@ -4914,9 +4922,9 @@ button.w-add-chain {
   align-items: center;
   width: 7.5rem;
   padding-left: 0.85rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--card);
 }
 
 .w-moneyin span {
@@ -4950,9 +4958,9 @@ button.w-add-chain {
 
 .w-choice-item {
   padding: 0.55rem 0.85rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   font: inherit;
   font-size: 0.875rem;
@@ -4964,7 +4972,7 @@ button.w-add-chain {
 }
 
 .w-choice-on {
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -4980,7 +4988,7 @@ button.w-add-chain {
   min-height: 11rem;
   margin-top: 1rem;
   padding: 1rem 1.25rem 1.2rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.9rem;
   background: var(--teal-deep);
   color: #fff;
@@ -5017,7 +5025,7 @@ button.w-add-chain {
   gap: 0.75rem;
   margin-top: 0.75rem;
   padding: 0.75rem 0.75rem 0.75rem 0.875rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.375rem;
   background: var(--tint-mint);
   color: var(--ink);
@@ -5056,9 +5064,9 @@ button.w-add-chain {
   align-items: center;
   gap: 0.3rem;
   padding: 0.45rem 0.75rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 999px;
-  background: #fff;
+  background: var(--card);
   color: var(--ink);
   font: inherit;
   font-size: 0.8125rem;
@@ -5067,7 +5075,7 @@ button.w-add-chain {
 }
 
 .w-from-on {
-  background: var(--ink);
+  background: var(--fill);
   color: #fff;
 }
 
@@ -5087,7 +5095,7 @@ button.w-add-chain {
   gap: 0.75rem;
   width: 100%;
   padding: 0.7rem 0.8rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.2rem;
   background: var(--tint-mint);
   color: var(--ink);
@@ -5109,9 +5117,9 @@ button.w-add-chain {
   display: grid;
   overflow-y: auto;
   max-height: 16rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--card);
 }
 
 .w-banklist button {
@@ -5171,7 +5179,7 @@ button.w-add-chain {
   gap: 0;
   margin: 0;
   padding: 0.25rem 1rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 1.4rem;
   background: var(--card);
   list-style: none;
@@ -5194,7 +5202,7 @@ button.w-add-chain {
   place-items: center;
   width: 2.5rem;
   height: 2.5rem;
-  border: 2px solid var(--ink);
+  border: 2px solid var(--line);
   border-radius: 50%;
   background: var(--tint-sand, var(--sunken));
   font-weight: 800;
@@ -5225,4 +5233,120 @@ button.w-add-chain {
 
 .w-other-into strong {
   font-variant-numeric: tabular-nums;
+}
+
+/* Appearance on Profile (components/wallet/theme.tsx): like the phone, or always light or dark. */
+.w-appearance {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+  padding: 0.875rem 0.875rem 0.875rem 1.125rem;
+  border: 2px solid var(--line);
+  border-radius: 1.375rem;
+  background: var(--surface);
+}
+
+.w-appearance-head {
+  display: grid;
+  line-height: 1.35;
+}
+
+.w-appearance-head strong {
+  font-size: 1.0625rem;
+  font-weight: 750;
+}
+
+.w-appearance-head small {
+  color: var(--muted);
+  font-size: 0.75rem;
+}
+
+.w-appearance .w-filters {
+  margin: 0;
+  background: var(--sunken);
+}
+
+/* ── The wallet in the dark (globals.css :root[data-theme="dark"]), as Kova's ─────────────── */
+
+:root[data-theme="dark"] .w-app {
+  --teal-light: #4fcaa2;
+  --on-tint: #d6ddd9;
+  --on-teal: #e3fff5;
+}
+
+:root[data-theme="dark"] .w-receipt {
+  background: var(--surface);
+}
+
+:root[data-theme="dark"] .w-balance,
+:root[data-theme="dark"] .w-money {
+  background:
+    radial-gradient(120% 130% at 100% 0%, rgba(32, 180, 135, 0.26), transparent 60%), var(--surface);
+}
+
+:root[data-theme="dark"] .w-slide-knob {
+  background: var(--ink);
+  color: var(--dark);
+}
+
+:root[data-theme="dark"] .w-filter-on {
+  background: #343434;
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .w-namecard-input {
+  border-bottom-color: rgba(230, 238, 233, 0.25);
+}
+
+:root[data-theme="dark"] .key:hover {
+  background: var(--sunken);
+}
+
+/* Light text in the dark: the second ink is a soft grey, so what it fills turns dark grey here. */
+:root[data-theme="dark"] .w-privcard-lock,
+:root[data-theme="dark"] .w-chip.w-chip-ink,
+:root[data-theme="dark"] .w-privswitch-on .w-privswitch-icon {
+  background: #262626;
+}
+
+:root[data-theme="dark"] .w-chip {
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .w-balance-sign,
+:root[data-theme="dark"] .w-balance-cents {
+  color: var(--muted);
+}
+
+:root[data-theme="dark"] .w-privcard-go {
+  background: var(--sunken);
+  color: var(--ink);
+}
+
+:root[data-theme="dark"] .w-dock-shop {
+  background: #262626;
+}
+
+:root[data-theme="dark"] .w-dock-shop:hover {
+  background: #303030;
+}
+
+/* Pale tint text on a dark fill: in the dark the tints are dark too, so it takes the colour itself. */
+:root[data-theme="dark"] .w-privcard-lock,
+:root[data-theme="dark"] .w-howpriv-icon,
+:root[data-theme="dark"] .w-lockbadge,
+:root[data-theme="dark"] .w-privcard-text small,
+:root[data-theme="dark"] .w-private-label,
+:root[data-theme="dark"] .w-private-amount .w-balance-sign,
+:root[data-theme="dark"] .w-private-amount .w-balance-cents,
+:root[data-theme="dark"] .w-movearc-ink svg,
+:root[data-theme="dark"] .w-privswitch-on .w-privswitch-icon,
+:root[data-theme="dark"] .w-keybadge,
+:root[data-theme="dark"] .w-snippet {
+  color: var(--teal);
+}
+
+:root[data-theme="dark"] .w-month-down {
+  color: var(--coral);
 }

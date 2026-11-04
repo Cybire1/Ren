@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { type ShopToday, WalletProvider } from '@/components/wallet/provider'
 import { WalletShell } from '@/components/wallet/shell'
+import { WalletTheme } from '@/components/wallet/theme'
 import { kovaPublic, type Merchant, type Summary } from '@/lib/api'
 import { getSession } from '@/lib/session'
 import { timeZone, tzQuery } from '@/lib/tz'
@@ -38,6 +39,7 @@ export default async function WalletLayout({ children }: { children: React.React
       initialRates={rates}
       zone={zoneSite()}
     >
+      <WalletTheme />
       <WalletShell>{children}</WalletShell>
     </WalletProvider>
   )
