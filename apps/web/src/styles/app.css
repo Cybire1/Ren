@@ -80,10 +80,11 @@
 }
 
 .shop-main {
+  --clear-dock: calc(var(--dock-h, 3.625rem) + var(--dock-gap, 1rem) + 2rem);
   width: 100%;
   max-width: 76rem;
   margin: 0 auto;
-  padding: 0.75rem 2.25rem calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.75rem 2.25rem var(--clear-dock);
 }
 
 .demo-bar {
@@ -104,7 +105,7 @@
 
 @media (max-width: 900px) {
   .shop-main {
-    padding: 0.5rem 1.25rem calc(7.5rem + env(safe-area-inset-bottom, 0px));
+    padding: 0.5rem 1.25rem var(--clear-dock);
   }
 
   .demo-bar {
@@ -1171,7 +1172,7 @@
 
   .tape {
     position: relative;
-    height: 32rem;
+    height: auto;
     margin-top: 2.25rem;
   }
 }
@@ -2214,7 +2215,6 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
   border: 2px solid var(--ink);
   border-radius: 1.75rem;
   background: #fff;
-  box-shadow: 0 4px 0 var(--ink);
 }
 
 .ov-total {
@@ -2223,7 +2223,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
   align-items: flex-end;
   justify-content: space-between;
   gap: 1.25rem 2rem;
-  margin-top: 1.75rem;
+  margin-top: 2.25rem;
 }
 
 .ov-total-main {
@@ -2231,7 +2231,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
 }
 
 .ov-amount {
-  font-size: clamp(3.4rem, 7.5vw, 6.5rem);
+  font-size: clamp(3.9rem, 9.5vw, 8.6rem);
 }
 
 .ov-stats {
@@ -2275,7 +2275,7 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
 }
 
 .dc {
-  margin-top: 1.5rem;
+  margin-top: 2.75rem;
 }
 
 .dc-fill {
@@ -2300,13 +2300,13 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
 }
 
 .setup {
-  margin-top: 1.5rem;
-  border-radius: 1.5rem;
+  margin-top: 1.6rem;
+  border-radius: 1.6rem;
 }
 
 .setup p {
   flex: none;
-  min-width: 0;
+  min-width: 13rem;
 }
 
 .setup-steps {

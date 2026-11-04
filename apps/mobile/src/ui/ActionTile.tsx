@@ -30,7 +30,6 @@ export function ActionTile({ kind, onPress }: { kind: 'send' | 'request'; onPres
 
   return (
     <Sticker
-      lift
       fill={tone.fill}
       radius={22}
       style={{ flex: 1 }}

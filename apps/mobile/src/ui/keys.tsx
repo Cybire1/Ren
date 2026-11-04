@@ -62,21 +62,20 @@ export function KeysCard() {
         onPress={() => router.push('/keys')}
         fill={colors.coralSoft}
         radius={26}
-        lift
         style={{ marginTop: 12 }}
       >
         <View style={styles.cardRow}>
           <View style={[styles.cardIcon, { backgroundColor: colors.coral }]}>
-            <Icon name="bell" size={20} color={colors.white} />
+            <Icon name="bell" size={18} color={colors.white} />
           </View>
           <View style={{ flex: 1 }}>
-            <Txt weight="heavy" size={12} color={colors.coralDeep} style={styles.kicker}>
+            <Txt weight="heavy" size={11} color={colors.coralDeep} style={styles.kicker}>
               {(waiting.key.label ?? 'An agent').toUpperCase()} ASKS
             </Txt>
-            <Txt weight="heavy" size={20}>
+            <Txt weight="bold" size={17}>
               Pay {dollars(waiting.amount)}?
             </Txt>
-            <Txt size={13} color={colors.muted} numberOfLines={1}>
+            <Txt size={12} color={colors.muted} numberOfLines={1}>
               {waiting.origin
                 ? new URL(waiting.origin).host
                 : (waiting.description ?? shortAddress(waiting.to))}
@@ -109,21 +108,20 @@ export function KeysCard() {
       onPress={() => router.push('/keys')}
       fill={colors.card}
       radius={26}
-      lift
       style={{ marginTop: 12 }}
     >
       <View style={styles.cardRow}>
         <View style={[styles.cardIcon, { backgroundColor: '#FFF0B5' }]}>
-          <Icon name="lock" size={20} />
+          <Icon name="lock" size={18} />
         </View>
         <View style={{ flex: 1 }}>
-          <Txt weight="heavy" size={12} color={colors.muted} style={styles.kicker}>
+          <Txt weight="heavy" size={11} color={colors.muted} style={styles.kicker}>
             KEYS
           </Txt>
-          <Txt weight="heavy" size={20}>
+          <Txt weight="bold" size={17}>
             Who can spend
           </Txt>
-          <Txt size={13} color={colors.muted} numberOfLines={1}>
+          <Txt size={12} color={colors.muted} numberOfLines={1}>
             {summary}
           </Txt>
         </View>
@@ -169,7 +167,7 @@ export function KeyRow({
         <Txt weight="bold" size={15} numberOfLines={1}>
           {received ? `From ${shortAddress(key.owner)}` : key.label}
         </Txt>
-        <Txt size={13} color={colors.muted} numberOfLines={1}>
+        <Txt size={12} color={colors.muted} numberOfLines={1}>
           {standing(key)}
         </Txt>
         {key.status === 'active' && !ended(key) && key.remaining !== null ? (
@@ -244,7 +242,7 @@ export function Ask({ payment }: { payment: KeyPaymentView }) {
     ? new URL(payment.origin).host
     : (payment.description ?? shortAddress(payment.to))
   return (
-    <Sticker fill={colors.coralTint} radius={22} lift style={{ marginBottom: 10 }}>
+    <Sticker fill={colors.coralTint} radius={22} style={{ marginBottom: 10 }}>
       <View style={{ padding: 14, gap: 12 }}>
         <View style={styles.askTop}>
           <View style={[styles.badge, { backgroundColor: colors.ink }]}>
@@ -254,7 +252,7 @@ export function Ask({ payment }: { payment: KeyPaymentView }) {
             <Txt weight="heavy" size={15}>
               {payment.key.label ?? 'Your agent'}
             </Txt>
-            <Txt size={13} color={colors.muted} numberOfLines={1}>
+            <Txt size={12} color={colors.muted} numberOfLines={1}>
               wants to pay {where}
             </Txt>
           </View>
@@ -429,14 +427,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    paddingVertical: 12,
+    paddingVertical: 10,
     paddingLeft: 14,
     paddingRight: 12,
   },
   cardIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 2,
     borderColor: colors.ink,
     alignItems: 'center',
@@ -550,19 +548,18 @@ export function AllowanceCards() {
           onPress={() => router.push({ pathname: '/send', params: { from: h.id } })}
           fill="#CFF5E6"
           radius={26}
-          lift
           style={{ marginTop: 12 }}
           accessibilityLabel={`Allowance from ${giver(h.owner)}, ${dollars((Number(h.remaining) / 1e6).toString())} left`}
         >
           <View style={styles.cardRow}>
             <View style={[styles.cardIcon, { backgroundColor: colors.tealDeep }]}>
-              <Icon name="user" size={20} color={colors.white} />
+              <Icon name="user" size={18} color={colors.white} />
             </View>
             <View style={{ flex: 1 }}>
-              <Txt weight="heavy" size={12} color={colors.tealDeep} style={styles.kicker}>
+              <Txt weight="heavy" size={11} color={colors.tealDeep} style={styles.kicker}>
                 FROM {giver(h.owner).toUpperCase()}
               </Txt>
-              <Txt weight="heavy" size={20}>
+              <Txt weight="bold" size={17}>
                 {dollars((Number(h.remaining) / 1e6).toString())} left
               </Txt>
               <Meter value={h.limit > 0n ? Number((h.remaining * 1000n) / h.limit) / 1000 : 0} />

@@ -1041,7 +1041,7 @@
   align-self: flex-end;
   margin-top: auto;
   height: auto;
-  margin-bottom: -2.25rem;
+  margin-bottom: -3.5rem;
 }
 
 .lp-panel-art {
@@ -1539,7 +1539,6 @@
   border: 2px solid var(--ink);
   border-radius: 1.2rem;
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--ink);
   transform: rotate(2deg) translateX(2.5rem);
 }
 

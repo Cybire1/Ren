@@ -27,20 +27,20 @@ export function PrivateCard() {
     >
       <View style={styles.row}>
         <View style={styles.lock}>
-          <Icon name="lock" size={20} color={colors.tealSoft} />
+          <Icon name="lock" size={18} color={colors.tealSoft} />
         </View>
         <View style={{ flex: 1 }}>
-          <Txt weight="heavy" size={12} color={colors.tealSoft} style={styles.kicker}>
+          <Txt weight="heavy" size={11} color={colors.tealSoft} style={styles.kicker}>
             PRIVATE
           </Txt>
-          <Txt weight="heavy" size={21} color={colors.white}>
+          <Txt weight="bold" size={17} color={colors.white}>
             {shown
               ? formatUsd(privacy.balance ?? 0n)
               : privacy.status === 'opening'
                 ? 'Opening…'
                 : 'Hidden'}
           </Txt>
-          <Txt size={13} color={colors.onInk} numberOfLines={1}>
+          <Txt size={12} color={colors.onInk} numberOfLines={1}>
             {shown
               ? privacy.balance === 0n
                 ? 'Keep dollars out of sight'
@@ -51,7 +51,7 @@ export function PrivateCard() {
           </Txt>
         </View>
         <View style={styles.reni}>
-          <Reni pose="key" size={58} />
+          <Reni pose="key" size={48} />
         </View>
         <View style={styles.go}>
           <Icon name="arrow" size={18} />
@@ -72,9 +72,9 @@ const styles = StyleSheet.create({
     paddingRight: 12,
   },
   lock: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.2)',
     backgroundColor: '#1E3557',

@@ -45,7 +45,7 @@ export function Home() {
   const hello = (
     <div className="w-hello">
       <Link href="/wallet/profile" className="w-hello-face" aria-label="Your profile">
-        <Avatar name={profile.name} id={profile.address} size={44} />
+        <Avatar name={profile.name} id={profile.address} size={34} />
       </Link>
       <div className="w-hello-text">
         <span className="w-hello-small">{greeting}</span>
@@ -58,7 +58,7 @@ export function Home() {
         </strong>
       </div>
       <Link href="/wallet/activity" className="round w-hello-bell" aria-label="Activity">
-        <Icon name="bell" size={20} />
+        <Icon name="bell" size={18} />
       </Link>
     </div>
   )

@@ -18,7 +18,7 @@ export type Fresh = { id: string; line: string }
 
 /** The amount's size: as large as the figures allow on a phone, smaller as the balance grows. */
 const amountSize = (figures: number) =>
-  figures <= 4 ? 68 : figures <= 6 ? 56 : figures <= 8 ? 46 : 38
+  figures <= 4 ? 54 : figures <= 6 ? 46 : figures <= 8 ? 40 : 34
 
 /**
  * The balance, as the first thing on Home: money at rest on a solid teal card, standing on the
@@ -45,17 +45,17 @@ export function BalanceCard({
     balance !== null && currency !== 'USD' ? formatLocal(baseToNumber(balance), currency) : null
 
   return (
-    <Sticker lift fill={colors.teal} radius={28} style={styles.frame} innerStyle={styles.card}>
+    <Sticker fill={colors.teal} radius={30} style={styles.frame} innerStyle={styles.card}>
       <Waves />
       <View style={styles.coins} pointerEvents="none">
         <Bob distance={5} duration={5000} delay={900} style={styles.coinBack}>
           <View style={{ transform: [{ rotate: '10deg' }] }}>
-            <Coin size={40} symbol="€" />
+            <Coin size={32} symbol="€" />
           </View>
         </Bob>
         <Bob distance={5} duration={5000} style={styles.coinFront}>
           <View style={{ transform: [{ rotate: '-6deg' }] }}>
-            <Coin size={58} symbol="$" />
+            <Coin size={44} symbol="$" />
           </View>
         </Bob>
       </View>
@@ -74,18 +74,17 @@ export function BalanceCard({
           <Txt weight="bold" size={15}>
             Available
           </Txt>
-          <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={19} />
+          <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={18} />
         </Pressable>
         <Sticker
-          lift
-          radius={22}
+          radius={16}
           fill={colors.card}
           onPress={() => router.push('/add-money')}
           accessibilityLabel="Add money"
           innerStyle={styles.add}
         >
-          <Icon name="plus" size={17} strokeWidth={2.6} />
-          <Txt weight="heavy" size={15}>
+          <Icon name="plus" size={15} strokeWidth={2.6} />
+          <Txt weight="semi" size={14}>
             Add
           </Txt>
         </Sticker>
@@ -93,14 +92,14 @@ export function BalanceCard({
 
       <View style={styles.amount}>
         {hideBalance ? (
-          <Txt weight="heavy" size={44} accessibilityLabel="Balance hidden" style={styles.hidden}>
+          <Txt weight="heavy" size={36} accessibilityLabel="Balance hidden" style={styles.hidden}>
             ••••••
           </Txt>
         ) : whole === null ? (
           <View accessible accessibilityLabel="Balance loading" style={styles.waiting}>
             <Txt
               weight="heavy"
-              size={30}
+              size={24}
               style={styles.sign}
               importantForAccessibility="no"
               accessibilityElementsHidden
@@ -113,7 +112,7 @@ export function BalanceCard({
           <>
             <Txt
               weight="heavy"
-              size={30}
+              size={24}
               exact
               style={[styles.sign, { marginTop: size * 0.2 }]}
               importantForAccessibility="no"
@@ -124,7 +123,7 @@ export function BalanceCard({
             <Odometer value={whole} size={size} label={`Available, ${usd}`} />
             <Txt
               weight="heavy"
-              size={30}
+              size={24}
               exact
               color={colors.onTint}
               style={[styles.cents, { marginTop: size * 0.2 }]}
@@ -181,7 +180,6 @@ export function BalanceCard({
 export function ReadyCard() {
   return (
     <Sticker
-      lift
       fill={colors.teal}
       radius={28}
       style={styles.frame}
@@ -240,7 +238,6 @@ export function ReadyCard() {
       </Txt>
       <View style={styles.readyRow}>
         <Sticker
-          lift
           radius={26}
           fill={colors.card}
           onPress={() => router.push('/add-money')}
@@ -281,11 +278,11 @@ const styles = StyleSheet.create({
   waiting: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    height: 66,
+    height: 56,
   },
   waitBar: {
-    width: 128,
-    height: 48,
+    width: 112,
+    height: 40,
     marginTop: 8,
     marginLeft: 4,
     borderRadius: 14,
@@ -295,23 +292,23 @@ const styles = StyleSheet.create({
   card: { paddingLeft: 20, paddingRight: 14, paddingTop: 10, paddingBottom: 18 },
   ready: { minHeight: 244 },
   waves: { position: 'absolute', right: -58, top: -26, opacity: 0.16 },
-  coins: { position: 'absolute', right: 16, bottom: 14, width: 92, height: 104 },
+  coins: { position: 'absolute', right: 14, bottom: 12, width: 76, height: 78 },
   coinFront: { position: 'absolute', right: 6, bottom: 0 },
   coinBack: { position: 'absolute', right: 0, top: 4 },
   top: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  label: { flexDirection: 'row', alignItems: 'center', gap: 8, height: 44 },
+  label: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 },
   add: {
-    height: 40,
+    height: 32,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingLeft: 12,
-    paddingRight: 16,
+    gap: 5,
+    paddingLeft: 9,
+    paddingRight: 12,
   },
   amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 8, paddingRight: 64 },
   sign: { marginRight: 3 },
   cents: { marginLeft: 5, letterSpacing: -0.6 },
-  hidden: { letterSpacing: 4, lineHeight: 72 },
+  hidden: { letterSpacing: 4, lineHeight: 60 },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',

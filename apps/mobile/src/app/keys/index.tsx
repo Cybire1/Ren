@@ -96,7 +96,6 @@ export default function KeysScreen() {
 
             <Sticker
               onPress={() => router.push('/keys/card')}
-              lift
               fill={colors.coralTint}
               radius={22}
               style={{ marginTop: 10 }}
@@ -208,7 +207,6 @@ function NewTile({
   return (
     <Sticker
       onPress={onPress}
-      lift
       fill={fill}
       radius={22}
       style={{ flex: 1 }}

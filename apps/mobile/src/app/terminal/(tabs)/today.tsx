@@ -109,7 +109,6 @@ export default function Today() {
           </Txt>
 
           <Sticker
-            lift
             fill={colors.card}
             radius={26}
             style={{ marginTop: 16 }}
@@ -306,13 +305,7 @@ function DaySoFar({ paid }: { paid: PaymentIntent[] }) {
   const label = (hour: number) =>
     hour === 0 ? '12am' : hour === 12 ? '12pm' : hour < 12 ? `${hour}am` : `${hour - 12}pm`
   return (
-    <Sticker
-      lift
-      fill={colors.card}
-      radius={26}
-      style={{ marginTop: 16 }}
-      innerStyle={styles.chart}
-    >
+    <Sticker fill={colors.card} radius={26} style={{ marginTop: 16 }} innerStyle={styles.chart}>
       <Txt weight="heavy" size={17} style={{ letterSpacing: -0.3 }}>
         The day so far
       </Txt>

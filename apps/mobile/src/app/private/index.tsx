@@ -203,7 +203,6 @@ function Action({
   return (
     <Sticker
       onPress={onPress}
-      lift
       fill={fill}
       radius={22}
       style={{ flex: 1 }}

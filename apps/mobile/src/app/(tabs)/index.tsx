@@ -73,13 +73,13 @@ export default function Home() {
           onPress={() => router.push('/(tabs)/profile')}
           style={styles.face}
         >
-          <Avatar name={profile.name} id={profile.address} size={42} />
+          <Avatar name={profile.name} id={profile.address} size={34} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <Txt weight="semi" size={13} color={colors.muted}>
             {firstRun ? 'Welcome to Ren' : greeting()}
           </Txt>
-          <Txt weight="heavy" size={19} style={{ letterSpacing: -0.4 }} numberOfLines={1}>
+          <Txt weight="semi" size={18} style={{ letterSpacing: -0.3 }} numberOfLines={1}>
             {profile.name.split(' ')[0]}
           </Txt>
         </View>
@@ -90,7 +90,7 @@ export default function Home() {
           onPress={() => router.push('/(tabs)/activity')}
           style={({ pressed }) => [styles.bell, pressed && { transform: [{ scale: 0.94 }] }]}
         >
-          <Icon name="bell" />
+          <Icon name="bell" size={18} />
           {fresh ? <View style={styles.bellDot} /> : null}
         </Pressable>
       </View>
@@ -131,7 +131,6 @@ export default function Home() {
 
           {balance === 0n ? (
             <Sticker
-              lift
               radius={24}
               fill={colors.sunken}
               onPress={() => router.push('/add-money')}
@@ -235,7 +234,6 @@ export default function Home() {
           </ScrollView>
 
           <Sticker
-            lift
             radius={22}
             fill={colors.tealSoft}
             onPress={() => router.push('/travel')}
@@ -317,8 +315,7 @@ function freshLine(entry: Entry): Fresh['line'] {
 function PayTile() {
   return (
     <Sticker
-      lift
-      radius={26}
+      radius={30}
       fill={colors.ink}
       onPress={() => router.push('/scan')}
       accessibilityLabel="Pay. Scan a code or tap a card"
@@ -330,22 +327,22 @@ function PayTile() {
           <Icon name="scan" strokeWidth={2.2} />
         </View>
         <View style={[styles.payIcon, { backgroundColor: colors.onTint }]}>
-          <TapMark size={26} stem={colors.white} wave={colors.onInk} />
+          <TapMark size={22} stem={colors.white} wave={colors.onInk} />
         </View>
       </View>
       <View style={styles.payWaves} pointerEvents="none">
-        <PulseWaves size={132} />
+        <PulseWaves size={104} />
       </View>
       <View>
         <Txt
-          weight="heavy"
-          size={42}
+          weight="bold"
+          size={34}
           color={colors.white}
-          style={{ letterSpacing: -1.8, lineHeight: 48 }}
+          style={{ letterSpacing: -1, lineHeight: 40 }}
         >
           Pay
         </Txt>
-        <Txt weight="semi" size={13} color={colors.onInk} style={{ lineHeight: 17 }}>
+        <Txt size={12} color={colors.onInk} style={{ lineHeight: 16 }}>
           {'Scan a code\nor tap a card'}
         </Txt>
       </View>
@@ -501,7 +498,6 @@ function ShopCard() {
 
   return (
     <Sticker
-      lift
       radius={22}
       fill={colors.card}
       onPress={card.go}
@@ -536,11 +532,11 @@ function ShopCard() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 46 },
   face: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.coralSoft,
@@ -549,9 +545,9 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   bell: {
-    width: 46,
-    height: 46,
-    borderRadius: 23,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.surface,
@@ -560,21 +556,21 @@ const styles = StyleSheet.create({
   },
   bellDot: {
     position: 'absolute',
-    top: 8,
-    right: 9,
-    width: 11,
-    height: 11,
+    top: 5,
+    right: 6,
+    width: 10,
+    height: 10,
     borderRadius: 6,
     borderWidth: 2,
     borderColor: colors.surface,
     backgroundColor: colors.coral,
   },
-  hero: { flexDirection: 'row', gap: 12, height: 196, marginTop: 16 },
-  pay: { padding: 16, justifyContent: 'space-between' },
+  hero: { flexDirection: 'row', gap: 12, height: 182, marginTop: 12 },
+  pay: { padding: 18, justifyContent: 'space-between' },
   payIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -589,15 +585,15 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
   },
   go: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: colors.ink,
     alignItems: 'center',
     justifyContent: 'center',
   },
   travel: {
-    height: 76,
+    height: 66,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,

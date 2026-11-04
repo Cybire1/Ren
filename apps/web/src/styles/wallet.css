@@ -4,12 +4,21 @@
  */
 
 .w-app {
+  --dock-h: 3.625rem;
+  --dock-gap: max(1rem, calc(env(safe-area-inset-bottom, 0px) - 0.375rem));
+  --round-size: 2.25rem;
   min-height: 100dvh;
   background: var(--paper);
   color: var(--ink);
 }
 
 /* Top bar: brand, the Wallet / Shop switch, and you. */
+
+/* The wallet's logo stays small on every screen, as in the app: the page leads, not the brand. */
+.w-top .brand > svg {
+  width: auto;
+  height: 1.375rem;
+}
 
 .w-top {
   position: sticky;
@@ -21,7 +30,7 @@
   gap: 0.75rem;
   max-width: 34rem;
   margin: 0 auto;
-  padding: 0.85rem 1.25rem;
+  padding: 0.85rem max(1.25rem, calc((100% - 30rem) / 2 + 1.25rem));
   background: color-mix(in srgb, var(--paper) 88%, transparent);
   backdrop-filter: blur(12px);
 }
@@ -79,7 +88,7 @@
 .w-main {
   max-width: 30rem;
   margin: 0 auto;
-  padding: 0.25rem 1.25rem calc(7.5rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.25rem 1.25rem calc(var(--dock-h) + var(--dock-gap) + 2rem);
 }
 
 .w-screen {
@@ -101,15 +110,15 @@
 .w-dock {
   position: fixed;
   left: 50%;
-  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  bottom: var(--dock-gap);
   z-index: 30;
   display: flex;
   align-items: center;
   justify-content: space-around;
   gap: 0.25rem;
-  width: min(calc(100% - 2rem), 26rem);
-  height: 4.5rem;
-  padding: 0 0.6rem;
+  width: min(calc(100% - 2.5rem), 23.5rem);
+  height: var(--dock-h);
+  padding: 0 0.375rem;
   border-radius: 999px;
   background: var(--ink);
   box-shadow: 0 18px 40px -18px color-mix(in srgb, var(--ink) 55%, transparent);
@@ -120,7 +129,7 @@
   display: grid;
   justify-items: center;
   gap: 0.15rem;
-  min-width: 3.4rem;
+  min-width: 0;
   padding: 0.35rem 0.25rem;
   border-radius: 1rem;
   color: var(--on-ink);
@@ -156,9 +165,9 @@
 .w-dock-pay {
   display: flex;
   align-items: center;
-  gap: 0.4rem;
-  height: 3.25rem;
-  padding: 0 1.15rem 0 0.95rem;
+  gap: 0.375rem;
+  height: 2.75rem;
+  padding: 0 1.125rem 0 0.875rem;
   border-radius: 999px;
   background: var(--coral);
   color: var(--ink);
@@ -191,7 +200,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  min-height: 3.25rem;
+  min-height: 2.875rem;
 }
 
 .w-hello-text {
@@ -202,21 +211,21 @@
 
 .w-hello-text span {
   color: var(--muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .w-hello-text strong {
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 650;
   letter-spacing: -0.02em;
 }
 
 .w-balance {
   position: relative;
-  margin-top: 1rem;
-  padding: 1rem 1.25rem 1.1rem;
+  margin-top: 0.875rem;
+  padding: 0.875rem 1.125rem 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.9rem;
+  border-radius: 1.5rem;
   background: var(--teal);
   color: #fff;
   overflow: hidden;
@@ -232,10 +241,10 @@
 
 .w-balance-coins {
   position: absolute;
-  right: 0.9rem;
+  right: 0.875rem;
   bottom: 0.75rem;
-  width: 84px;
-  height: 60px;
+  width: 74px;
+  height: 52px;
   pointer-events: none;
 }
 
@@ -266,8 +275,8 @@
 .w-balance-label {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.25rem 0;
+  gap: 0.4rem;
+  padding: 0;
   border: 0;
   background: none;
   color: var(--on-teal);
@@ -279,14 +288,14 @@
 .w-balance-add {
   display: flex;
   align-items: center;
-  gap: 0.3rem;
-  height: 2.25rem;
-  padding: 0 0.9rem 0 0.6rem;
+  gap: 0.25rem;
+  height: 2rem;
+  padding: 0 0.75rem 0 0.55rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
   color: var(--ink);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   text-decoration: none;
   transition: transform 0.4s var(--spring);
@@ -300,34 +309,34 @@
   position: relative;
   display: flex;
   align-items: flex-start;
-  margin-top: 0.6rem;
-  padding-right: 4.5rem;
+  margin-top: 0.5rem;
+  padding-right: 4.75rem;
   font-variant-numeric: tabular-nums;
 }
 
 .w-balance-sign {
-  margin: 0.45rem 0.1rem 0 0;
+  margin: 0.4rem 0.1rem 0 0;
   color: var(--on-teal);
-  font-size: 1.6rem;
+  font-size: 1.375rem;
   font-weight: 600;
 }
 
 .w-balance-whole {
-  font-size: clamp(2.6rem, 11vw, 3.4rem);
+  font-size: clamp(2.375rem, 12vw, 3rem);
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 1.05;
 }
 
 .w-balance-cents {
-  margin: 0.45rem 0 0 0.1rem;
+  margin: 0.4rem 0 0 0.1rem;
   color: var(--on-teal);
-  font-size: 1.5rem;
+  font-size: 1.25rem;
   font-weight: 600;
 }
 
 .w-balance-hidden {
-  font-size: 2.75rem;
+  font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: 0.25rem;
   line-height: 1.1;
@@ -339,18 +348,18 @@
   flex-wrap: wrap;
   gap: 0.5rem;
   min-height: 1.9rem;
-  margin-top: 0.6rem;
-  padding-right: 5.25rem;
+  margin-top: 0.625rem;
+  padding-right: 5rem;
 }
 
 .w-chip {
   display: inline-flex;
   align-items: center;
-  height: 1.9rem;
-  padding: 0 0.75rem;
+  height: 1.75rem;
+  padding: 0 0.7rem;
   border-radius: 999px;
   background: var(--teal-deep);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 550;
 }
 
@@ -358,8 +367,8 @@
   display: grid;
   grid-template-columns: 1.35fr 1fr;
   gap: 0.75rem;
-  height: 12.75rem;
-  margin-top: 0.9rem;
+  height: 11.25rem;
+  margin-top: 0.75rem;
 }
 
 .w-pay {
@@ -367,8 +376,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 1.1rem;
-  border-radius: 1.9rem;
+  padding: 1rem;
+  border-radius: 1.5rem;
   background: var(--ink);
   color: #fff;
   text-decoration: none;
@@ -390,8 +399,8 @@
 .w-pay-icon {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.14);
 }
@@ -409,7 +418,7 @@
 
 .w-pay-label {
   display: block;
-  font-size: 2.1rem;
+  font-size: 1.875rem;
   font-weight: 800;
   letter-spacing: -0.035em;
   line-height: 1.05;
@@ -432,9 +441,9 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 0.75rem 0.9rem;
+  padding: 0.7rem 0.875rem;
   border: 2px solid var(--ink);
-  border-radius: 1.6rem;
+  border-radius: 1.375rem;
   color: var(--ink);
   text-decoration: none;
   overflow: hidden;
@@ -477,8 +486,8 @@
   position: relative;
   display: grid;
   place-items: center;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2rem;
+  height: 2rem;
   border-radius: 50%;
   background: var(--coral);
   color: #fff;
@@ -490,19 +499,19 @@
 
 .w-tile-label {
   position: relative;
-  font-size: 1.06rem;
+  font-size: 0.9375rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.015em;
 }
 
 .w-notice {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin-top: 1.4rem;
-  padding: 0.75rem 0.75rem 0.75rem 0.9rem;
+  margin-top: 1.25rem;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
   border: 2px solid var(--ink);
-  border-radius: 1.5rem;
+  border-radius: 1.375rem;
   background: var(--sunken);
   color: var(--ink);
   text-decoration: none;
@@ -513,8 +522,8 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
   border: 2px solid var(--ink);
   border-radius: 50%;
   background: var(--teal-light);
@@ -523,7 +532,7 @@
 .w-notice-text {
   display: grid;
   flex: 1;
-  gap: 0.1rem;
+  gap: 0.0625rem;
 }
 
 .w-notice-text strong {
@@ -538,8 +547,8 @@
 .w-notice-cta {
   display: grid;
   place-items: center;
-  height: 2.5rem;
-  padding: 0 1.1rem;
+  height: 2.25rem;
+  padding: 0 1rem;
   border-radius: 999px;
   background: var(--ink);
   color: #fff;
@@ -547,8 +556,8 @@
 }
 
 .w-section {
-  margin: 1.6rem 0 0.75rem;
-  font-size: 1.125rem;
+  margin: 1.5rem 0 0.625rem;
+  font-size: 1.0625rem;
   font-weight: 650;
   letter-spacing: -0.015em;
 }
@@ -565,13 +574,13 @@
 
 .w-see-all {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   text-underline-offset: 3px;
 }
 
 .w-people {
   display: flex;
-  gap: 0.9rem;
+  gap: 0.875rem;
   margin: 0 -1.25rem;
   padding: 0 1.25rem 0.25rem;
   overflow-x: auto;
@@ -586,10 +595,10 @@
   display: grid;
   flex: none;
   justify-items: center;
-  gap: 0.35rem;
-  width: 3.75rem;
+  gap: 0.3rem;
+  width: 3.375rem;
   color: var(--ink);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 550;
   text-decoration: none;
 }
@@ -604,8 +613,8 @@
 .w-person-new {
   display: grid;
   place-items: center;
-  width: 3.5rem;
-  height: 3.5rem;
+  width: 3rem;
+  height: 3rem;
   border: 2px dashed var(--ink);
   border-radius: 50%;
 }
@@ -662,7 +671,7 @@
 }
 
 .w-quiet {
-  margin-top: 0.4rem;
+  margin-top: 0.25rem;
   color: var(--muted);
   line-height: 1.5;
 }
@@ -674,7 +683,7 @@
   display: block;
   margin-top: 0.75rem;
   border: 2px solid var(--ink);
-  border-radius: 1.6rem;
+  border-radius: 1.375rem;
   background: var(--surface);
   color: var(--ink);
   text-decoration: none;
@@ -690,7 +699,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.5rem 0.75rem 0.75rem 0.875rem;
+  padding: 0.375rem 0.75rem 0.75rem 0.875rem;
 }
 
 .w-shopcard-text {
@@ -702,13 +711,13 @@
 
 .w-shopcard-text small {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 650;
 }
 
 .w-shopcard-text strong {
   overflow: hidden;
-  font-size: 1.15rem;
+  font-size: 1.0625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   text-overflow: ellipsis;
@@ -717,7 +726,7 @@
 
 .w-shopcard-text span {
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-variant-numeric: tabular-nums;
 }
 
@@ -725,8 +734,8 @@
   display: grid;
   flex: none;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
   border-radius: 50%;
   background: var(--ink);
   color: #fff;
@@ -740,21 +749,21 @@
 .w-nameyourself {
   display: grid;
   gap: 0.75rem;
-  margin-top: 1rem;
-  padding: 1rem;
+  margin-top: 0.875rem;
+  padding: 0.875rem 1rem 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.5rem;
+  border-radius: 1.375rem;
   background: var(--coral-soft);
 }
 
 .w-nameyourself label {
   display: grid;
-  gap: 0.15rem;
+  gap: 0.125rem;
 }
 
 .w-nameyourself label span {
   color: var(--on-tint);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .w-nameyourself-row {
@@ -765,8 +774,8 @@
 .w-nameyourself-row input {
   flex: 1;
   min-width: 0;
-  height: 3rem;
-  padding: 0 1.1rem;
+  height: var(--pill-h);
+  padding: 0 1rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -783,19 +792,19 @@
 
 .w-welcome {
   display: grid;
-  gap: 0.9rem;
-  padding-top: 0.5rem;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
   animation: rise 0.6s var(--spring);
 }
 
 .w-welcome-art {
-  width: min(100%, 22rem);
+  width: min(100%, 14rem);
   height: auto;
   justify-self: center;
 }
 
 .w-hero-title {
-  font-size: clamp(2.3rem, 10vw, 3rem);
+  font-size: clamp(2rem, 9vw, 2.5rem);
   font-weight: 800;
   letter-spacing: -0.045em;
   line-height: 1;
@@ -808,7 +817,7 @@
 }
 
 .w-title {
-  font-size: 1.6rem;
+  font-size: 1.375rem;
   font-weight: 650;
   letter-spacing: -0.03em;
   line-height: 1.2;
@@ -816,8 +825,8 @@
 
 .w-ways {
   display: grid;
-  gap: 0.6rem;
-  margin-top: 0.4rem;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
 }
 
 .w-ways .shop-wallet {
@@ -844,9 +853,9 @@
 .w-namecard {
   display: grid;
   gap: 0.75rem;
-  padding: 1rem 1.25rem 1.1rem;
+  padding: 0.875rem 1.125rem 1.125rem;
   border: 2px solid var(--ink);
-  border-radius: 1.9rem;
+  border-radius: 1.5rem;
   background: var(--coral-soft);
 }
 
@@ -855,7 +864,7 @@
   align-items: center;
   gap: 0.6rem;
   color: var(--on-tint);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 550;
 }
 
@@ -867,7 +876,7 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
-  font-size: 2rem;
+  font-size: 1.75rem;
   font-weight: 800;
   letter-spacing: -0.04em;
   outline: none;
@@ -883,13 +892,13 @@
   justify-content: space-between;
   gap: 0.75rem;
   color: var(--on-tint);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 550;
 }
 
 .w-namecard-currency select {
-  height: 2.4rem;
-  padding: 0 0.8rem;
+  height: 2.5rem;
+  padding: 0 0.75rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -906,10 +915,10 @@
 
 @media (max-width: 380px) {
   .w-hero {
-    height: 12rem;
+    height: 10.5rem;
   }
   .w-pay-label {
-    font-size: 1.8rem;
+    font-size: 1.625rem;
   }
   .w-switch a {
     padding: 0 0.6rem;
@@ -920,15 +929,15 @@
 
 .w-head {
   display: grid;
-  grid-template-columns: 2.75rem 1fr auto;
+  grid-template-columns: var(--round-size) minmax(0, 1fr) auto;
   align-items: center;
   gap: 0.75rem;
-  min-height: 3.25rem;
-  margin-bottom: 0.5rem;
+  min-height: 2.75rem;
+  margin-bottom: 0.75rem;
 }
 
 .w-head h1 {
-  font-size: 1.35rem;
+  font-size: 1.375rem;
   font-weight: 750;
   letter-spacing: -0.03em;
 }
@@ -948,9 +957,9 @@
 .w-empty {
   display: grid;
   justify-items: center;
-  gap: 0.35rem;
-  margin-top: 2rem;
-  padding: 1.5rem 1rem;
+  gap: 0.3rem;
+  margin-top: 1.5rem;
+  padding: 1.25rem 0.5rem;
   text-align: center;
 }
 
@@ -973,25 +982,25 @@
 
 .w-month {
   display: grid;
-  gap: 0.35rem;
+  gap: 0.25rem;
   margin-top: 0.25rem;
-  padding: 1.1rem 1.2rem 1rem;
-  border-radius: 1.9rem;
+  padding: 1rem 1.125rem 1.125rem;
+  border-radius: 1.5rem;
   background: var(--ink);
   color: #fff;
 }
 
 .w-month-label {
   color: var(--on-ink);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 550;
 }
 
 .w-month-net {
-  font-size: 2.2rem;
+  font-size: 2rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  line-height: 1.05;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1001,14 +1010,14 @@
 
 .w-month-local {
   color: var(--on-ink);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .w-split {
   display: flex;
   gap: 3px;
-  height: 0.55rem;
-  margin-top: 0.6rem;
+  height: 0.625rem;
+  margin-top: 0.75rem;
   border-radius: 999px;
   overflow: hidden;
 }
@@ -1030,14 +1039,14 @@
   display: flex;
   gap: 1rem;
   color: var(--on-ink);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-variant-numeric: tabular-nums;
 }
 
 .w-split-legend i {
   display: inline-block;
-  width: 0.55rem;
-  height: 0.55rem;
+  width: 0.5rem;
+  height: 0.5rem;
   margin-right: 0.3rem;
   border-radius: 50%;
 }
@@ -1053,14 +1062,14 @@
 .w-week {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 0.4rem;
-  margin-top: 0.9rem;
+  gap: 0.25rem;
+  margin-top: 0.5rem;
 }
 
 .w-week-day {
   display: grid;
   justify-items: center;
-  gap: 0.3rem;
+  gap: 0.375rem;
 }
 
 .w-week-bar {
@@ -1070,7 +1079,7 @@
   gap: 2px;
   width: 100%;
   max-width: 1.6rem;
-  height: 4.25rem;
+  height: 4rem;
   padding: 2px;
   border-radius: 0.55rem;
   background: rgba(255, 255, 255, 0.06);
@@ -1078,7 +1087,7 @@
 
 .w-week-bar i {
   display: block;
-  border-radius: 0.35rem;
+  border-radius: 0.3rem;
 }
 
 .w-week-in {
@@ -1103,12 +1112,12 @@
 .w-filters {
   display: flex;
   gap: 0.5rem;
-  margin: 1.1rem 0 0.25rem;
+  margin: 1rem 0 0.25rem;
 }
 
 .w-filter {
   height: 2.4rem;
-  padding: 0 1rem;
+  padding: 0 0.5rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -1126,15 +1135,15 @@
 }
 
 .w-day {
-  margin-top: 1.1rem;
+  margin-top: 1rem;
 }
 
 .w-day-head {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.375rem;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   font-variant-numeric: tabular-nums;
 }
@@ -1146,9 +1155,9 @@
 
 .w-day-card {
   display: grid;
-  padding: 0.35rem 0.9rem;
+  padding: 0.125rem 0.875rem;
   border: 2px solid var(--ink);
-  border-radius: 1.4rem;
+  border-radius: 1.375rem;
   background: var(--surface);
 }
 
@@ -1160,8 +1169,8 @@
 
 .w-receipt {
   position: relative;
-  margin-top: 0.5rem;
-  padding: 1.5rem 1.25rem 1.25rem;
+  margin-top: 0.25rem;
+  padding: 1.25rem 1.125rem 1.125rem;
   background: #fbfaf7;
   border-radius: 1.2rem 1.2rem 0 0;
   box-shadow: 0 1px 0 var(--hairline);
@@ -1169,18 +1178,18 @@
   mask:
     conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% /
     calc(var(--edge) * 2) 100%;
-  padding-bottom: calc(1.25rem + var(--edge));
+  padding-bottom: calc(1.125rem + var(--edge));
 }
 
 .w-receipt-top {
   display: grid;
   justify-items: center;
-  gap: 0.35rem;
+  gap: 0.25rem;
   text-align: center;
 }
 
 .w-receipt-verb {
-  margin-top: 0.5rem;
+  margin-top: 0.375rem;
   color: var(--muted);
   font-weight: 600;
 }
@@ -1189,7 +1198,7 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  font-size: 1.35rem;
+  font-size: 1.1875rem;
   font-weight: 750;
   letter-spacing: -0.02em;
 }
@@ -1212,7 +1221,7 @@
 }
 
 .w-receipt-rename input {
-  height: 2.4rem;
+  height: 2.5rem;
   padding: 0 0.9rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
@@ -1222,7 +1231,7 @@
 }
 
 .w-receipt-amount {
-  font-size: 2.4rem;
+  font-size: 2.125rem;
   font-weight: 800;
   letter-spacing: -0.04em;
   font-variant-numeric: tabular-nums;
@@ -1230,9 +1239,9 @@
 
 .w-receipt-rows {
   display: grid;
-  gap: 0.6rem;
-  margin-top: 1.25rem;
-  padding-top: 1rem;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 0.875rem;
   border-top: 2px dashed var(--hairline);
 }
 
@@ -1255,14 +1264,14 @@
   display: flex;
   justify-content: center;
   gap: 0.35rem;
-  margin-top: 1.1rem;
+  margin-top: 1rem;
   color: var(--ink);
   font-weight: 650;
   text-underline-offset: 3px;
 }
 
 .w-receipt-again {
-  margin-top: 1.25rem;
+  margin-top: 1rem;
 }
 
 /* Send */
@@ -1271,8 +1280,8 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  height: 3.4rem;
-  padding: 0 0.4rem 0 1rem;
+  height: 3rem;
+  padding: 0 0.3125rem 0 0.875rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -1295,8 +1304,8 @@
 .w-find-btn {
   display: grid;
   place-items: center;
-  height: 2.5rem;
-  padding: 0 0.85rem;
+  height: 2.25rem;
+  padding: 0 0.75rem;
   border: 0;
   border-radius: 999px;
   background: var(--sunken);
@@ -1313,8 +1322,8 @@
 .w-find-scan {
   display: grid;
   place-items: center;
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   background: var(--coral);
   color: #fff;
@@ -1325,10 +1334,10 @@
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  margin-top: 1rem;
-  padding: 0.75rem 1rem 0.75rem 0.75rem;
+  margin-top: 0.875rem;
+  padding: 0.625rem 0.875rem 0.625rem 0.625rem;
   border: 0;
-  border-radius: 1.5rem;
+  border-radius: 1.375rem;
   background: var(--ink);
   color: #fff;
   font: inherit;
@@ -1356,7 +1365,7 @@
   align-items: center;
   gap: 0.75rem;
   width: 100%;
-  padding: 0.5rem 0;
+  padding: 0.4375rem 0;
   border: 0;
   background: none;
   color: var(--ink);
@@ -1400,7 +1409,7 @@ button.w-person {
 
 .w-amount-screen {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .w-to {
@@ -1414,7 +1423,7 @@ button.w-person {
 }
 
 .w-to strong {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
@@ -1427,8 +1436,8 @@ button.w-person {
   justify-content: center;
   align-items: flex-start;
   gap: 0.15rem;
-  margin-top: 0.75rem;
-  font-size: clamp(3rem, 16vw, 4.25rem);
+  margin-top: 0.5rem;
+  font-size: clamp(2.75rem, 14vw, 3.5rem);
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1.05;
@@ -1436,7 +1445,7 @@ button.w-person {
 }
 
 .w-typed-sign {
-  margin-top: 0.4rem;
+  margin-top: 0.35rem;
   color: var(--muted);
   font-size: 0.45em;
 }
@@ -1447,8 +1456,8 @@ button.w-person {
 }
 
 .w-note {
-  height: 3rem;
-  padding: 0 1.1rem;
+  height: 2.75rem;
+  padding: 0 1rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -1463,20 +1472,33 @@ button.w-person {
 }
 
 .w-keypad {
+  --key: 4rem;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 0.35rem;
-  margin: 0.25rem 0 0.4rem;
+  gap: 0.75rem 0;
+  margin: 0.25rem 0 0.75rem;
+}
+
+/* A short screen (a phone with the browser's bars showing): the keys give up some height. */
+@media (max-height: 760px) {
+  .w-keypad {
+    --key: 3.375rem;
+    gap: 0.5rem 0;
+  }
+  .w-typed {
+    margin-top: 0.25rem;
+    font-size: clamp(2.5rem, 12vw, 3rem);
+  }
 }
 
 .w-key {
-  height: 3.6rem;
+  height: var(--key);
   border: 0;
-  border-radius: 1.2rem;
+  border-radius: 50%;
   background: none;
   color: var(--ink);
   font: inherit;
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   font-weight: 650;
   cursor: pointer;
   display: grid;
@@ -1508,12 +1530,12 @@ button.w-person {
 
 .w-review-card {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.625rem;
   width: 100%;
-  margin: 0.75rem 0;
-  padding: 1rem 1.1rem;
+  margin: 0.625rem 0;
+  padding: 0.875rem 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.4rem;
+  border-radius: 1.375rem;
   background: var(--surface);
   text-align: left;
 }
@@ -1559,13 +1581,13 @@ button.w-person {
 .w-moment {
   display: grid;
   justify-items: center;
-  gap: 0.6rem;
-  padding-top: 2rem;
+  gap: 0.5rem;
+  padding-top: 1.25rem;
   text-align: center;
 }
 
 .w-moment-art {
-  width: min(100%, 16rem);
+  width: min(100%, 10.5rem);
   height: auto;
 }
 
@@ -1574,16 +1596,16 @@ button.w-person {
 }
 
 .w-moment-big {
-  font-size: 1.25rem;
+  font-size: 1.0625rem;
   font-weight: 700;
 }
 
 .w-moment-actions {
   display: grid;
   justify-items: center;
-  gap: 0.9rem;
+  gap: 0.75rem;
   width: 100%;
-  margin-top: 1rem;
+  margin-top: 0.75rem;
 }
 
 /* Request, receive */
@@ -1591,7 +1613,7 @@ button.w-person {
 .w-code-screen {
   display: grid;
   justify-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   text-align: center;
 }
 
@@ -1600,18 +1622,18 @@ button.w-person {
 }
 
 .w-code-amount {
-  font-size: 2.6rem;
+  font-size: 2.25rem;
   font-weight: 800;
   letter-spacing: -0.045em;
-  line-height: 1.05;
+  line-height: 1.1;
   font-variant-numeric: tabular-nums;
 }
 
 .w-code-card {
-  margin: 0.5rem 0;
-  padding: 1.1rem;
+  margin: 0.375rem 0;
+  padding: 0.875rem;
   border: 2px solid var(--ink);
-  border-radius: 1.6rem;
+  border-radius: 1.375rem;
   background: #fff;
 }
 
@@ -1631,7 +1653,7 @@ button.w-person {
   justify-content: space-between;
   gap: 1rem;
   width: 100%;
-  padding: 0.7rem 0.7rem 0.7rem 1.1rem;
+  padding: 0.4375rem 0.4375rem 0.4375rem 1rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -1656,14 +1678,14 @@ button.w-person {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  height: 2.4rem;
-  padding: 0 0.9rem;
+  height: 2.25rem;
+  padding: 0 0.8rem;
   border: 0;
   border-radius: 999px;
   background: var(--sunken);
   color: var(--ink);
   font: inherit;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 650;
   cursor: pointer;
 }
@@ -1671,7 +1693,7 @@ button.w-person {
 .w-copy-wide {
   justify-content: center;
   width: 100%;
-  height: 3rem;
+  height: 2.75rem;
 }
 
 .w-copy-ink {
@@ -1684,7 +1706,7 @@ button.w-person {
 .w-add {
   display: grid;
   justify-items: center;
-  gap: 0.6rem;
+  gap: 0.5rem;
   text-align: center;
 }
 
@@ -1694,7 +1716,7 @@ button.w-person {
 }
 
 .w-add-art {
-  width: 9rem;
+  width: 6.5rem;
   height: auto;
 }
 
@@ -1704,9 +1726,9 @@ button.w-person {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  padding: 1.2rem;
-  border-radius: 1.9rem;
+  gap: 0.875rem;
+  padding: 1rem 1rem 1rem 1.125rem;
+  border-radius: 1.5rem;
   background: var(--ink);
   color: #fff;
 }
@@ -1714,30 +1736,30 @@ button.w-person {
 .w-pass-text {
   display: grid;
   justify-items: start;
-  gap: 0.2rem;
+  gap: 0.125rem;
   min-width: 0;
 }
 
 .w-pass-text strong {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
 
 .w-pass-text > span {
   color: var(--on-ink);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .w-pass-label {
-  margin-top: 0.6rem;
+  margin-top: 0.625rem;
   color: var(--on-ink);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
 }
 
 .w-pass-label em {
   margin-left: 0.35rem;
-  padding: 0.05rem 0.45rem;
+  padding: 0.0625rem 0.4375rem;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
   font-style: normal;
@@ -1746,20 +1768,20 @@ button.w-person {
 
 .w-pass-text code {
   font-family: var(--font);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
 }
 
 .w-pass-qr {
   flex: none;
-  padding: 0.6rem;
-  border-radius: 1.1rem;
+  padding: 0.5rem;
+  border-radius: 1rem;
   background: #fff;
 }
 
 .w-stats {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.5rem;
   margin-top: 0.75rem;
 }
@@ -1767,18 +1789,18 @@ button.w-person {
 .w-stats span {
   display: grid;
   justify-items: center;
-  padding: 0.75rem 0.25rem;
+  padding: 0.625rem 0.25rem;
   border: 2px solid var(--ink);
-  border-radius: 1.2rem;
+  border-radius: 1.125rem;
   background: var(--surface);
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
 }
 
 .w-stats strong {
   color: var(--ink);
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
   font-variant-numeric: tabular-nums;
 }
@@ -1791,11 +1813,11 @@ button.w-person {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.875rem;
   margin-top: 0.75rem;
-  padding: 1rem 1.1rem;
+  padding: 0.875rem 0.875rem 0.875rem 1.125rem;
   border: 2px solid var(--ink);
-  border-radius: 1.5rem;
+  border-radius: 1.375rem;
   background: var(--teal);
   color: #fff;
 }
@@ -1807,11 +1829,11 @@ button.w-person {
 .w-money small,
 .w-money span {
   color: var(--on-teal);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .w-money strong {
-  font-size: 1.2rem;
+  font-size: 1.0625rem;
   font-weight: 750;
 }
 
@@ -1819,8 +1841,8 @@ button.w-person {
   position: relative;
   display: grid;
   place-items: center;
-  height: 2.4rem;
-  padding: 0 1rem;
+  height: 2.25rem;
+  padding: 0 0.875rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--surface);
@@ -1838,11 +1860,11 @@ button.w-person {
 
 .w-keys {
   display: grid;
-  gap: 0.75rem;
+  gap: 0.625rem;
   margin-top: 0.75rem;
-  padding: 1rem 1.1rem;
+  padding: 0.875rem 1rem 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.5rem;
+  border-radius: 1.375rem;
   background: var(--surface);
 }
 
@@ -1865,8 +1887,8 @@ button.w-person {
   display: grid;
   flex: none;
   place-items: center;
-  width: 2.6rem;
-  height: 2.6rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   background: var(--ink);
   color: #fff;
@@ -1877,8 +1899,8 @@ button.w-person {
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.75rem 0.9rem;
-  border-radius: 1rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.875rem;
   background: var(--sunken);
 }
 
@@ -1888,7 +1910,7 @@ button.w-person {
 
 .w-session small {
   color: var(--muted);
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
 }
 
 .w-session-open {
@@ -1898,14 +1920,14 @@ button.w-person {
 .w-rules {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.375rem;
 }
 
 .w-rules span {
-  padding: 0.3rem 0.7rem;
+  padding: 0.1875rem 0.625rem;
   border: 1.5px solid var(--ink);
   border-radius: 999px;
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 650;
 }
 
@@ -1922,7 +1944,7 @@ button.w-person {
 
 .w-forget-link {
   display: block;
-  margin: 1.5rem auto 0;
+  margin: 1.25rem auto 0;
   color: var(--muted);
   font-weight: 600;
 }
@@ -1931,8 +1953,8 @@ button.w-person {
   display: grid;
   gap: 0.75rem;
   margin-top: 1.25rem;
-  padding: 1rem;
-  border-radius: 1.2rem;
+  padding: 0.875rem 1rem;
+  border-radius: 1.125rem;
   background: rgba(176, 62, 50, 0.1);
   line-height: 1.5;
 }
@@ -1950,9 +1972,9 @@ button.w-person {
   display: grid;
   place-items: center;
   aspect-ratio: 1;
-  max-height: 60vh;
-  margin: 0.25rem 0 1rem;
-  border-radius: 1.9rem;
+  max-height: 52vh;
+  margin: 0 0 0.875rem;
+  border-radius: 1.5rem;
   background: var(--ink);
   color: #fff;
   overflow: hidden;
@@ -1975,24 +1997,24 @@ button.w-person {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 0.6rem;
-  max-width: 19rem;
+  gap: 0.5rem;
+  max-width: 18rem;
   padding: 1rem;
   text-align: center;
 }
 
 .w-scan-idle > span {
   color: var(--on-ink);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
 .w-scan-frame {
   display: grid;
   place-items: center;
-  width: 5rem;
-  height: 5rem;
-  border-radius: 1.4rem;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 1.125rem;
   background: rgba(255, 255, 255, 0.08);
 }
 
@@ -2019,12 +2041,12 @@ button.w-person {
 
 .w-shop {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.75rem;
 }
 
 .w-shop-art {
   justify-self: center;
-  width: min(100%, 15rem);
+  width: min(100%, 9rem);
   height: auto;
 }
 
@@ -2040,7 +2062,7 @@ button.w-person {
   justify-items: center;
   gap: 1.5rem;
   min-height: 100dvh;
-  padding: 1.25rem 1.25rem 3rem;
+  padding: 1rem 1.25rem 2.5rem;
   background: var(--paper);
 }
 
@@ -2051,11 +2073,11 @@ button.w-person {
 .to-card {
   display: grid;
   justify-items: center;
-  gap: 0.5rem;
+  gap: 0.25rem;
   width: min(100%, 26rem);
-  padding: 1.75rem 1.25rem;
+  padding: 1.5rem 1.125rem 1.25rem;
   border: 2px solid var(--ink);
-  border-radius: 2rem;
+  border-radius: 1.5rem;
   background: var(--surface);
   text-align: center;
   animation: rise 0.6s var(--spring);
@@ -2069,9 +2091,9 @@ button.w-person {
 
 .to-ways {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.5rem;
   width: 100%;
-  margin: 0.75rem 0 0.25rem;
+  margin: 1rem 0 0.5rem;
 }
 
 /* The pay page's second way in: the Kova wallet on the web. */
@@ -2286,48 +2308,25 @@ button.w-person {
  * that just landed gets a chip and a glow, and Pay's waves breathe.
  */
 
-.w-balance,
 .w-pay,
 .w-tile,
 .w-shopcard,
 .w-notice,
 .w-balance-add,
 .w-balance-cta {
-  box-shadow: 0 4px 0 var(--ink);
-  transition:
-    transform 0.25s var(--spring),
-    box-shadow 0.25s var(--spring);
-}
-
-.w-balance-add,
-.w-balance-cta {
-  box-shadow: 0 3px 0 var(--ink);
-}
-
-@media (hover: hover) {
-  .w-pay:hover,
-  .w-tile:hover,
-  .w-shopcard:hover,
-  .w-notice:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 5px 0 var(--ink);
-  }
-
-  .w-balance-add:hover,
-  .w-balance-cta:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 0 var(--ink);
-  }
+  transition: transform 0.25s var(--spring);
 }
 
 .w-pay:active,
 .w-tile:active,
 .w-shopcard:active,
-.w-notice:active,
+.w-notice:active {
+  transform: scale(0.98);
+}
+
 .w-balance-add:active,
 .w-balance-cta:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--ink);
+  transform: scale(0.96);
 }
 
 .w-pay {
@@ -2337,8 +2336,8 @@ button.w-person {
 .w-hello-face {
   display: block;
   flex: none;
-  width: 2.875rem;
-  height: 2.875rem;
+  width: 2.375rem;
+  height: 2.375rem;
   box-sizing: border-box;
   border: 2px solid var(--ink);
   border-radius: 50%;
@@ -2361,8 +2360,8 @@ button.w-person {
 }
 
 .w-hello-bell {
-  width: 2.875rem;
-  height: 2.875rem;
+  width: var(--round-size, 2.25rem);
+  height: var(--round-size, 2.25rem);
   box-sizing: border-box;
   border: 2px solid var(--ink);
   background: var(--surface);
@@ -2428,7 +2427,7 @@ button.w-person {
 }
 
 .w-chip {
-  height: 1.85rem;
+  height: 1.75rem;
   box-sizing: border-box;
   gap: 0.35rem;
   border: 2px solid var(--ink);
@@ -2558,8 +2557,8 @@ button.w-person {
 
 .w-pay-waves {
   position: absolute;
-  right: -30px;
-  top: 34px;
+  right: -14px;
+  top: 40px;
   pointer-events: none;
 }
 
@@ -2590,8 +2589,8 @@ button.w-person {
 }
 
 .w-pay-sub {
-  margin-top: 0.3rem;
-  font-size: 0.8125rem;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 
@@ -2925,23 +2924,23 @@ button.w-person {
 /* Opened inside X or Instagram: the way out to a browser that holds passkeys. */
 .w-inapp {
   display: grid;
-  gap: 0.35rem;
-  margin: 1rem 0 0.25rem;
-  padding: 1rem 1.1rem;
+  gap: 0.3rem;
+  margin: 0.75rem 0 0.25rem;
+  padding: 0.875rem 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.4rem;
+  border-radius: 1.375rem;
   background: var(--coral-soft);
   color: var(--ink);
   text-align: left;
 }
 
 .w-inapp strong {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 800;
 }
 
 .w-inapp span {
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   line-height: 1.4;
 }
 
@@ -2959,7 +2958,7 @@ button.w-person {
   background: none;
   color: var(--ink);
   font: inherit;
-  font-size: 0.9375rem;
+  font-size: 0.875rem;
   font-weight: 700;
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -2988,12 +2987,12 @@ button.w-person {
   bottom: 0;
   z-index: 41;
   width: min(100%, 30rem);
-  max-height: calc(100dvh - 1.5rem);
+  max-height: calc(100dvh - 1rem);
   overflow: auto;
   padding: 0 1.25rem calc(1rem + env(safe-area-inset-bottom, 0px));
   border: 2px solid var(--ink);
   border-bottom: 0;
-  border-radius: 2.1rem 2.1rem 0 0;
+  border-radius: 1.5rem 1.5rem 0 0;
   background: var(--paper);
   transform: translateX(-50%);
   animation: w-sheet-up 0.5s var(--spring) both;
@@ -3012,7 +3011,7 @@ button.w-person {
   .w-sheet {
     bottom: 1.5rem;
     border-bottom: 2px solid var(--ink);
-    border-radius: 2.1rem;
+    border-radius: 1.75rem;
   }
 }
 
@@ -3036,9 +3035,9 @@ button.w-person {
 
 .w-sheet-grab {
   display: block;
-  width: 2.6rem;
-  height: 0.35rem;
-  margin: 0.55rem auto 0;
+  width: 2.25rem;
+  height: 0.3125rem;
+  margin: 0.5rem auto 0;
   padding: 0;
   border: 0;
   border-radius: 1rem;
@@ -3052,7 +3051,7 @@ button.w-person {
 }
 
 .w-sheet-fit > div {
-  padding-top: 1rem;
+  padding-top: 0.75rem;
 }
 
 .w-sheet-step {
@@ -3071,14 +3070,14 @@ button.w-person {
 }
 
 .w-sheet-h {
-  margin: 0.4rem 0 0.85rem;
-  font-size: 1.85rem;
+  margin: 0.25rem 0 0.75rem;
+  font-size: 1.5rem;
   font-weight: 800;
   letter-spacing: -0.04em;
 }
 
 .w-sheet-people {
-  margin-top: 1rem;
+  margin-top: 0.875rem;
 }
 
 .w-sheet-list {
@@ -3099,7 +3098,7 @@ button.w-person {
 
 .w-sheet-who strong,
 .w-sheet-title {
-  font-size: 1.05rem;
+  font-size: 1rem;
   font-weight: 700;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -3112,7 +3111,7 @@ button.w-person {
 
 .w-sheet-amount {
   display: grid;
-  gap: 0.6rem;
+  gap: 0.5rem;
 }
 
 .w-sheet-amount .w-note {
@@ -3128,11 +3127,11 @@ button.w-person {
 }
 
 .w-sheet-pill {
-  padding: 0.35rem 0.8rem;
+  padding: 0.3rem 0.75rem;
   border-radius: 999px;
   background: var(--sunken);
   color: var(--on-tint);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -3151,7 +3150,7 @@ button.w-person {
 .w-arc {
   position: relative;
   height: 8.25rem;
-  margin-top: 1.1rem;
+  margin-top: 0.75rem;
 }
 
 .w-arc-line {
@@ -3176,7 +3175,7 @@ button.w-person {
   justify-items: center;
   gap: 0.25rem;
   width: 68px;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
 }
 
@@ -3259,7 +3258,7 @@ button.w-person {
 }
 
 .w-sheet-sum strong {
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 800;
   letter-spacing: -0.05em;
   line-height: 1.1;
@@ -3271,10 +3270,10 @@ button.w-person {
 }
 
 .w-facts {
-  margin: 1.1rem 0 1rem;
-  padding: 0.35rem 1rem;
+  margin: 0.875rem 0;
+  padding: 0.25rem 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.4rem;
+  border-radius: 1.25rem;
   background: var(--surface);
 }
 
@@ -3283,7 +3282,7 @@ button.w-person {
   justify-content: space-between;
   align-items: center;
   gap: 1rem;
-  padding: 0.55rem 0;
+  padding: 0.5rem 0;
 }
 
 .w-fact dt {
@@ -3320,11 +3319,11 @@ button.w-person {
   align-items: center;
   gap: 0.5rem;
   margin: 0 0 0.75rem;
-  padding: 0.75rem;
+  padding: 0.625rem 0.75rem;
   border-radius: 1rem;
   background: var(--coral-soft);
   color: var(--danger);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 600;
 }
 
@@ -3332,8 +3331,8 @@ button.w-person {
 
 .w-slide {
   position: relative;
-  height: 68px;
-  border-radius: 34px;
+  height: 52px;
+  border-radius: 26px;
   background: var(--ink);
   overflow: hidden;
   user-select: none;
@@ -3347,7 +3346,7 @@ button.w-person {
 .w-slide-fill {
   position: absolute;
   inset: 0 auto 0 0;
-  border-radius: 34px;
+  border-radius: 26px;
   background: var(--coral);
   transition: width 0.45s var(--spring);
 }
@@ -3358,14 +3357,14 @@ button.w-person {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding-left: 56px;
+  padding-left: 44px;
   color: #fff;
   font-weight: 700;
   pointer-events: none;
 }
 
 .w-slide-busy .w-slide-words {
-  padding: 0 56px 0 0;
+  padding: 0 44px 0 0;
 }
 
 .w-slide-chevrons {
@@ -3395,12 +3394,12 @@ button.w-person {
 
 .w-slide-knob {
   position: absolute;
-  top: 6px;
-  left: 6px;
+  top: 4px;
+  left: 4px;
   display: grid;
   place-items: center;
-  width: 56px;
-  height: 56px;
+  width: 44px;
+  height: 44px;
   padding: 0;
   border: 0;
   border-radius: 50%;
@@ -3454,26 +3453,26 @@ button.w-person {
 .w-sheet-sent {
   display: grid;
   justify-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
   text-align: center;
 }
 
 .w-sheet-sent h2 {
-  margin: 0.4rem 0 0;
-  font-size: 2.75rem;
+  margin: 0.25rem 0 0;
+  font-size: 2.25rem;
   font-weight: 800;
   letter-spacing: -0.05em;
 }
 
 .w-sheet-sent p {
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 600;
 }
 
 .w-sheet-sent .pill {
   width: 100%;
-  margin-top: 1.1rem;
+  margin-top: 1rem;
 }
 
 .w-sheet-sent .textlink {
@@ -3526,12 +3525,12 @@ button.w-person {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  margin-top: 0.65rem;
-  padding: 0.45rem 0.9rem;
+  margin-top: 0.5rem;
+  padding: 0.375rem 0.8rem;
   border-radius: 999px;
   background: var(--ink);
   color: #fff;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -3611,7 +3610,7 @@ button.w-person {
   justify-items: end;
   gap: 0.15rem;
   max-width: 65%;
-  font-size: 1.05rem;
+  font-size: 0.9375rem;
 }
 
 .w-receipt-note small {
@@ -3624,10 +3623,10 @@ button.w-person {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  margin: 1rem 0 0;
-  padding: 0.75rem 0.75rem 0.75rem 1rem;
+  margin: 0.875rem 0 0;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
   border: 2px solid var(--ink);
-  border-radius: 1.4rem;
+  border-radius: 1.375rem;
   background: var(--tint-sand);
 }
 
@@ -3654,8 +3653,8 @@ button.w-person {
 
 .w-notes-locked-btn {
   flex: none;
-  height: 2.5rem;
-  padding: 0 1.1rem;
+  height: 2.25rem;
+  padding: 0 1rem;
   border: 0;
   border-radius: 999px;
   background: var(--ink);
@@ -3672,9 +3671,9 @@ button.w-person {
   align-items: center;
   gap: 0.75rem;
   margin-top: 0.75rem;
-  padding: 0.9rem 1.1rem;
+  padding: 0.75rem 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.4rem;
+  border-radius: 1.375rem;
   background: var(--surface);
   color: var(--ink);
   text-decoration: none;
@@ -3704,14 +3703,14 @@ button.w-person {
 .w-chain {
   display: grid;
   justify-items: center;
-  gap: 0.45rem;
-  padding: 0.8rem 0.25rem;
+  gap: 0.4rem;
+  padding: 0.7rem 0.25rem;
   border: 2px solid var(--ink);
-  border-radius: 1.3rem;
+  border-radius: 1.125rem;
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 0.8125rem;
+  font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
   transition:
@@ -3731,8 +3730,8 @@ button.w-person {
 .w-chain-disc {
   display: grid;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
   border: 2px solid var(--ink);
   border-radius: 50%;
   background: #8fa2e8;
@@ -3756,7 +3755,7 @@ button.w-person {
 .w-chain-soon {
   margin-top: 1rem;
   border: 2px solid var(--ink);
-  border-radius: 1.75rem;
+  border-radius: 1.5rem;
   background: var(--surface);
 }
 
@@ -3765,9 +3764,9 @@ button.w-person {
   justify-items: center;
   gap: 0.5rem;
   margin-top: 1rem;
-  padding: 1.25rem;
+  padding: 1.125rem;
   border: 2px solid var(--ink);
-  border-radius: 1.75rem;
+  border-radius: 1.5rem;
   background: var(--surface);
   animation: w-fade 0.3s ease both;
 }
@@ -3817,17 +3816,17 @@ button.w-add-chain {
 /* Paid for a stall order: where it is at the counter, and the stamp it earned. */
 .w-moment-order {
   display: grid;
-  gap: 3rem;
+  gap: 2.75rem;
   width: 100%;
   margin-top: 0.75rem;
 }
 
 .w-moment-reward {
-  padding: 0.35rem 0.9rem;
+  padding: 0.3rem 0.85rem;
   border: 2px solid var(--ink);
   border-radius: 999px;
   background: var(--coral-soft);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 700;
 }
 
@@ -3860,10 +3859,10 @@ button.w-add-chain {
 .w-privcard {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.75rem;
   margin-top: 0.75rem;
-  padding: 0.8rem 0.8rem 0.8rem 0.9rem;
-  border-radius: 1.6rem;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
+  border-radius: 1.375rem;
   text-decoration: none;
   transition: transform 0.45s var(--spring);
 }
@@ -3885,8 +3884,8 @@ button.w-add-chain {
 
 .w-privcard-lock {
   position: relative;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
   border: 2px solid rgba(255, 255, 255, 0.2);
   background: var(--ink-2);
 }
@@ -3909,7 +3908,7 @@ button.w-add-chain {
 }
 
 .w-privcard-text strong {
-  font-size: 1.3rem;
+  font-size: 1.0625rem;
   font-weight: 800;
   letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
@@ -3917,7 +3916,7 @@ button.w-add-chain {
 
 .w-privcard-text span {
   color: rgba(255, 255, 255, 0.75);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
 }
 
 .w-privcard-reni {
@@ -3932,8 +3931,8 @@ button.w-add-chain {
   display: grid;
   flex: none;
   place-items: center;
-  width: 2.5rem;
-  height: 2.5rem;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 50%;
   background: #fff;
   color: var(--ink);
@@ -3941,9 +3940,9 @@ button.w-add-chain {
 
 .w-private {
   min-height: 11.75rem;
-  margin-top: 1rem;
-  padding: 1rem 1.25rem 1.1rem;
-  border-radius: 1.9rem;
+  margin-top: 0.75rem;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
+  border-radius: 1.375rem;
 }
 
 .w-private-top {
@@ -4029,17 +4028,13 @@ button.w-add-chain {
   border: 2px solid var(--ink);
   border-radius: 1.4rem;
   background: var(--surface);
-  box-shadow: 0 4px 0 var(--ink);
   color: var(--ink);
   text-decoration: none;
-  transition:
-    transform 0.15s,
-    box-shadow 0.15s;
+  transition: transform 0.15s;
 }
 
 .w-privact:active {
-  transform: translateY(4px);
-  box-shadow: 0 0 0 var(--ink);
+  transform: scale(0.98);
 }
 
 .w-privact-coral {
@@ -4339,23 +4334,19 @@ button.w-add-chain {
 .w-keyscard {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.75rem;
   margin-top: 0.75rem;
-  padding: 0.75rem 0.8rem 0.75rem 0.85rem;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
   border: 2px solid var(--ink);
-  border-radius: 1.6rem;
+  border-radius: 1.375rem;
   background: var(--card);
-  box-shadow: 0 4px 0 var(--ink);
   color: var(--ink);
   text-decoration: none;
-  transition:
-    transform 0.45s var(--spring),
-    box-shadow 0.15s;
+  transition: transform 0.45s var(--spring);
 }
 
 .w-keyscard:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--ink);
+  transform: scale(0.98);
 }
 
 .w-keyscard-ask {
@@ -4387,8 +4378,8 @@ button.w-add-chain {
   display: grid;
   flex: none;
   place-items: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: 2.375rem;
+  height: 2.375rem;
   border: 2px solid var(--ink);
   border-radius: 50%;
   background: var(--coral);
@@ -4409,7 +4400,7 @@ button.w-add-chain {
 
 .w-keyscard-text small {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -4420,7 +4411,7 @@ button.w-add-chain {
 }
 
 .w-keyscard-text strong {
-  font-size: 1.15rem;
+  font-size: 0.9375rem;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
@@ -4428,19 +4419,22 @@ button.w-add-chain {
 .w-keyscard-text span {
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .w-keyscard-go {
   flex: none;
-  padding: 0.5rem 0.85rem;
+  padding: 0 1rem;
   border-radius: 999px;
   background: var(--ink);
   color: #fff;
   font-size: 0.875rem;
   font-weight: 700;
+  height: 2.25rem;
+  display: inline-flex;
+  align-items: center;
 }
 
 .w-keyscard-arrow {
@@ -4664,7 +4658,6 @@ button.w-add-chain {
   border: 2px solid var(--ink);
   border-radius: 1.4rem;
   background: var(--coral-tint);
-  box-shadow: 0 4px 0 var(--ink);
 }
 
 .w-ask-top {
@@ -4868,7 +4861,7 @@ button.w-add-chain {
 
 .w-keyform {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.75rem;
 }
 
 .w-field {
@@ -5021,20 +5014,18 @@ button.w-add-chain {
 .w-allowcard {
   display: flex;
   align-items: center;
-  gap: 0.8rem;
+  gap: 0.75rem;
   margin-top: 0.75rem;
-  padding: 0.75rem 0.8rem 0.75rem 0.85rem;
+  padding: 0.75rem 0.75rem 0.75rem 0.875rem;
   border: 2px solid var(--ink);
-  border-radius: 1.6rem;
+  border-radius: 1.375rem;
   background: var(--tint-mint);
-  box-shadow: 0 4px 0 var(--ink);
   color: var(--ink);
   text-decoration: none;
 }
 
 .w-allowcard:active {
-  transform: translateY(3px);
-  box-shadow: 0 1px 0 var(--ink);
+  transform: scale(0.98);
 }
 
 .w-allowcard .w-keyscard-go {
@@ -5183,7 +5174,6 @@ button.w-add-chain {
   border: 2px solid var(--ink);
   border-radius: 1.4rem;
   background: var(--card);
-  box-shadow: 0 4px 0 var(--ink);
   list-style: none;
 }
 

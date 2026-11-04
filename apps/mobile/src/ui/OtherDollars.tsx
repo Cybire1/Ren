@@ -28,22 +28,21 @@ export function OtherDollarsCard() {
       onPress={() => router.push('/other-dollars')}
       fill={colors.tealSoft}
       radius={26}
-      lift
       style={{ marginTop: 12 }}
       accessibilityLabel={`Other dollars, ${formatUsd(total)} in ${names}. Add them to your balance as ${settlementToken.symbol}`}
     >
       <View style={styles.row}>
         <View style={styles.icon}>
-          <Icon name="swap" size={20} color={colors.white} />
+          <Icon name="swap" size={18} color={colors.white} />
         </View>
         <View style={{ flex: 1 }}>
-          <Txt weight="heavy" size={12} color={colors.tealDeep} style={styles.kicker}>
+          <Txt weight="heavy" size={11} color={colors.tealDeep} style={styles.kicker}>
             OTHER DOLLARS
           </Txt>
-          <Txt weight="heavy" size={20}>
+          <Txt weight="bold" size={17}>
             {formatUsd(total)}
           </Txt>
-          <Txt size={13} color={colors.muted} numberOfLines={1}>
+          <Txt size={12} color={colors.muted} numberOfLines={1}>
             {names}
           </Txt>
         </View>
@@ -66,9 +65,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   icon: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     borderWidth: 2,
     borderColor: colors.ink,
     backgroundColor: colors.teal,

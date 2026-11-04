@@ -49,7 +49,7 @@ export function PrivateCard() {
               : 'Open with your passkey'}
         </span>
       </span>
-      <Art name="reni-key" size={64} className="w-privcard-reni" />
+      <Art name="reni-key" size={52} className="w-privcard-reni" />
       <span className="w-privcard-go" aria-hidden="true">
         <Icon name="arrow" size={18} />
       </span>
