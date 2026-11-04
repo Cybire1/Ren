@@ -298,7 +298,7 @@ const mppShopKey = mppShop.body.secret_key ?? mppShop.body.key
 const mppCharge = await call<{ id: string }>('/v1/payment_intents', {
   method: 'POST',
   token: mppShopKey,
-  body: JSON.stringify({ amount: '0.30', currency: 'USDC', reference: 'Akara' }),
+  body: JSON.stringify({ amount: '0.30', currency: 'OUSD', reference: 'Akara' }),
 })
 expect(mppCharge.status === 201, `mpp charge: ${JSON.stringify(mppCharge.body)}`)
 const viaMpp = await call<{
@@ -565,7 +565,7 @@ const charge = await call<{ id: string; amount: string; pay_to: Address; memo: H
   {
     method: 'POST',
     token: shopKey,
-    body: JSON.stringify({ amount: '1.00', currency: 'USDC', reference: 'Suya' }),
+    body: JSON.stringify({ amount: '1.00', currency: 'OUSD', reference: 'Suya' }),
   },
 )
 expect(charge.status === 201, `charge: ${JSON.stringify(charge.body)}`)
@@ -604,7 +604,7 @@ step('$0.50 more is over what the card has left today ($0.20): Tempo refuses it'
 const charge2 = await call<{ pay_to: Address; memo: Hex }>('/v1/payment_intents', {
   method: 'POST',
   token: shopKey,
-  body: JSON.stringify({ amount: '0.50', currency: 'USDC', reference: 'Zobo' }),
+  body: JSON.stringify({ amount: '0.50', currency: 'OUSD', reference: 'Zobo' }),
 })
 const refusedTap = await till.token
   .transferSync({

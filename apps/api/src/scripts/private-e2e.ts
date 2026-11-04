@@ -96,7 +96,7 @@ expect(shopKey, `open shop: ${JSON.stringify(opened.body)}`)
 const charge = await call<{ id: string; pay_to: Address }>('/v1/payment_intents', {
   method: 'POST',
   token: shopKey,
-  body: JSON.stringify({ amount: '1.00', currency: 'USDC', reference: 'Puff-puff' }),
+  body: JSON.stringify({ amount: '1.00', currency: 'OUSD', reference: 'Puff-puff' }),
 })
 expect(charge.status === 201, `charge: ${JSON.stringify(charge.body)}`)
 ok(`charge ${charge.body.id}, paying ${charge.body.pay_to}`)
@@ -174,7 +174,7 @@ step('A deposit for someone else can’t pay this shop’s next charge')
 const charge2 = await call<{ id: string }>('/v1/payment_intents', {
   method: 'POST',
   token: shopKey,
-  body: JSON.stringify({ amount: '1.00', currency: 'USDC', reference: 'Chin chin' }),
+  body: JSON.stringify({ amount: '1.00', currency: 'OUSD', reference: 'Chin chin' }),
 })
 const elsewhere = seal(publicKey as { prefix: number; x: Hex }, customer.address, keyIndex)
 const receipt2 = await deposit(elsewhere)

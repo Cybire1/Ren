@@ -166,7 +166,7 @@ export default async function Landing() {
         </div>
         <small>
           At Ren’s published reference rates. Payments always settle in dollars (
-          {onTempo ? 'USDC' : 'AUSD, Agora’s dollar'}).
+          {onTempo ? 'OUSD, the open dollar' : 'AUSD, Agora’s dollar'}).
         </small>
       </section>
 

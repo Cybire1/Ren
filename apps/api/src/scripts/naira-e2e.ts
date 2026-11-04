@@ -151,7 +151,7 @@ expect(key, `open shop: ${JSON.stringify(opened.body)}`)
 const charge = await call<{ id: string }>('/v1/payment_intents', {
   method: 'POST',
   token: key,
-  body: JSON.stringify({ amount: '3.00', currency: 'USDC', reference: 'Jollof x1' }),
+  body: JSON.stringify({ amount: '3.00', currency: 'OUSD', reference: 'Jollof x1' }),
 })
 expect(charge.status === 201, `charge: ${JSON.stringify(charge.body)}`)
 const price = await call<{ naira: string; rate: string }>(`/v1/checkout/${charge.body.id}/naira`)

@@ -15,6 +15,7 @@ import {
 } from '@/lib/api'
 import { finishTap, forgetDevCard, linkCard, readTap } from '@/lib/card'
 import { readCardToLink } from '@/lib/card-tempo'
+import { otherDollarBalances, quoteIntoDollars } from '@/lib/chain-tempo'
 import type { KeyView } from '@/lib/keys-state'
 import { type DisplayCurrency, toBase } from '@/lib/money'
 import { type Mode, usePrefs } from '@/lib/prefs'
@@ -39,6 +40,7 @@ import { Txt } from '@/ui/primitives'
  * `keys=signin,agent:<name>,allowance:<name>,card:<name>` signs in to Keys and makes keys with the real code (lib/keys-state.ts);
  * `card:` links the software Ren Card at `limit` dollars a day, and `cardlimit:<dollars>` or `freeze` change the newest card, then
  * the Card tab opens.
+ * `waitother=1` waits for other dollars to arrive and `swapother=1` turns them into Ren's (app/other-dollars.tsx).
  * Release builds redirect home.
  */
 /** A small Lagos kitchen menu for trying the stall screens. */
@@ -186,6 +188,8 @@ export default function Dev() {
     private?: string
     /** signin,agent:<name>,allowance:<name>: Keys' real code, in order. */
     keys?: string
+    waitother?: string
+    swapother?: string
   }>()
   const wallet = useWallet()
   const prefs = usePrefs()
@@ -250,6 +254,22 @@ export default function Dev() {
         if (params.fund) {
           setStep('funding')
           await wallet.addMoney().catch(() => {})
+        }
+        // waitother=1: waits (up to two minutes) for other dollars to reach this wallet, as
+        // `pnpm --filter @kova/api send:test-dollars <address> AlphaUSD:5` sends them;
+        // swapother=1 then turns them into Ren's dollar through the real code.
+        if ((params.waitother || params.swapother) && wallet.profile) {
+          setStep('waiting for other dollars')
+          let held = await otherDollarBalances(wallet.profile.address)
+          for (let i = 0; i < 120 && held.length === 0; i++) {
+            await new Promise((r) => setTimeout(r, 1000))
+            held = await otherDollarBalances(wallet.profile.address)
+          }
+          await wallet.refresh()
+          if (params.swapother && held.length) {
+            setStep('turning them into dollars')
+            await wallet.turnIntoDollars(await quoteIntoDollars(held))
+          }
         }
         if (params.private && wallet.privacy.zone) {
           for (const move of params.private.split(',')) {

@@ -11,7 +11,7 @@ import type { AbiEvent, Address, Chain, Hash, Hex, Log, TransactionReceipt } fro
 export type ChainName = 'tempo' | 'monad'
 
 /** Every dollar Kova settles in on some chain (the database's currency enum). */
-export type Currency = 'USDC' | 'pathUSD' | 'USDT0' | 'AUSD'
+export type Currency = 'OUSD' | 'USDC' | 'pathUSD' | 'USDT0' | 'AUSD'
 export type NetworkId = 'mainnet' | 'testnet'
 
 export interface KitNetwork {

@@ -340,7 +340,7 @@ export function Receipt({ id }: { id: string }) {
           <div>
             <dt>Amount</dt>
             <dd>
-              {formatUsd(BigInt(entry.amount))} {onTempo ? 'USDC' : 'AUSD'}
+              {formatUsd(BigInt(entry.amount))} {onTempo ? 'OUSD' : 'AUSD'}
             </dd>
           </div>
         </dl>

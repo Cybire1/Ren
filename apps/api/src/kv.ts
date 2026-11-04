@@ -91,7 +91,7 @@ export function mppStore(prefix: string) {
  */
 export async function takeSponsorship(
   wallet: string,
-  kind: 'send' | 'key',
+  kind: 'send' | 'key' | 'swap',
   max: number,
 ): Promise<boolean> {
   const who = wallet.toLowerCase()

@@ -61,7 +61,7 @@ export default async function SettingsPage() {
             </div>
             <div>
               <dt>Settles in</dt>
-              <dd>{onTempo ? 'USDC' : 'AUSD'}, final in about a second</dd>
+              <dd>{onTempo ? 'OUSD' : 'AUSD'}, final in about a second</dd>
             </div>
             <div>
               <dt>Fees</dt>

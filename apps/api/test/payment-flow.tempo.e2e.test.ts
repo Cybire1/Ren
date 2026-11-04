@@ -96,7 +96,7 @@ describe('payment flow on Tempo', () => {
   it('pays a charge through Kova’s relay: the customer pays the price, Kova pays the fee', async () => {
     const checkout = await newCharge('4.50')
     expect(checkout.status).toBe('requires_payment')
-    expect(checkout.currency).toBe('USDC')
+    expect(checkout.currency).toBe('OUSD')
     expect(checkout.chain_id).toBe(network.chainId)
     expect(checkout.pay_to.toLowerCase()).toBe(merchantAddress.toLowerCase())
 

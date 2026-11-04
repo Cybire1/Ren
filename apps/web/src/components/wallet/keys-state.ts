@@ -677,4 +677,4 @@ export function useKeys({
 }
 
 /** The dollar a key spends, as the API names it. */
-export const keysDollar = (network: NetworkId) => getToken(network, 'USDC').address
+export const keysDollar = (network: NetworkId) => getToken(network).address

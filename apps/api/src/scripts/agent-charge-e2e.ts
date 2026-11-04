@@ -119,7 +119,7 @@ const charge = async (amount: string, reference: string) =>
     await call<{ id: string }>('/v1/payment_intents', {
       method: 'POST',
       token: shopKey,
-      body: JSON.stringify({ amount, currency: 'USDC', reference }),
+      body: JSON.stringify({ amount, currency: 'OUSD', reference }),
     })
   ).body.id
 

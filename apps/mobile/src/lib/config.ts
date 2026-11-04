@@ -66,12 +66,10 @@ export const explorerName = onTempo ? 'Tempo Explorer' : 'Monadscan'
 export const chainDeposits = !onTempo && process.env.EXPO_PUBLIC_KOVA_CHAIN_DEPOSITS === '1'
 
 /**
- * The dollar Ren settles in: USDC on Tempo (USDC.e on mainnet, AlphaUSD standing in on testnet,
- * whose faucet doesn't hand out USDC.e), AUSD, Agora's dollar, on Monad.
+ * The dollar Ren settles in: OUSD on Tempo (Open Standard's dollar, the one Tempo recommends),
+ * AUSD, Agora's dollar, on Monad.
  */
-export const settlementToken = onTempo
-  ? tempoToken(networkId, 'USDC')
-  : monadToken(networkId, 'AUSD')
+export const settlementToken = onTempo ? tempoToken(networkId) : monadToken(networkId, 'AUSD')
 
 /**
  * Private notes travel with a send, sealed against its EIP-3009 authorization (notes-core.ts). A

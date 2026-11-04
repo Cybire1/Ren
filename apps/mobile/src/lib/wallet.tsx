@@ -1,4 +1,5 @@
 import { createPasskeyWithPrfOutput, getPasskeyPrfOutput, isMeraError } from '@category-labs/mera'
+import { STABLECOIN_DEX, type SwapIn } from '@kova/tempo'
 import { hkdf } from '@noble/hashes/hkdf.js'
 import { sha256 } from '@noble/hashes/sha2.js'
 import { base64urlnopad } from '@scure/base'
@@ -26,8 +27,13 @@ import {
 } from 'viem'
 import { type Checkout, demoSignIn } from './api'
 import { fundFromFaucet, getBalance, incomingSince, payCharge, sendMoney } from './chain'
-import { walletClient } from './chain-tempo'
-import { chainKey, notesTravel, passkeyDomain, settlementToken, zone } from './config'
+import {
+  type OtherHolding,
+  otherDollarBalances,
+  turnIntoDollars as turnIntoDollarsOnChain,
+  walletClient,
+} from './chain-tempo'
+import { chainKey, notesTravel, onTempo, passkeyDomain, settlementToken, zone } from './config'
 import { openSigningSession } from './keys'
 import { type Keys, useKeys } from './keys-state'
 import { type DisplayCurrency, formatUsd } from './money'
@@ -175,6 +181,10 @@ interface Wallet {
   }) => Promise<Entry>
   /** Everything that can spend this wallet's dollars short of the wallet itself (app/keys). */
   keys: Keys
+  /** Other dollars this wallet holds on Tempo, which Ren turns into its own (app/other-dollars.tsx). */
+  otherDollars: OtherHolding[]
+  /** Turns other dollars into Ren's in one transaction this phone signs; Ren pays the fee. */
+  turnIntoDollars: (swaps: SwapIn[]) => Promise<Entry>
 }
 
 const WalletContext = createContext<Wallet | null>(null)
@@ -226,6 +236,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<Status>('loading')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [balance, setBalance] = useState<bigint | null>(null)
+  const [otherDollars, setOtherDollars] = useState<OtherHolding[]>([])
   const [activity, setActivity] = useState<Entry[]>([])
   const [savedContacts, setSavedContacts] = useState<Contact[]>([])
   const [arrival, setArrival] = useState<Arrival | null>(null)
@@ -260,6 +271,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     if (!profile) return
     try {
+      if (onTempo)
+        void otherDollarBalances(profile.address)
+          .then(setOtherDollars)
+          .catch(() => {})
       const latest = await getBalance(profile.address)
       setBalance(latest)
       void save(BALANCE, latest.toString())
@@ -360,7 +375,25 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         const { transfers, head } = await incomingSince(profile.address, cursor)
         if (stopped) return
         await save(CURSOR, head.toString())
+        // Other dollars turned into Ren's arrive from Tempo's exchange, a transfer for each dollar
+        // swapped: one transaction is one entry, so they're added up first.
+        const swapped = new Map<string, bigint>()
+        for (const t of transfers)
+          if (onTempo && isAddressEqual(t.from, STABLECOIN_DEX))
+            swapped.set(t.hash, (swapped.get(t.hash) ?? 0n) + t.amount)
+        for (const [hash, amount] of swapped)
+          await record({
+            id: newId(),
+            kind: 'added',
+            amount: amount.toString(),
+            name: 'Your other dollars',
+            detail: `Turned into ${settlementToken.symbol}`,
+            address: STABLECOIN_DEX,
+            txHash: hash as Hex,
+            at: Date.now(),
+          })
         for (const t of transfers) {
+          if (swapped.has(t.hash)) continue
           // Dollars moved out of your private balance arrive from the zone's portal: yours already.
           if (zone && isAddressEqual(t.from, zone.portal)) {
             await record({
@@ -818,6 +851,32 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   const keys = useKeys({ address: profile?.address ?? null, unlock })
 
+  const turnIntoDollars = useCallback(
+    async (swaps: SwapIn[]) => {
+      // Nothing leaves the wallet: its other dollars become its own, so this asks for no limit.
+      const account = await unlock(0n)
+      const { hash, ms } = await turnIntoDollarsOnChain(account, swaps)
+      const entry: Entry = {
+        id: newId(),
+        kind: 'added',
+        amount: swaps.reduce((sum, s) => sum + s.quoted, 0n).toString(),
+        name: 'Your other dollars',
+        detail: `Turned into ${settlementToken.symbol}`,
+        address: STABLECOIN_DEX,
+        txHash: hash,
+        ms,
+        at: Date.now(),
+      }
+      await record(entry)
+      setOtherDollars((held) =>
+        held.filter((h) => !swaps.some((s) => s.token === h.dollar.address)),
+      )
+      void refresh()
+      return entry
+    },
+    [unlock, record, refresh],
+  )
+
   const value: Wallet = {
     status,
     profile,
@@ -845,6 +904,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     privacy,
     sendToRen,
     keys,
+    otherDollars,
+    turnIntoDollars,
   }
   return <WalletContext.Provider value={value}>{children}</WalletContext.Provider>
 }

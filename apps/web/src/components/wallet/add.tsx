@@ -26,7 +26,7 @@ export function AddMoney() {
         <div className="w-empty w-empty-art">
           <Art name="reni-catch" size={160} />
           <strong>
-            Send {onTempo ? 'USDC' : 'AUSD'} on {chainName} to your address
+            Send {onTempo ? 'OUSD' : 'AUSD'} on {chainName} to your address
           </strong>
           <span>
             {onTempo

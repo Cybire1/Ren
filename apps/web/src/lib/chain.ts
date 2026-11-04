@@ -30,11 +30,10 @@ export const chainIdOf = (id: NetworkId) => networkOf(id).chainId
 export const isMainnetChain = (chainId: number) => chainId === 4217 || chainId === 143
 
 /**
- * The dollar Kova settles in: USDC on Tempo (USDC.e on mainnet, AlphaUSD on testnet), AUSD,
- * Agora's dollar, on Monad.
+ * The dollar Ren settles in: OUSD on Tempo (Open Standard's dollar), AUSD, Agora's dollar, on Monad.
  */
 export const settlementTokenOf = (id: NetworkId) =>
-  onTempo ? tempoToken(id, 'USDC') : monadToken(id, 'AUSD')
+  onTempo ? tempoToken(id) : monadToken(id, 'AUSD')
 
 /** What a browser wallet needs to add the chain if it has never seen it. */
 export const walletChains: Record<

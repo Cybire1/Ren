@@ -5149,3 +5149,90 @@ button.w-add-chain {
   color: var(--teal-deep);
   font-weight: 800;
 }
+
+/* ── Other dollars (components/wallet/other-dollars.tsx) ─────────────────────────────────── */
+
+.w-othercard {
+  background: var(--tint-mint, var(--card));
+}
+
+.w-othercard-icon {
+  background: var(--teal);
+  color: #fff;
+}
+
+.w-other {
+  display: grid;
+  gap: 1rem;
+  max-width: 34rem;
+  margin: 0 auto;
+}
+
+.w-other-lede {
+  margin: 0;
+  color: var(--muted);
+  font-size: 1rem;
+  line-height: 1.45;
+}
+
+.w-other-list {
+  display: grid;
+  gap: 0;
+  margin: 0;
+  padding: 0.25rem 1rem;
+  border: 2px solid var(--ink);
+  border-radius: 1.4rem;
+  background: var(--card);
+  box-shadow: 0 4px 0 var(--ink);
+  list-style: none;
+}
+
+.w-other-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.8rem 0;
+}
+
+.w-other-row + .w-other-row {
+  border-top: 1px solid var(--sunken);
+}
+
+.w-other-coin {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 50%;
+  background: var(--tint-sand, var(--sunken));
+  font-weight: 800;
+}
+
+.w-other-name,
+.w-other-into {
+  display: grid;
+  line-height: 1.25;
+}
+
+.w-other-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.w-other-name small,
+.w-other-into small {
+  color: var(--muted);
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.w-other-into {
+  justify-items: end;
+  text-align: right;
+}
+
+.w-other-into strong {
+  font-variant-numeric: tabular-nums;
+}

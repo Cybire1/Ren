@@ -2,24 +2,29 @@ import { schema } from '@kova/db'
 import { formatAmount } from '@kova/tempo'
 import { eq, lt } from 'drizzle-orm'
 import { type Address, encodeFunctionData, type Hash } from 'viem'
+import { Actions } from 'viem/tempo'
 import {
   balanceOf,
   erc20Abi,
   feePayerAccount,
   kit,
+  network,
   onTempo,
+  publicClient,
   sendFromTreasury,
   settlementToken,
 } from '../chain.js'
 import { db } from '../db.js'
 import { KovaError } from '../errors.js'
+import { claimOnce } from '../kv.js'
 import { sendFromRelayer } from '../relay.js'
 
 /**
  * Test dollars, on testnet only: five a day for each wallet, from Kova's own testnet treasury (the
  * fee payer). Public faucets give far more at once (Tempo's a million, Agora's ten thousand when
  * it isn't dry), which makes a demo balance meaningless; a small daily amount from Kova's own
- * stock keeps trying Kova honest, and the treasury is topped up from the faucet by hand.
+ * stock keeps trying Ren honest. On Tempo testnet the treasury restocks itself from Tempo's faucet
+ * when it runs low (at most every ten minutes); elsewhere it's topped up by hand.
  */
 const DAY_MS = 24 * 60 * 60 * 1000
 const TEST_DOLLARS_A_DAY = kit.testDollarsADay
@@ -86,7 +91,9 @@ export async function giveTestDollars(to: Address): Promise<Drip> {
     )
 
   try {
-    const stock = await balanceOf(settlementToken.address, feePayerAccount.address)
+    let stock = await balanceOf(settlementToken.address, feePayerAccount.address)
+    if (stock < TEST_DOLLARS_A_DAY && (await restock()))
+      stock = await balanceOf(settlementToken.address, feePayerAccount.address)
     if (stock < TEST_DOLLARS_A_DAY) {
       console.error(
         `[faucet] the treasury holds ${formatAmount(stock)} ${settlementToken.symbol}: top up ${feePayerAccount.address}`,
@@ -115,6 +122,23 @@ export async function giveTestDollars(to: Address): Promise<Drip> {
       'chain_error',
       'The test-dollar top-up didn’t go through. Try again in a moment.',
     )
+  }
+}
+
+/**
+ * Tempo testnet: asks Tempo's faucet to fund the treasury (it gives each test dollar, OUSD among
+ * them). True when it asked; false when it isn't Tempo testnet or it asked in the last ten minutes.
+ */
+async function restock(): Promise<boolean> {
+  if (!onTempo || network.id !== 'testnet' || !feePayerAccount) return false
+  if (!(await claimOnce('faucet:restock', Date.now() + 10 * 60_000))) return false
+  try {
+    await Actions.faucet.fundSync(publicClient as never, { account: feePayerAccount.address })
+    console.log(`[faucet] restocked the treasury ${feePayerAccount.address} from Tempo's faucet`)
+    return true
+  } catch (error) {
+    console.error('[faucet] restock', error instanceof Error ? error.message.split('\n')[0] : error)
+    return false
   }
 }
 

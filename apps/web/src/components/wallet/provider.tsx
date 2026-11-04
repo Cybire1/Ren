@@ -2,7 +2,7 @@
 
 import type { PasskeyCredentialMetadata } from '@category-labs/mera'
 import type { NetworkId } from '@kova/monad'
-import { getNetwork, getToken } from '@kova/tempo'
+import { getNetwork, getToken, STABLECOIN_DEX, type SwapIn } from '@kova/tempo'
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import { type Address, getAddress, type Hex, isAddress, type LocalAccount } from 'viem'
 import { onTempo } from '@/lib/chain'
@@ -23,7 +23,12 @@ import {
   sendMoney,
   transfersAfter,
 } from '@/lib/wallet/chain'
-import { relayedClient } from '@/lib/wallet/chain-tempo'
+import {
+  type OtherHolding,
+  otherDollarBalances,
+  relayedClient,
+  turnIntoDollars as turnIntoDollarsOnChain,
+} from '@/lib/wallet/chain-tempo'
 import {
   type DisplayCurrency,
   guessCurrency,
@@ -96,7 +101,7 @@ interface Note {
   name: string
   detail: string
   ms: number
-  kind: 'paid' | 'sent'
+  kind: 'paid' | 'sent' | 'added'
   to: string
   amount: string
   at: number
@@ -173,6 +178,10 @@ interface WalletValue {
   renameContact: (address: string, name: string) => void
   signOut: () => void
   refresh: () => Promise<void>
+  /** Other dollars this wallet holds on Tempo, which Ren turns into its own (components/wallet/other-dollars.tsx). */
+  otherDollars: OtherHolding[]
+  /** Turns other dollars into Ren's in one transaction this wallet signs; Ren pays the fee. */
+  turnIntoDollars: (swaps: SwapIn[]) => Promise<Moved>
   /** Your private balance on the site's Tempo Zone, when it has one (components/wallet/private.tsx). */
   privacy: PrivateValue
   /** Everything that can spend this wallet's dollars short of the wallet itself (components/wallet/keys.tsx). */
@@ -243,6 +252,7 @@ export function WalletProvider({
   const [status, setStatus] = useState<WalletValue['status']>('loading')
   const [profile, setProfile] = useState<Profile | null>(null)
   const [balance, setBalance] = useState<bigint | null>(null)
+  const [otherDollars, setOtherDollars] = useState<OtherHolding[]>([])
   const [transfers, setTransfers] = useState<IndexedTransfer[]>([])
   const [notes, setNotes] = useState<Record<string, Note>>({})
   const [saved, setSaved] = useState<Contact[]>([])
@@ -289,8 +299,12 @@ export function WalletProvider({
 
   const refreshBalance = useCallback(async () => {
     if (!profile) return
-    const next = await balanceOf(network, profile.address).catch(() => null)
+    const [next, others] = await Promise.all([
+      balanceOf(network, profile.address).catch(() => null),
+      onTempo ? otherDollarBalances(network, profile.address).catch(() => null) : null,
+    ])
     if (next !== null) setBalance(next)
+    if (others !== null) setOtherDollars(others)
   }, [network, profile])
 
   /** New history since the last look, a page at a time until it's caught up. */
@@ -540,7 +554,7 @@ export function WalletProvider({
       const account = await unlock(input.amount)
       const started = performance.now()
       const { receipt } = await relayedClient(network, account).token.transferSync({
-        token: getToken(network, 'USDC').address,
+        token: getToken(network).address,
         to: input.to,
         amount: input.amount,
         memo: input.memo,
@@ -564,6 +578,32 @@ export function WalletProvider({
         at: Date.now(),
         explorer: moved.explorer,
       })
+      void refresh()
+      return moved
+    },
+    [network, profile, refresh, remember, unlock],
+  )
+
+  const turnIntoDollars = useCallback(
+    async (swaps: SwapIn[]) => {
+      if (!profile) throw new Error('Open your wallet first.')
+      // Nothing leaves the wallet: its other dollars become its own, so this asks for no limit.
+      const account = await unlock(0n)
+      const moved = await turnIntoDollarsOnChain(network, account, swaps)
+      const quoted = swaps.reduce((sum, s) => sum + s.quoted, 0n)
+      remember(moved.hash, {
+        name: 'Your other dollars',
+        detail: `Turned into ${getToken(network).symbol}`,
+        ms: moved.ms,
+        kind: 'added',
+        to: profile.address,
+        amount: quoted.toString(),
+        at: Date.now(),
+        explorer: moved.explorer,
+      })
+      setOtherDollars((held) =>
+        held.filter((h) => !swaps.some((s) => s.token === h.dollar.address)),
+      )
       void refresh()
       return moved
     },
@@ -708,11 +748,15 @@ export function WalletProvider({
     const me = profile.address.toLowerCase()
     const entries: Entry[] = []
     const indexed = new Set<string>()
+    const ours = getToken(network).address.toLowerCase()
     for (const t of transfers) {
       const out = t.from.toLowerCase() === me
       const incoming = t.to.toLowerCase() === me
       if (!out && !incoming) continue
       indexed.add(t.tx_hash.toLowerCase())
+      // Activity is Ren's own dollar. Other dollars wait apart (other-dollars.tsx) until they're
+      // turned into it, and that arrives here as one entry from Tempo's exchange.
+      if (onTempo && t.token.toLowerCase() !== ours) continue
       // Dollars into or out of the private zone: Tempo shows the zone's portal, never who they were
       // for. This browser knows when it sent them to someone.
       if (isZonePortal(zone, out ? t.to : t.from)) {
@@ -756,6 +800,26 @@ export function WalletProvider({
             (locked ? 'Private note' : (t.shop?.reference ?? (paid ? 'Scan to pay' : 'Sent'))),
           ...secret,
           address: t.to,
+          txHash: t.tx_hash,
+          explorer: t.explorer_url,
+          ...(note ? { ms: note.ms } : {}),
+          at,
+        })
+      } else if (onTempo && t.from.toLowerCase() === STABLECOIN_DEX.toLowerCase()) {
+        // Other dollars this wallet turned into Ren's: they arrive from Tempo's exchange, a transfer
+        // for each dollar swapped, and one transaction reads as one entry.
+        const same = entries.find((e) => e.txHash === t.tx_hash && e.address === t.from)
+        if (same) {
+          same.amount = (BigInt(same.amount) + BigInt(t.amount_base)).toString()
+          continue
+        }
+        entries.push({
+          id: t.id,
+          kind: 'added',
+          amount: t.amount_base,
+          name: 'Your other dollars',
+          detail: note?.detail ?? `Turned into ${getToken(network).symbol}`,
+          address: t.from,
           txHash: t.tx_hash,
           explorer: t.explorer_url,
           ...(note ? { ms: note.ms } : {}),
@@ -823,7 +887,7 @@ export function WalletProvider({
       })
     }
     return entries.sort((a, b) => b.at - a.at)
-  }, [nameFor, noteSecret, notes, openFor, privacy, profile, transfers, zone])
+  }, [nameFor, network, noteSecret, notes, openFor, privacy, profile, transfers, zone])
 
   /** Everyone you've paid or been paid by, plus the people you've named, most recent first. */
   const contacts = useMemo<Contact[]>(() => {
@@ -879,10 +943,14 @@ export function WalletProvider({
       renameContact,
       signOut,
       refresh,
+      otherDollars,
+      turnIntoDollars,
       privacy,
       keys,
     }),
     [
+      otherDollars,
+      turnIntoDollars,
       privacy,
       keys,
       network,

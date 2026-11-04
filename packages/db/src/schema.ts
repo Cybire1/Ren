@@ -27,8 +27,8 @@ const updatedAt = () => timestamp('updated_at', { withTimezone: true }).notNull(
 const bytea = customType<{ data: Buffer; driverData: Buffer }>({ dataType: () => 'bytea' })
 
 export const network = pgEnum('network', ['mainnet', 'testnet'])
-/** Tempo's dollars (USDC, pathUSD, USDT0) and, on Monad, AUSD beside Circle's USDC. */
-export const currency = pgEnum('currency', ['USDC', 'pathUSD', 'USDT0', 'AUSD'])
+/** Tempo's dollars (OUSD, USDC, pathUSD, USDT0) and, on Monad, AUSD beside Circle's USDC. */
+export const currency = pgEnum('currency', ['USDC', 'pathUSD', 'USDT0', 'AUSD', 'OUSD'])
 
 // --- Accounts -------------------------------------------------------------
 
@@ -1156,7 +1156,7 @@ export const sponsorships = pgTable(
     id: id(),
     /** Lowercase. */
     wallet: address('wallet').notNull(),
-    /** send or key. */
+    /** send, key or swap. */
     kind: text('kind').notNull(),
     createdAt: createdAt(),
   },

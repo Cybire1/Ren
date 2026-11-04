@@ -1,4 +1,13 @@
-import { getNetwork, getToken, type NetworkId, tokenByAddress } from '@kova/tempo'
+import {
+  getNetwork,
+  getToken,
+  type NetworkId,
+  type OtherDollar,
+  otherDollars,
+  type SwapIn,
+  swapIntoCalls,
+  tokenByAddress,
+} from '@kova/tempo'
 import { type Address, type Hex, http, type LocalAccount } from 'viem'
 import { Actions, createClient, withRelay } from 'viem/tempo'
 import type { NoteToSeal } from './chain-monad'
@@ -27,7 +36,7 @@ function reader(network: NetworkId) {
 
 /** A client that signs as `account` and sends through Kova's relay, which pays the fee. */
 export function relayedClient(network: NetworkId, account: LocalAccount) {
-  const token = getToken(network, 'USDC')
+  const token = getToken(network)
   return createClient({
     account,
     testnet: network === 'testnet',
@@ -39,13 +48,94 @@ export function relayedClient(network: NetworkId, account: LocalAccount) {
   })
 }
 
-/** The wallet's dollars (USDC), in base units. */
+/** The wallet's dollars (OUSD), in base units. */
 export async function balanceOf(network: NetworkId, address: Address): Promise<bigint> {
   const { amount } = await Actions.token.getBalance(reader(network) as never, {
     account: address,
-    token: getToken(network, 'USDC').address,
+    token: getToken(network).address,
   })
   return amount
+}
+
+/** Another dollar this wallet holds, which Ren can turn into its own. */
+export interface OtherHolding {
+  dollar: OtherDollar
+  amount: bigint
+}
+
+/** Below a cent, a dollar isn't worth a line (and dust is how address-poisoning starts). */
+const DUST = 10_000n
+
+/** The other dollars this wallet holds on Tempo, a cent or more of each. */
+export async function otherDollarBalances(
+  network: NetworkId,
+  address: Address,
+): Promise<OtherHolding[]> {
+  const amounts = await Promise.all(
+    otherDollars[network].map((dollar) =>
+      Actions.token
+        .getBalance(reader(network) as never, { account: address, token: dollar.address })
+        .then((b) => b.amount)
+        .catch(() => 0n),
+    ),
+  )
+  return otherDollars[network]
+    .map((dollar, i) => ({ dollar, amount: amounts[i] ?? 0n }))
+    .filter((h) => h.amount >= DUST)
+}
+
+/**
+ * What Tempo's stablecoin exchange gives for each, in Ren's dollar. A dollar the exchange can't
+ * price right now is left out, so the rest still go.
+ */
+export async function quoteIntoDollars(
+  network: NetworkId,
+  holdings: readonly OtherHolding[],
+): Promise<SwapIn[]> {
+  const into = getToken(network).address
+  const quotes = await Promise.all(
+    holdings.map((h) =>
+      Actions.dex
+        .getSellQuote(reader(network) as never, {
+          tokenIn: h.dollar.address,
+          tokenOut: into,
+          amountIn: h.amount,
+        })
+        .then((quoted) => ({ token: h.dollar.address, amount: h.amount, quoted }))
+        .catch(() => null),
+    ),
+  )
+  return quotes.filter((q): q is SwapIn => q !== null && q.quoted > 0n)
+}
+
+/**
+ * Turns other dollars into Ren's, all in one transaction this wallet signs: a swap on Tempo's
+ * stablecoin exchange for each, so they all go or none does. Ren's relay pays the fee.
+ */
+export async function turnIntoDollars(
+  network: NetworkId,
+  account: LocalAccount,
+  swaps: readonly SwapIn[],
+): Promise<Moved> {
+  const started = performance.now()
+  try {
+    const receipt = await relayedClient(network, account).sendTransactionSync({
+      calls: swapIntoCalls(swaps, getToken(network).address),
+      feePayer: true,
+    } as never)
+    if (receipt.status !== 'success') throw new Error('reverted')
+    return {
+      hash: receipt.transactionHash,
+      ms: Math.round(performance.now() - started),
+      explorer: explorerTx(network, receipt.transactionHash),
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error)
+    if (/reject|denied|cancel/i.test(message)) throw new Error('Cancelled. Nothing moved.')
+    throw new Error(
+      'The swap didn’t go through, so nothing moved. The price may have changed: try again.',
+    )
+  }
 }
 
 async function post<T>(path: string, body: unknown): Promise<T> {
@@ -93,7 +183,7 @@ export async function sendMoney(
   const started = performance.now()
   try {
     const { receipt } = await relayedClient(network, account).token.transferSync({
-      token: getToken(network, 'USDC').address,
+      token: getToken(network).address,
       to,
       amount,
       feePayer: true,

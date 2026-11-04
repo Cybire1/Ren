@@ -8,6 +8,7 @@ import { chainName, onTempo } from '@/lib/chain'
 import { formatUsd, toBase } from '@/lib/wallet/money'
 import { AllowanceCards } from './allowance'
 import { KeysCard } from './keys'
+import { OtherDollarsCard } from './other-dollars'
 import { PrivateCard } from './private'
 import { isUnnamed, useWallet } from './provider'
 import { ActionTile, Avatar, BalanceCard, EntryRow, isFresh, Waves } from './ui'
@@ -126,6 +127,7 @@ export function Home() {
           </div>
         </div>
 
+        <OtherDollarsCard />
         <PrivateCard />
         <AllowanceCards />
         <KeysCard />
@@ -144,7 +146,7 @@ export function Home() {
               <span>
                 {network === 'testnet'
                   ? `$5 a day, free on ${chainName} testnet. Arrives in about a second.`
-                  : `Send ${onTempo ? 'USDC' : 'AUSD'} on ${chainName} to your address.`}
+                  : `Send ${onTempo ? 'OUSD' : 'AUSD'} on ${chainName} to your address.`}
               </span>
             </span>
             <span className="w-notice-cta">Add</span>
@@ -211,7 +213,7 @@ function FirstSteps() {
       title: testnet ? 'Add test dollars' : 'Add money',
       sub: testnet
         ? `$5 a day, free on ${chainName} testnet`
-        : `Send ${onTempo ? 'USDC' : 'AUSD'} on ${chainName} to your address`,
+        : `Send ${onTempo ? 'OUSD' : 'AUSD'} on ${chainName} to your address`,
     },
     { href: '/wallet/pay', title: 'Pay a shop', sub: 'Scan its code or open its link' },
     { href: '/wallet/send', title: 'Send to a friend', sub: 'By name or link. Ren covers the fee' },

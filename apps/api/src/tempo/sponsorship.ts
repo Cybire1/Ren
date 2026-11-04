@@ -1,9 +1,15 @@
 import { schema } from '@kova/db'
-import { decodeMemo, TRANSFER_SELECTOR, TRANSFER_WITH_MEMO_SELECTOR } from '@kova/tempo'
+import {
+  decodeMemo,
+  decodeSwapIn,
+  otherDollars,
+  TRANSFER_SELECTOR,
+  TRANSFER_WITH_MEMO_SELECTOR,
+} from '@kova/tempo'
 import { eq } from 'drizzle-orm'
 import { type Address, decodeFunctionData, type Hex, isAddressEqual } from 'viem'
 import { Abis, Addresses, Selectors } from 'viem/tempo'
-import { acceptedTokens } from '../chain.js'
+import { acceptedTokens, network, settlementToken } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { takeSponsorship } from '../kv.js'
@@ -25,7 +31,7 @@ export interface FillRequest {
 }
 
 export type SponsorDecision =
-  | { sponsor: true; kind: 'charge' | 'send' | 'private' | 'key' | 'cashout' }
+  | { sponsor: true; kind: 'charge' | 'send' | 'private' | 'key' | 'cashout' | 'swap' }
   | { sponsor: false; reason: string }
 
 /** The portal of the private zone Ren pays deposits into, when one is configured. */
@@ -37,6 +43,40 @@ const takeSend = (from: Address) => takeSponsorship(from, 'send', config.KOVA_SP
 /** Key changes per wallet per day: putting keys on-chain, freezing, changing limits, removing. */
 const KEY_CHANGES_A_DAY = 40
 const takeKeyChange = (from: Address) => takeSponsorship(from, 'key', KEY_CHANGES_A_DAY)
+
+/** Turning other dollars into Ren's, per wallet per day. */
+const SWAPS_A_DAY = 10
+/** The most dollars one transaction may turn into Ren's: one call each. */
+const MAX_SWAPS = 8
+
+/**
+ * Other dollars into Ren's (packages/tempo swap.ts): every call a `swapExactAmountIn` on Tempo's
+ * stablecoin exchange, each from a different dollar Ren knows into exactly Ren's own, for something,
+ * with a floor. Undefined when the transaction isn't swaps at all.
+ */
+function swapProblem(
+  calls: readonly { to?: Address | undefined; data?: Hex | undefined }[],
+): string | null | undefined {
+  const swaps = calls.map(decodeSwapIn)
+  if (swaps.length === 0 || swaps.some((s) => s === null)) return undefined
+  if (swaps.length > MAX_SWAPS) return 'too many dollars in one swap'
+  const known = [
+    ...otherDollars[network.id].map((d) => d.address),
+    ...acceptedTokens.map((t) => t.address),
+  ]
+  const seen = new Set<string>()
+  for (const swap of swaps) {
+    if (!swap) return 'not a swap'
+    if (!isAddressEqual(swap.tokenOut, settlementToken.address))
+      return 'swaps go into Ren’s dollar only'
+    if (isAddressEqual(swap.tokenIn, settlementToken.address)) return 'that’s already Ren’s dollar'
+    if (!known.some((a) => isAddressEqual(a, swap.tokenIn))) return 'not a dollar Ren knows'
+    if (swap.amountIn <= 0n || swap.minAmountOut <= 0n) return 'nothing to swap'
+    if (seen.has(swap.tokenIn.toLowerCase())) return 'one call per dollar'
+    seen.add(swap.tokenIn.toLowerCase())
+  }
+  return null
+}
 
 const ZERO = '0x0000000000000000000000000000000000000000'
 const KEYCHAIN_CHANGES = [
@@ -117,6 +157,15 @@ export async function shouldSponsor(
     if (!(await takeKeyChange(request.from)))
       return { sponsor: false, reason: 'daily key changes used up' }
     return { sponsor: true, kind: 'key' }
+  }
+
+  const swap = swapProblem(calls)
+  if (swap !== undefined) {
+    if (swap) return { sponsor: false, reason: swap }
+    if (!request.from) return { sponsor: false, reason: 'no sender' }
+    if (!(await takeSponsorship(request.from, 'swap', SWAPS_A_DAY)))
+      return { sponsor: false, reason: 'daily swaps used up' }
+    return { sponsor: true, kind: 'swap' }
   }
 
   if (calls.length === 2 && zonePortal) {

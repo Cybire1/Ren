@@ -49,7 +49,9 @@ describe('takeSponsorship', () => {
 
   it('holds the cap when requests race', async () => {
     const wallet = `0x${randomUUID().replace(/-/g, '').padEnd(40, '0')}`
-    const results = await Promise.all(Array.from({ length: 6 }, () => takeSponsorship(wallet, 'send', 3)))
+    const results = await Promise.all(
+      Array.from({ length: 6 }, () => takeSponsorship(wallet, 'send', 3)),
+    )
     expect(results.filter(Boolean)).toHaveLength(3)
   })
 })

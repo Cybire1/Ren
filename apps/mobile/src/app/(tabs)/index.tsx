@@ -27,6 +27,7 @@ import { Icon } from '@/ui/Icon'
 import { AllowanceCards, KeysCard } from '@/ui/keys'
 import { TapMark } from '@/ui/Logo'
 import { PulseWaves } from '@/ui/motion'
+import { OtherDollarsCard } from '@/ui/OtherDollars'
 import { PrivateCard } from '@/ui/PrivateCard'
 import { Sticker, Txt } from '@/ui/primitives'
 import { dollars } from '@/ui/StallParts'
@@ -98,6 +99,7 @@ export default function Home() {
         <>
           <ReadyCard />
           {/* Dollars someone sent privately are here even when the balance is empty. */}
+          <OtherDollarsCard />
           <PrivateCard />
           <AllowanceCards />
           <KeysCard />
@@ -120,6 +122,7 @@ export default function Home() {
             </View>
           </View>
 
+          <OtherDollarsCard />
           <PrivateCard />
           <AllowanceCards />
           <KeysCard />

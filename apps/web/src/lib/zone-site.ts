@@ -29,8 +29,7 @@ export function zoneSite(): ZoneConfig | null {
     id,
     chainId,
     portal: portal as Address,
-    token:
-      (process.env.KOVA_ZONE_TOKEN as Address | undefined) ?? getToken(network, 'USDC').address,
+    token: (process.env.KOVA_ZONE_TOKEN as Address | undefined) ?? getToken(network).address,
     parent: Number(process.env.KOVA_ZONE_PARENT_CHAIN_ID) || getNetwork(network).chainId,
     operator: process.env.KOVA_ZONE_OPERATOR ?? 'Ren',
     runtime: process.env.KOVA_ZONE_RUNTIME === 'sandbox' ? 'sandbox' : 'current',

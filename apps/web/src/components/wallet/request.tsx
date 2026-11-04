@@ -138,7 +138,9 @@ export function Receive() {
           <CopyButton text={profile.address} />
         </div>
         <p className="w-fine w-center">
-          {chainName} address. Send only {onTempo ? 'USDC' : 'AUSD'} on {chainName} to it.
+          {onTempo
+            ? `${chainName} address. Send OUSD to it; other dollars on ${chainName} show up too, ready to turn into OUSD.`
+            : `${chainName} address. Send only AUSD on ${chainName} to it.`}
         </p>
         <ShareButton
           title={`Pay ${profile.name}`}

@@ -1,7 +1,7 @@
 import { formatAmount, parseAmount } from '@kova/tempo'
 
 /**
- * Money in the app is dollars on-chain (USDC on Tempo, AUSD on Monad), shown in whatever
+ * Money in the app is dollars on-chain (OUSD on Tempo, AUSD on Monad), shown in whatever
  * currency a person thinks in.
  *
  * Kova never converts money (DECISIONS D-012). Local amounts are shown at a published

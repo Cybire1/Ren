@@ -50,7 +50,7 @@ describe('chain watcher on Tempo', () => {
       id: intentId,
       merchantId,
       amount,
-      currency: 'USDC',
+      currency: 'OUSD',
       tokenAddress: settlementToken.address,
       network: 'testnet',
       payTo: merchant.address,

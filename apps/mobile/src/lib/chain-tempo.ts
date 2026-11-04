@@ -8,7 +8,13 @@
  * read straight from the chain; what arrived comes from Kova's API, which reads it from Tempo.
  */
 import type { SealedNote } from '@kova/monad'
-import { tokenByAddress } from '@kova/tempo'
+import {
+  type OtherDollar,
+  otherDollars,
+  type SwapIn,
+  swapIntoCalls,
+  tokenByAddress,
+} from '@kova/tempo'
 import { type Address, type Hash, type Hex, http, isAddressEqual, type LocalAccount } from 'viem'
 import { Actions, createClient, withRelay } from 'viem/tempo'
 import type { NoteToSeal } from './chain-monad'
@@ -66,6 +72,73 @@ export async function getBalance(address: Address): Promise<bigint> {
     token: settlementToken.address,
   })
   return amount
+}
+
+/** Another dollar this wallet holds on Tempo, which Ren can turn into its own. */
+export interface OtherHolding {
+  dollar: OtherDollar
+  amount: bigint
+}
+
+/** Below a cent, a dollar isn't worth a line (and dust is how address-poisoning starts). */
+const DUST = 10_000n
+
+/** The other dollars this wallet holds on Tempo, a cent or more of each. */
+export async function otherDollarBalances(address: Address): Promise<OtherHolding[]> {
+  const list = otherDollars[networkId]
+  const amounts = await Promise.all(
+    list.map((dollar) =>
+      Actions.token
+        .getBalance(publicClient as never, { account: address, token: dollar.address })
+        .then((b) => b.amount)
+        .catch(() => 0n),
+    ),
+  )
+  return list
+    .map((dollar, i) => ({ dollar, amount: amounts[i] ?? 0n }))
+    .filter((h) => h.amount >= DUST)
+}
+
+/** What Tempo's stablecoin exchange gives for each, in Ren's dollar; one it can't price is left out. */
+export async function quoteIntoDollars(holdings: readonly OtherHolding[]): Promise<SwapIn[]> {
+  const quotes = await Promise.all(
+    holdings.map((h) =>
+      Actions.dex
+        .getSellQuote(publicClient as never, {
+          tokenIn: h.dollar.address,
+          tokenOut: settlementToken.address,
+          amountIn: h.amount,
+        })
+        .then((quoted) => ({ token: h.dollar.address, amount: h.amount, quoted }))
+        .catch(() => null),
+    ),
+  )
+  return quotes.filter((q): q is SwapIn => q !== null && q.quoted > 0n)
+}
+
+/**
+ * Turns other dollars into Ren's in one transaction the phone signs: a swap on Tempo's
+ * stablecoin exchange for each, all or nothing. Ren's relay pays the fee.
+ */
+export async function turnIntoDollars(
+  account: LocalAccount,
+  swaps: readonly SwapIn[],
+): Promise<Sent> {
+  const started = Date.now()
+  const receipt = await walletClient(account)
+    .sendTransactionSync({
+      calls: swapIntoCalls(swaps, settlementToken.address),
+      feePayer: true,
+    } as never)
+    .catch((error: unknown) => {
+      const message = error instanceof Error ? error.message : String(error)
+      if (/reject|denied|cancel/i.test(message)) throw new Error('Cancelled. Nothing moved.')
+      throw new Error(
+        'The swap didn’t go through, so nothing moved. The price may have changed: try again.',
+      )
+    })
+  if (receipt.status !== 'success') throw new Error('Tempo didn’t take the swap. Nothing moved.')
+  return { hash: receipt.transactionHash, ms: Date.now() - started }
 }
 
 /** Testnet only: asks Kova for today's test dollars ($5 a day), and waits until they land. */

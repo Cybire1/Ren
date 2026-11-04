@@ -242,7 +242,7 @@ export function Charge() {
             {typedDollars(amount)}
           </p>
           <p className="amount-sub">
-            Customer pays {usd(amount || '0')} in {onTempo ? 'USDC' : 'AUSD'}
+            Customer pays {usd(amount || '0')} in {onTempo ? 'OUSD' : 'AUSD'}
           </p>
           <input
             className="amount-ref"
