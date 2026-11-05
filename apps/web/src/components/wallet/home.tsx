@@ -11,7 +11,7 @@ import { KeysCard } from './keys'
 import { OtherDollarsCard } from './other-dollars'
 import { PrivateCard } from './private'
 import { isUnnamed, useWallet } from './provider'
-import { ActionTile, Avatar, BalanceCard, EntryRow, isFresh, Waves } from './ui'
+import { ActionTile, Avatar, BalanceCard, EntryRow, isFresh } from './ui'
 
 const greetingFor = (hour: number) =>
   hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening'
@@ -115,7 +115,6 @@ export function Home() {
                 <Icon name="tap" size={22} />
               </span>
             </span>
-            <Waves className="w-pay-waves" size={124} />
             <span>
               <span className="w-pay-label">Pay</span>
               <span className="w-pay-sub">Scan a code or pay a link</span>

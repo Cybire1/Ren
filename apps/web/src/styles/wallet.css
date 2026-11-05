@@ -409,13 +409,6 @@
   background: var(--coral);
 }
 
-.w-pay-waves {
-  position: absolute;
-  right: -14px;
-  top: 40px;
-  pointer-events: none;
-}
-
 .w-pay-label {
   display: block;
   font-size: 1.875rem;
@@ -2561,41 +2554,6 @@ button.w-person {
   }
 }
 
-/* Pay: the tap mark's waves pulse outward, one after another. */
-
-.w-pay-waves {
-  position: absolute;
-  right: -14px;
-  top: 40px;
-  pointer-events: none;
-}
-
-.w-pay-waves path {
-  fill: none;
-  stroke: var(--coral);
-  stroke-width: 12;
-  stroke-linecap: round;
-  animation: wave 2.6s ease-in-out infinite;
-}
-
-.w-pay-waves path:nth-child(2) {
-  animation-delay: 0.25s;
-}
-
-.w-pay-waves path:nth-child(3) {
-  animation-delay: 0.5s;
-}
-
-@keyframes wave {
-  0%,
-  100% {
-    opacity: 0.2;
-  }
-  35% {
-    opacity: 1;
-  }
-}
-
 .w-pay-sub {
   margin-top: 0.125rem;
   font-size: 0.75rem;
@@ -2804,8 +2762,7 @@ button.w-person {
   .w-coin-front,
   .w-coin-back,
   .w-reni-catch,
-  .w-sparkle,
-  .w-pay-waves path {
+  .w-sparkle {
     animation: none;
   }
 }

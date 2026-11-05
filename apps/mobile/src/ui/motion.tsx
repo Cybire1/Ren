@@ -12,10 +12,8 @@ import Animated, {
   withSpring,
   withTiming,
 } from 'react-native-reanimated'
-import Svg, { Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
 import { Coin, Flake, Sparkle } from './art'
-import { WAVES } from './Logo'
 
 type Point = { x: number; y: number }
 
@@ -394,66 +392,6 @@ export function PopIn({
     transform: [{ scale: v.value }, { rotate: `${(1 - v.value) * -30}deg` }],
   }))
   return <Animated.View style={[anim, style]}>{children}</Animated.View>
-}
-
-/**
- * The logo's three tap waves, brightening in turn from the inside out, like a contactless reader
- * waiting for a phone. Drawn on the mark's canvas, so they line up with the logo at any size.
- */
-export function PulseWaves({
-  size,
-  color = colors.coral,
-  strokeWidth = 12,
-}: {
-  size: number
-  color?: ColorValue
-  strokeWidth?: number
-}) {
-  return (
-    <View pointerEvents="none" style={{ width: size, height: size }}>
-      {WAVES.map((d, i) => (
-        <Wave key={d} d={d} order={i} size={size} color={color} strokeWidth={strokeWidth} />
-      ))}
-    </View>
-  )
-}
-
-function Wave({
-  d,
-  order,
-  size,
-  color,
-  strokeWidth,
-}: {
-  d: string
-  order: number
-  size: number
-  color: ColorValue
-  strokeWidth: number
-}) {
-  const reduced = useReducedMotion()
-  const v = useSharedValue(reduced ? 1 : 0.2)
-  useEffect(() => {
-    if (reduced) return
-    v.value = withDelay(
-      order * 250,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 900, easing: Easing.out(Easing.quad) }),
-          withTiming(0.2, { duration: 1700, easing: Easing.inOut(Easing.quad) }),
-        ),
-        -1,
-      ),
-    )
-  }, [reduced, order, v])
-  const anim = useAnimatedStyle(() => ({ opacity: v.value }))
-  return (
-    <Animated.View style={[StyleSheet.absoluteFill, anim]}>
-      <Svg width={size} height={size} viewBox="0 0 200 200">
-        <Path d={d} stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" fill="none" />
-      </Svg>
-    </Animated.View>
-  )
 }
 
 /** A painted sparkle's twinkle: brightens and swells a little, then rests. */

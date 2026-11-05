@@ -26,7 +26,6 @@ import { EntryRow } from '@/ui/EntryRow'
 import { Icon } from '@/ui/Icon'
 import { AllowanceCards, KeysCard } from '@/ui/keys'
 import { TapMark } from '@/ui/Logo'
-import { PulseWaves } from '@/ui/motion'
 import { OtherDollarsCard } from '@/ui/OtherDollars'
 import { PrivateCard } from '@/ui/PrivateCard'
 import { Sticker, Txt } from '@/ui/primitives'
@@ -308,13 +307,10 @@ function freshLine(entry: Entry): Fresh['line'] {
   return `${amount} from ${from}, just now`
 }
 
-/**
- * Pay: the biggest thing under the balance, in ink, with the logo's tap waves brightening in turn
- * as if a reader were waiting for a phone.
- */
-/** The tap disc on the Pay tile: navy on ink in light, a step above the fill in the dark. */
+/** The tap disc on the Pay tile: a step above the fill. */
 const tapDisc = pair('#3D3438', '#2E2E2E')
 
+/** Pay: the biggest thing under the balance, on the dark fill. */
 function PayTile() {
   return (
     <Sticker
@@ -332,9 +328,6 @@ function PayTile() {
         <View style={[styles.payIcon, { backgroundColor: tapDisc }]}>
           <TapMark size={22} stem={colors.white} wave={colors.onInk} />
         </View>
-      </View>
-      <View style={styles.payWaves} pointerEvents="none">
-        <PulseWaves size={104} />
       </View>
       <View>
         <Txt
@@ -577,7 +570,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  payWaves: { position: 'absolute', right: -34, top: 40 },
   shopBody: {
     flexDirection: 'row',
     alignItems: 'center',

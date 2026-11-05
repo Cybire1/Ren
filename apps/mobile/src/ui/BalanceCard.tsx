@@ -191,7 +191,7 @@ export function BalanceCard({
 export function ReadyCard() {
   return (
     <Sticker
-      fill={colors.teal}
+      fill={colors.money}
       radius={28}
       style={styles.frame}
       innerStyle={[styles.card, styles.ready]}
