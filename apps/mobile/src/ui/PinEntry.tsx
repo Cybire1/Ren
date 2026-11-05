@@ -1,9 +1,13 @@
 import * as Haptics from 'expo-haptics'
 import { useEffect } from 'react'
 import { StyleSheet, View } from 'react-native'
-import { useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated'
 import { colors } from '@/lib/theme'
-import Animated from '@/ui/animated'
 import { Keypad } from './Keypad'
 import { Txt } from './primitives'
 

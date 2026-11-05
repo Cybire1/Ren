@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     borderWidth: 2,
     borderColor: 'rgba(255,255,255,0.3)',
-    backgroundColor: '#1E3557',
+    backgroundColor: '#3D3438',
   },
   amount: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 10, paddingRight: 90 },
   locked: { marginTop: 8, gap: 10, paddingRight: 90 },

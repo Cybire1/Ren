@@ -51,7 +51,7 @@ export function Sheet({
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(16,35,63,0.32)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(30,26,28,0.32)' },
   sheet: {
     maxHeight: '90%',
     backgroundColor: colors.paper,
@@ -65,6 +65,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(16,35,63,0.16)',
+    backgroundColor: 'rgba(30,26,28,0.16)',
   },
 })

@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
 import { type ColorValue, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
-import {
+import Animated, {
   Easing,
   useAnimatedStyle,
   useReducedMotion,
@@ -9,7 +9,6 @@ import {
   withTiming,
 } from 'react-native-reanimated'
 import { colors, type fonts } from '@/lib/theme'
-import Animated from '@/ui/animated'
 import { Txt } from './primitives'
 
 const FIGURES = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']

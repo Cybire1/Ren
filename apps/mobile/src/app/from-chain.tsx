@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics'
 import { useEffect, useState } from 'react'
 import { type ColorValue, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native'
 import QRCode from 'react-native-qrcode-svg'
-import { FadeIn, FadeInDown } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeInDown } from 'react-native-reanimated'
 import {
   type ChainDeposit,
   type DepositSources,
@@ -13,7 +13,6 @@ import {
 } from '@/lib/chain'
 import { colors, fonts, palette } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import Animated from '@/ui/animated'
 import { Flyer } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Bob } from '@/ui/motion'
@@ -21,7 +20,7 @@ import { Header, Screen, Sticker, Txt } from '@/ui/primitives'
 
 /** Each kind of chain, drawn as a coloured disc with its mark, so it reads at a glance. */
 const LOOK: Record<string, { mark: string; fill: ColorValue; ink: ColorValue }> = {
-  evm: { mark: 'Ξ', fill: '#8FA2E8', ink: colors.ink },
+  evm: { mark: 'Ξ', fill: '#d9d2d4', ink: colors.ink },
   sol: { mark: '◎', fill: '#B7A3EE', ink: colors.ink },
   tron: { mark: 'T', fill: '#E89A8F', ink: colors.ink },
   btc: { mark: '₿', fill: '#F2C26B', ink: colors.ink },

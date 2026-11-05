@@ -313,7 +313,7 @@ function freshLine(entry: Entry): Fresh['line'] {
  * as if a reader were waiting for a phone.
  */
 /** The tap disc on the Pay tile: navy on ink in light, a step above the fill in the dark. */
-const tapDisc = pair('#1E3557', '#2E2E2E')
+const tapDisc = pair('#3D3438', '#2E2E2E')
 
 function PayTile() {
   return (

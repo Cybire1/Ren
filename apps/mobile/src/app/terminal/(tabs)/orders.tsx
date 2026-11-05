@@ -9,13 +9,12 @@ import {
   StyleSheet,
   View,
 } from 'react-native'
-import { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated'
+import Animated, { FadeInDown, FadeOut, LinearTransition } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { Order, OrderStatus } from '@/lib/api'
 import { useOrders } from '@/lib/orders'
 import { useStall } from '@/lib/stall'
 import { colors } from '@/lib/theme'
-import Animated from '@/ui/animated'
 import { Avatar, Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Ping } from '@/ui/motion'

@@ -16,7 +16,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { FadeInDown, FadeOutDown } from 'react-native-reanimated'
+import Animated, { FadeInDown, FadeOutDown } from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import {
   getCheckout,
@@ -34,7 +34,6 @@ import { type DisplayCurrency, formatLocal } from '@/lib/money'
 import { colors, fonts } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
 import { Awning } from '@/ui/Awning'
-import Animated from '@/ui/animated'
 import { Coin, Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { PillButton, RoundButton, Screen, Txt } from '@/ui/primitives'
@@ -583,7 +582,7 @@ function BasketSheet({
                 onChangeText={setName}
                 maxLength={60}
                 placeholder="Sam"
-                placeholderTextColor="#8C9799"
+                placeholderTextColor={colors.muted}
                 style={styles.input}
               />
               <Txt weight="semi" size={14} color={colors.muted} style={styles.label}>
@@ -597,7 +596,7 @@ function BasketSheet({
                 onChangeText={setNote}
                 maxLength={200}
                 placeholder="Gift-wrap it, please"
-                placeholderTextColor="#8C9799"
+                placeholderTextColor={colors.muted}
                 style={styles.input}
               />
 
@@ -888,7 +887,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  backdrop: { flex: 1, backgroundColor: 'rgba(16,35,63,0.32)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(30,26,28,0.32)' },
   sheet: {
     maxHeight: '88%',
     backgroundColor: colors.paper,
@@ -902,7 +901,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(16,35,63,0.16)',
+    backgroundColor: 'rgba(30,26,28,0.16)',
   },
   basket: {
     marginTop: 14,

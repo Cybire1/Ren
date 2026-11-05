@@ -9,7 +9,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { chainName, isTestnet, network, onTempo, webUrl } from '@/lib/config'
 import { personLink } from '@/lib/links'
 import { currencyInfo, type DisplayCurrency, formatUsd } from '@/lib/money'
-import { type Look, usePrefs } from '@/lib/prefs'
 import { rateLabel, ratesLive } from '@/lib/rates'
 import {
   endSession,
@@ -253,7 +252,6 @@ export default function Profile() {
           void setCurrency(next)
         }}
       />
-      <LookCard />
       {profile.demo ? (
         <View style={styles.keys}>
           <View style={styles.keysTop}>
@@ -347,7 +345,7 @@ function Stat({ value, label }: { value: string; label: string }) {
 }
 
 /** Secondary text on teal. */
-const onTeal = '#E3FFF5'
+const onTeal = '#FFF0F5'
 
 /** Your currency, at today's rate, with where that rate comes from. */
 function MoneyCard({
@@ -516,72 +514,7 @@ function KeysCard() {
   )
 }
 
-const LOOKS: { id: Look; label: string }[] = [
-  { id: 'system', label: 'System' },
-  { id: 'light', label: 'Light' },
-  { id: 'dark', label: 'Dark' },
-]
-
-/** Light or dark, or as the phone is set (the default): every screen follows at once. */
-function LookCard() {
-  const { look, setLook } = usePrefs()
-  return (
-    <View style={styles.look}>
-      <Txt weight="semi" size={16}>
-        Appearance
-      </Txt>
-      <Txt size={13} color={colors.muted}>
-        System follows your phone, day and night. Ren reopens in the new look.
-      </Txt>
-      <View style={styles.lookToggle} accessibilityRole="radiogroup">
-        {LOOKS.map((option) => {
-          const on = look === option.id
-          return (
-            <Pressable
-              key={option.id}
-              accessibilityRole="radio"
-              accessibilityState={{ selected: on }}
-              onPress={() => {
-                void Haptics.selectionAsync()
-                setLook(option.id, '/profile')
-              }}
-              style={[styles.lookItem, on && styles.lookOn]}
-            >
-              <Txt weight="semi" size={14} color={on ? colors.onChosen : colors.ink}>
-                {option.label}
-              </Txt>
-            </Pressable>
-          )
-        })}
-      </View>
-    </View>
-  )
-}
-
 const styles = StyleSheet.create({
-  look: {
-    marginTop: 14,
-    borderRadius: 24,
-    borderWidth: 2,
-    borderColor: colors.line,
-    backgroundColor: colors.surface,
-    padding: 16,
-  },
-  lookToggle: {
-    flexDirection: 'row',
-    marginTop: 12,
-    padding: 4,
-    borderRadius: 999,
-    backgroundColor: colors.sunken,
-  },
-  lookItem: {
-    flex: 1,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 999,
-  },
-  lookOn: { backgroundColor: colors.chosen },
   cashOut: { flex: 1, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 18 },
   pass: { marginTop: 16, borderRadius: 28, backgroundColor: colors.fill },
   passTop: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18, paddingBottom: 16 },
@@ -687,7 +620,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     backgroundColor: colors.sunken,
   },
-  sessionOpen: { backgroundColor: '#E3FFF5' },
+  sessionOpen: { backgroundColor: '#FFF0F5' },
   liveDotWrap: { width: 12, height: 12, alignItems: 'center', justifyContent: 'center' },
   liveDot: { width: 12, height: 12, borderRadius: 6 },
   lock: {

@@ -143,7 +143,7 @@ export default function OpenStall() {
             value={name}
             onChangeText={setName}
             placeholder="Ada’s Bakery"
-            placeholderTextColor="#8C9799"
+            placeholderTextColor={colors.muted}
             autoCapitalize="words"
             maxLength={60}
             editable={!step}
@@ -159,7 +159,7 @@ export default function OpenStall() {
             value={tagline}
             onChangeText={setTagline}
             placeholder="Fresh bread and coffee, round the corner"
-            placeholderTextColor="#8C9799"
+            placeholderTextColor={colors.muted}
             maxLength={120}
             editable={!step}
             style={styles.input}

@@ -261,7 +261,7 @@ export default function TerminalSetup() {
             onChangeText={setName}
             maxLength={40}
             placeholder="Front counter"
-            placeholderTextColor="#8C9799"
+            placeholderTextColor={colors.muted}
             style={styles.name}
           />
         </ScrollView>
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 18,
     borderWidth: 2,
-    borderColor: 'rgba(16,35,63,0.18)',
+    borderColor: 'rgba(30,26,28,0.18)',
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
@@ -346,7 +346,7 @@ const styles = StyleSheet.create({
     height: 44,
     paddingHorizontal: 16,
     borderRadius: 22,
-    backgroundColor: 'rgba(16,35,63,0.07)',
+    backgroundColor: 'rgba(30,26,28,0.07)',
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,

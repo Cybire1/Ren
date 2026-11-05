@@ -11,11 +11,11 @@ import type { Entry } from './wallet'
  */
 export const categoryInfo: Record<SpendingCategory, { label: string; color: ColorValue }> = {
   food: { label: 'Eating out', color: '#FF5E7E' },
-  groceries: { label: 'Groceries', color: '#00A37A' },
-  travel: { label: 'Travel', color: '#00805F' },
-  transport: { label: 'Getting around', color: '#6FD3B3' },
+  groceries: { label: 'Groceries', color: '#C2185B' },
+  travel: { label: 'Travel', color: '#A3144C' },
+  transport: { label: 'Getting around', color: '#F08DB0' },
   shopping: { label: 'Shopping', color: '#FFC0CC' },
-  bills: { label: 'Bills and airtime', color: '#4F6577' },
+  bills: { label: 'Bills and airtime', color: '#63585C' },
   health: { label: 'Health', color: '#D13C5C' },
   people: { label: 'Family and friends', color: '#E8C35A' },
   other: { label: 'Other', color: '#B9B6AF' },

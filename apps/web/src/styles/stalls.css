@@ -2954,3 +2954,8 @@
     -webkit-print-color-adjust: exact;
   }
 }
+
+/* Cobalt carries white. */
+.store-sign {
+  color: #fff;
+}

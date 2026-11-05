@@ -507,7 +507,7 @@
   box-sizing: border-box;
   border-radius: 0.8em;
   border: 0.19em solid var(--line);
-  background: #23373b;
+  background: #2a2527;
 }
 
 .rh-screen {
@@ -1211,7 +1211,7 @@
 }
 
 .c-ok {
-  color: #8fe0bd;
+  color: #ff9db8;
 }
 
 @media (max-width: 960px) {
@@ -1504,7 +1504,7 @@
   background-size: 12px 12px;
   color: #fff;
   transform: rotate(-3deg);
-  box-shadow: 0 6px 0 rgba(16, 35, 63, 0.25);
+  box-shadow: 0 6px 0 rgba(30, 26, 28, 0.25);
 }
 
 .lp-private-label {

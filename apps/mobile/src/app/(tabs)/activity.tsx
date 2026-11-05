@@ -1,14 +1,18 @@
 import * as Haptics from 'expo-haptics'
 import { useEffect, useMemo, useState } from 'react'
 import { type ColorValue, Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated'
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import type { SpendingCategory } from '@/lib/api'
 import { categoryInfo, useSpendingCategories } from '@/lib/categories'
 import { formatUsd } from '@/lib/money'
 import { colors } from '@/lib/theme'
 import { type Entry, useWallet } from '@/lib/wallet'
-import Animated from '@/ui/animated'
 import { Reni } from '@/ui/art'
 import { dockClearance } from '@/ui/Dock'
 import { EntryRow } from '@/ui/EntryRow'

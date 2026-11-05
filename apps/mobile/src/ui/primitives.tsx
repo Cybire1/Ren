@@ -12,10 +12,14 @@ import {
   View,
   type ViewStyle,
 } from 'react-native'
-import { useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated'
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { colors, density, fonts } from '@/lib/theme'
-import Animated from '@/ui/animated'
 import { Icon, type IconName } from './Icon'
 
 type Weight = keyof typeof fonts
@@ -204,7 +208,7 @@ export function RoundButton({
           width: size,
           height: size,
           borderRadius: size / 2,
-          backgroundColor: fill ?? 'rgba(16,35,63,0.07)',
+          backgroundColor: fill ?? 'rgba(30,26,28,0.07)',
         },
         pressed && { transform: [{ scale: 0.92 }], opacity: 0.8 },
       ]}

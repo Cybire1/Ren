@@ -160,7 +160,7 @@ export function KeyRow({
         <Icon
           name={key.status === 'frozen' ? 'snow' : kind.icon}
           size={18}
-          color={key.kind === 'agent' ? colors.tealSoft : colors.white}
+          color={key.kind === 'agent' ? colors.glow : colors.white}
         />
       </View>
       <View style={{ flex: 1, gap: 2 }}>
@@ -546,7 +546,7 @@ export function AllowanceCards() {
         <Sticker
           key={h.id}
           onPress={() => router.push({ pathname: '/send', params: { from: h.id } })}
-          fill="#CFF5E6"
+          fill={colors.tealSoft}
           radius={26}
           style={{ marginTop: 12 }}
           accessibilityLabel={`Allowance from ${giver(h.owner)}, ${dollars((Number(h.remaining) / 1e6).toString())} left`}

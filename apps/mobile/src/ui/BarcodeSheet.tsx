@@ -96,7 +96,7 @@ export function BarcodeSheet({
               value={typed}
               onChangeText={(v) => setTyped(v.replace(/\D/g, '').slice(0, 14))}
               placeholder="5449000000996"
-              placeholderTextColor="#8C9799"
+              placeholderTextColor={colors.muted}
               keyboardType="number-pad"
               style={styles.input}
             />

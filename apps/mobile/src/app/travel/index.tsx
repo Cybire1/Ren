@@ -204,7 +204,7 @@ export default function Travel() {
                 value={sentence}
                 onChangeText={setSentence}
                 placeholder="Lisbon to London next Friday, back Sunday"
-                placeholderTextColor="#8C9799"
+                placeholderTextColor={colors.muted}
                 multiline
                 returnKeyType="go"
                 blurOnSubmit
@@ -349,7 +349,7 @@ export default function Travel() {
                   ? 'Anything that matters? Non-stop, arrive by 6pm…'
                   : 'Anything that matters? Breakfast, a pool…'
               }
-              placeholderTextColor="#8C9799"
+              placeholderTextColor={colors.muted}
               maxLength={200}
               style={styles.wishesInput}
               accessibilityLabel="What matters to you"

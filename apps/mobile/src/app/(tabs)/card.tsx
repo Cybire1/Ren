@@ -13,7 +13,7 @@ import {
   View,
 } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import {
+import Animated, {
   Easing,
   useAnimatedStyle,
   useReducedMotion,
@@ -28,7 +28,6 @@ import type { KeyPaymentView, KeyView } from '@/lib/keys-state'
 import { load as loadSaved, save } from '@/lib/storage'
 import { colors } from '@/lib/theme'
 import { isUnnamed, useWallet } from '@/lib/wallet'
-import Animated from '@/ui/animated'
 import { CardArt } from '@/ui/art'
 import { type CardDesign, CardDesignPicker, CardFace } from '@/ui/CardFace'
 import { dockClearance } from '@/ui/Dock'

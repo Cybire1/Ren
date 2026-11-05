@@ -5,8 +5,8 @@
     "scheme": "kova",
     "version": "0.1.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "automatic",
-    "backgroundColor": "#E8F7EF",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
@@ -41,7 +41,7 @@
       ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/brand/icon-foreground.png",
-        "backgroundColor": "#E8F7EF"
+        "backgroundColor": "#000000"
       }
     },
     "plugins": [
@@ -84,7 +84,7 @@
           "image": "./assets/brand/splash-mark.png",
           "imageWidth": 150,
           "resizeMode": "contain",
-          "backgroundColor": "#E8F7EF"
+          "backgroundColor": "#000000"
         }
       ]
     ],

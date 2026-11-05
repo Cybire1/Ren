@@ -10,7 +10,7 @@ import {
   useWindowDimensions,
   View,
 } from 'react-native'
-import { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated'
+import Animated, { FadeIn, FadeInLeft, FadeInRight } from 'react-native-reanimated'
 import { type Address, getAddress, isAddressEqual } from 'viem'
 import { chainName, notesTravel } from '@/lib/config'
 import { parseScanned } from '@/lib/links'
@@ -27,7 +27,6 @@ import {
 import { rateLabel } from '@/lib/rates'
 import { colors, fonts } from '@/lib/theme'
 import { type Contact, type Entry, isUnnamed, useWallet } from '@/lib/wallet'
-import Animated from '@/ui/animated'
 import { Avatar, Flyer } from '../art'
 import { Icon, type IconName } from '../Icon'
 import { Keypad } from '../Keypad'
@@ -355,7 +354,7 @@ export function SendSheet({
                   value={note}
                   onChangeText={setNote}
                   placeholder={notesTravel ? 'Private note' : 'What’s it for?'}
-                  placeholderTextColor="#8C9799"
+                  placeholderTextColor={colors.muted}
                   maxLength={60}
                   accessibilityLabel={
                     notesTravel
@@ -614,7 +613,7 @@ function Who({ onPick }: { onPick: (p: Payee) => void }) {
           }}
           onSubmitEditing={() => go(text)}
           placeholder="Name, address or link"
-          placeholderTextColor="#8C9799"
+          placeholderTextColor={colors.muted}
           autoCapitalize="none"
           autoCorrect={false}
           returnKeyType="go"
@@ -903,7 +902,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  switchIconOn: { backgroundColor: '#1E3557' },
+  switchIconOn: { backgroundColor: '#3D3438' },
   track: {
     width: 42,
     height: 24,

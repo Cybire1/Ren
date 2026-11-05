@@ -883,7 +883,7 @@
 }
 
 .w-namecard-input::placeholder {
-  color: rgba(31, 52, 56, 0.38);
+  color: rgba(30, 26, 28, 0.38);
 }
 
 .w-namecard-currency {
@@ -1179,7 +1179,7 @@
   position: relative;
   margin-top: 0.25rem;
   padding: 1.25rem 1.125rem 1.125rem;
-  background: #fbfaf7;
+  background: #fcf9f8;
   border-radius: 1.2rem 1.2rem 0 0;
   box-shadow: 0 1px 0 var(--hairline);
   --edge: 10px;
@@ -2381,7 +2381,7 @@ button.w-person {
 }
 
 .w-balance {
-  color: var(--ink);
+  color: #fff;
 }
 
 .w-balance-label {
@@ -2429,7 +2429,7 @@ button.w-person {
 
 .w-balance-waves path {
   fill: none;
-  stroke: var(--ink);
+  stroke: #fff;
   stroke-width: 11;
   stroke-linecap: round;
 }
@@ -2836,7 +2836,7 @@ button.w-person {
   height: 2.6rem;
   margin: 0.35rem 0 0.25rem 0.2rem;
   border-radius: 0.8rem;
-  background: color-mix(in srgb, var(--fill) 14%, transparent);
+  background: rgba(255, 255, 255, 0.22);
   animation: wait-pulse 1.4s ease-in-out infinite;
 }
 
@@ -3742,7 +3742,7 @@ button.w-person {
   height: 2.375rem;
   border: 2px solid var(--line);
   border-radius: 50%;
-  background: #8fa2e8;
+  background: #d9d2d4;
   color: var(--ink);
   font-size: 1.25rem;
   font-weight: 800;
@@ -5236,42 +5236,13 @@ button.w-add-chain {
 }
 
 /* Appearance on Profile (components/wallet/theme.tsx): like the phone, or always light or dark. */
-.w-appearance {
-  display: grid;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
-  padding: 0.875rem 0.875rem 0.875rem 1.125rem;
-  border: 2px solid var(--line);
-  border-radius: 1.375rem;
-  background: var(--surface);
-}
-
-.w-appearance-head {
-  display: grid;
-  line-height: 1.35;
-}
-
-.w-appearance-head strong {
-  font-size: 1.0625rem;
-  font-weight: 750;
-}
-
-.w-appearance-head small {
-  color: var(--muted);
-  font-size: 0.75rem;
-}
-
-.w-appearance .w-filters {
-  margin: 0;
-  background: var(--sunken);
-}
 
 /* ── The wallet in the dark (globals.css :root[data-theme="dark"]), as Kova's ─────────────── */
 
 :root[data-theme="dark"] .w-app {
-  --teal-light: #4fcaa2;
-  --on-tint: #d6ddd9;
-  --on-teal: #e3fff5;
+  --teal-light: #ff8fb5;
+  --on-tint: #d6dae3;
+  --on-teal: #fff0f5;
 }
 
 :root[data-theme="dark"] .w-receipt {
@@ -5280,8 +5251,7 @@ button.w-add-chain {
 
 :root[data-theme="dark"] .w-balance,
 :root[data-theme="dark"] .w-money {
-  background:
-    radial-gradient(120% 130% at 100% 0%, rgba(32, 180, 135, 0.26), transparent 60%), var(--surface);
+  background: #7d0f3b;
 }
 
 :root[data-theme="dark"] .w-slide-knob {
@@ -5295,7 +5265,7 @@ button.w-add-chain {
 }
 
 :root[data-theme="dark"] .w-namecard-input {
-  border-bottom-color: rgba(230, 238, 233, 0.25);
+  border-bottom-color: rgba(238, 236, 234, 0.25);
 }
 
 :root[data-theme="dark"] .key:hover {
@@ -5316,7 +5286,7 @@ button.w-add-chain {
 
 :root[data-theme="dark"] .w-balance-sign,
 :root[data-theme="dark"] .w-balance-cents {
-  color: var(--muted);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 :root[data-theme="dark"] .w-privcard-go {
@@ -5349,4 +5319,29 @@ button.w-add-chain {
 
 :root[data-theme="dark"] .w-month-down {
   color: var(--coral);
+}
+
+/* Cobalt carries white: the balance's words and figures, and every icon or word set on it. */
+.w-balance-label,
+.w-balance-whole,
+.w-balance-hidden {
+  color: #fff;
+}
+
+.w-balance-sign,
+.w-balance-cents {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.w-tile-request .w-tile-disc,
+.w-keynew-teal .w-privact-disc,
+.w-from-allow.w-from-on,
+.w-keyhero-allowance {
+  color: #fff;
+}
+
+/* On the raspberry card, chips stay light, with dark text. */
+:root[data-theme="dark"] .w-balance .w-chip {
+  background: #fde7ef;
+  color: #1e1a1c;
 }

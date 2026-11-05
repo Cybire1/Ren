@@ -72,7 +72,12 @@ export function ActionTile({ kind, onPress }: { kind: 'send' | 'request'; onPres
       </View>
       <View style={styles.body}>
         <View style={[styles.disc, { backgroundColor: tone.disc }]}>
-          <Icon name={tone.icon} size={18} color={colors.ink} strokeWidth={2.4} />
+          <Icon
+            name={tone.icon}
+            size={18}
+            color={send ? colors.ink : colors.white}
+            strokeWidth={2.4}
+          />
         </View>
         <Txt weight="heavy" size={18} style={{ letterSpacing: -0.4 }}>
           {tone.label}

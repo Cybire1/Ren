@@ -575,7 +575,7 @@ function KeypadPanel({ bottom }: { bottom: number }) {
               value={note}
               onChangeText={setNote}
               placeholder="What's it for? (optional)"
-              placeholderTextColor="rgba(13,13,18,0.45)"
+              placeholderTextColor={colors.muted}
               maxLength={60}
               style={styles.note}
             />
@@ -705,7 +705,7 @@ function ItemsPanel({
                 value={query}
                 onChangeText={setQuery}
                 placeholder="Find an item"
-                placeholderTextColor="rgba(13,13,18,0.45)"
+                placeholderTextColor={colors.muted}
                 style={styles.searchInput}
               />
             </View>
@@ -969,7 +969,7 @@ function ScanPanel({
             value={code}
             onChangeText={(v) => setCode(v.replace(/\D/g, '').slice(0, 14))}
             placeholder="Barcode number"
-            placeholderTextColor="rgba(13,13,18,0.45)"
+            placeholderTextColor={colors.muted}
             keyboardType="number-pad"
             autoFocus
             onSubmitEditing={submitTyped}
@@ -1347,7 +1347,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(16,35,63,0.55)',
+    backgroundColor: 'rgba(30,26,28,0.55)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1375,7 +1375,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 7 },
-  backdrop: { flex: 1, backgroundColor: 'rgba(16,35,63,0.32)' },
+  backdrop: { flex: 1, backgroundColor: 'rgba(30,26,28,0.32)' },
   sheet: {
     backgroundColor: colors.paper,
     borderTopLeftRadius: 32,
@@ -1388,6 +1388,6 @@ const styles = StyleSheet.create({
     width: 40,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(16,35,63,0.16)',
+    backgroundColor: 'rgba(30,26,28,0.16)',
   },
 })

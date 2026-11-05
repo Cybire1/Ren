@@ -79,7 +79,7 @@ export default function Request() {
           value={note}
           onChangeText={setNote}
           placeholder="What's it for?"
-          placeholderTextColor="#8C9799"
+          placeholderTextColor={colors.muted}
           maxLength={60}
           style={styles.note}
         />

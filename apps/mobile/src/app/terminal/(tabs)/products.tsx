@@ -141,7 +141,7 @@ export default function Products() {
             value={query}
             onChangeText={setQuery}
             placeholder="Find a product, barcode or shelf"
-            placeholderTextColor="#8C9799"
+            placeholderTextColor={colors.muted}
             style={styles.searchInput}
           />
         </View>

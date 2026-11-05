@@ -88,7 +88,7 @@ export default function KeysScreen() {
                 icon="user"
                 label="Give an allowance"
                 sub="A weekly limit for someone"
-                fill="#CFF5E6"
+                fill={colors.tealSoft}
                 disc={colors.tealDeep}
                 onPress={() => router.push('/keys/allowance')}
               />

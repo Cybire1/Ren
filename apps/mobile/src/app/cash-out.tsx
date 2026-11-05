@@ -510,7 +510,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     borderWidth: 2,
     borderColor: colors.line,
-    backgroundColor: '#CFF5E6',
+    backgroundColor: colors.tealSoft,
   },
   bankBadge: {
     width: 38,
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: '#CFF5E6',
+    backgroundColor: colors.tealSoft,
   },
   facts: {
     marginTop: 16,

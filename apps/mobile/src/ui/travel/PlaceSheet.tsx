@@ -55,7 +55,7 @@ export function PlaceSheet({
           value={query}
           onChangeText={setQuery}
           placeholder="City or airport, like Lisbon or LHR"
-          placeholderTextColor="#8C9799"
+          placeholderTextColor={colors.muted}
           autoFocus
           autoCorrect={false}
           style={styles.input}

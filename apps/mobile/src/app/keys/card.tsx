@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 12,
     borderRadius: 14,
-    backgroundColor: '#CFF5E6',
+    backgroundColor: colors.tealSoft,
   },
   input: {
     paddingHorizontal: 14,

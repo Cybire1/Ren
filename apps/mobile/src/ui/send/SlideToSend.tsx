@@ -2,7 +2,7 @@ import * as Haptics from 'expo-haptics'
 import { useEffect, useState } from 'react'
 import { ActivityIndicator, StyleSheet, View } from 'react-native'
 import { Gesture, GestureDetector } from 'react-native-gesture-handler'
-import {
+import Animated, {
   Easing,
   interpolate,
   useAnimatedStyle,
@@ -16,7 +16,6 @@ import {
 } from 'react-native-reanimated'
 import { scheduleOnRN } from 'react-native-worklets'
 import { colors } from '@/lib/theme'
-import Animated from '@/ui/animated'
 import { Icon } from '../Icon'
 import { Txt } from '../primitives'
 

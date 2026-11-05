@@ -968,7 +968,7 @@
   width: 0.5rem;
   height: 0.5rem;
   border-radius: 50%;
-  background: #8fe0bd;
+  background: #ff9db8;
   animation: breathe 2.4s var(--spring) infinite;
 }
 
@@ -984,7 +984,7 @@
   height: 0.28rem;
   margin-top: -0.14rem;
   border-radius: 999px;
-  background: #2a3f43;
+  background: #2f2a2c;
 }
 
 .tape-paper {
@@ -2442,4 +2442,10 @@ input:not([type="checkbox"]):not([type="hidden"]):not(.amount-ref),
   color: var(--ink);
   font: inherit;
   font-size: 1rem;
+}
+
+/* Cobalt carries white. */
+.more-icon-teal,
+.setup-steps li[data-done] .setup-check {
+  color: #fff;
 }

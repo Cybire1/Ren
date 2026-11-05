@@ -1,20 +1,12 @@
-import { reloadAppAsync } from 'expo'
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from 'react'
-import { Appearance, Platform } from 'react-native'
+import { Appearance } from 'react-native'
 import { load, save } from './storage'
-import { androidLook, chosenLook, LOOK_KEY, writeStartSetting } from './theme'
 
 /**
  * Settings that are not money: which side of the counter this phone is on, whether the balance
- * shows, and light or dark. A Ren Card's state lives on Tempo, as a key on the wallet (Keys).
+ * shows. A Ren Card's state lives on Tempo, as a key on the wallet (Keys).
  */
 export type Mode = 'pay' | 'terminal'
-
-/** Light, dark, or whatever the phone is set to (the default). */
-export type Look = 'system' | 'light' | 'dark'
-
-/** Where to go once the app has reloaded for a new look: back to the setting that changed it. */
-export const AFTER_RELOAD_KEY = 'KovaAfterReload'
 
 interface Prefs {
   ready: boolean
@@ -23,26 +15,14 @@ interface Prefs {
   /** Hides the balance on Home, for glances in public. */
   hideBalance: boolean
   setHideBalance: (hide: boolean) => void
-  look: Look
-  /** Saves the look and reloads the app in it (`from` is the screen to come back to). */
-  setLook: (look: Look, from?: string) => void
 }
 
 const PREFS = 'kova.prefs.v1'
 const defaults = { mode: 'pay' as Mode, hideBalance: false }
 
-/** The look this run of the app was drawn in (lib/theme.ts reads it before any style exists). */
-const startLook: Look = chosenLook ?? 'system'
-
-// Native parts (the keyboard, alerts, the status bar, sheets' chrome) follow the same look.
-Appearance.setColorScheme(chosenLook)
-
-// Android draws every colour once, in the look the phone had as the app started: when the phone
-// switches while Ren follows it, redraw in the new one (as Android itself does for most apps).
-if (Platform.OS === 'android' && !chosenLook)
-  Appearance.addChangeListener(({ colorScheme }) => {
-    if (colorScheme && colorScheme !== androidLook) void reloadAppAsync('Appearance changed')
-  })
+// Ren is dark, always (lib/theme.ts): native parts (the keyboard, alerts, the status bar, sheets'
+// chrome) are drawn dark too.
+Appearance.setColorScheme('dark')
 
 const PrefsContext = createContext<Prefs | null>(null)
 
@@ -83,14 +63,6 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
         setMode: (mode) => update({ mode }),
         hideBalance: state.hideBalance,
         setHideBalance: (hideBalance) => update({ hideBalance }),
-        look: startLook,
-        setLook: (look, from) => {
-          if (look === startLook) return
-          // Every style is made once, from the look the app started in: redraw it all in the new one.
-          writeStartSetting(LOOK_KEY, look === 'system' ? null : look)
-          if (from) writeStartSetting(AFTER_RELOAD_KEY, from)
-          void reloadAppAsync('Appearance changed')
-        },
       }}
     >
       {children}

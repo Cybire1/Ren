@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import {
+import Animated, {
   Easing,
   useAnimatedStyle,
   useReducedMotion,
@@ -24,7 +24,6 @@ import { createItem, type MenuImport, readMenuPhoto } from '@/lib/api'
 import { type PhotoSource, takePhoto } from '@/lib/photos'
 import { useStall } from '@/lib/stall'
 import { colors, fonts } from '@/lib/theme'
-import Animated from '@/ui/animated'
 import { Reni } from '@/ui/art'
 import { Icon } from '@/ui/Icon'
 import { Header, PillButton, Screen, Txt } from '@/ui/primitives'

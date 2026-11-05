@@ -163,7 +163,7 @@ function Field(props: React.ComponentProps<typeof TextInput> & { label: string }
       <Txt weight="semi" size={14}>
         {label}
       </Txt>
-      <TextInput placeholderTextColor="#8C9799" style={[styles.input, style]} {...rest} />
+      <TextInput placeholderTextColor={colors.muted} style={[styles.input, style]} {...rest} />
     </View>
   )
 }
@@ -326,7 +326,7 @@ function Confirm({
           if (digits.length === 6) onSubmit(digits)
         }}
         placeholder="000000"
-        placeholderTextColor="#B4B9B8"
+        placeholderTextColor={colors.muted}
         keyboardType="number-pad"
         textContentType="oneTimeCode"
         autoComplete="sms-otp"

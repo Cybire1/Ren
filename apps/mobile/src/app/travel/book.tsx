@@ -462,7 +462,7 @@ function Input({
       value={value}
       onChangeText={onChange}
       placeholder={placeholder}
-      placeholderTextColor="#8C9799"
+      placeholderTextColor={colors.muted}
       autoCapitalize={words ? 'words' : 'none'}
       autoCorrect={false}
       keyboardType={

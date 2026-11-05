@@ -11,33 +11,33 @@
   --pill-cap-size: 2.75rem;
   --pill-fs: 1.0625rem;
   --pill-pl: 1.5rem;
-  --paper: #e8f7ef;
-  --surface: #f6fcf8;
-  --sunken: #d6eee1;
-  --ink: #10233f;
-  --muted: #4f6577;
-  --on-ink: #a9c1d6;
-  --teal: #00a37a;
-  --teal-deep: #00805f;
-  --teal-soft: #a6e8d2;
+  --paper: #f6f1f0;
+  --surface: #fcf9f8;
+  --sunken: #ede6e5;
+  --ink: #1e1a1c;
+  --muted: #63585c;
+  --on-ink: #c7bec1;
+  --teal: #c2185b;
+  --teal-deep: #a3144c;
+  --teal-soft: #fbe0ea;
   --coral: #ff5e7e;
   --coral-deep: #d13c5c;
   --coral-soft: #ffc0cc;
-  --positive: #00805f;
-  --danger: #d2334b;
+  --positive: #a3144c;
+  --danger: #c43d12;
   --hairline: color-mix(in srgb, var(--ink) 10%, transparent);
-  --ink-2: #1e3557;
+  --ink-2: #3d3438;
   --card: #ffffff;
   --coral-tint: #ffe0e6;
-  --teal-light: #6fd3b3;
-  --on-teal: #e3fff5;
+  --teal-light: #f08db0;
+  --on-teal: #fff0f5;
   --on-tint: var(--ink-2);
-  --tint-mint: #cff5e6;
+  --tint-mint: #fde7ef;
   --tint-sand: #fff0b5;
   /* Ink's three jobs, split so the dark theme can tell them apart; in light they're all ink. */
   --line: var(--ink); /* outlines */
   --fill: var(--ink); /* dark surfaces: the Pay card, the dock, ink pills */
-  --dark: #10233f; /* text on bright colours (white, watermelon), in either theme */
+  --dark: #1e1a1c; /* text on bright colours (white, watermelon), in either theme */
   --on-fill: var(--surface); /* light text on a dark fill */
 
   --font: "Manrope", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -56,29 +56,29 @@
   --surface: #161616;
   --sunken: #222;
   --card: #161616;
-  --ink: #e6eee9;
-  --ink-2: #c3ccc7;
-  --muted: #8c9892;
-  --on-ink: #b0bab5;
-  --teal: #20b487;
-  --teal-deep: #189a73;
+  --ink: #eeecea;
+  --ink-2: #cdc7c9;
+  --muted: #9c9497;
+  --on-ink: #b8b0b3;
+  --teal: #e0457a;
+  --teal-deep: #c2185b;
   --teal-soft: #1b1b1b;
-  --teal-light: #4fcaa2;
+  --teal-light: #ff8fb5;
   --coral: #ff6f8c;
   --coral-deep: #e0566f;
   --coral-soft: #2a1519;
   --coral-tint: #2a1519;
-  --positive: #3ec79b;
-  --danger: #ff6b7d;
-  --tint-mint: #10241c;
+  --positive: #ff8fb5;
+  --danger: #ff7a59;
+  --tint-mint: #241018;
   --tint-sand: #2a2512;
-  --on-teal: #e3fff5;
-  --on-tint: #b0bab5;
-  --hairline: rgba(230, 238, 233, 0.12);
+  --on-teal: #fff0f5;
+  --on-tint: #b8b0b3;
+  --hairline: rgba(238, 236, 234, 0.12);
   /* No outlines in the dark: cards stand off the black by their own grey. */
   --line: transparent;
   --fill: #1b1b1b;
-  --on-fill: #e6eee9;
+  --on-fill: #eeecea;
   color-scheme: dark;
 }
 
@@ -762,7 +762,7 @@ p {
 }
 
 .amount-ref::placeholder {
-  color: rgba(31, 52, 56, 0.55);
+  color: rgba(30, 26, 28, 0.55);
 }
 
 .keypad {

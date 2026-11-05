@@ -263,7 +263,7 @@ export default function ItemEditor() {
               value={name}
               onChangeText={setName}
               placeholder="Jollof and chicken"
-              placeholderTextColor="#8C9799"
+              placeholderTextColor={colors.muted}
               maxLength={80}
               style={styles.input}
             />
@@ -317,7 +317,7 @@ export default function ItemEditor() {
                     setPrice(v.replace(/[^0-9.]/g, '').replace(/(\..*)\./g, '$1'))
                   }
                   placeholder={currency === 'NGN' ? '6,000' : '4.50'}
-                  placeholderTextColor="#8C9799"
+                  placeholderTextColor={colors.muted}
                   keyboardType="decimal-pad"
                   style={styles.priceText}
                   accessibilityLabel={`Price in ${info.name}`}
@@ -343,7 +343,7 @@ export default function ItemEditor() {
               value={description}
               onChangeText={setDescription}
               placeholder="Smoky party jollof, with a drumstick"
-              placeholderTextColor="#8C9799"
+              placeholderTextColor={colors.muted}
               maxLength={200}
               multiline
               style={[styles.input, { height: 70, paddingTop: 16, textAlignVertical: 'top' }]}

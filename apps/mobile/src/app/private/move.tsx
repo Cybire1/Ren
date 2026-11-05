@@ -115,7 +115,7 @@ export default function MoveScreen() {
               <Icon
                 name={into ? 'down' : 'up'}
                 size={20}
-                color={into ? colors.tealSoft : colors.white}
+                color={into ? colors.glow : colors.white}
               />
             </View>
             <Txt size={14} color={colors.muted}>

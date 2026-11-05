@@ -111,7 +111,7 @@ export function ProfileForm({
             value={name}
             onChangeText={onName}
             placeholder="Your name"
-            placeholderTextColor="rgba(31,52,56,0.38)"
+            placeholderTextColor={colors.muted}
             autoFocus
             autoCapitalize="words"
             autoComplete="name"

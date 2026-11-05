@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect } from 'react'
 import { type ColorValue, type StyleProp, StyleSheet, View, type ViewStyle } from 'react-native'
-import {
+import Animated, {
   Easing,
   interpolateColor,
   useAnimatedStyle,
@@ -14,8 +14,6 @@ import {
 } from 'react-native-reanimated'
 import Svg, { Path } from 'react-native-svg'
 import { colors } from '@/lib/theme'
-import Animated from '@/ui/animated'
-import { plain, useLook } from './animated'
 import { Coin, Flake, Sparkle } from './art'
 import { WAVES } from './Logo'
 
@@ -538,10 +536,9 @@ export function Landing({
     )
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-  // Reanimated blends plain colours only: the two ends as they are in this appearance.
-  const look = useLook()
-  const from = plain(rest, look) as string
-  const to = plain(colors.tealSoft, look) as string
+  // Reanimated blends plain colours, which Ren's are (lib/theme.ts).
+  const from = rest as string
+  const to = colors.tealSoft as string
   const anim = useAnimatedStyle(() => ({
     opacity: t.value,
     transform: [{ translateY: (1 - t.value) * -16 }, { scale: 0.97 + 0.03 * t.value }],

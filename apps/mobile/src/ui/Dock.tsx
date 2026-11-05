@@ -3,7 +3,7 @@ import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
 import { useEffect } from 'react'
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native'
-import {
+import Animated, {
   Easing,
   useAnimatedStyle,
   useReducedMotion,
@@ -18,7 +18,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import Svg, { Defs, LinearGradient, Path, Rect, Stop } from 'react-native-svg'
 import { colors } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
-import Animated from './animated'
 import { Avatar } from './art'
 import { NavIcon, type NavIconName } from './NavIcons'
 import { Txt } from './primitives'

@@ -13,6 +13,9 @@ import { Bob, Breathe, Landing, Twinkle } from './motion'
 import { Odometer } from './Odometer'
 import { Sticker, Txt } from './primitives'
 
+/** The dollar sign and cents on the cobalt card: white, a step back from the figures. */
+const SOFT = 'rgba(255, 255, 255, 0.78)'
+
 /** Money that has only just arrived, shown on the card for a moment: "+$12.00 from Ade, just now". */
 export type Fresh = { id: string; line: string }
 
@@ -71,10 +74,10 @@ export function BalanceCard({
           }}
           style={styles.label}
         >
-          <Txt weight="bold" size={15}>
+          <Txt weight="bold" size={15} color={colors.white}>
             Available
           </Txt>
-          <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={18} />
+          <Icon name={hideBalance ? 'eyeOff' : 'eye'} size={18} color={colors.white} />
         </Pressable>
         <Sticker
           radius={16}
@@ -92,7 +95,13 @@ export function BalanceCard({
 
       <View style={styles.amount}>
         {hideBalance ? (
-          <Txt weight="heavy" size={36} accessibilityLabel="Balance hidden" style={styles.hidden}>
+          <Txt
+            weight="heavy"
+            size={36}
+            color={colors.white}
+            accessibilityLabel="Balance hidden"
+            style={styles.hidden}
+          >
             ••••••
           </Txt>
         ) : whole === null ? (
@@ -100,6 +109,7 @@ export function BalanceCard({
             <Txt
               weight="heavy"
               size={24}
+              color={SOFT}
               style={styles.sign}
               importantForAccessibility="no"
               accessibilityElementsHidden
@@ -114,18 +124,19 @@ export function BalanceCard({
               weight="heavy"
               size={24}
               exact
+              color={SOFT}
               style={[styles.sign, { marginTop: size * 0.2 }]}
               importantForAccessibility="no"
               accessibilityElementsHidden
             >
               $
             </Txt>
-            <Odometer value={whole} size={size} label={`Available, ${usd}`} />
+            <Odometer value={whole} size={size} label={`Available, ${usd}`} color={colors.white} />
             <Txt
               weight="heavy"
               size={24}
               exact
-              color={colors.onTint}
+              color={SOFT}
               style={[styles.cents, { marginTop: size * 0.2 }]}
               importantForAccessibility="no"
               accessibilityElementsHidden
@@ -154,14 +165,14 @@ export function BalanceCard({
           <>
             {local ? (
               <View style={styles.chip}>
-                <Txt weight="bold" size={13}>
+                <Txt weight="bold" size={13} color={colors.dark}>
                   {hideBalance ? '≈ ••••' : `≈ ${local}`}
                 </Txt>
               </View>
             ) : null}
             {isTestnet ? (
               <View style={styles.chip}>
-                <Txt weight="heavy" size={12}>
+                <Txt weight="heavy" size={12} color={colors.dark}>
                   Test dollars
                 </Txt>
               </View>
@@ -200,13 +211,13 @@ export function ReadyCard() {
 
       <View style={styles.top}>
         <View style={styles.label}>
-          <Txt weight="bold" size={15}>
+          <Txt weight="bold" size={15} color={colors.white}>
             Available
           </Txt>
         </View>
         {isTestnet ? (
           <View style={styles.chip}>
-            <Txt weight="heavy" size={12}>
+            <Txt weight="heavy" size={12} color={colors.dark}>
               Test dollars
             </Txt>
           </View>
@@ -217,23 +228,23 @@ export function ReadyCard() {
         accessible
         accessibilityLabel="Available, $0.00"
       >
-        <Txt weight="heavy" size={30} exact style={[styles.sign, { marginTop: 14 }]}>
+        <Txt weight="heavy" size={30} exact color={SOFT} style={[styles.sign, { marginTop: 14 }]}>
           $
-        </Txt>
-        <Txt weight="heavy" size={68} exact style={{ lineHeight: 79, letterSpacing: -2.4 }}>
-          0
         </Txt>
         <Txt
           weight="heavy"
-          size={30}
+          size={68}
           exact
-          color={colors.onTint}
-          style={[styles.cents, { marginTop: 14 }]}
+          color={colors.white}
+          style={{ lineHeight: 79, letterSpacing: -2.4 }}
         >
+          0
+        </Txt>
+        <Txt weight="heavy" size={30} exact color={SOFT} style={[styles.cents, { marginTop: 14 }]}>
           .00
         </Txt>
       </View>
-      <Txt weight="heavy" size={16} style={{ marginTop: 2 }}>
+      <Txt weight="heavy" size={16} color={colors.white} style={{ marginTop: 2 }}>
         Your wallet is ready.
       </Txt>
       <View style={styles.readyRow}>
@@ -264,7 +275,7 @@ function Waves() {
         <Path
           key={d}
           d={d}
-          stroke={colors.ink}
+          stroke={colors.white}
           strokeWidth={11}
           strokeLinecap="round"
           fill="none"
@@ -286,7 +297,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     marginLeft: 4,
     borderRadius: 14,
-    backgroundColor: 'rgba(16, 35, 63, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.22)',
   },
   frame: { marginTop: 16 },
   card: { paddingLeft: 20, paddingRight: 14, paddingTop: 10, paddingBottom: 18 },
