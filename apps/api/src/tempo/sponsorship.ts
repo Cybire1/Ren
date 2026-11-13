@@ -13,8 +13,10 @@ import { acceptedTokens, network, settlementToken } from '../chain.js'
 import { config } from '../config.js'
 import { db } from '../db.js'
 import { takeSponsorship } from '../kv.js'
+import { topUpSponsorProblem } from '../services/dollar-card.js'
 import { findIntentByMemo } from '../services/intents.js'
 import { cashOutSponsorProblem } from '../services/naira.js'
+import { payoutSponsorProblem } from '../services/payouts.js'
 import { rewardRefusal } from '../services/stamps.js'
 import { zoneDepositProblem } from './zone-deposit.js'
 
@@ -31,7 +33,10 @@ export interface FillRequest {
 }
 
 export type SponsorDecision =
-  | { sponsor: true; kind: 'charge' | 'send' | 'private' | 'key' | 'cashout' | 'swap' }
+  | {
+      sponsor: true
+      kind: 'charge' | 'send' | 'private' | 'key' | 'cashout' | 'swap' | 'payout' | 'card-topup'
+    }
   | { sponsor: false; reason: string }
 
 /** The portal of the private zone Ren pays deposits into, when one is configured. */
@@ -129,6 +134,9 @@ function keyChangeProblem(
  *   exactly that charge's. A charge a stamp card made free is paid for $0, so it still has its
  *   receipt on-chain: the only transfer of nothing Kova pays for, and only from the card's owner;
  *   or
+ * - **a cash-out or a card top-up**: the memo is an open quote's (a naira cash-out, a cash-out
+ *   abroad, a dollar-card top-up), and the amount, token, sender and recipient (Kova's treasury) are
+ *   exactly that quote's; or
  * - **a send between people**: no Kova memo at all (a charge can only be paid through its own
  *   check above), within a daily number of sponsored sends per wallet.
  *
@@ -217,6 +225,14 @@ export async function shouldSponsor(
     })
     if (problem) return { sponsor: false, reason: problem }
     return { sponsor: true, kind: 'cashout' }
+  }
+  // A cash-out abroad or a card top-up: exactly an open quote's amount, to Ren's treasury, from the
+  // wallet that asked (services/payouts.ts, services/dollar-card.ts). Nothing else with those memos.
+  if (kova.kind === 'payout' || kova.kind === 'card-topup') {
+    const check = kova.kind === 'payout' ? payoutSponsorProblem : topUpSponsorProblem
+    const problem = await check({ id: kova.id, to, amount, token: call.to, from: request.from })
+    if (problem) return { sponsor: false, reason: problem }
+    return { sponsor: true, kind: kova.kind }
   }
   if (kova.kind !== 'payment') return { sponsor: false, reason: `a ${kova.kind} is Ren's to send` }
 

@@ -1,6 +1,7 @@
 export * from './card.js'
 export * from './keys.js'
 export * from './memo.js'
+export * from './money.js'
 export * from './networks.js'
 export * from './payment.js'
 export * from './swap.js'

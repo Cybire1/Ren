@@ -1162,3 +1162,259 @@ export const sponsorships = pgTable(
   },
   (t) => [index('sponsorships_wallet_idx').on(t.wallet, t.kind, t.createdAt)],
 )
+
+// --- The dollar card and cash-outs abroad (Nuvion) -----------------------------------------------
+
+/**
+ * Someone asking for a feature that waits on a partner (the dollar card) before Ren has that
+ * partner's key: one row per wallet, network and feature, so Ren knows who to switch on first.
+ */
+export const moneyAccessRequests = pgTable(
+  'money_access_requests',
+  {
+    id: id(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    network: network('network').notNull(),
+    /** us_account, dollar_card or savings. */
+    feature: text('feature').notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex('money_access_requests_idx').on(t.wallet, t.network, t.feature)],
+)
+
+/**
+ * A dollar card (virtual), issued by a card partner. The card's number never touches Ren's
+ * database: it is read from the partner when the holder asks. Ren keeps the token, the last four,
+ * the limit and whether it's frozen.
+ */
+export const dollarCards = pgTable(
+  'dollar_cards',
+  {
+    id: id(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    network: network('network').notNull(),
+    provider: text('provider').notNull().default('nuvion'),
+    providerCardToken: text('provider_card_token').notNull(),
+    lastFour: text('last_four').notNull(),
+    /** The card's brand: mastercard, visa or other, worked out from the number when it's made. */
+    brand: text('brand'),
+    expMonth: text('exp_month'),
+    expYear: text('exp_year'),
+    /** open, paused or closed (the partner's states). */
+    state: text('state').notNull().default('open'),
+    /** The most that goes onto it in a day, in base units. */
+    dailyLimit: amount('daily_limit').notNull(),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('dollar_cards_token_idx').on(t.providerCardToken),
+    index('dollar_cards_wallet_idx').on(t.wallet, t.network),
+  ],
+)
+
+/**
+ * Who a dollar card is issued to: the person behind a wallet, as the card issuer (Nuvion) knows
+ * them after their ID check. Ren keeps the issuer's ids and whether they passed, never their ID
+ * document; the card's own account and the payment detail that tops it up are made once they pass.
+ */
+export const cardHolders = pgTable(
+  'card_holders',
+  {
+    id: id(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    network: network('network').notNull(),
+    provider: text('provider').notNull().default('nuvion'),
+    entityId: text('entity_id').notNull(),
+    personId: text('person_id'),
+    /** The issuer's check: incomplete, pending, approved, rejected, failed or suspended. */
+    status: text('status').notNull().default('pending'),
+    /** Why a check didn't pass, in the issuer's words. */
+    reason: text('reason'),
+    firstName: text('first_name').notNull(),
+    lastName: text('last_name').notNull(),
+    email: text('email'),
+    /** The issuer needs it to make the card (E.164). */
+    phone: text('phone'),
+    /** The card's own USD account at the issuer, and its account number for top-ups. */
+    accountId: text('account_id'),
+    accountNumber: text('account_number'),
+    /** Ren's way to pay that account from its pot: a counterparty and its book-transfer detail. */
+    counterpartyId: text('counterparty_id'),
+    paymentDetailId: text('payment_detail_id'),
+    /** The holder's way to pay Ren's pot back (money moved off the card): Ren as their counterparty. */
+    returnCounterpartyId: text('return_counterparty_id'),
+    returnPaymentDetailId: text('return_payment_detail_id'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [uniqueIndex('card_holders_wallet_idx').on(t.wallet, t.network)],
+)
+
+/**
+ * Each top-up of a dollar card: quoted (the amount and Ren's fee, open for a few minutes), paid
+ * (the wallet's transfer to Ren's treasury on Tempo was read and matched), then credited (the same
+ * amount moved onto the card at the issuer), or failed while that move is still being retried. One
+ * Tempo transaction pays one top-up, and one top-up credits once. A payment that arrives for a
+ * top-up the day's limit no longer allows goes back to the wallet: refunding, then refunded.
+ */
+export const cardTopups = pgTable(
+  'card_topups',
+  {
+    id: id(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    network: network('network').notNull(),
+    /** What lands on the card, in base units. */
+    amount: amount('amount').notNull(),
+    /** Ren's fee on top, kept by Ren: the wallet sends amount + fee. */
+    fee: amount('fee').notNull().default(sql`0`),
+    /** The wallet's transfer to the treasury, once Ren has read it. */
+    txHash: text('tx_hash'),
+    /** The issuer transfer's unique reference, so a retry can never credit twice. */
+    reference: text('reference').notNull(),
+    /** quoted, paid, credited, failed, refunding or refunded. */
+    status: text('status').notNull().default('quoted'),
+    transferId: text('transfer_id'),
+    problem: text('problem'),
+    /** When the quote stops being payable. */
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    /** A refund to the wallet: its hash, and where and when Ren last tried to send it. */
+    refundTxHash: text('refund_tx_hash'),
+    refundBlock: bigint('refund_block', { mode: 'bigint' }),
+    refundTriedAt: timestamp('refund_tried_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('card_topups_tx_idx').on(t.txHash),
+    uniqueIndex('card_topups_reference_idx').on(t.reference),
+    index('card_topups_wallet_idx').on(t.wallet, t.network, t.createdAt),
+  ],
+)
+
+/**
+ * Money moved off a dollar card back to the wallet: the amount moved from the card's account to
+ * Ren's pot at the issuer (pulled), then the same dollars sent to the wallet on Tempo from Ren's
+ * treasury (paid). A move is pulled once (its reference is unique at the issuer) and paid once.
+ */
+export const cardWithdrawals = pgTable(
+  'card_withdrawals',
+  {
+    id: id(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    network: network('network').notNull(),
+    /** What leaves the card and reaches the wallet, in base units. */
+    amount: amount('amount').notNull(),
+    /** The issuer transfer's unique reference, so a retry can never pull twice. */
+    reference: text('reference').notNull(),
+    /** pulling, pulled, paid or failed (nothing left the card). */
+    status: text('status').notNull().default('pulling'),
+    transferId: text('transfer_id'),
+    /** The treasury's transfer to the wallet, and where and when Ren last tried to send it. */
+    txHash: text('tx_hash'),
+    payBlock: bigint('pay_block', { mode: 'bigint' }),
+    payTriedAt: timestamp('pay_tried_at', { withTimezone: true }),
+    problem: text('problem'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    uniqueIndex('card_withdrawals_reference_idx').on(t.reference),
+    index('card_withdrawals_wallet_idx').on(t.wallet, t.network, t.createdAt),
+  ],
+)
+
+/**
+ * Where a wallet cashes out through Nuvion: a bank, a mobile-money number or a wallet, in any of the
+ * countries Ren pays out to. The details live at Nuvion (a counterparty and its payment detail);
+ * Ren keeps only their ids and a masked label.
+ */
+export const payoutRecipients = pgTable(
+  'payout_recipients',
+  {
+    id: id(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    network: network('network').notNull(),
+    /** The rail, from services/payout-corridors.ts (us_rtp, ca_interac_email, ke_momo…). */
+    corridor: text('corridor').notNull(),
+    /** The account's country and the currency it receives. */
+    country: text('country').notNull(),
+    currency: text('currency').notNull(),
+    holderName: text('holder_name').notNull(),
+    /** What Ren shows for it, never the whole number: "RBC •••• 6789". */
+    label: text('label').notNull(),
+    counterpartyId: text('counterparty_id').notNull(),
+    paymentDetailId: text('payment_detail_id').notNull(),
+    /**
+     * The Nuvion entity the counterparty belongs to: the wallet's own verified entity, whose account
+     * pays it. Null when Ren's own pot pays (KOVA_PAYOUTS_OWN_NAME off).
+     */
+    entityId: text('entity_id'),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [index('payout_recipients_wallet_idx').on(t.wallet, t.network, t.createdAt)],
+)
+
+/**
+ * A cash-out through Nuvion: quoted (a rate locked for a few minutes), received (the wallet's
+ * dollars reached Ren's treasury on Tempo), sending (Nuvion is paying it out), then paid, or
+ * refunding and failed (the dollars went back to the wallet). Paid out once: its reference is unique
+ * at Nuvion. With entityId, it's paid in the wallet's own name: Ren's pot funds the person's own
+ * verified account, and that account pays the bank.
+ */
+export const payouts = pgTable(
+  'payouts',
+  {
+    id: id(),
+    network: network('network').notNull(),
+    /** Lowercase. */
+    wallet: address('wallet').notNull(),
+    recipientId: uuid('recipient_id').notNull(),
+    /** Dollars the wallet sends, base units. */
+    amount: amount('amount').notNull(),
+    /** Ren's fee within it, base units. */
+    fee: amount('fee').notNull().default(sql`0`),
+    /** What the account receives, in its currency's smallest unit. */
+    currency: text('currency').notNull(),
+    amountTo: bigint('amount_to', { mode: 'bigint' }).notNull(),
+    /** The currency's units per dollar, as quoted. */
+    rate: text('rate').notNull(),
+    fxQuoteId: text('fx_quote_id'),
+    /** quoted | received | sending | paid | refunding | held | failed */
+    status: text('status').notNull().default('quoted'),
+    /** The wallet's transfer to the treasury, once Ren has read it. */
+    txHash: text('tx_hash'),
+    transferId: text('transfer_id'),
+    /** Nuvion's fee on the transfer, in cents, when it says. */
+    providerFee: bigint('provider_fee', { mode: 'bigint' }),
+    /** The person's verified Nuvion entity whose account pays it; null when Ren's pot paid. */
+    entityId: text('entity_id'),
+    /** Cents Ren's pot moved into that account for this payout: the payout and room for its fee. */
+    fundedCents: bigint('funded_cents', { mode: 'bigint' }),
+    /** When the room left over after Nuvion's fee went back to Ren's pot. */
+    restReturnedAt: timestamp('rest_returned_at', { withTimezone: true }),
+    /** When a failed payout's money went back from the person's account to Ren's pot. */
+    pulledBackAt: timestamp('pulled_back_at', { withTimezone: true }),
+    /** The refund to the wallet: its hash, and where and when Ren last tried to send it. */
+    refundTxHash: text('refund_tx_hash'),
+    refundBlock: bigint('refund_block', { mode: 'bigint' }),
+    refundTriedAt: timestamp('refund_tried_at', { withTimezone: true }),
+    failure: text('failure'),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    paidAt: timestamp('paid_at', { withTimezone: true }),
+    createdAt: createdAt(),
+    updatedAt: updatedAt(),
+  },
+  (t) => [
+    index('payouts_wallet_idx').on(t.wallet, t.network, t.createdAt),
+    index('payouts_status_idx').on(t.network, t.status),
+    uniqueIndex('payouts_tx_idx').on(t.txHash),
+  ],
+)

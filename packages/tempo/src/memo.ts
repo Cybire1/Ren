@@ -15,7 +15,19 @@ import type { Hex } from 'viem'
 export const MEMO_MAGIC = '4b4f5641'
 export const MEMO_VERSION = 1
 
-export const memoKinds = { payment: 0x01, refund: 0x02, payout: 0x03, cashout: 0x04 } as const
+/**
+ * What a transfer is for. `payout` is a cash-out abroad and `card-topup` a dollar-card top-up: both
+ * are a wallet paying Ren's treasury for an open quote. `card-withdraw` is the treasury paying a
+ * wallet what came off its card.
+ */
+export const memoKinds = {
+  payment: 0x01,
+  refund: 0x02,
+  payout: 0x03,
+  cashout: 0x04,
+  'card-topup': 0x05,
+  'card-withdraw': 0x06,
+} as const
 export type MemoKind = keyof typeof memoKinds
 
 export interface KovaMemo {

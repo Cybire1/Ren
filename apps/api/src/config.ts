@@ -1,5 +1,9 @@
 import { z } from 'zod'
 
+/** Nuvion's sandbox, where nothing moves, and its live API, which moves people's money. */
+export const NUVION_SANDBOX_URL = 'https://api.nuvion.dev'
+export const NUVION_LIVE_URL = 'https://api.nuvion.co'
+
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(4000),
@@ -143,6 +147,35 @@ const schema = z.object({
   PAYSTACK_SECRET_KEY: z.string().startsWith('sk_').optional(),
   /** Naira per dollar Ren quotes against the market rate: a cash-out gets this much less. */
   KOVA_NAIRA_SPREAD: z.coerce.number().min(0).max(0.1).default(0.01),
+  /**
+   * Nuvion: the dollar card and cash-outs abroad. Each card holder passes Nuvion's ID check once and
+   * gets a virtual USD card with its own account. A top-up is dollars sent to Ren's treasury on
+   * Tempo (the fee payer's wallet), then the same amount moved by book transfer from Ren's own USD
+   * account at Nuvion (NUVION_POT_ACCOUNT). Both are off until the key and the pot are set, and stay
+   * off when the key or URL is Nuvion's live one on a test network (nuvionProblem, below).
+   */
+  NUVION_API_KEY: z.string().optional(),
+  NUVION_API_URL: z.string().url().default(NUVION_SANDBOX_URL),
+  NUVION_POT_ACCOUNT: z.string().optional(),
+  /** The most a wallet can put on its card in a day, in base units: $100. */
+  KOVA_CARD_DAILY_TOPUP: z.string().regex(/^\d+$/).default('100000000'),
+  /** Ren's fee on each top-up, in basis points: 50 is 0.5%, paid on top of what lands on the card. */
+  KOVA_CARD_TOPUP_FEE_BPS: z.coerce.number().int().min(0).max(1000).default(50),
+  /**
+   * Ren's owners, who are on Nuvion already as Ren's own business and so can't pass its ID check
+   * again as customers: wallet addresses, comma-separated. Their cards are issued under Ren's own
+   * approved business, in the name KOVA_CARD_OWNER_NAME.
+   */
+  KOVA_CARD_OWNER_WALLETS: z.string().optional(),
+  KOVA_CARD_OWNER_NAME: z.string().default('Ren Team'),
+  /** Ren's fee on a cash-out through Nuvion, in basis points of what the wallet sends (0: none). */
+  KOVA_PAYOUT_FEE_BPS: z.coerce.number().int().min(0).max(1000).default(0),
+  /**
+   * Cash-outs abroad in the person's own name (services/payouts.ts). `1`: a first cash-out needs the
+   * ID check (the dollar card's), accounts are saved under the person's own Nuvion entity, and each
+   * payout leaves from their own account, which Ren's pot funds for it. `0`: Ren's pot pays, as Ren.
+   */
+  KOVA_PAYOUTS_OWN_NAME: z.enum(['0', '1']).default('0'),
 })
 
 export type Config = z.infer<typeof schema>
@@ -150,3 +183,42 @@ export type Config = z.infer<typeof schema>
 export const config: Config = schema.parse(process.env)
 
 export const isProduction = config.NODE_ENV === 'production'
+
+/**
+ * Why Nuvion must stay off with these settings, or null when it may run.
+ *
+ * Ren on a test network moves test dollars, and Nuvion's live API moves people's money: a live key
+ * there would pay out bank transfers and fund cards against dollars worth nothing. So off mainnet
+ * only Nuvion's sandbox is allowed, named exactly: its URL and an `nv_test_` key. Anything else (the
+ * live URL, an `nv_live_` key, a URL or key Ren doesn't recognise) is refused. On mainnet either
+ * works, since a sandbox there costs nobody anything.
+ */
+export function nuvionProblem(
+  settings: Pick<Config, 'KOVA_NETWORK' | 'NUVION_API_KEY' | 'NUVION_API_URL'> = config,
+): string | null {
+  if (settings.KOVA_NETWORK === 'mainnet') return null
+  let origin: string
+  try {
+    origin = new URL(settings.NUVION_API_URL).origin
+  } catch {
+    return 'NUVION_API_URL isn’t a URL.'
+  }
+  if (origin !== NUVION_SANDBOX_URL)
+    return `On a test network Ren talks only to Nuvion’s sandbox (${NUVION_SANDBOX_URL}), never ${origin}.`
+  const key = settings.NUVION_API_KEY
+  if (key && !key.startsWith('nv_test_'))
+    return 'On a test network Ren takes only a Nuvion sandbox key (nv_test_…), never a live one.'
+  return null
+}
+
+/** Whether Nuvion's key and pot are set and allowed on this network: the card and cash-outs' switch. */
+export function nuvionReady(
+  settings: Pick<
+    Config,
+    'KOVA_NETWORK' | 'NUVION_API_KEY' | 'NUVION_API_URL' | 'NUVION_POT_ACCOUNT'
+  > = config,
+): boolean {
+  return Boolean(
+    settings.NUVION_API_KEY && settings.NUVION_POT_ACCOUNT && nuvionProblem(settings) === null,
+  )
+}

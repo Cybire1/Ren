@@ -14,7 +14,8 @@
       "!**/.expo",
       "!docs",
       "!film",
-      "!**/contracts/lib"
+      "!**/contracts/lib",
+      "!apps/web/public/flags"
     ]
   },
   "formatter": {

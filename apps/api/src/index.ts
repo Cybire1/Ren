@@ -3,7 +3,7 @@ import { runMigrations } from '@kova/db'
 import { Hono } from 'hono'
 import { logger } from 'hono/logger'
 import { feePayerAddress, kit, network, onTempo } from './chain.js'
-import { config } from './config.js'
+import { config, nuvionProblem } from './config.js'
 import { errorHandler } from './errors.js'
 import { sweep } from './kv.js'
 import { accountRoutes } from './routes/account.js'
@@ -16,9 +16,11 @@ import { insightRoutes } from './routes/insights.js'
 import { intentRoutes } from './routes/intents.js'
 import { keyRoutes } from './routes/keys.js'
 import { mcpRoutes } from './routes/mcp.js'
+import { moneyRoutes } from './routes/money.js'
 import { mppRoutes } from './routes/mpp.js'
 import { nairaRoutes } from './routes/naira.js'
 import { orderRoutes } from './routes/orders.js'
+import { payoutRoutes } from './routes/payouts.js'
 import { rateRoutes } from './routes/rates.js'
 import { reportRoutes } from './routes/reports.js'
 import { stallRoutes } from './routes/stalls.js'
@@ -28,8 +30,10 @@ import { ussdRoutes } from './routes/ussd.js'
 import { walletRoutes } from './routes/wallet.js'
 import { webhookRoutes } from './routes/webhooks.js'
 import { startDemo } from './services/demo.js'
+import { creditTopups, dollarCardLive, settleWithdrawals } from './services/dollar-card.js'
 import { expireStaleIntents } from './services/intents.js'
 import { checkPayingCashOuts, retryPayIns } from './services/naira.js'
+import { payoutsLive, settlePayouts } from './services/payouts.js'
 import { rateBook } from './services/rates.js'
 import { expireTrips } from './services/travel.js'
 import { relayHandler, relayPath } from './tempo/relay.js'
@@ -60,6 +64,10 @@ app.route('/v1', walletRoutes)
 app.route('/v1', ussdRoutes)
 app.route('/v1', keyRoutes)
 app.route('/v1', nairaRoutes)
+// The dollar card and cash-outs abroad, through Nuvion (off without its key, and on a test network
+// with anything but its sandbox).
+app.route('/v1', moneyRoutes)
+app.route('/v1', payoutRoutes)
 app.route('/v1', mppRoutes)
 app.route('/v1', cardRoutes)
 app.route('/v1', demoRoutes)
@@ -96,6 +104,9 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
     void expireTrips().catch((error) => console.error('[expiry] trips', error))
     void checkPayingCashOuts().catch((error) => console.error('[naira] cash-outs', error))
     void retryPayIns().catch((error) => console.error('[naira] pay-ins', error))
+    void settlePayouts().catch((error) => console.error('[payouts]', error))
+    void creditTopups().catch((error) => console.error('[dollar-card] top-ups', error))
+    void settleWithdrawals().catch((error) => console.error('[dollar-card] withdrawals', error))
   }
   expire()
   setInterval(expire, 30_000)
@@ -104,6 +115,15 @@ if (process.argv[1]?.endsWith('index.ts') || process.argv[1]?.endsWith('index.js
   // Rates change every 15 minutes at most; keep Kova Travel's copy fresh without waiting for a request.
   void rateBook()
   setInterval(() => void rateBook(), 5 * 60_000)
+
+  // A Nuvion key that mustn't be used here (a live one on a test network) switches nothing on: say
+  // so once, loudly, rather than leave someone wondering why the card is off.
+  const nuvion = config.NUVION_API_KEY ? nuvionProblem() : null
+  if (nuvion) console.error(`[nuvion] the dollar card and cash-outs abroad stay off: ${nuvion}`)
+  else if (config.NUVION_API_KEY)
+    console.log(
+      `[nuvion] dollar card ${dollarCardLive() ? 'on' : 'off'}, cash-outs abroad ${payoutsLive() ? 'on' : 'off'}`,
+    )
 
   serve({ fetch: app.fetch, port: config.PORT }, (info) => {
     console.log(

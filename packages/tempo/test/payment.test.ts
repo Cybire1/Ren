@@ -70,6 +70,13 @@ describe('memo', () => {
     )
   })
 
+  it('names a cash-out abroad, a card top-up and money off a card, each its own kind', () => {
+    const kinds = ['payout', 'card-topup', 'card-withdraw'] as const
+    for (const kind of kinds)
+      expect(decodeMemo(encodeMemo({ kind, id: INTENT }))).toEqual({ kind, id: INTENT })
+    expect(new Set(kinds.map((kind) => encodeMemo({ kind, id: INTENT }))).size).toBe(3)
+  })
+
   it('rejects foreign and malformed memos', () => {
     expect(decodeMemo(pad('0xef1ed712', { size: 32, dir: 'right' }))).toBeNull() // MPP-style memo
     expect(decodeMemo('0x00')).toBeNull()

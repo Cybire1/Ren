@@ -141,6 +141,13 @@
       "when": 1793742293620,
       "tag": "0019_ousd",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1794527574552,
+      "tag": "0020_nuvion",
+      "breakpoints": true
     }
   ]
 }
