@@ -29,6 +29,14 @@
       "ios": {
         "simulator": true
       }
+    },
+    "ren": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_KOVA_CHAIN": "tempo",
+        "EXPO_PUBLIC_KOVA_TEMPO_WEB_URL": "https://web-production-acdb.up.railway.app",
+        "EXPO_PUBLIC_KOVA_TEMPO_API_URL": "https://api-production-a594b.up.railway.app"
+      }
     }
   },
   "submit": {
