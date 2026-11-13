@@ -20,8 +20,8 @@
     "test:e2e": "vitest run --config vitest.e2e.config.ts"
   },
   "dependencies": {
-    "ox": "0.14.59",
-    "viem": "2.57.12"
+    "ox": "0.14.65",
+    "viem": "2.57.19"
   },
   "devDependencies": {
     "@types/node": "^22",
