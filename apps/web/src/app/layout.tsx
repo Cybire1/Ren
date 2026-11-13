@@ -4,7 +4,6 @@ import { BAR, THEME_SCRIPT } from '@/lib/theme'
 import './globals.css'
 import '../styles/app.css'
 import '../styles/auth.css'
-import '../styles/landing.css'
 import '../styles/stalls.css'
 import '../styles/wallet.css'
 
