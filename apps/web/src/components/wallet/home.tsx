@@ -7,6 +7,7 @@ import { Art, Icon } from '@/components/brand'
 import { chainName, onTempo } from '@/lib/chain'
 import { formatUsd, toBase } from '@/lib/wallet/money'
 import { AllowanceCards } from './allowance'
+import { DollarCardRow } from './dollar-card'
 import { KeysCard } from './keys'
 import { OtherDollarsCard } from './other-dollars'
 import { PrivateCard } from './private'
@@ -74,6 +75,7 @@ export function Home() {
           <PrivateCard />
           <AllowanceCards />
           <KeysCard />
+          {onTempo ? <DollarCardRow /> : null}
         </div>
         <div className="w-home-side">
           <FirstSteps />
@@ -126,10 +128,16 @@ export function Home() {
           </div>
         </div>
 
+        {/* Cash out, where everyone sees it: one button, and the next screen asks where to (your
+            accounts, or a new one starting with your own country). */}
+        {onTempo ? <CashOutRow /> : null}
+
         <OtherDollarsCard />
         <PrivateCard />
         <AllowanceCards />
         <KeysCard />
+        {/* Beside the keys (the Ren Card is one of them): a card number for anywhere online. */}
+        {onTempo ? <DollarCardRow /> : null}
 
         <ShopCard />
 
@@ -199,6 +207,25 @@ export function Home() {
         )}
       </div>
     </div>
+  )
+}
+
+/** Home's one Cash out button: a bank or mobile money in any country Ren pays out to. */
+function CashOutRow() {
+  return (
+    <Link href="/wallet/cash-out" className="w-keyscard">
+      <span className="w-keyscard-icon w-keyscard-icon-key">
+        <Icon name="out" size={20} />
+      </span>
+      <span className="w-keyscard-text">
+        <small>Cash out</small>
+        <strong>To your bank or mobile money</strong>
+        <span>Your accounts, or a new country</span>
+      </span>
+      <span className="w-privcard-go w-keyscard-arrow" aria-hidden="true">
+        <Icon name="arrow" size={18} />
+      </span>
+    </Link>
   )
 }
 

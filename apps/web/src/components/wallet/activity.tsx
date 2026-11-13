@@ -12,17 +12,26 @@ import { Avatar, EntryBadge, EntryRow, incoming, signed } from './ui'
 export function ScreenHead({
   title,
   back = '/wallet',
+  onBack,
   children,
 }: {
   title: string
   back?: string
+  /** A step back within the screen itself, rather than to another page. */
+  onBack?: () => void
   children?: React.ReactNode
 }) {
   return (
     <div className="w-head">
-      <Link href={back} className="round" aria-label="Back">
-        <Icon name="back" size={20} />
-      </Link>
+      {onBack ? (
+        <button type="button" className="round" aria-label="Back" onClick={onBack}>
+          <Icon name="back" size={20} />
+        </button>
+      ) : (
+        <Link href={back} className="round" aria-label="Back">
+          <Icon name="back" size={20} />
+        </Link>
+      )}
       <h1>{title}</h1>
       <span className="w-head-end">{children}</span>
     </div>

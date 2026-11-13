@@ -242,6 +242,27 @@ const glyphs = {
   chevronDown: ['M6.5 9.5l5.5 5.5 5.5-5.5'],
   card: ['M5 5.5h14a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2z', 'M3 10h18'],
   down: ['M12 5v14', 'M6 13l6 6 6-6'],
+  swap: ['M8 20V5', 'M4 9l4-4 4 4', 'M16 4v15', 'M12 15l4 4 4-4'],
+  calendar: ['M4 6h16v14H4z', 'M4 10.5h16', 'M8.5 3.5v4', 'M15.5 3.5v4'],
+  // The ID photo's three tips (components/wallet/dollar-card.tsx).
+  glare: [
+    'M15.5 12a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0',
+    'M12 3v1.5',
+    'M12 19.5V21',
+    'M3 12h1.5',
+    'M19.5 12H21',
+    'M5.6 5.6l1.1 1.1',
+    'M17.3 17.3l1.1 1.1',
+    'M18.4 5.6l-1.1 1.1',
+    'M3.5 20.5l17-17',
+  ],
+  corners: [
+    'M4 9V6a2 2 0 0 1 2-2h3',
+    'M15 4h3a2 2 0 0 1 2 2v3',
+    'M20 15v3a2 2 0 0 1-2 2h-3',
+    'M9 20H6a2 2 0 0 1-2-2v-3',
+  ],
+  type: ['M5 7V4.5h14V7', 'M12 4.5v15', 'M9 19.5h6'],
 } as const
 
 export type IconName = keyof typeof glyphs

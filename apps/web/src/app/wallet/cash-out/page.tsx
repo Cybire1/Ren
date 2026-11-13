@@ -1,8 +1,11 @@
 import { CashOut } from '@/components/wallet/cash-out'
-import { NairaCashOut } from '@/components/wallet/naira'
+import { CashOutWorld } from '@/components/wallet/cash-out-world'
 import { onTempo } from '@/lib/chain'
 
-/** Cashing out: on Tempo to naira in a Nigerian bank (Paystack); on Monad to a bank or card (Ramp). */
+/**
+ * Cashing out. On Tempo it's one screen for every country: your saved accounts or a new one, with
+ * Nigeria going to the naira cash-out (/wallet/cash-out/naira). On Monad, to a bank or card (Ramp).
+ */
 export default function CashOutPage() {
-  return onTempo ? <NairaCashOut /> : <CashOut />
+  return onTempo ? <CashOutWorld /> : <CashOut />
 }

@@ -42,6 +42,37 @@ interface CashOut {
 
 type Step = 'amount' | 'account' | 'review' | 'done'
 
+/** A naira account this browser cashed out to before, kept here only (Cash out lists them). */
+export interface NairaRecent {
+  name: string
+  bankCode: string
+  bankName: string
+  accountNumber: string
+}
+
+const RECENTS = 'kova.web.naira.recents.v1'
+
+/** The naira accounts this browser cashed out to, newest first. */
+export function readNairaRecents(): NairaRecent[] {
+  try {
+    const list = JSON.parse(localStorage.getItem(RECENTS) ?? '[]') as NairaRecent[]
+    return Array.isArray(list) ? list : []
+  } catch {
+    return []
+  }
+}
+
+function keepNairaRecent(recent: NairaRecent) {
+  try {
+    const rest = readNairaRecents().filter(
+      (r) => !(r.bankCode === recent.bankCode && r.accountNumber === recent.accountNumber),
+    )
+    localStorage.setItem(RECENTS, JSON.stringify([recent, ...rest].slice(0, 5)))
+  } catch {
+    // Not remembered on this browser; the cash-out itself is unaffected.
+  }
+}
+
 async function nairaApi<T>(
   path: string,
   init: { method?: 'GET' | 'POST'; body?: unknown; token?: string } = {},
@@ -60,6 +91,17 @@ async function nairaApi<T>(
   return body as T
 }
 
+/** Whether naira cash-outs are on for this site: null while asking. */
+export function useNairaOn(): boolean | null {
+  const [enabled, setEnabled] = useState<boolean | null>(null)
+  useEffect(() => {
+    void nairaApi<{ enabled: boolean }>('naira')
+      .then((n) => setEnabled(n.enabled === true))
+      .catch(() => setEnabled(false))
+  }, [])
+  return enabled
+}
+
 export function NairaCashOut() {
   const { balance, keys, profile, sendToRen } = useWallet()
   const [step, setStep] = useState<Step>('amount')
@@ -74,12 +116,17 @@ export function NairaCashOut() {
   const [quote, setQuote] = useState<CashOut | null>(null)
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
-  const [enabled, setEnabled] = useState<boolean | null>(null)
+  const enabled = useNairaOn()
 
+  // Opened from a saved account on Cash out (?recent=bank:number): that account, already picked.
   useEffect(() => {
-    void nairaApi<{ enabled: boolean }>('naira')
-      .then((n) => setEnabled(n.enabled))
-      .catch(() => setEnabled(false))
+    const asked = new URLSearchParams(window.location.search).get('recent')
+    if (!asked) return
+    const [code, number] = asked.split(':')
+    const recent = readNairaRecents().find((r) => r.bankCode === code && r.accountNumber === number)
+    if (!recent) return
+    setBank({ name: recent.bankName, code: recent.bankCode })
+    setAccount(recent.accountNumber)
   }, [])
 
   const onKey = useCallback((key: Key) => setTyped((v) => applyKey(v, key, 2)), [])
@@ -183,6 +230,13 @@ export function NairaCashOut() {
       await wait(Math.max(0, 900 - (Date.now() - started)))
       setQuote(result)
       setStep('done')
+      if (bank && named)
+        keepNairaRecent({
+          name: result.account_name,
+          bankCode: bank.code,
+          bankName: result.bank_name,
+          accountNumber: named.number,
+        })
       for (let i = 0; i < 20 && (result.status === 'paying' || result.status === 'received'); i++) {
         await wait(3000)
         result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}`, {
@@ -202,7 +256,7 @@ export function NairaCashOut() {
   if (enabled === false)
     return (
       <div className="w-screen">
-        <ScreenHead title="Cash out" back="/wallet/profile" />
+        <ScreenHead title="Cash out" back="/wallet" />
         <div className="w-empty w-empty-art">
           <Art name="coin-ngn" size={110} className="w-bob" />
           <strong>Naira cash-outs aren’t on here yet</strong>
@@ -213,7 +267,7 @@ export function NairaCashOut() {
 
   return (
     <div className="w-screen w-cashout">
-      <ScreenHead title="Cash out" back="/wallet/profile" />
+      <ScreenHead title="Cash out" back="/wallet" />
 
       {step === 'amount' ? (
         <div className="w-sheet-amount w-cashout-step">

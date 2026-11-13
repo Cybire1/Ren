@@ -1,0 +1,218 @@
+import type { Address, Hex } from 'viem'
+import { type PayRequest, type Sign, signed } from './signed'
+
+/**
+ * Cash out through Nuvion: to banks, mobile money and wallets in 20+ countries, the same rails the
+ * app uses. On Tempo the wallet pays for a payout with a sponsored transfer carrying its memo. The API owns the list and the fields each needs (services/payout-corridors.ts); calls
+ * pass through /api/payouts.
+ */
+
+export type FieldKind =
+  | 'text'
+  | 'digits'
+  | 'email'
+  | 'phone'
+  | 'iban'
+  | 'bic'
+  | 'country'
+  | 'select'
+  | 'bank'
+
+export interface PayoutField {
+  key: string
+  label: string
+  kind: FieldKind
+  placeholder?: string
+  min?: number
+  max?: number
+  options?: { value: string; label: string }[]
+  optional?: boolean
+  section?: string
+}
+
+export interface Corridor {
+  id: string
+  country: string
+  name: string
+  flag: string
+  currency: string
+  title: string
+  speed: string
+  banks: string | null
+  fields: PayoutField[]
+  min_to: number | null
+  max_to: number | null
+}
+
+export interface PayoutsInfo {
+  live: boolean
+  min: string
+  max: string
+  fee_bps: number
+  corridors: Corridor[]
+}
+
+export interface PayoutBank {
+  name: string
+  code: string
+}
+
+export interface Recipient {
+  id: string
+  corridor: string
+  country: string
+  currency: string
+  name: string
+  flag: string
+  title: string
+  speed: string
+  holder_name: string
+  label: string
+}
+
+export interface Payout {
+  id: string
+  amount: string
+  fee: string
+  currency: string
+  amount_to: string
+  rate: string
+  recipient: Recipient | null
+  status: 'quoted' | 'expired' | 'received' | 'sending' | 'paid' | 'failed'
+  /** The transfer that pays for it: the wallet sends exactly this, sponsored, with this memo. */
+  pay: PayRequest
+  tx_hash: string | null
+  refund_tx_hash: string | null
+  failure: string | null
+  expires_at: string
+  created_at: string
+}
+
+/** Where a wallet stands on the ID check cashing out abroad needs (the dollar card's check). */
+export type Verification = 'verified' | 'checking' | 'needed' | 'failed'
+
+export interface CashOutAccess {
+  /** Cash-outs go out in the person's own name, so the ID check comes first. */
+  required: boolean
+  verification: Verification | null
+}
+
+/** An error from Ren, with the ID check's status when that's what stopped it. */
+export class PayoutError extends Error {
+  constructor(
+    message: string,
+    readonly verification?: Verification,
+  ) {
+    super(message)
+  }
+}
+
+async function call<T>(path: string, init?: { method?: string; body?: unknown }): Promise<T> {
+  const response = await fetch(`/api/payouts/${path}`, {
+    method: init?.method ?? (init?.body === undefined ? 'GET' : 'POST'),
+    ...(init?.body === undefined
+      ? {}
+      : { headers: { 'content-type': 'application/json' }, body: JSON.stringify(init.body) }),
+  })
+  const json = (await response.json().catch(() => null)) as
+    | (T & { error?: string; verification?: Verification | null })
+    | null
+  if (!response.ok || !json)
+    throw new PayoutError(
+      json?.error ?? 'Ren didn’t answer. Try again.',
+      json?.verification ?? undefined,
+    )
+  return json
+}
+
+export const getPayoutsInfo = () => call<PayoutsInfo>('payouts')
+export const getPayoutBanks = (country: string) =>
+  call<{ data: PayoutBank[] }>(`payouts/banks/${country}`).then((r) => r.data)
+export const getPayoutRate = (currency: string) =>
+  call<{ per_dollar: number }>(`payouts/rates/${currency}`).then((r) => r.per_dollar)
+export const getRecipients = (address: Address) =>
+  getCashOutAccounts(address).then((r) => r.recipients)
+
+/** The wallet's saved accounts, and whether it needs the ID check before cashing out. */
+export async function getCashOutAccounts(
+  address: Address,
+): Promise<{ recipients: Recipient[]; access: CashOutAccess }> {
+  const r = await call<{
+    data: Recipient[]
+    verification_required?: boolean
+    verification?: Verification | null
+  }>(`wallets/${address}/payout-recipients`)
+  return {
+    recipients: r.data,
+    access: { required: r.verification_required ?? false, verification: r.verification ?? null },
+  }
+}
+export const getPayout = (id: string) => call<Payout>(`payouts/${id}`)
+
+export async function addRecipient(
+  address: Address,
+  sign: Sign,
+  corridor: string,
+  fields: Record<string, string>,
+) {
+  return call<Recipient>(`wallets/${address}/payout-recipients`, {
+    body: { corridor, fields, ...(await signed(address, sign, 'payout-recipient', corridor)) },
+  })
+}
+
+export const quotePayout = (address: Address, recipientId: string, dollars: string) =>
+  call<Payout>(`wallets/${address}/payouts`, {
+    body: { recipient_id: recipientId, amount: dollars },
+  })
+
+/**
+ * Tells Ren the payout's transfer is on Tempo (the wallet sent `payout.pay` itself, through the
+ * provider's sendToRen): Ren checks it and pays out.
+ */
+export const reportPayoutPaid = (id: string, txHash: Hex) =>
+  call<Payout>(`payouts/${id}/pay`, { body: { tx_hash: txHash } })
+
+/** "C$137.02", "KSh12,735.05", "$20.00": an amount in the currency it lands in. */
+export function inCurrency(amount: string | number, currency: string): string {
+  const n = typeof amount === 'number' ? amount : Number(amount.replace(/,/g, ''))
+  if (currency === 'USDC')
+    return `${n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} USDC`
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      currencyDisplay: 'symbol',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(n)
+  } catch {
+    return `${currency} ${n.toFixed(2)}`
+  }
+}
+
+/** A country's ways out in a few words: "Interac · Bank account", "M-Pesa · Bank account". */
+export function waysOut(rails: Corridor[]): string {
+  return [
+    ...new Set(
+      rails.map((r) =>
+        r.title.includes('Interac')
+          ? 'Interac'
+          : r.title.startsWith('M-Pesa')
+            ? 'M-Pesa'
+            : r.title.startsWith('Mobile money')
+              ? 'Mobile money'
+              : r.title.startsWith('Wire')
+                ? 'Wire'
+                : r.title.startsWith('SWIFT')
+                  ? 'SWIFT, in dollars'
+                  : r.title.startsWith('USDC')
+                    ? 'Base, Ethereum, Polygon, Solana'
+                    : r.title.startsWith('Another Nuvion')
+                      ? 'Instant, in dollars'
+                      : r.title.startsWith('Bank or e-wallet')
+                        ? 'Bank or e-wallet'
+                        : 'Bank account',
+      ),
+    ),
+  ].join(' · ')
+}

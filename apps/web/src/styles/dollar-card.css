@@ -1,0 +1,1550 @@
+/* The dollar card in the web wallet (components/wallet/dollar-card.tsx). Ren's wallet tokens
+   throughout: grey cards on black with no outlines, raspberry for what's chosen, done or to press.
+   The card itself is drawn here (raspberry plastic), not a picture. */
+
+.dcd {
+  --dc-plastic: #c2185b;
+  --dc-mark: #a8134d;
+  --dc-print: #fff;
+  --dc-print-soft: rgba(255, 255, 255, 0.72);
+  padding-bottom: 24px;
+}
+
+.dcd-title {
+  margin: 16px 0 6px;
+  font-size: 1.75rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.08;
+}
+
+.dcd-center {
+  text-align: center;
+  font-size: 1.375rem;
+}
+
+.dcd-lead {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.dcd-fine {
+  margin: 12px 0 0;
+  text-align: center;
+  font-size: 0.75rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.dcd-gap {
+  margin-top: 16px;
+}
+
+.dcd-problem {
+  margin: 12px 0 0;
+  align-items: flex-start;
+}
+
+.dcd-problem svg {
+  flex: none;
+}
+
+.dcd-sandbox {
+  margin: 0 0 12px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--teal-light);
+}
+
+/* What Nuvion said, in its own words. */
+.dcd-said {
+  margin: 10px 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: var(--tint-sand);
+  color: var(--ink);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.dcd-section {
+  margin: 24px 2px 4px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Opening */
+.dcd-opening {
+  display: grid;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.dcd-opening i {
+  height: 56px;
+  border-radius: 18px;
+  background: var(--surface);
+  animation: dcd-breathe 1.4s ease-in-out infinite;
+}
+
+.dcd-opening i[data-shape="card"] {
+  width: min(290px, 100%);
+  height: auto;
+  aspect-ratio: 354 / 223;
+  justify-self: center;
+  margin: 28px 0 14px;
+  transform: rotate(-4deg);
+}
+
+.dcd-opening i:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dcd-opening i:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes dcd-breathe {
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Home's row */
+.w-keyscard-icon.dcd-row-icon {
+  background: var(--teal-deep);
+  color: #fff;
+}
+
+/* Get your card */
+.dcd-intro-top {
+  position: relative;
+  height: 348px;
+  border-radius: 28px;
+  background: var(--tint-mint);
+  overflow: hidden;
+}
+
+.dcd-hero {
+  position: relative;
+  margin: 22px 22px 0;
+  white-space: pre-line;
+  font-size: 2.375rem;
+  line-height: 0.98;
+  font-weight: 800;
+  letter-spacing: -0.035em;
+  color: var(--ink);
+}
+
+.dcd-reni {
+  position: absolute;
+  right: 6px;
+  top: 34px;
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+}
+
+.dcd-plastic.dcd-intro-card {
+  position: absolute;
+  left: 50%;
+  top: 178px;
+  width: 282px;
+  margin: 0 0 0 -141px;
+  transform: rotate(-6deg);
+}
+
+.dcd-stickers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.dcd-stickers span {
+  padding: 7px 13px;
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.dcd-stickers span[data-tone="teal"] {
+  background: var(--teal-deep);
+  color: #fff;
+  transform: rotate(-2deg);
+}
+
+.dcd-stickers span[data-tone="coral"] {
+  background: var(--tint-mint);
+  color: var(--teal-light);
+  transform: rotate(1.5deg);
+}
+
+.dcd-intro-top + .dcd-lead {
+  margin-top: 18px;
+}
+
+.dcd-foot {
+  margin-top: 4px;
+}
+
+/* Checking your ID */
+.dcd-check-art {
+  position: relative;
+  height: 212px;
+  display: grid;
+  justify-items: center;
+}
+
+.dcd-check-art img {
+  position: relative;
+  width: 240px;
+  height: 120px;
+  object-fit: contain;
+}
+
+.dcd-check-card {
+  position: absolute;
+  top: 88px;
+  width: min(284px, 90%);
+  height: 124px;
+  border-radius: 20px;
+  border: 2px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+  background: var(--surface);
+}
+
+.dcd-oops {
+  display: grid;
+  justify-items: center;
+  margin-top: 8px;
+}
+
+.dcd-steps {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 6px;
+  border-radius: 22px;
+  background: var(--surface);
+}
+
+.dcd-steps li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 11px 12px;
+  border-radius: 16px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.dcd-steps li::before {
+  content: "";
+  width: 24px;
+  height: 24px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  border: 2px solid var(--sunken);
+  flex-shrink: 0;
+}
+
+.dcd-steps li[data-state="done"] {
+  color: var(--ink);
+}
+
+.dcd-steps li[data-state="done"]::before {
+  border-color: var(--teal-deep);
+  background:
+    var(--teal-deep)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E")
+    center / 14px no-repeat;
+}
+
+.dcd-steps li[data-state="now"] {
+  color: var(--ink);
+  font-weight: 750;
+  background: var(--sunken);
+}
+
+.dcd-steps li[data-state="now"]::before {
+  border: 3px solid var(--teal-light);
+  border-right-color: transparent;
+  animation: dcd-spin 1s linear infinite;
+}
+
+@keyframes dcd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* The ID check */
+.dcd-form {
+  display: grid;
+  gap: 14px;
+}
+
+.dcd-form .dcd-title {
+  margin: 4px 0 0;
+}
+
+.dcd-form .dcd-problem {
+  margin: 0;
+}
+
+.dcd-progress {
+  display: grid;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.dcd-progress div {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.dcd-progress i {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--sunken);
+}
+
+.dcd-progress i[data-on] {
+  background: var(--teal);
+}
+
+.dcd-number {
+  display: grid;
+  gap: 6px;
+}
+
+.dcd-hint {
+  margin: 0;
+  padding: 0 2px;
+  color: var(--muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.dcd-pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.dcd-field {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  /* What's typed: the input inherits it (styles/app.css). */
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.dcd-field span,
+.dcd-fieldset legend {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--muted);
+  padding: 0;
+}
+
+.dcd-field input {
+  height: 48px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 14px;
+  border: 2px solid transparent;
+  background: var(--surface);
+  padding: 0 14px;
+  color: var(--ink);
+  color-scheme: dark;
+}
+
+.dcd-field input::placeholder {
+  color: var(--muted);
+  opacity: 0.6;
+}
+
+.dcd-field input:focus-visible {
+  outline: 0;
+  border-color: var(--teal);
+}
+
+.dcd-fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.dcd-choices {
+  display: flex;
+  gap: 8px;
+}
+
+.dcd-wrap {
+  flex-wrap: wrap;
+}
+
+.dcd-choices button {
+  height: 44px;
+  padding: 0 14px;
+  border-radius: 22px;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 650 0.875rem var(--font);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.dcd-choices button[aria-pressed="true"] {
+  background: var(--teal-deep);
+  color: #fff;
+}
+
+.dcd-choices button:focus-visible,
+.dcd-actions button:focus-visible,
+.dcd-pill:focus-visible,
+.dcd-cell:focus-visible,
+.dcd-delete:focus-visible {
+  outline: 2px solid var(--teal-light);
+  outline-offset: 2px;
+}
+
+.dcd-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  margin: 4px;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+.dcd-note svg {
+  flex-shrink: 0;
+  color: var(--teal-light);
+}
+
+/* The photo steps */
+.dcd-shoot {
+  display: grid;
+}
+
+.dcd-shoot-lead {
+  margin: 4px 0 0;
+  padding: 0 8px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.dcd-shoot .dcd-choices {
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.dcd-frame {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 236px;
+  margin-top: 18px;
+  border-radius: 22px;
+  background: var(--surface);
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.dcd-frame[data-tall] {
+  height: 250px;
+}
+
+.dcd-frame:focus-within {
+  outline: 2px solid var(--teal-light);
+  outline-offset: 2px;
+}
+
+.dcd-corner {
+  position: absolute;
+  width: 30px;
+  height: 30px;
+  border: 0 solid var(--teal-light);
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.dcd-frame[data-filled="true"] .dcd-corner {
+  border-color: #fff;
+}
+
+.dcd-corner[data-at="tl"] {
+  left: 12px;
+  top: 12px;
+  border-left-width: 3px;
+  border-top-width: 3px;
+}
+
+.dcd-corner[data-at="tr"] {
+  right: 12px;
+  top: 12px;
+  border-right-width: 3px;
+  border-top-width: 3px;
+}
+
+.dcd-corner[data-at="bl"] {
+  left: 12px;
+  bottom: 12px;
+  border-left-width: 3px;
+  border-bottom-width: 3px;
+}
+
+.dcd-corner[data-at="br"] {
+  right: 12px;
+  bottom: 12px;
+  border-right-width: 3px;
+  border-bottom-width: 3px;
+}
+
+.dcd-frame input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.dcd-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dcd-frame-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.dcd-frame-empty svg {
+  color: var(--teal-light);
+}
+
+.dcd-tips {
+  list-style: none;
+  margin: 14px 0 16px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.dcd-tips li {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 14px 6px;
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--muted);
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.dcd-tips svg {
+  color: var(--ink);
+}
+
+.dcd-shoot .dcd-problem {
+  margin: 0 0 14px;
+}
+
+/* Card home */
+.dcd-band {
+  display: grid;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.dcd-band small {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.dcd-balance {
+  display: block;
+  font-size: 2.75rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+
+.dcd-hero-card {
+  display: grid;
+  justify-items: center;
+  gap: 22px;
+  margin-top: 26px;
+}
+
+.dcd-plastic.dcd-tilt {
+  width: min(290px, 88%);
+  margin: 0;
+  transform: rotate(-4deg);
+}
+
+.dcd-meter {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 18px;
+  background: var(--surface);
+  box-sizing: border-box;
+}
+
+.dcd-meter p {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.dcd-meter p strong {
+  color: var(--ink);
+}
+
+.dcd-meter p strong[data-over="yes"] {
+  color: var(--danger);
+}
+
+.dcd-blocks {
+  display: grid;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  gap: 4px;
+  margin: 8px 0 2px;
+}
+
+.dcd-sheet .dcd-blocks {
+  margin: 0 0 8px;
+}
+
+.dcd-blocks i {
+  height: 12px;
+  border-radius: 3px;
+  background: var(--sunken);
+}
+
+.dcd-blocks i[data-on="yes"] {
+  background: var(--teal-deep);
+}
+
+.dcd-blocks i[data-on="now"] {
+  background: var(--teal-light);
+}
+
+.dcd-blocks i[data-on="over"] {
+  background: var(--danger);
+}
+
+.dcd-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.dcd-actions button {
+  height: 48px;
+  border-radius: 24px;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font: 650 0.9375rem var(--font);
+  cursor: pointer;
+  transition: transform 0.3s var(--spring);
+}
+
+.dcd-actions button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.dcd-actions button[data-tone="coral"] {
+  background: var(--coral);
+  color: var(--dark);
+}
+
+.dcd-actions button:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.dcd-activity {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dcd-activity li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1.5px solid var(--hairline);
+}
+
+.dcd-activity li:first-child {
+  border-top: 0;
+}
+
+.dcd-activity-none {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.dcd-dot {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--surface);
+  font-weight: 750;
+  flex-shrink: 0;
+}
+
+.dcd-dot[data-kind="spend"] {
+  background: var(--sunken);
+}
+
+.dcd-dot[data-kind="topup"],
+.dcd-dot[data-kind="refund"] {
+  background: var(--tint-mint);
+  color: var(--teal-light);
+}
+
+.dcd-what {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+
+.dcd-what strong {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dcd-what small {
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.dcd-amount {
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.dcd-amount[data-kind="check"] {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.dcd-amount[data-kind="topup"],
+.dcd-amount[data-kind="refund"] {
+  color: var(--positive);
+}
+
+.dcd-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 22px;
+  padding: 10px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: var(--danger);
+  font: 650 0.9375rem var(--font);
+  cursor: pointer;
+}
+
+/* Frozen: the same card with its colour drained, under a lock. */
+.dcd-frozen {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: 232px;
+}
+
+.dcd-plastic[data-frozen="yes"] .dcd-face {
+  filter: grayscale(1) brightness(0.62);
+}
+
+.dcd-lockbadge {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+.dcd-safe {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-radius: 20px;
+  background: var(--surface);
+  font-weight: 650;
+  color: var(--muted);
+}
+
+.dcd-safe small {
+  display: block;
+  font-size: 0.75rem;
+}
+
+.dcd-safe strong {
+  font-size: 1.5rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Deleted */
+.dcd-closed {
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  width: min(290px, 88%);
+  aspect-ratio: 354 / 223;
+  margin: 18px auto 6px;
+  border-radius: 16px;
+  border: 2px dashed color-mix(in srgb, var(--ink) 26%, transparent);
+  color: var(--muted);
+  font-size: 0.875rem;
+  font-weight: 650;
+}
+
+/* The sheets: top up, withdraw, delete */
+.dcd-sheet-back {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  align-items: end;
+  justify-items: center;
+  background: rgba(0, 0, 0, 0.62);
+  animation: dcd-fade 0.3s ease both;
+}
+
+@keyframes dcd-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.dcd-sheet {
+  width: min(30rem, 100%);
+  max-height: calc(100dvh - 1rem);
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 18px 20px max(20px, env(safe-area-inset-bottom));
+  border-radius: 24px 24px 0 0;
+  background: var(--surface);
+  display: grid;
+  gap: 12px;
+  animation: dcd-up 0.45s var(--spring) both;
+}
+
+.dcd-sheet .dcd-meter,
+.dcd-sheet .dcd-said {
+  background: var(--sunken);
+}
+
+.dcd-sheet .dcd-blocks i[data-on="no"] {
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
+}
+
+/* On the sheet's grey, the quiet button sits a step darker so it still reads as a button. */
+.dcd-sheet .pill[data-tone="light"] {
+  --bg: var(--sunken);
+}
+
+.dcd-sheet .dcd-problem,
+.dcd-sheet .dcd-said {
+  margin: 0;
+}
+
+@keyframes dcd-up {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+@media (min-width: 40rem) {
+  .dcd-sheet-back {
+    align-items: center;
+  }
+
+  .dcd-sheet {
+    border-radius: 24px;
+  }
+}
+
+.dcd-sheet-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
+.dcd-sheet-head button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--sunken);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.dcd-sheet-head button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.dcd-sheet-title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+/* Ren's inputs inherit their font (styles/app.css), so the amount's size is set on its label. */
+.dcd-amount-input {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 3.25rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+
+.dcd-amount-input span {
+  font-size: 1.875rem;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+
+.dcd-amount-input input {
+  width: 6ch;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.dcd-amount-input input::placeholder {
+  color: var(--muted);
+  opacity: 0.5;
+}
+
+.dcd-amount-input input:focus-visible {
+  outline: none;
+}
+
+.dcd-from {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0;
+  padding: 0 4px;
+  font-size: 0.9375rem;
+  font-weight: 650;
+}
+
+.dcd-from strong {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dcd-from strong[data-over="yes"] {
+  color: var(--danger);
+}
+
+.dcd-from:has(.dcd-all) {
+  align-items: center;
+}
+
+.dcd-from:has(.dcd-all) strong {
+  margin-left: auto;
+}
+
+.dcd-from .dcd-all {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 15px;
+  border: 0;
+  background: var(--sunken);
+  color: var(--teal-light);
+  font: 700 0.8125rem var(--font);
+  cursor: pointer;
+}
+
+.dcd-fee {
+  margin-top: -6px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.dcd-trash {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--danger) 16%, transparent);
+  color: var(--danger);
+}
+
+.dcd-points {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--on-tint);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+}
+
+.dcd-points li {
+  display: flex;
+  gap: 10px;
+}
+
+.dcd-points li::before {
+  content: "";
+  flex: none;
+  width: 6px;
+  height: 6px;
+  margin-top: 0.5em;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.dcd-danger {
+  height: var(--pill-h);
+  margin-top: 6px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--danger);
+  color: var(--dark);
+  font: 750 var(--pill-fs) var(--font);
+  cursor: pointer;
+}
+
+.dcd-danger:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* The card, drawn. Every size is in card units (--u, 1/354 of the card's width), so the card
+   scales as one piece: small and tilted on the home screens, full size in Card details, where the
+   CVV is on its back. */
+.dcd-clock {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 14px;
+  background: var(--surface);
+  font-size: 0.75rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+.dcd-plastic {
+  --u: calc(100cqw / 354);
+  position: relative;
+  display: block;
+  container-type: inline-size;
+  width: min(354px, 100%);
+  aspect-ratio: 354 / 223;
+  margin: 10px auto 0;
+}
+
+.dcd-plastic-full {
+  aspect-ratio: auto;
+  perspective: 1200px;
+}
+
+.dcd-plastic-turn {
+  position: relative;
+  aspect-ratio: 354 / 223;
+  transform-style: preserve-3d;
+  transition: transform 0.7s var(--spring);
+}
+
+.dcd-plastic[data-back="yes"] .dcd-plastic-turn {
+  transform: rotateY(180deg);
+}
+
+.dcd-plastic[data-waiting="yes"] .dcd-print {
+  animation: dcd-breathe 1.4s ease-in-out infinite;
+}
+
+.dcd-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: calc(13 * var(--u));
+  background: var(--dc-plastic);
+  color: var(--dc-print);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  font-family: var(--font);
+}
+
+.dcd-face-back {
+  transform: rotateY(180deg);
+}
+
+.dcd-face-mark {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: var(--dc-mark);
+  stroke-linecap: round;
+}
+
+.dcd-face-logo,
+.dcd-back-logo {
+  position: absolute;
+  display: block;
+  line-height: 0;
+}
+
+.dcd-face-logo svg,
+.dcd-back-logo svg {
+  display: block;
+  width: auto;
+}
+
+.dcd-face-logo {
+  left: calc(22 * var(--u));
+  top: calc(16 * var(--u));
+}
+
+.dcd-face-logo svg {
+  height: calc(26 * var(--u));
+}
+
+.dcd-face-kind {
+  position: absolute;
+  right: calc(22 * var(--u));
+  top: calc(22 * var(--u));
+  font-size: calc(9 * var(--u));
+  font-weight: 750;
+  letter-spacing: 0.18em;
+  color: var(--dc-print-soft);
+}
+
+.dcd-face-chip {
+  position: absolute;
+  left: calc(30 * var(--u));
+  top: calc(68 * var(--u));
+  width: calc(46 * var(--u));
+}
+
+.dcd-face-tap {
+  position: absolute;
+  left: calc(88 * var(--u));
+  top: calc(74 * var(--u));
+  width: calc(20 * var(--u));
+  fill: none;
+  stroke: var(--dc-print-soft);
+  stroke-width: 2;
+  stroke-linecap: round;
+}
+
+/* A value printed on the card; in Card details it's a button that copies. */
+.dcd-print {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  padding: 0 calc(8 * var(--u));
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--dc-print);
+  font-family: var(--font);
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+
+button.dcd-print {
+  cursor: pointer;
+}
+
+button.dcd-print:hover:not(:disabled),
+button.dcd-print:focus-visible {
+  outline: 0;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+button.dcd-print:disabled {
+  cursor: default;
+}
+
+.dcd-print svg {
+  color: var(--dc-print-soft);
+}
+
+.dcd-face-number {
+  left: calc(14 * var(--u));
+  top: calc(114 * var(--u));
+  height: calc(38 * var(--u));
+  font-size: calc(22 * var(--u));
+  letter-spacing: 0.12em;
+  white-space: nowrap;
+}
+
+.dcd-face-expiry {
+  left: calc(124 * var(--u));
+  top: calc(152 * var(--u));
+  height: calc(28 * var(--u));
+  font-size: calc(15 * var(--u));
+  letter-spacing: 0.09em;
+}
+
+.dcd-face-expiry small {
+  font-size: calc(6.5 * var(--u));
+  line-height: 1.15;
+  letter-spacing: 0.04em;
+  color: var(--dc-print-soft);
+  text-align: left;
+}
+
+.dcd-face-name {
+  left: calc(14 * var(--u));
+  bottom: calc(13 * var(--u));
+  max-width: calc(250 * var(--u));
+  height: calc(28 * var(--u));
+  overflow: hidden;
+  font-size: calc(13 * var(--u));
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dcd-face-brand,
+.dcd-back-brand {
+  position: absolute;
+  right: calc(20 * var(--u));
+  bottom: calc(16 * var(--u));
+  height: auto;
+}
+
+.dcd-face-brand {
+  width: calc(48 * var(--u));
+}
+
+.dcd-back-brand {
+  width: calc(40 * var(--u));
+}
+
+.dcd-stripe {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(22 * var(--u));
+  height: calc(42 * var(--u));
+  background: #17070d;
+}
+
+.dcd-back-label {
+  position: absolute;
+  left: calc(20 * var(--u));
+  top: calc(82 * var(--u));
+  font-size: calc(8 * var(--u));
+  font-weight: 750;
+  letter-spacing: 0.15em;
+  color: var(--dc-print-soft);
+}
+
+.dcd-back-panel {
+  position: absolute;
+  left: calc(20 * var(--u));
+  right: calc(20 * var(--u));
+  top: calc(100 * var(--u));
+  height: calc(38 * var(--u));
+  display: flex;
+}
+
+.dcd-signature {
+  flex: 1;
+  border-radius: 4px 0 0 4px;
+  background: repeating-linear-gradient(-45deg, #f1efea 0 5px, #e2ded6 5px 8px);
+}
+
+.dcd-cvv {
+  width: calc(86 * var(--u));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: calc(8 * var(--u));
+  border: 0;
+  border-radius: 0 4px 4px 0;
+  background: #fff;
+  color: #1e1a1c;
+  font: italic 750 calc(20 * var(--u)) var(--font);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+}
+
+.dcd-cvv svg {
+  color: #63585c;
+}
+
+.dcd-cvv:hover:not(:disabled) {
+  background: #f6f1f0;
+}
+
+.dcd-back-note {
+  position: absolute;
+  left: calc(20 * var(--u));
+  top: calc(146 * var(--u));
+  margin: 0;
+  font-size: calc(10 * var(--u));
+  font-weight: 650;
+  color: var(--dc-print-soft);
+}
+
+.dcd-back-logo {
+  left: calc(20 * var(--u));
+  bottom: calc(14 * var(--u));
+}
+
+.dcd-back-logo svg {
+  height: calc(19 * var(--u));
+}
+
+.dcd-plastic-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dcd-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 21px;
+  border: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 750 0.875rem var(--font);
+  cursor: pointer;
+}
+
+.dcd-pill-ink {
+  background: var(--teal-deep);
+  color: #fff;
+}
+
+.dcd-pill:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.dcd-grid-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 22px 4px 6px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.dcd-grid-head strong {
+  color: var(--ink);
+}
+
+.dcd-grid-head small {
+  font-size: 0.6875rem;
+}
+
+.dcd-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--surface);
+}
+
+.dcd-cell {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 52px;
+  padding: 0 14px;
+  border: 0;
+  border-top: 1.5px solid var(--sunken);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dcd-cell:nth-child(even) {
+  border-right: 1.5px solid var(--sunken);
+}
+
+.dcd-cell-wide {
+  grid-column: 1 / -1;
+  border-top: 0;
+}
+
+.dcd-cell:hover {
+  background: var(--sunken);
+}
+
+.dcd-cell > span {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.dcd-cell small {
+  font-size: 0.6875rem;
+  color: var(--muted);
+}
+
+.dcd-cell strong {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.dcd-cell > svg {
+  flex: none;
+  color: var(--muted);
+}
+
+.dcd-note-quiet {
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  font-size: 0.6875rem;
+}
+
+.dcd-toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(env(safe-area-inset-bottom) + var(--dock-h, 0px) + 28px);
+  z-index: 45;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--teal-deep);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 650;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transform: translate(-50%, 12px);
+}
+
+.dcd-toast[data-on="yes"] {
+  animation: dcd-toast 1.6s var(--spring) both;
+}
+
+@keyframes dcd-toast {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+  12%,
+  82% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dcd-steps li[data-state="now"]::before,
+  .dcd-sheet,
+  .dcd-sheet-back,
+  .dcd-opening i,
+  .dcd-plastic[data-waiting="yes"] .dcd-print {
+    animation: none;
+  }
+  .dcd-plastic-turn {
+    transition: none;
+  }
+  .dcd-toast[data-on="yes"] {
+    animation: none;
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
