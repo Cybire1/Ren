@@ -2,7 +2,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config'
 
 /**
  * Ren is one app on two chains, and each chain's build is its own app on a phone: Ren on Tempo
- * (`xyz.kova.pay`, the default) and on Monad (`xyz.kova.pay.monad`). app.json holds everything
+ * (`xyz.ren.pay`, the default) and on Monad (`xyz.kova.pay.monad`). app.json holds everything
  * they share; this picks the identity from EXPO_PUBLIC_KOVA_CHAIN.
  *
  * Each build is associated with its chain's website, whose association file lists the app: its
@@ -12,7 +12,7 @@ import type { ConfigContext, ExpoConfig } from 'expo/config'
  */
 export default ({ config }: ConfigContext): ExpoConfig => {
   const tempo = process.env.EXPO_PUBLIC_KOVA_CHAIN !== 'monad'
-  const bundle = tempo ? 'xyz.kova.pay' : 'xyz.kova.pay.monad'
+  const bundle = tempo ? 'xyz.ren.pay' : 'xyz.kova.pay.monad'
   const site = new URL(
     process.env.EXPO_PUBLIC_KOVA_TEMPO_WEB_URL ?? 'https://web-production-acdb.up.railway.app',
   ).hostname
