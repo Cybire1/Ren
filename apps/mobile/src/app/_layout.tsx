@@ -167,6 +167,8 @@ export default function RootLayout() {
                     <Stack.Screen name="travel" options={{ animation: 'slide_from_bottom' }} />
                     <Stack.Screen name="send/index" options={sendSheet} />
                     <Stack.Screen name="send/[to]" options={sendSheet} />
+                    <Stack.Screen name="dollar-card/top-up" options={sendSheet} />
+                    <Stack.Screen name="dollar-card/withdraw" options={sendSheet} />
                   </Stack>
                 </TravelProvider>
               </StallProvider>

@@ -171,8 +171,13 @@ interface Wallet {
   signOut: () => Promise<void>
   /** Your private balance on a Tempo Zone, when this build has one (private.ts). */
   privacy: Privacy
-  /** Dollars to Ren itself with a Ren memo: a cash-out to a bank (app/cash-out.tsx). */
+  /**
+   * Dollars to Ren itself with a Ren memo: a cash-out to a bank (app/cash-out.tsx,
+   * app/cash-out-world.tsx) or a dollar-card top-up. `token` is the one the API asked for: anything
+   * but Ren's dollars is refused before a signature.
+   */
   sendToRen: (input: {
+    token?: Address
     to: Address
     amount: bigint
     memo: Hex
@@ -700,7 +705,16 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   )
 
   const sendToRen = useCallback(
-    async (input: { to: Address; amount: bigint; memo: Hex; name: string; detail: string }) => {
+    async (input: {
+      token?: Address
+      to: Address
+      amount: bigint
+      memo: Hex
+      name: string
+      detail: string
+    }) => {
+      if (input.token && !isAddressEqual(input.token, settlementToken.address))
+        throw new Error('This asks for a token Ren doesn’t use. Nothing moved.')
       const account = await unlock(input.amount)
       const started = Date.now()
       const { receipt } = await walletClient(account).token.transferSync({

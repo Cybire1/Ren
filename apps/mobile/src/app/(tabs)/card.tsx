@@ -32,6 +32,7 @@ import { CardArt } from '@/ui/art'
 import { type CardDesign, CardDesignPicker, CardFace } from '@/ui/CardFace'
 import { dockClearance } from '@/ui/Dock'
 import { Icon, type IconName } from '@/ui/Icon'
+import { DollarCardRow } from '@/ui/Money'
 import { Snowfall } from '@/ui/motion'
 import { PillButton, Txt } from '@/ui/primitives'
 
@@ -210,16 +211,26 @@ function TempoCards() {
         <ActivityIndicator color={colors.ink} />
       </View>,
     )
-  if (!card) return scroll(<NoCard />)
+  // The dollar card (app/dollar-card) sits under the Ren Card, whether or not there's one yet.
+  if (!card)
+    return scroll(
+      <>
+        <NoCard />
+        <DollarCardRow />
+      </>,
+    )
   return scroll(
-    <TempoCardView
-      key={card.id}
-      card={card}
-      others={cards}
-      selected={selected}
-      onSelect={setSelected}
-      onRemoved={() => setSelected(0)}
-    />,
+    <>
+      <TempoCardView
+        key={card.id}
+        card={card}
+        others={cards}
+        selected={selected}
+        onSelect={setSelected}
+        onRemoved={() => setSelected(0)}
+      />
+      <DollarCardRow />
+    </>,
   )
 }
 

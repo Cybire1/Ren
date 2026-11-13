@@ -1,0 +1,685 @@
+import * as Haptics from 'expo-haptics'
+import { router, useFocusEffect } from 'expo-router'
+import { useCallback, useState } from 'react'
+import {
+  AppState,
+  type ColorValue,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { formatUsd } from '@/lib/money'
+import { type DollarCard, getDollarCard, setDollarCard } from '@/lib/partners'
+import { colors } from '@/lib/theme'
+import { useWallet } from '@/lib/wallet'
+import { Reni, ReniPeek } from '@/ui/art'
+import { CardClosed, DeleteCardLink } from '@/ui/CardDelete'
+import { DollarCardFace } from '@/ui/DollarCardFace'
+import { Icon, type IconName } from '@/ui/Icon'
+import { NotYet, problemOf, SandboxNote, useMoney } from '@/ui/Money'
+import { Header, PillButton, Screen, Txt } from '@/ui/primitives'
+
+/**
+ * The dollar card (Nuvion): a virtual USD card, topped up from the wallet, up to a daily cap.
+ *
+ * Where you are decides the screen: no card yet (what it is, then the ID check), the check with the
+ * issuer, a check that didn't pass, the card itself (balance, top up, details, freeze, delete), or a
+ * deleted card (its money still yours, and a way to a new one).
+ */
+export default function DollarCardScreen() {
+  const { data, setData, problem, reload } = useMoney<DollarCard>(getDollarCard, {
+    loadOnMount: false,
+  })
+  const checking = data?.stage === 'checking'
+  useFocusEffect(
+    useCallback(() => {
+      let disposed = false
+      let running = false
+      let timer: ReturnType<typeof setTimeout> | undefined
+      const refresh = async () => {
+        if (disposed || running || AppState.currentState !== 'active') return
+        clearTimeout(timer)
+        running = true
+        try {
+          await reload()
+        } finally {
+          running = false
+          if (!disposed && checking && AppState.currentState === 'active')
+            timer = setTimeout(refresh, 10_000)
+        }
+      }
+      void refresh()
+      const subscription = AppState.addEventListener('change', (state) => {
+        clearTimeout(timer)
+        if (state === 'active') void refresh()
+      })
+      return () => {
+        disposed = true
+        clearTimeout(timer)
+        subscription.remove()
+      }
+    }, [reload, checking]),
+  )
+
+  if (!data)
+    return (
+      <Screen>
+        <Header title="Dollar card" />
+        <Txt size={15} color={colors.muted} style={{ marginTop: 40, textAlign: 'center' }}>
+          {problem ?? 'Opening…'}
+        </Txt>
+      </Screen>
+    )
+  if (!data.live)
+    return (
+      <Screen>
+        <Header title="Dollar card" />
+        <ScrollView contentContainerStyle={styles.body}>
+          <NotYet
+            pose="ride"
+            title="A dollar card for anywhere"
+            lead="Subscriptions, flights, apps, anything online that takes a card. Fill it from your Ren balance in a tap."
+            facts={[
+              ['Top up from', 'Your Ren balance'],
+              ['Up to', `$${Number(BigInt(data.daily_topup) / 1_000_000n)} a day`],
+              ['Freeze', 'One tap'],
+              ['Card number', 'Shown only to you'],
+            ]}
+            requested={data.requested}
+            onRequested={() => setData({ ...data, requested: true })}
+          />
+        </ScrollView>
+      </Screen>
+    )
+  if (data.stage === 'intro') return <Intro sandbox={data.sandbox} cap={data.daily_topup} />
+  if (data.stage === 'checking')
+    return (
+      <Checking
+        approved={!!data.approved}
+        stuck={!!data.card_problem}
+        problem={problem}
+        onRefresh={reload}
+      />
+    )
+  if (data.stage === 'fix')
+    return <TryAgain reason={data.reason ?? null} unfinished={!!data.unfinished} />
+  if (data.stage === 'closed') return <CardClosed data={data} onChange={setData} />
+  return <CardHome data={data} onChange={setData} onRefresh={reload} />
+}
+
+function Intro({ sandbox, cap }: { sandbox: boolean; cap: string }) {
+  const perDay = `$${Number(BigInt(cap) / 1_000_000n)} a day`
+  return (
+    <Screen bg={colors.money} edges={['top']}>
+      <Header />
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }} bounces={false}>
+        <View style={styles.introTop}>
+          <Txt weight="bold" size={40} color={colors.white} style={styles.introTitle}>
+            {'Spend\ndollars\nanywhere.'}
+          </Txt>
+          <View style={styles.introReni}>
+            <Reni pose="ride" size={140} />
+          </View>
+          <View style={styles.introCard}>
+            <DollarCardFace width={282} />
+          </View>
+        </View>
+        <View style={styles.introBottom}>
+          <View style={styles.stickers}>
+            <Sticker label="Top up from Ren" />
+            <Sticker label={`Up to ${perDay}`} fill={colors.tealSoft} tilt={-2} />
+            <Sticker label="Freeze in one tap" />
+            <Sticker label="One ID check" fill={colors.coralSoft} tilt={1.5} />
+          </View>
+          {sandbox ? <SandboxNote text="Card sandbox: a test card, no money moves" /> : null}
+          <View style={{ marginTop: 'auto', gap: 12 }}>
+            <PillButton label="Get my card" onPress={() => router.push('/dollar-card/check')} />
+            <Txt size={12} color={colors.muted} style={{ textAlign: 'center', lineHeight: 17 }}>
+              {
+                'Virtual card with our partner Nuvion. Ren covers the card fee.\nYour main balance stays in your wallet.'
+              }
+            </Txt>
+          </View>
+        </View>
+      </ScrollView>
+    </Screen>
+  )
+}
+
+function Sticker({ label, fill, tilt = 0 }: { label: string; fill?: ColorValue; tilt?: number }) {
+  return (
+    <View
+      style={[
+        styles.sticker,
+        { backgroundColor: fill ?? colors.surface, transform: [{ rotate: `${tilt}deg` }] },
+      ]}
+    >
+      <Txt weight="semi" size={13}>
+        {label}
+      </Txt>
+    </View>
+  )
+}
+
+function Checking({
+  approved,
+  stuck,
+  problem,
+  onRefresh,
+}: {
+  approved: boolean
+  /** Approved, but the issuer keeps refusing to make the card: say so, plainly. */
+  stuck: boolean
+  problem: string | null
+  onRefresh: () => Promise<void>
+}) {
+  const [refreshing, setRefreshing] = useState(false)
+  const refresh = async () => {
+    setRefreshing(true)
+    try {
+      await onRefresh()
+    } finally {
+      setRefreshing(false)
+    }
+  }
+  return (
+    <Screen>
+      <Header />
+      <ScrollView
+        contentContainerStyle={styles.body}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void refresh()} />}
+      >
+        <View style={styles.checkArt}>
+          <View style={styles.checkCard} />
+          <ReniPeek width={240} />
+        </View>
+        <Txt weight="bold" size={32} style={styles.title}>
+          {approved ? 'Your ID is approved' : 'Checking your ID'}
+        </Txt>
+        <Txt size={15} color={colors.muted} style={styles.lead}>
+          {approved && stuck
+            ? 'The card issuer is taking longer than usual to make your card. We keep trying, and it appears here as soon as it’s ready. Nothing is charged until then.'
+            : approved
+              ? 'We’re preparing your card. It appears here as soon as it’s ready.'
+              : 'You can close Ren. We’ll check again automatically when you come back.'}
+        </Txt>
+        <View style={styles.section}>
+          <Step done label="Details sent" />
+          <Step done label="ID and proof of address sent" />
+          <Step label="Nuvion checks it" done={approved} now={!approved} />
+          <Step label="Your card is made" now={approved} />
+        </View>
+        {problem ? (
+          <Txt size={13} color={colors.danger} style={styles.fine}>
+            {problem}
+          </Txt>
+        ) : null}
+        <View style={{ marginTop: 24 }}>
+          <PillButton label="Back to home" icon="home" tone="white" onPress={() => router.back()} />
+        </View>
+        <Txt size={12} color={colors.muted} style={styles.fine}>
+          If something doesn’t match, we’ll tell you what to fix.
+        </Txt>
+      </ScrollView>
+    </Screen>
+  )
+}
+
+function Step({ label, done, now }: { label: string; done?: boolean; now?: boolean }) {
+  return (
+    <View style={[styles.step, now && styles.stepNow]}>
+      <View style={[styles.stepDot, done && styles.stepDone, now && styles.stepSpin]}>
+        {done ? <Icon name="check" size={14} color={colors.white} /> : null}
+      </View>
+      <Txt weight={now ? 'bold' : 'semi'} size={15} color={done || now ? colors.ink : colors.muted}>
+        {label}
+      </Txt>
+    </View>
+  )
+}
+
+/** A check to send again: one that stopped before Nuvion could review it, or one it refused. */
+function TryAgain({ reason, unfinished }: { reason: string | null; unfinished: boolean }) {
+  return (
+    <Screen>
+      <Header />
+      <ScrollView contentContainerStyle={styles.body}>
+        <Txt weight="bold" size={32} style={styles.title}>
+          {unfinished ? 'Finish your ID check' : 'Your ID didn’t pass'}
+        </Txt>
+        <Txt size={15} color={colors.muted} style={styles.lead}>
+          {unfinished
+            ? `${reason ? `Nuvion said: ${reason} ` : ''}Nuvion needs a photo of your ID and a bill or bank statement with your address before it can check you. It takes a minute.`
+            : `${reason ? `Nuvion said: ${reason}` : 'Nuvion couldn’t confirm your details from that photo.'} Check that your details match your ID exactly, then send a clearer photo.`}
+        </Txt>
+        <View style={{ marginTop: 28 }}>
+          <PillButton
+            label={unfinished ? 'Finish my check' : 'Try again'}
+            onPress={() => router.push('/dollar-card/check')}
+          />
+        </View>
+      </ScrollView>
+    </Screen>
+  )
+}
+
+function CardHome({
+  data,
+  onChange,
+  onRefresh,
+}: {
+  data: DollarCard
+  onChange: (d: DollarCard) => void
+  onRefresh: () => Promise<void>
+}) {
+  const insets = useSafeAreaInsets()
+  const [refreshing, setRefreshing] = useState(false)
+  const refresh = async () => {
+    setRefreshing(true)
+    await onRefresh().catch(() => null)
+    setRefreshing(false)
+  }
+  const { profile, signMessage } = useWallet()
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const card = data.card
+  if (!card) return null
+  const cap = BigInt(data.daily_topup)
+  const today = BigInt(data.topups?.today ?? '0')
+  const left = BigInt(data.topups?.left ?? data.daily_topup)
+  const blocks = 10
+  const used = cap > 0n ? Number((today * BigInt(blocks)) / cap) : 0
+
+  const freeze = async (frozen: boolean) => {
+    if (!profile) return
+    setBusy(true)
+    setError(null)
+    try {
+      onChange(await setDollarCard(profile.address, signMessage, frozen))
+      void Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success)
+    } catch (e) {
+      setError(problemOf(e))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (card.frozen)
+    return (
+      <Screen>
+        <Header />
+        <ScrollView contentContainerStyle={styles.body}>
+          <Txt weight="bold" size={32} style={styles.title}>
+            Frozen
+          </Txt>
+          <Txt size={15} color={colors.onTint} style={styles.lead}>
+            Every payment is refused until you unfreeze it. Nothing leaves your card.
+          </Txt>
+          <View style={styles.frozenArt}>
+            <View style={styles.tilt}>
+              <DollarCardFace width={290} last4={card.last_four} brand={card.brand} frozen />
+            </View>
+          </View>
+          <View style={[styles.section, styles.safe]}>
+            <View>
+              <Txt weight="semi" size={12} color={colors.onTint}>
+                Safe on your card
+              </Txt>
+              <Txt weight="bold" size={24}>
+                {card.balance === null ? '—' : formatUsd(BigInt(card.balance))}
+              </Txt>
+            </View>
+            <Txt weight="semi" size={13} color={colors.onTint}>
+              •••• {card.last_four}
+            </Txt>
+          </View>
+          {error ? <Problem text={error} /> : null}
+          <View style={{ marginTop: 16 }}>
+            <PillButton
+              label={busy ? 'One moment…' : 'Unfreeze'}
+              icon="snow"
+              tone="coral"
+              loading={busy}
+              onPress={() => void freeze(false)}
+            />
+          </View>
+          <DeleteCardLink balance={card.balance} onDeleted={onChange} />
+        </ScrollView>
+      </Screen>
+    )
+
+  return (
+    <Screen bg={colors.paper} edges={['bottom']}>
+      {/* Behind the list: pulling down shows more of the band's colour, never a gap above it. */}
+      <View style={styles.bandBackdrop} />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, paddingBottom: 32, backgroundColor: colors.paper }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void refresh()}
+            tintColor={colors.white}
+          />
+        }
+      >
+        <View style={[styles.band, { paddingTop: insets.top }]}>
+          <Header
+            title=""
+            right={
+              data.sandbox ? (
+                <Txt weight="semi" size={12} color={colors.onTeal}>
+                  Sandbox
+                </Txt>
+              ) : null
+            }
+          />
+          <View style={{ paddingHorizontal: 24 }}>
+            <Txt weight="semi" size={13} color={colors.onTeal}>
+              Ready to spend
+            </Txt>
+            <Txt weight="bold" size={46} color={colors.white} style={{ letterSpacing: -1.4 }}>
+              {card.balance === null ? '—' : formatUsd(BigInt(card.balance))}
+            </Txt>
+          </View>
+        </View>
+        <View style={styles.hero}>
+          <View style={styles.tilt}>
+            <DollarCardFace width={290} last4={card.last_four} brand={card.brand} />
+          </View>
+          <View style={[styles.meter, styles.tiltSoft]}>
+            <View style={styles.meterHead}>
+              <Txt weight="bold" size={12}>
+                Today’s top-ups
+              </Txt>
+              <Txt weight="semi" size={12} color={colors.muted}>
+                {formatUsd(left)} left of {formatUsd(cap)}
+              </Txt>
+            </View>
+            <View style={styles.blocks}>
+              {Array.from({ length: blocks }, (_, i) => (
+                <View
+                  // biome-ignore lint/suspicious/noArrayIndexKey: ten fixed blocks of a meter
+                  key={i}
+                  style={[styles.block, i < used && styles.blockOn]}
+                />
+              ))}
+            </View>
+          </View>
+        </View>
+        {error ? <Problem text={error} /> : null}
+        <View style={styles.actions}>
+          <Action
+            icon="plus"
+            label="Top up"
+            coral
+            disabled={left === 0n}
+            onPress={() => router.push('/dollar-card/top-up')}
+          />
+          <Action
+            icon="down"
+            label="Withdraw"
+            disabled={!card.balance || BigInt(card.balance) < 1_000_000n}
+            onPress={() => router.push('/dollar-card/withdraw')}
+          />
+        </View>
+        <View style={[styles.actions, { marginTop: 10 }]}>
+          <Action icon="eye" label="Details" onPress={() => router.push('/dollar-card/details')} />
+          <Action
+            icon="snow"
+            label={busy ? '…' : 'Freeze'}
+            disabled={busy}
+            onPress={() => void freeze(true)}
+          />
+        </View>
+        <View style={styles.activity}>
+          {(data.activity ?? []).length === 0 ? (
+            <Txt size={15} color={colors.muted}>
+              Top-ups, withdrawals and card payments show up here.
+            </Txt>
+          ) : (
+            (data.activity ?? []).map((a, i) => (
+              <View key={a.id} style={[styles.row, i > 0 && styles.rule]}>
+                <View
+                  style={[
+                    styles.rowIcon,
+                    a.kind === 'topup' && { backgroundColor: colors.tealSoft },
+                    a.kind === 'withdraw' && { backgroundColor: colors.sunken },
+                    a.kind === 'spend' && { backgroundColor: colors.fill },
+                  ]}
+                >
+                  {a.kind === 'spend' ? (
+                    <Txt weight="bold" size={15} color={colors.onFill}>
+                      {a.title.slice(0, 1).toUpperCase()}
+                    </Txt>
+                  ) : (
+                    <Icon name={a.kind === 'topup' ? 'up' : 'down'} size={16} />
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Txt weight="semi" size={15} numberOfLines={1}>
+                    {a.title}
+                  </Txt>
+                  <Txt size={12} color={colors.muted}>
+                    {when(a.at)}
+                    {a.kind === 'check' ? ' · Card check, not charged' : ''}
+                    {a.kind !== 'check' && a.status === 'pending' ? ' · On its way' : ''}
+                    {a.status === 'failed' ? ' · Declined' : ''}
+                  </Txt>
+                </View>
+                <Txt
+                  weight="bold"
+                  size={15}
+                  color={
+                    a.kind === 'check'
+                      ? colors.muted
+                      : a.kind === 'spend' || a.kind === 'withdraw'
+                        ? colors.ink
+                        : colors.positive
+                  }
+                  style={a.kind === 'check' ? { textDecorationLine: 'line-through' } : undefined}
+                >
+                  {a.kind === 'check'
+                    ? formatUsd(-BigInt(a.amount))
+                    : formatUsd(BigInt(a.amount), { sign: true })}
+                </Txt>
+              </View>
+            ))
+          )}
+        </View>
+        <DeleteCardLink balance={card.balance} onDeleted={onChange} />
+      </ScrollView>
+    </Screen>
+  )
+}
+
+function Action({
+  icon,
+  label,
+  onPress,
+  wide,
+  coral,
+  disabled,
+}: {
+  icon: IconName
+  label: string
+  onPress: () => void
+  wide?: boolean
+  coral?: boolean
+  disabled?: boolean
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      disabled={disabled}
+      onPress={() => {
+        void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+        onPress()
+      }}
+      style={({ pressed }) => [
+        styles.action,
+        wide && { flex: 1.4 },
+        coral && { backgroundColor: colors.coral },
+        disabled && { opacity: 0.5 },
+        pressed && { transform: [{ scale: 0.97 }] },
+      ]}
+    >
+      <Icon name={icon} size={18} color={coral ? colors.dark : colors.ink} />
+      <Txt weight="semi" size={15} color={coral ? colors.dark : colors.ink}>
+        {label}
+      </Txt>
+    </Pressable>
+  )
+}
+
+function Problem({ text }: { text: string }) {
+  return (
+    <Txt
+      weight="medium"
+      size={14}
+      color={colors.danger}
+      style={{ marginTop: 12, paddingHorizontal: 20 }}
+    >
+      {text}
+    </Txt>
+  )
+}
+
+function when(at: string) {
+  const d = new Date(at)
+  const today = new Date()
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  if (d.toDateString() === today.toDateString()) return `Today · ${time}`
+  const yesterday = new Date(today.getTime() - 86_400_000)
+  if (d.toDateString() === yesterday.toDateString()) return 'Yesterday'
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+}
+
+const styles = StyleSheet.create({
+  body: { flexGrow: 1, paddingHorizontal: 20, paddingBottom: 32 },
+  title: { letterSpacing: -1, marginTop: 8 },
+  lead: { marginTop: 8, lineHeight: 21 },
+  fine: { textAlign: 'center', marginTop: 12, lineHeight: 17 },
+  section: {
+    marginTop: 22,
+    borderRadius: 22,
+    borderWidth: 2,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    padding: 6,
+  },
+  introTop: { height: 400 },
+  introTitle: { marginTop: 4, marginLeft: 22, lineHeight: 39, letterSpacing: -1.2 },
+  introReni: { position: 'absolute', right: 4, top: 108 },
+  introCard: {
+    position: 'absolute',
+    left: 52,
+    top: 214,
+    transform: [{ rotate: '-6deg' }],
+  },
+  introBottom: {
+    flex: 1,
+    backgroundColor: colors.paper,
+    paddingHorizontal: 20,
+    paddingTop: 22,
+    paddingBottom: 34,
+  },
+  stickers: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 },
+  sticker: {
+    paddingHorizontal: 13,
+    paddingVertical: 8,
+    borderRadius: 999,
+    borderWidth: 2,
+    borderColor: colors.line,
+  },
+  checkArt: { height: 220, marginTop: 10, alignItems: 'center' },
+  checkCard: {
+    position: 'absolute',
+    top: 90,
+    width: 284,
+    height: 130,
+    borderRadius: 20,
+    borderWidth: 3,
+    borderStyle: 'dashed',
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  step: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 12, borderRadius: 16 },
+  stepNow: { backgroundColor: colors.raised },
+  stepDot: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: colors.muted,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  stepDone: { backgroundColor: colors.tealDeep, borderColor: colors.tealDeep },
+  stepSpin: { borderColor: colors.coral, borderRightColor: colors.coralSoft, borderWidth: 3 },
+  frozenArt: { height: 236, marginTop: 14, alignItems: 'center', justifyContent: 'center' },
+  safe: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  bandBackdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 320,
+    backgroundColor: colors.money,
+  },
+  band: {
+    backgroundColor: colors.money,
+    paddingBottom: 120,
+    borderBottomLeftRadius: 44,
+    borderBottomRightRadius: 44,
+  },
+  hero: { marginTop: -100, alignItems: 'center' },
+  tilt: { transform: [{ rotate: '-4deg' }] },
+  tiltSoft: { transform: [{ rotate: '-4deg' }] },
+  meter: {
+    width: 290,
+    marginTop: 12,
+    padding: 12,
+    borderRadius: 18,
+    borderWidth: 2,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+  },
+  meterHead: { flexDirection: 'row', justifyContent: 'space-between' },
+  blocks: { flexDirection: 'row', gap: 4, marginTop: 8 },
+  block: { flex: 1, height: 12, borderRadius: 3, backgroundColor: colors.sunken },
+  blockOn: { backgroundColor: colors.teal },
+  actions: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginTop: 26 },
+  action: {
+    flex: 1,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 2,
+    borderColor: colors.line,
+    backgroundColor: colors.surface,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  activity: { paddingHorizontal: 20, marginTop: 18 },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10 },
+  rule: { borderTopWidth: 2, borderColor: colors.sunken },
+  rowIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.sunken,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+})

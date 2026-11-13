@@ -1,5 +1,6 @@
 import * as Haptics from 'expo-haptics'
-import { router } from 'expo-router'
+import { router, useLocalSearchParams } from 'expo-router'
+import * as SecureStore from 'expo-secure-store'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   KeyboardAvoidingView,
@@ -12,6 +13,7 @@ import {
 import type { Address, Hex } from 'viem'
 import { apiUrl, chainName } from '@/lib/config'
 import { applyKey, formatUsd, groupTyped, type Key, toBase } from '@/lib/money'
+import { loadNairaRecents, NAIRA_RECENTS, type NairaRecent, recentKey } from '@/lib/naira-recents'
 import { useSessionCovers } from '@/lib/session'
 import { colors, fonts } from '@/lib/theme'
 import { useWallet } from '@/lib/wallet'
@@ -65,10 +67,24 @@ async function nairaApi<T>(
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms))
 
+/** Keeps an account this phone cashed out to, newest first, for Cash out's list of accounts. */
+async function rememberAccount(recent: NairaRecent) {
+  try {
+    const before = await loadNairaRecents()
+    const next = [recent, ...before.filter((r) => recentKey(r) !== recentKey(recent))].slice(0, 5)
+    await SecureStore.setItemAsync(NAIRA_RECENTS, JSON.stringify(next))
+  } catch {
+    // Only a shortcut for next time: the cash-out itself is done.
+  }
+}
+
 /**
  * Cashing out to naira (the API's services/naira.ts): dollars from this wallet to a Nigerian bank
  * account, through Paystack. The app's twin of the web's cash-out. How much, which account (the
  * bank says whose it is), the quote, slide; if the bank can't take it, the dollars come back.
+ *
+ * Cash out (app/cash-out-world.tsx) opens this for Nigeria, and with `recent` ("058:0123456789")
+ * for an account this phone cashed out to before: the bank and number come already filled in.
  */
 export default function CashOutScreen() {
   const { balance, keys, profile, sendToRen } = useWallet()
@@ -85,6 +101,17 @@ export default function CashOutScreen() {
   const [busy, setBusy] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const quick = useSessionCovers(0n)
+  const { recent } = useLocalSearchParams<{ recent?: string }>()
+
+  useEffect(() => {
+    if (!recent) return
+    void loadNairaRecents().then((list) => {
+      const saved = list.find((r) => recentKey(r) === recent)
+      if (!saved) return
+      setBank({ name: saved.bankName, code: saved.bankCode })
+      setAccount(saved.accountNumber)
+    })
+  }, [recent])
 
   const onKey = useCallback((key: Key) => setTyped((v) => applyKey(v, key, 2)), [])
   const amount = useMemo(() => {
@@ -186,6 +213,13 @@ export default function CashOutScreen() {
       )
       setQuote(result)
       setStep('done')
+      if (result.status !== 'failed' && bank && named)
+        void rememberAccount({
+          name: named.name,
+          bankCode: bank.code,
+          bankName: bank.name,
+          accountNumber: named.number,
+        })
       for (let i = 0; i < 20 && (result.status === 'paying' || result.status === 'received'); i++) {
         await wait(3000)
         result = await nairaApi<CashOut>(`wallets/${profile.address}/cash-outs/${quote.id}`, {
@@ -258,7 +292,13 @@ export default function CashOutScreen() {
             <View style={{ marginTop: 14 }}>
               <PillButton
                 label={
-                  over ? 'More than you have' : tooSmall ? 'At least $1' : 'Choose the account'
+                  over
+                    ? 'More than you have'
+                    : tooSmall
+                      ? 'At least $1'
+                      : bank && account
+                        ? 'Continue'
+                        : 'Choose the account'
                 }
                 disabled={amount === 0n || over || tooSmall}
                 onPress={() => setStep('account')}

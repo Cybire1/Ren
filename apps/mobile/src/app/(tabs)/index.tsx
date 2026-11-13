@@ -10,7 +10,7 @@ import {
 } from 'react-native'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { getSummary } from '@/lib/api'
-import { chainName, isTestnet } from '@/lib/config'
+import { chainName, isTestnet, onTempo } from '@/lib/config'
 import { formatUsd } from '@/lib/money'
 import { usePrefs } from '@/lib/prefs'
 import { useStall } from '@/lib/stall'
@@ -26,6 +26,7 @@ import { EntryRow } from '@/ui/EntryRow'
 import { Icon } from '@/ui/Icon'
 import { AllowanceCards, KeysCard } from '@/ui/keys'
 import { TapMark } from '@/ui/Logo'
+import { MoneyTiles } from '@/ui/Money'
 import { OtherDollarsCard } from '@/ui/OtherDollars'
 import { PrivateCard } from '@/ui/PrivateCard'
 import { Sticker, Txt } from '@/ui/primitives'
@@ -98,6 +99,10 @@ export default function Home() {
         <>
           <ReadyCard />
           {/* Dollars someone sent privately are here even when the balance is empty. */}
+          {/* Cash out (one button for every country) and the dollar card. Both pay with a Tempo
+              transfer to Ren, so they're on the Tempo build only. */}
+          {onTempo ? <MoneyTiles /> : null}
+
           <OtherDollarsCard />
           <PrivateCard />
           <AllowanceCards />

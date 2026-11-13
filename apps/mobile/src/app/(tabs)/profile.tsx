@@ -196,24 +196,23 @@ export default function Profile() {
         </Sticker>
       )}
 
-      {/* On Tempo: naira to any Nigerian bank, through Paystack (app/cash-out.tsx). */}
+      {/* On Tempo: one Cash out, as on Home: your accounts, or a new one starting with your own
+          country (app/cash-out-world.tsx). Nigeria opens the naira cash-out (app/cash-out.tsx). */}
       {onTempo ? (
         <Sticker
           radius={24}
-          accessibilityLabel="Cash out to naira"
-          onPress={() => router.push('/cash-out')}
+          accessibilityLabel="Cash out. To your bank or mobile money"
+          onPress={() => router.push('/cash-out-world')}
           style={{ height: 62, marginTop: 14 }}
         >
           <View style={[styles.cashOut, { gap: 14 }]}>
-            <Txt weight="heavy" size={20} style={{ width: 22, textAlign: 'center' }}>
-              ₦
-            </Txt>
+            <Icon name="bank" size={22} />
             <View style={{ flex: 1 }}>
               <Txt weight="semi" size={16}>
-                Cash out to naira
+                Cash out
               </Txt>
-              <Txt size={13} color={colors.muted}>
-                To any Nigerian bank account, through Paystack
+              <Txt size={13} color={colors.muted} numberOfLines={1}>
+                To your bank or mobile money
               </Txt>
             </View>
             <Icon name="arrow" size={20} />
