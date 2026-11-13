@@ -20,6 +20,9 @@ const appPackage = path.join(projectRoot, 'package.json')
 // build) has no dist/, and the app should never run against a stale one. Its sources import
 // siblings as './x.js' (Node ESM style), which Metro resolves to the './x.ts' next to them.
 const monadSource = path.join(workspaceRoot, 'packages/monad/src')
+// @kova/tempo the same way, for the same reason.
+const tempoSource = path.join(workspaceRoot, 'packages/tempo/src')
+const inSource = (file) => file.startsWith(monadSource) || file.startsWith(tempoSource)
 
 // ox ships its TypeScript sources beside its builds (ox/tempo/VirtualAddress.ts next to the
 // ox/tempo/VirtualAddress/ folder), and Metro picks the .ts for some subpaths, whose own './x.js'
@@ -30,13 +33,15 @@ const oxExports = require(path.join(oxRoot, 'package.json')).exports
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === '@kova/monad')
     return { type: 'sourceFile', filePath: path.join(monadSource, 'index.ts') }
+  if (moduleName === '@kova/tempo')
+    return { type: 'sourceFile', filePath: path.join(tempoSource, 'index.ts') }
   if (moduleName.startsWith('ox/')) {
     const entry = oxExports[`./${moduleName.slice(3)}`]
     const target = typeof entry === 'string' ? entry : entry?.default
     if (target) return { type: 'sourceFile', filePath: path.join(oxRoot, target) }
   }
   if (
-    context.originModulePath.startsWith(monadSource) &&
+    inSource(context.originModulePath) &&
     moduleName.startsWith('.') &&
     moduleName.endsWith('.js')
   ) {
@@ -47,7 +52,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
     if (fs.existsSync(ts)) return { type: 'sourceFile', filePath: ts }
   }
   const root = moduleName.split('/')[0]
-  if (shared.includes(root) || context.originModulePath.startsWith(monadSource))
+  if (shared.includes(root) || inSource(context.originModulePath))
     return context.resolveRequest(
       { ...context, originModulePath: appPackage },
       moduleName,
